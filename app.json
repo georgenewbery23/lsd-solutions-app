@@ -8,7 +8,9 @@
     "userInterfaceStyle": "light",
     "platforms": ["ios", "android", "web"],
     "web": {
-      "bundler": "webpack"
+      "bundler": "webpack",
+      "title": "LSD Solutions — HGV Walkaround",
+      "favicon": "./assets/favicon.png"
     },
     "splash": {
       "resizeMode": "contain",
