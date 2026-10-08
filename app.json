@@ -10,7 +10,7 @@
     "web": {
       "bundler": "webpack",
       "title": "LSD Solutions — HGV Walkaround",
-      "favicon": "./assets/favicon.png"
+      "favicon": "/assets/favicon.png"
     },
     "splash": {
       "resizeMode": "contain",
