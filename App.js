@@ -1,1167 +1,369 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   ScrollView, Alert, Image, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// --- Wrap imports in try/catch ---
-import { 
-  getAuth, 
-  onAuthStateChanged,  // ⬅️ ADD THIS LINE
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut 
-} from 'firebase/auth';
-}
-
-let initializeAppCheck, getAppCheck;
-try {
-  const fbAppCheck = require('firebase/app-check');
-  initializeAppCheck = fbAppCheck.initializeAppCheck;
-  getAppCheck = fbAppCheck.getAppCheck;
-} catch {
-  initializeAppCheck = null;
-  getAppCheck = null;
-}
-
-// ─── THEME ─────────────────────────────────────────────
-const COLORS = {
-  primary: '#0A337D',
-  accent: '#2A60D9',
-  silver: '#C8CDD8',
-  light: '#E8EBF2',
-  background: '#F5F7FA',
-  success: '#2E7D32',
-  warning: '#F57C00',
-  danger: '#C62828',
-  text: '#1A1A1A',
-  textLight: '#666666',
-  advisory: '#F57C00',
-  major: '#C62828'
-};
-
-// ─── DVSA CHECKLISTS ───────────────────────────────────
-const DVSA_CHECKS = {
-  vehicle: [
-    {id:'1',label:'Brakes',req:true},
-    {id:'2',label:'Tyres & Wheels',req:true},
-    {id:'3',label:'Lights & Indicators',req:true},
-    {id:'4',label:'Mirrors & Windows',req:true},
-    {id:'5',label:'Windscreen Wipers/Washers',req:true},
-    {id:'6',label:'Steering',req:true},
-    {id:'7',label:'Suspension',req:true},
-    {id:'8',label:'Exhaust & Emissions',req:true},
-    {id:'9',label:'Fuel System',req:true},
-    {id:'10',label:'Electrical Systems',req:true},
-    {id:'11',label:'Body & Security',req:true},
-    {id:'12',label:'Coupling & Towing',req:true},
-    {id:'13',label:'Load Security',req:true},
-    {id:'14',label:'Emergency Equipment',req:true},
-    {id:'15',label:'Tachograph',req:true}
-  ],
-  trailer: [
-    {id:'t1',label:'Brakes',req:true},
-    {id:'t2',label:'Tyres & Wheels',req:true},
-    {id:'t3',label:'Lights & Reflectors',req:true},
-    {id:'t4',label:'Coupling & Safety Chains',req:true},
-    {id:'t5',label:'Suspension & Undercarriage',req:true},
-    {id:'t6',label:'Body & Structure',req:true},
-    {id:'t7',label:'Load Securing Points',req:true},
-    {id:'t8',label:'Markings & Plates',req:true}
-  ]
-};
-
-// ─── CONTEXT ────────────────────────────────────────────
-const AppContext = createContext(null);
-
-const AppProvider = ({children}) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
- useEffect(() => {
-  let unsubscribe = () => {};
-  if (auth && onAuthStateChanged) {
-    unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-  } else {
-    // No Firebase — skip auth, show login screen
-    setLoading(false);
-  }
-  return unsubscribe;
-}, []);
-
-  const registerCompany = async (email, password, companyData) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      uid: cred.user.uid, email, role: 'company',
-      ...companyData,
-      subscription: {
-        status: 'trial', trialEnd: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
-        ratePerVehicle: 2.00, activeVehicles: []
-      },
-      createdAt: serverTimestamp()
-    });
-    return cred.user;
-  };
-
-  const registerDriver = async (email, password, driverData) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      uid: cred.user.uid, email, role: 'driver',
-      ...driverData, savedCompanies: [],
-      createdAt: serverTimestamp()
-    });
-    return cred.user;
-  };
-
-  const login = async (email, password) => {
-    await signInWithEmailAndPassword(auth, email, password);
-  };
-
-  const logout = async () => {
-    await signOut(auth);
-    setUserProfile(null);
-  };
-
-  const addVehicle = async (reg, trailerNumber=null) => {
-    if (!userProfile || userProfile.role !== 'company') return;
-    const vehicles = [...(userProfile.subscription?.activeVehicles||[])];
-    vehicles.push({reg, trailerNumber, addedAt: new Date().toISOString(), active:true});
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      'subscription.activeVehicles': vehicles
-    });
-    setUserProfile(p => ({...p, subscription:{...p.subscription, activeVehicles:vehicles}}));
-  };
-
-  const submitCheck = async (checkData) => {
-    await addDoc(collection(db, 'checks'), {
-      ...checkData, driverId: currentUser.uid,
-      submittedAt: serverTimestamp()
-    });
-    if (checkData.hasDefect) {
-      await addDoc(collection(db, 'notifications'), {
-        companyId: checkData.companyId || 'unassigned',
-        type: 'defect',
-        severity: checkData.defectSeverity,
-        message: `${checkData.defectSeverity === 'major' ? '🔴 MAJOR DEFECT' : '⚠️ Advisory'} reported on ${checkData.vehicleReg || checkData.trailerNumber}`,
-        checkData, read: false, createdAt: serverTimestamp()
-      });
-    }
-  };
-
-  if (loading) return <LoadingScreen />;
-
-  return (
-    <AppContext.Provider value={{
-      currentUser, userProfile,
-      registerCompany, registerDriver, login, logout, addVehicle, submitCheck
-    }}>
-      {children}
-    </AppContext.Provider>
-  );
-};
-
-// ─── SCREENS ─────────────────────────────────────────────
-const LoadingScreen = () => (
-  <View style={styles.centered}>
-    <Text style={styles.loadingText}>Loading LSD Solutions...</Text>
-  </View>
-);
-
-const HomeScreen = ({navigation}) => {
-  const {userProfile} = useContext(AppContext);
-  useEffect(() => {
-    if (!userProfile) return;
-    if (userProfile.role === 'company') navigation.replace('CompanyPortal');
-    if (userProfile.role === 'driver') navigation.replace('DriverPortal');
-  }, [userProfile]);
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.logoWrap}>
-        <Text style={styles.logoText}>LSD SOLUTIONS</Text>
-        <Text style={styles.tagline}>For all your long haul, shunting & delivery needs</Text>
-      </View>
-      <View style={styles.btnCol}>
-        <TouchableOpacity style={styles.btnPrimary} onPress={()=>navigation.navigate('Login')}>
-          <Text style={styles.btnText}>Sign In</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.btnSecondary} onPress={()=>navigation.navigate('SelectRole')}>
-          <Text style={styles.btnTextSecondary}>Create Account</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-};
-
-const SelectRoleScreen = ({navigation}) => (
-  <SafeAreaView style={styles.container}>
-    <Text style={styles.heading}>Select Account Type</Text>
-    <TouchableOpacity style={styles.btnPrimary} onPress={()=>navigation.navigate('CompanyRegister')}>
-      <Text style={styles.btnText}>🏢 Company — £2/vehicle/month</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.btnSecondary} onPress={()=>navigation.navigate('DriverRegister')}>
-      <Text style={styles.btnTextSecondary}>🚛 Driver — Free</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.backLink} onPress={()=>navigation.goBack()}>
-      <Text style={styles.backText}>← Back</Text>
-    </TouchableOpacity>
-  </SafeAreaView>
-);
-
-const CompanyRegisterScreen = ({navigation}) => {
-  const {registerCompany} = useContext(AppContext);
-  const [form, setForm] = useState({
-    email:'',password:'',name:'',tradingAs:'',address:'',operatorLicence:''
-  });
-  const handle = async () => {
-    try {
-      await registerCompany(form.email, form.password, {
-        companyName:form.name, tradingAs:form.tradingAs,
-        registeredAddress:form.address, operatorLicence:form.operatorLicence,
-        contactEmail:form.email
-      });
-      navigation.replace('CompanyPortal');
-    } catch(e) { Alert.alert('Error', e.message); }
-  };
-  return (
-    <ScrollView style={styles.formScroll}>
-      <Text style={styles.heading}>Company Registration</Text>
-      {['email','password','name','tradingAs','address','operatorLicence'].map(f => (
-        <TextInput 
-          key={f} 
-          style={styles.input} 
-          placeholder={f.replace(/([A-Z])/g,' $1').trim().replace(/^./,t=>t.toUpperCase())}
-          value={form[f]} 
-          onChangeText={v=>setForm(p=>({...p,[f]:v}))}
-          secureTextEntry={f==='password'} 
-          autoCapitalize='none' 
-          keyboardType={f==='email'?'email-address':'default'} 
-        />
-      ))}
-      <TouchableOpacity style={styles.btnPrimary} onPress={handle}>
-        <Text style={styles.btnText}>Register — 30 Day Free Trial</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-};
-
-const DriverRegisterScreen = ({navigation}) => {
-  const {registerDriver} = useContext(AppContext);
-  const [form, setForm] = useState({email:'',password:'',name:''});
-  const handle = async () => {
-    try {
-      await registerDriver(form.email, form.password, {name:form.name});
-      navigation.replace('DriverPortal');
-    } catch(e) { Alert.alert('Error', e.message); }
-  };
-  return (
-    <ScrollView style={styles.formScroll}>
-      <Text style={styles.heading}>Driver Registration</Text>
-      {['name','email','password'].map(f => (
-        <TextInput 
-          key={f} 
-          style={styles.input} 
-          placeholder={f.charAt(0).toUpperCase()+f.slice(1)}
-          value={form[f]} 
-          onChangeText={v=>setForm(p=>({...p,[f]:v}))}
-          secureTextEntry={f==='password'} 
-          autoCapitalize='none' 
-          keyboardType={f==='email'?'email-address':'default'} 
-        />
-      ))}
-      <TouchableOpacity style={styles.btnPrimary} onPress={handle}>
-        <Text style={styles.btnText}>Register</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-};
-
-const LoginScreen = ({navigation}) => {
-  const {login} = useContext(AppContext);
-  const [email,setEmail] = useState(''),[pw,setPw] = useState('');
-  const handle = async () => {
-    try { await login(email,pw); } catch(e) { Alert.alert('Error',e.message); }
-  };
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Sign In</Text>
-      <TextInput style={styles.input} placeholder='Email' value={email} onChangeText={setEmail} autoCapitalize='none' keyboardType='email-address' />
-      <TextInput style={styles.input} placeholder='Password' value={pw} onChangeText={setPw} secureTextEntry />
-      <TouchableOpacity style={styles.btnPrimary} onPress={handle}>
-        <Text style={styles.btnText}>Sign In</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
-  );
-};
-
-const CompanyPortalScreen = ({navigation}) => {
-  const {userProfile, logout, addVehicle} = useContext(AppContext);
-  const [newReg,setNewReg] = useState(''),[newTrailer,setNewTrailer] = useState('');
-  const vehicles = userProfile?.subscription?.activeVehicles||[];
-  const isActive = userProfile?.subscription?.status==='trial' || userProfile?.subscription?.status==='active';
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <Text style={styles.heading}>Company Portal</Text>
-        <Text style={styles.subHeading}>{userProfile?.companyName}</Text>
-        <Text style={styles.status}>Subscription: {isActive?'✅ Active':'❌ Inactive'}</Text>
-        <Text style={styles.text}>Vehicles: {vehicles.length} × £2.00 = £{(vehicles.length*2).toFixed(2)}/month</Text>
-        
-        <View style={styles.addVehicleForm}>
-          <TextInput style={styles.input} placeholder='Vehicle Registration' value={newReg} onChangeText={setNewReg} autoCapitalize='characters' />
-          <TextInput style={styles.input} placeholder='Trailer No. (optional)' value={newTrailer} onChangeText={setNewTrailer} autoCapitalize='characters' />
-          <TouchableOpacity style={styles.btnPrimary} onPress={()=>{addVehicle(newReg,newTrailer);setNewReg('');setNewTrailer('');}}>
-            <Text style={styles.btnText}>Add Vehicle</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.subHeading}>Fleet List</Text>
-        {vehicles.length === 0 ? (
-          <Text style={styles.textLight}>No vehicles added yet.</Text>
-        ) : vehicles.map((v,i)=>(
-          <View key={i} style={styles.itemRow}>
-            <Text style={styles.itemText}>{v.reg} {v.trailerNumber&&`/ ${v.trailerNumber}`}</Text>
-            <Text style={styles.itemStatus}>Active</Text>
-          </View>
-        ))}
-
-        <TouchableOpacity style={styles.btnDanger} onPress={logout}>
-          <Text style={styles.btnText}>Sign Out</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
-const DriverPortalScreen = ({navigation}) => {
-  const {userProfile, logout} = useContext(AppContext);
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Driver Portal</Text>
-      <Text style={styles.welcome}>Welcome, {userProfile?.name}</Text>
-      
-      <TouchableOpacity style={styles.btnPrimary} onPress={()=>navigation.navigate('CheckTypeSelect')}>
-        <Text style={styles.btnText}>🚛 Start Walkaround Check</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.btnSecondary} onPress={logout}>
-        <Text style={styles.btnTextSecondary}>Sign Out</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
-  );
-};
-
-const CheckTypeSelectScreen = ({navigation}) => {
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Select Check Type</Text>
-      
-      <TouchableOpacity style={styles.btnPrimary} onPress={()=>navigation.navigate('CheckEntry',{type:'vehicle'})}>
-        <Text style={styles.btnText}>🚛 Vehicle Only</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.btnPrimary} onPress={()=>navigation.navigate('CheckEntry',{type:'both'})}>
-        <Text style={styles.btnText}>🚛 + 📦 Vehicle & Trailer</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.btnPrimary} onPress={()=>navigation.navigate('CheckEntry',{type:'trailer'})}>
-        <Text style={styles.btnText}>📦 Trailer Only</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
-  );
-};
-
-const CheckEntryScreen = ({route, navigation}) => {
-  const {type} = route.params;
-  const [reg,setReg] = useState('');
-  const [trailer,setTrailer] = useState('');
-  const [odometer,setOdometer] = useState('');
-  const [companyId,setCompanyId] = useState('');
-
-  const startCheck = () => {
-    if (type !== 'trailer' && !reg.trim()) {
-      return Alert.alert('⚠️ Required', 'Please enter the vehicle registration');
-    }
-    if (type === 'trailer' && !trailer.trim()) {
-      return Alert.alert('⚠️ Required', 'Please enter the trailer number');
-    }
-    navigation.navigate('CheckList', {
-      type, reg: reg.toUpperCase(), trailer: trailer.toUpperCase(), odometer, companyId,
-      startTime: new Date()
-    });
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Vehicle Details</Text>
-      
-      {type !== 'trailer' && (
-        <TextInput 
-          style={styles.input} 
-          placeholder='Vehicle Registration e.g. AB12 CDE' 
-          value={reg} 
-          onChangeText={setReg} 
-          autoCapitalize='characters'
-          autoCorrect={false}
-        />
-      )}
-      
-      {type !== 'vehicle' && (
-        <TextInput 
-          style={styles.input} 
-          placeholder='Trailer Number / ID' 
-          value={trailer} 
-          onChangeText={setTrailer} 
-          autoCapitalize='characters'
-          autoCorrect={false}
-        />
-      )}
-      
-      <TextInput 
-        style={styles.input} 
-        placeholder='Odometer Reading (miles/km)' 
-        value={odometer} 
-        onChangeText={setOdometer} 
-        keyboardType='numeric'
-      />
-      
-      <TextInput 
-        style={styles.input} 
-        placeholder='Company ID (if linked)' 
-        value={companyId} 
-        onChangeText={setCompanyId} 
-        autoCapitalize='none'
-      />
-      
-      <TouchableOpacity style={styles.btnPrimary} onPress={startCheck}>
-        <Text style={styles.btnText}>▶ Start Check — Timer Running</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
-  );
-};
-
-// ─── REUSABLE DEFECT FORM COMPONENT ─────────────────────
-const DefectForm = ({defect, onChange, onRemove, showRemove}) => {
-  const pickPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      return Alert.alert('Permission needed', 'Please allow access to photos');
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsMultipleSelection: true
-    });
-    if (!result.canceled && result.assets) {
-      onChange({
-        ...defect,
-        photos: [...(defect.photos||[]), ...result.assets.map(a => a.uri)]
-      });
-    }
-  };
-
-  const removePhoto = (index) => {
-    onChange({
-      ...defect,
-      photos: defect.photos.filter((_,i)=>i!==index)
-    });
-  };
-
-  return (
-    <View style={styles.defectCard}>
-      {showRemove && (
-        <TouchableOpacity style={styles.removeDefectBtn} onPress={onRemove}>
-          <Text style={styles.removeDefectText}>✕ Remove</Text>
-        </TouchableOpacity>
-      )}
-      
-      <Text style={styles.label}>Description *</Text>
-      <TextInput
-        style={styles.textArea}
-        placeholder='Describe the defect...'
-        value={defect.description}
-        onChangeText={(text) => onChange({...defect, description: text})}
-        multiline
-        numberOfLines={3}
-        textAlignVertical='top'
-      />
-
-      <Text style={styles.label}>Severity *</Text>
-      <View style={styles.severityRow}>
-        <TouchableOpacity 
-          style={[
-            styles.severityBtn,
-            defect.severity === 'advisory' && styles.severityAdvisoryActive
-          ]}
-          onPress={() => onChange({...defect, severity: 'advisory'})}
-        >
-          <Text style={[
-            styles.severityText,
-            defect.severity === 'advisory' && styles.severityTextActive
-          ]}>
-            ⚠️ Advisory
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.severityBtn,
-            defect.severity === 'major' && styles.severityMajorActive
-          ]}
-          onPress={() => onChange({...defect, severity: 'major'})}
-        >
-          <Text style={[
-            styles.severityText,
-            defect.severity === 'major' && styles.severityTextActive
-          ]}>
-            🔴 Major
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.label}>Photos</Text>
-      <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>
-        <Text style={styles.photoBtnText}>📷 Add Photo</Text>
-      </TouchableOpacity>
-      
-      {defect.photos?.length > 0 && (
-        <View style={styles.photoGrid}>
-          {defect.photos.map((uri, i) => (
-            <View key={i} style={styles.photoWrap}>
-              <Image source={{ uri }} style={styles.photo} />
-              <TouchableOpacity style={styles.photoRemove} onPress={() => removePhoto(i)}>
-                <Text style={styles.photoRemoveText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-};
-
-// ─── CHECKLIST SCREEN ──────────────────────────────────
-const CheckListScreen = ({route, navigation}) => {
-  const {submitCheck, currentUser} = useContext(AppContext);
-  const {type, reg, trailer, odometer, companyId, startTime} = route.params;
-  
-  const [checks, setChecks] = useState({});
-  const [elapsed, setElapsed] = useState(0);
-  
-  // Built-in item defects
-  const [mainDefect, setMainDefect] = useState({
-    description: '',
-    severity: null,
-    photos: []
-  });
-  
-  // Other / additional defects
-  const [otherDefects, setOtherDefects] = useState([]);
-
-  // Timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Upload photos helper
-  const uploadPhotos = async (photoUris) => {
-    const urls = [];
-    for (let i = 0; i < photoUris?.length; i++) {
-      try {
-        const response = await fetch(photoUris[i]);
-        const blob = await response.blob();
-        const fileRef = ref(storage, `defect-photos/${currentUser.uid}/${Date.now()}_photo${i}.jpg`);
-        await uploadBytes(fileRef, blob);
-        urls.push(await getDownloadURL(fileRef));
-      } catch (err) {
-        console.warn('Upload failed:', err);
-      }
-    }
-    return urls;
-  };
-
-  // Add new blank other defect
-  const addOtherDefect = () => {
-    setOtherDefects(prev => [...prev, {
-      id: Date.now(),
-      description: '',
-      severity: null,
-      photos: []
-    }]);
-  };
-
-  // Update an other defect
-  const updateOtherDefect = (index, data) => {
-    const updated = [...otherDefects];
-    updated[index] = data;
-    setOtherDefects(updated);
-  };
-
-  // Remove an other defect
-  const removeOtherDefect = (index) => {
-    setOtherDefects(prev => prev.filter((_,i)=>i!==index));
-  };
-
-  // Validate all defects
-  const validateDefects = () => {
-    const mainDefectPresent = Object.values(checks).some(c => c === 'defect');
-    
-    if (mainDefectPresent) {
-      if (!mainDefect.description.trim()) {
-        return 'Please add a description for the marked defect(s)';
-      }
-      if (!mainDefect.severity) {
-        return 'Please select severity for the marked defect(s)';
-      }
-    }
-
-    for (let i = 0; i < otherDefects.length; i++) {
-      const d = otherDefects[i];
-      if (!d.description.trim()) {
-        return `Please add a description for Additional Defect ${i+1}`;
-      }
-      if (!d.severity) {
-        return `Please select severity for Additional Defect ${i+1}`;
-      }
-    }
-    return null;
-  };
-
-  const submitCheckReport = async () => {
-    const validationError = validateDefects();
-    if (validationError) return Alert.alert('⚠️ Required', validationError);
-
-    const finishTime = new Date();
-    const duration = Math.floor((finishTime - startTime) / 1000);
-    
-    const mainDefectPresent = Object.values(checks).some(c => c === 'defect');
-    const hasOtherDefects = otherDefects.length > 0;
-    const hasDefect = mainDefectPresent || hasOtherDefects;
-
-    // Upload all photos
-    const mainPhotos = mainDefectPresent ? await uploadPhotos(mainDefect.photos) : [];
-    const otherDefectsWithUrls = [];
-    for (const d of otherDefects) {
-      otherDefectsWithUrls.push({
-        description: d.description,
-        severity: d.severity,
-        photos: await uploadPhotos(d.photos)
-      });
-    }
-
-    const checkData = {
-      type,
-      vehicleReg: type !== 'trailer' ? reg : null,
-      trailerNumber: type !== 'vehicle' ? trailer : null,
-      odometer,
-      companyId: companyId || 'unassigned',
-      startTime: startTime.toISOString(),
-      finishTime: finishTime.toISOString(),
-      duration,
-      checks,
-      hasDefect,
-      // Main defect from checklist items
-      mainDefect: mainDefectPresent ? {
-        description: mainDefect.description,
-        severity: mainDefect.severity,
-        photos: mainPhotos
-      } : null,
-      // Additional / other defects
-      otherDefects: otherDefectsWithUrls,
-      passed: !hasDefect
-    };
-
-    await submitCheck(checkData);
-
-    const defectCount = (mainDefectPresent ? 1 : 0) + otherDefects.length;
-    Alert.alert(
-      '✅ Check Submitted',
-      `Date: ${new Date().toLocaleDateString('en-GB')}\nDuration: ${Math.floor(duration/60)}m ${duration%60}s\n\n${hasDefect ? `⚠️ ${defectCount} Defect(s) Reported` : 'All items passed ✅'}`,
-      [{ text: 'Done', onPress: () => navigation.navigate('DriverPortal') }]
-    );
-  };
-
-  const mins = Math.floor(elapsed / 60);
-  const secs = elapsed % 60;
-  const listItems = type === 'vehicle' ? DVSA_CHECKS.vehicle : 
-                    type === 'trailer' ? DVSA_CHECKS.trailer : 
-                    [...DVSA_CHECKS.vehicle, ...DVSA_CHECKS.trailer];
-
-  const showMainDefectForm = Object.values(checks).some(c => c === 'defect');
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.timer}>⏱ {mins}:{secs.toString().padStart(2, '0')}</Text>
-      
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.heading}>DVSA Walkaround Check</Text>
-        <Text style={styles.subInfo}>
-          {type !== 'trailer' && reg}
-          {type === 'both' && ' / '}
-          {type !== 'vehicle' && trailer}
-          {'  • '}{odometer}
-        </Text>
-
-        {listItems.map(item => (
-          <View key={item.id} style={styles.checkRow}>
-            <Text style={styles.checkLabel}>{item.label}</Text>
-            <View style={styles.checkBtns}>
-              <TouchableOpacity 
-                style={[styles.checkBtn, checks[item.id] === 'ok' && styles.checkOk]}
-                onPress={() => setChecks(p => ({ ...p, [item.id]: 'ok' }))}
-              >
-                <Text style={styles.checkBtnText}>✓</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.checkBtn, checks[item.id] === 'defect' && styles.checkBad]}
-                onPress={() => setChecks(p => ({ ...p, [item.id]: 'defect' }))}
-              >
-                <Text style={styles.checkBtnText}>⚠</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-
-        {/* DEFECT FORM FOR MARKED ITEMS */}
-        {showMainDefectForm && (
-          <View style={styles.defectSection}>
-            <Text style={styles.defectHeading}>🔴 Defect Details — Marked Items</Text>
-            <DefectForm
-              defect={mainDefect}
-              onChange={setMainDefect}
-              showRemove={false}
-            />
-          </View>
-        )}
-
-        {/* OTHER DEFECTS SECTION */}
-        <View style={styles.otherDefectsSection}>
-          <Text style={styles.otherDefectsHeading}>📋 Other Defects</Text>
-          <Text style={styles.otherDefectsSub}>Add any defects not listed above</Text>
-          
-          {otherDefects.map((defect, index) => (
-            <DefectForm
-              key={defect.id}
-              defect={defect}
-              onChange={(data) => updateOtherDefect(index, data)}
-              onRemove={() => removeOtherDefect(index)}
-              showRemove={true}
-            />
-          ))}
-          
-          <TouchableOpacity style={styles.addDefectBtn} onPress={addOtherDefect}>
-            <Text style={styles.addDefectText}>+ Add Another Defect</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* SUBMIT */}
-        <TouchableOpacity style={styles.btnPrimary} onPress={submitCheckReport}>
-          <Text style={styles.btnText}>✅ Submit Check</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
-// ─── MAIN APP & NAVIGATION ──────────────────────────────
 import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
+
+// Firebase imports
+import { auth, db, storage } from './firebase';
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from 'firebase/auth';
+import {
+  doc, setDoc, getDoc, updateDoc, collection, query, where,
+  getDocs, addDoc, serverTimestamp
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+import * as ImagePicker from 'expo-image-picker';
+
 const Stack = createStackNavigator();
 
-const App = () => (
-  <AppProvider>
-    <Stack.Navigator screenOptions={{
-      headerStyle: { backgroundColor: COLORS.primary },
-      headerTintColor: '#fff',
-      headerTitleStyle: { fontWeight: 'bold' }
-    }}>
-      <Stack.Screen name='Home' component={HomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name='SelectRole' component={SelectRoleScreen} options={{ title: 'Create Account' }} />
-      <Stack.Screen name='CompanyRegister' component={CompanyRegisterScreen} options={{ title: 'Company Sign Up' }} />
-      <Stack.Screen name='DriverRegister' component={DriverRegisterScreen} options={{ title: 'Driver Sign Up' }} />
-      <Stack.Screen name='Login' component={LoginScreen} options={{ title: 'Sign In' }} />
-      <Stack.Screen name='CompanyPortal' component={CompanyPortalScreen} options={{ title: 'Company Dashboard' }} />
-      <Stack.Screen name='DriverPortal' component={DriverPortalScreen} options={{ title: 'Driver Dashboard' }} />
-      <Stack.Screen name='CheckTypeSelect' component={CheckTypeSelectScreen} options={{ title: 'Walkaround Check' }} />
-      <Stack.Screen name='CheckEntry' component={CheckEntryScreen} options={{ title: 'Vehicle Details' }} />
-      <Stack.Screen name='CheckList' component={CheckListScreen} options={{ title: 'DVSA Inspection' }} />
-    </Stack.Navigator>
-  </AppProvider>
-);
+// ============== MAIN APP ==============
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-// ─── STYLES ─────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 20
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background
-  },
-  logoWrap: {
-    alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 40
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    letterSpacing: 2
-  },
-  tagline: {
-    fontSize: 14,
-    color: COLORS.textLight,
-    marginTop: 8,
-    textAlign: 'center'
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 5,
-    textAlign: 'center'
-  },
-  subInfo: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    textAlign: 'center',
-    marginBottom: 20
-  },
-  subHeading: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 12
-  },
-  welcome: {
-    fontSize: 16,
-    color: COLORS.textLight,
-    marginBottom: 30,
-    textAlign: 'center'
-  },
-  status: {
-    fontSize: 14,
-    marginBottom: 8
-  },
-  text: {
-    fontSize: 14,
-    color: COLORS.textLight,
-    marginBottom: 20
-  },
-  textLight: {
-    fontSize: 14,
-    color: COLORS.textLight,
-    fontStyle: 'italic'
-  },
-  timer: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: 15,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderRadius: 10
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: COLORS.silver,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: '#fff',
-    fontSize: 15
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 15,
-    marginBottom: 8
-  },
-  textArea: {
-    borderWidth: 1,
-    borderColor: COLORS.silver,
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#fff',
-    minHeight: 80,
-    fontSize: 15
-  },
-  btnPrimary: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    marginVertical: 8
-  },
-  btnSecondary: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    marginVertical: 8
-  },
-  btnDanger: {
-    backgroundColor: COLORS.danger,
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 30
-  },
-  btnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16
-  },
-  btnTextSecondary: {
-    color: COLORS.primary,
-    fontWeight: '600',
-    fontSize: 16
-  },
-  btnCol: {
-    marginTop: 40
-  },
-  backLink: {
-    marginTop: 20,
-    alignItems: 'center'
-  },
-  backText: {
-    color: COLORS.accent
-  },
-  formScroll: {
-    paddingBottom: 40
-  },
-  addVehicleForm: {
-    marginBottom: 30,
-    padding: 15,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.silver
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.light
-  },
-  itemText: {
-    fontSize: 14
-  },
-  itemStatus: {
-    color: COLORS.success,
-    fontWeight: '600'
-  },
-  checkRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.light
-  },
-  checkLabel: {
-    flex: 1,
-    fontSize: 15,
-    paddingRight: 10
-  },
-  checkBtns: {
-    flexDirection: 'row',
-    gap: 12
-  },
-  checkBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: COLORS.silver,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f9f9f9'
-  },
-  checkOk: {
-    backgroundColor: COLORS.success,
-    borderColor: COLORS.success
-  },
-  checkBad: {
-    backgroundColor: COLORS.danger,
-    borderColor: COLORS.danger
-  },
-  checkBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 20
-  },
-  defectSection: {
-    marginTop: 25,
-    padding: 18,
-    backgroundColor: '#FFF3E0',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.warning,
-    marginBottom: 10
-  },
-  defectHeading: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: COLORS.danger,
-    marginBottom: 15,
-    textAlign: 'center'
-  },
-  otherDefectsSection: {
-    marginTop: 30,
-    padding: 18,
-    backgroundColor: '#E8F0FE',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-    marginBottom: 10
-  },
-  otherDefectsHeading: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 4,
-    textAlign: 'center'
-  },
-  otherDefectsSub: {
-    fontSize: 13,
-    color: COLORS.textLight,
-    marginBottom: 15,
-    textAlign: 'center'
-  },
-  defectCard: {
-    padding: 14,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.light
-  },
-  removeDefectBtn: {
-    alignSelf: 'flex-end',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 6,
-    marginBottom: 8
-  },
-  removeDefectText: {
-    fontSize: 12,
-    color: COLORS.danger,
-    fontWeight: '600'
-  },
-  severityRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 5
-  },
-  severityBtn: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.silver,
-    alignItems: 'center',
-    backgroundColor: '#fff'
-  },
-  severityAdvisoryActive: {
-    borderColor: COLORS.advisory,
-    backgroundColor: COLORS.advisory
-  },
-  severityMajorActive: {
-    borderColor: COLORS.major,
-    backgroundColor: COLORS.major
-  },
-  severityText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text
-  },
-  severityTextActive: {
-    color: '#fff'
-  },
-  photoBtn: {
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.accent,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    backgroundColor: 'rgba(42,96,217,0.05)',
-    marginTop: 8
-  },
-  photoBtnText: {
-    color: COLORS.accent,
-    fontWeight: '600',
-    fontSize: 15
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12
-  },
-  photoWrap: {
-    position: 'relative'
-  },
-  photo: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: COLORS.light
-  },
-  photoRemove: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLORS.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10
-  },
-  photoRemoveText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 'bold'
-  },
-  addDefectBtn: {
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.accent,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    marginTop: 5
-  },
-  addDefectText: {
-    color: COLORS.accent,
-    fontWeight: '600',
-    fontSize: 15
-  },
-  loadingText: {
-    fontSize: 16,
-    color: COLORS.textLight
+  useEffect(() => {
+    let unsubscribe = () => {};
+    if (auth && onAuthStateChanged) {
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setLoading(false);
+      });
+    } else {
+      console.log("⚠️ Firebase not connected — demo mode");
+      setLoading(false);
+    }
+    return unsubscribe;
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading LSD Solutions...</Text>
+      </View>
+    );
   }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: '#0A337D' }, headerTintColor: '#fff' }}>
+        {user ? (
+          <>
+            <Stack.Screen name="SelectType" component={SelectTypeScreen} options={{ title: 'New Walkaround Check' }} />
+            <Stack.Screen name="VehicleSelect" component={VehicleSelectScreen} options={{ title: 'Vehicle & Trailer' }} />
+            <Stack.Screen name="DefectCheck" component={DefectCheckScreen} options={{ title: 'Walkaround Check' }} />
+            <Stack.Screen name="Report" component={ReportScreen} options={{ title: 'Check Report' }} />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+// ============== LOGIN SCREEN ==============
+function LoginScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      Alert.alert('Login Failed', err.message);
+    }
+  };
+
+  return (
+    <SafeAreaView style={loginStyles.container}>
+      <Text style={loginStyles.title}>LSD Solutions</Text>
+      <Text style={loginStyles.tagline}>For all your long haul, shunting & delivery needs</Text>
+      <TextInput style={loginStyles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
+      <TextInput style={loginStyles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      <TouchableOpacity style={loginStyles.button} onPress={handleLogin}>
+        <Text style={loginStyles.buttonText}>Sign In</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
+
+const loginStyles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#0A337D', marginBottom: 5 },
+  tagline: { fontSize: 14, color: '#666', marginBottom: 40, textAlign: 'center' },
+  input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 15 },
+  button: { backgroundColor: '#0A337D', padding: 15, borderRadius: 8, width: '100%', alignItems: 'center' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' }
 });
 
-export default App;
+// ============== SELECT TYPE SCREEN ==============
+function SelectTypeScreen({ navigation }) {
+  return (
+    <SafeAreaView style={selectStyles.container}>
+      <Text style={selectStyles.heading}>Select Check Type</Text>
+      <TouchableOpacity style={selectStyles.card} onPress={() => navigation.navigate('VehicleSelect', { mode: 'vehicle' })}>
+        <Text style={selectStyles.cardTitle}>🚛 Vehicle Only</Text>
+        <Text style={selectStyles.cardDesc}>Check truck / vehicle unit only</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={selectStyles.card} onPress={() => navigation.navigate('VehicleSelect', { mode: 'both' })}>
+        <Text style={selectStyles.cardTitle}>🚛 + 📦 Vehicle & Trailer</Text>
+        <Text style={selectStyles.cardDesc}>Check both unit and trailer</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={selectStyles.card} onPress={() => navigation.navigate('VehicleSelect', { mode: 'trailer' })}>
+        <Text style={selectStyles.cardTitle}>📦 Trailer Only</Text>
+        <Text style={selectStyles.cardDesc}>Check trailer only</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={{ marginTop: 30 }} onPress={() => signOut(auth)}>
+        <Text style={{ color: 'red' }}>Sign Out</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
+
+const selectStyles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  heading: { fontSize: 22, fontWeight: 'bold', marginBottom: 25, textAlign: 'center' },
+  card: { borderWidth: 2, borderColor: '#0A337D', borderRadius: 12, padding: 20, marginBottom: 15 },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#0A337D', marginBottom: 5 },
+  cardDesc: { fontSize: 14, color: '#666' }
+});
+
+// ============== VEHICLE SELECT SCREEN ==============
+function VehicleSelectScreen({ route, navigation }) {
+  const { mode } = route.params;
+  const [vehReg, setVehReg] = useState('');
+  const [trailerReg, setTrailerReg] = useState('');
+  const [odometer, setOdometer] = useState('');
+
+  return (
+    <SafeAreaView style={vehStyles.container}>
+      <ScrollView>
+        {mode !== 'trailer' && (
+          <>
+            <Text style={vehStyles.label}>Vehicle Registration</Text>
+            <TextInput style={vehStyles.input} placeholder="e.g. AB12 CDE" value={vehReg} onChangeText={setVehReg} autoCapitalize="characters" />
+          </>
+        )}
+        {mode !== 'vehicle' && (
+          <>
+            <Text style={vehStyles.label}>Trailer Number / Reg</Text>
+            <TextInput style={vehStyles.input} placeholder="e.g. T12345" value={trailerReg} onChangeText={setTrailerReg} autoCapitalize="characters" />
+          </>
+        )}
+        <Text style={vehStyles.label}>Odometer Reading (miles)</Text>
+        <TextInput style={vehStyles.input} placeholder="Current mileage" value={odometer} onChangeText={setOdometer} keyboardType="numeric" />
+        <TouchableOpacity style={vehStyles.button} onPress={() => navigation.navigate('DefectCheck', { mode, vehReg, trailerReg, odometer })}>
+          <Text style={vehStyles.buttonText}>Start Walkaround Check →</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const vehStyles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  label: { fontSize: 16, fontWeight: '600', marginTop: 15, marginBottom: 5 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 10 },
+  button: { backgroundColor: '#0A337D', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 20 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' }
+});
+
+// ============== DEFECT CHECK SCREEN ==============
+function DefectCheckScreen({ route, navigation }) {
+  const { mode, vehReg, trailerReg, odometer } = route.params;
+  const startTime = new Date();
+  const [checks, setChecks] = useState({});
+  const [otherDefects, setOtherDefects] = useState('');
+  const [photoUri, setPhotoUri] = useState(null);
+
+  // DVSA Checklists
+  const vehicleChecks = [
+    { id: 'lights', label: 'Lights & Indicators — working, clean, correct colour' },
+    { id: 'tyres', label: 'Tyres — condition, pressure, tread depth (min 1.6mm), no cuts/bulges' },
+    { id: 'brakes', label: 'Brakes — service, parking, air pressure, no leaks' },
+    { id: 'steering', label: 'Steering — free play, no fluid leaks, secure' },
+    { id: 'mirrors', label: 'Mirrors — all present, clean, secure' },
+    { id: 'windscreen', label: 'Windscreen — chips/cracks, wipers/washers working' },
+    { id: 'exhaust', label: 'Exhaust — no leaks, secure, no excessive smoke' },
+    { id: 'fuel', label: 'Fuel system — no leaks, caps fitted, hoses secure' },
+    { id: 'coupling', label: 'Coupling — fifth wheel, jaws, air/electrical connections secure' },
+    { id: 'body', label: 'Body & Load — no damage, load secure, doors locked' },
+    { id: 'docs', label: 'Documents — Operator Licence, Insurance, Discs in place' },
+  ];
+
+  const trailerChecks = [
+    { id: 't_lights', label: 'Trailer Lights — all working, connections secure' },
+    { id: 't_tyres', label: 'Trailer Tyres — condition, pressure, tread depth, no damage' },
+    { id: 't_brakes', label: 'Trailer Brakes — service, parking, auto-reverse working' },
+    { id: 't_suspension', label: 'Suspension — springs, air bags, fixings secure' },
+    { id: 't_coupling', label: 'Coupling — kingpin, landing gear, legs operate correctly' },
+    { id: 't_body', label: 'Body/Doors — no damage, seals good, doors secure/locked' },
+    { id: 't_plates', label: 'Plates/Markings — registration, gross weight, dimensions correct' },
+  ];
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, quality: 0.8 });
+    if (!result.canceled) setPhotoUri(result.assets[0].uri);
+  };
+
+  const toggleCheck = (id) => {
+    setChecks(prev => ({ ...prev, [id]: prev[id] === 'ok' ? 'fault' : prev[id] === 'fault' ? null : 'ok' }));
+  };
+
+  const getChecklist = () => {
+    if (mode === 'vehicle') return vehicleChecks;
+    if (mode === 'trailer') return trailerChecks;
+    return [...vehicleChecks, ...trailerChecks];
+  };
+
+  const completeCheck = () => {
+    const finishTime = new Date();
+    const durationMs = finishTime - startTime;
+    const durationMins = Math.round(durationMs / 60000) || 1;
+
+    navigation.navigate('Report', {
+      mode, vehReg, trailerReg, odometer,
+      startTime, finishTime, durationMins,
+      checks, otherDefects, photoUri
+    });
+  };
+
+  const list = getChecklist();
+
+  return (
+    <SafeAreaView style={defectStyles.container}>
+      <Text style={defectStyles.timer}>Started: {startTime.toLocaleTimeString()}</Text>
+      <ScrollView>
+        {list.map(item => (
+          <View key={item.id} style={defectStyles.itemRow}>
+            <Text style={defectStyles.label}>{item.label}</Text>
+            <View style={defectStyles.btnRow}>
+              <TouchableOpacity
+                style={[defectStyles.btn, checks[item.id] === 'ok' && defectStyles.btnOk]}
+                onPress={() => toggleCheck(item.id)}
+              >
+                <Text style={checks[item.id] === 'ok' ? defectStyles.btnTextActive : defectStyles.btnText}>✓</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[defectStyles.btn, checks[item.id] === 'fault' && defectStyles.btnFault]}
+                onPress={() => toggleCheck(item.id)}
+              >
+                <Text style={checks[item.id] === 'fault' ? defectStyles.btnTextActive : defectStyles.btnText}>✗</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+        <Text style={defectStyles.label}>Other Defects / Notes</Text>
+        <TextInput
+          style={defectStyles.notes}
+          placeholder="Describe any other issues..."
+          value={otherDefects}
+          onChangeText={setOtherDefects}
+          multiline numberOfLines={4}
+        />
+        <TouchableOpacity style={defectStyles.photoBtn} onPress={pickImage}>
+          <Text>{photoUri ? '📷 Photo Attached ✓' : '📷 Add Photo of Defect'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={defectStyles.completeBtn} onPress={completeCheck}>
+          <Text style={defectStyles.completeText}>Complete Walkaround Check</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const defectStyles = StyleSheet.create({
+  container: { flex: 1, padding: 15, backgroundColor: '#fff' },
+  timer: { fontSize: 14, color: '#0A337D', fontWeight: '600', marginBottom: 10, textAlign: 'center' },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  label: { flex: 1, fontSize: 14, paddingRight: 10 },
+  btnRow: { flexDirection: 'row', gap: 8 },
+  btn: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#ccc', justifyContent: 'center', alignItems: 'center' },
+  btnOk: { backgroundColor: '#2ecc71', borderColor: '#2ecc71' },
+  btnFault: { backgroundColor: '#e74c3c', borderColor: '#e74c3c' },
+  btnText: { color: '#999', fontWeight: 'bold' },
+  btnTextActive: { color: '#fff', fontWeight: 'bold' },
+  notes: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, height: 100, textAlignVertical: 'top', marginBottom: 15 },
+  photoBtn: { padding: 12, borderWidth: 1, borderColor: '#0A337D', borderRadius: 8, alignItems: 'center', marginBottom: 15 },
+  completeBtn: { backgroundColor: '#0A337D', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10, marginBottom: 30 },
+  completeText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
+});
+
+// ============== REPORT SCREEN ==============
+function ReportScreen({ route }) {
+  const {
+    mode, vehReg, trailerReg, odometer,
+    startTime, finishTime, durationMins,
+    checks, otherDefects, photoUri
+  } = route.params;
+
+  const hasFaults = Object.values(checks).includes('fault') || otherDefects.trim() !== '';
+
+  return (
+    <SafeAreaView style={reportStyles.container}>
+      <ScrollView>
+        <Text style={reportStyles.title}>Walkaround Check Report</Text>
+        <View style={reportStyles.section}>
+          <Text style={reportStyles.label}>Check Type:</Text>
+          <Text style={reportStyles.value}>{mode === 'vehicle' ? 'Vehicle Only' : mode === 'trailer' ? 'Trailer Only' : 'Vehicle & Trailer'}</Text>
+        </View>
+        {mode !== 'trailer' && (
+          <View style={reportStyles.section}><Text style={reportStyles.label}>Vehicle Reg:</Text><Text style={reportStyles.value}>{vehReg || 'Not provided'}</Text></View>
+        )}
+        {mode !== 'vehicle' && (
+          <View style={reportStyles.section}><Text style={reportStyles.label}>Trailer No:</Text><Text style={reportStyles.value}>{trailerReg || 'Not provided'}</Text></View>
+        )}
+        <View style={reportStyles.section}><Text style={reportStyles.label}>Odometer:</Text><Text style={reportStyles.value}>{odometer} miles</Text></View>
+        <View style={reportStyles.section}><Text style={reportStyles.label}>Date:</Text><Text style={reportStyles.value}>{new Date(startTime).toLocaleDateString()}</Text></View>
+        <View style={reportStyles.section}><Text style={reportStyles.label}>Start Time:</Text><Text style={reportStyles.value}>{new Date(startTime).toLocaleTimeString()}</Text></View>
+        <View style={reportStyles.section}><Text style={reportStyles.label}>Finish Time:</Text><Text style={reportStyles.value}>{new Date(finishTime).toLocaleTimeString()}</Text></View>
+        <View style={reportStyles.section}><Text style={reportStyles.label}>Duration:</Text><Text style={reportStyles.value}>{durationMins} minute{durationMins !== 1 ? 's' : ''}</Text></View>
+        <View style={[reportStyles.statusBox, hasFaults ? reportStyles.hasFaults : reportStyles.allClear]}>
+          <Text style={reportStyles.statusText}>{hasFaults ? '⚠️ DEFECTS REPORTED' : '✅ ALL ITEMS OK'}</Text>
+        </View>
+        {Object.entries(checks).map(([id, status]) => status === 'fault' && (
+          <View key={id} style={reportStyles.faultItem}>
+            <Text style={{ color: '#e74c3c' }}>✗ Fault Recorded</Text>
+          </View>
+        ))}
+        {otherDefects ? (
+          <View style={reportStyles.section}>
+            <Text style={reportStyles.label}>Other Defects:</Text>
+            <Text style={reportStyles.value}>{otherDefects}</Text>
+          </View>
+        ) : null}
+        {photoUri ? <Text style={{ textAlign: 'center', marginTop: 10 }}>📷 Photo attached to report</Text> : null}
+        <Text style={reportStyles.footer}>LSD Solutions — For all your long haul, shunting & delivery needs</Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const reportStyles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 25, color: '#0A337D' },
+  section: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  label: { fontWeight: '600', fontSize: 14 },
+  value: { fontSize: 14, color: '#333' },
+  statusBox: { padding: 15, borderRadius: 8, marginVertical: 20, alignItems: 'center' },
+  allClear: { backgroundColor: '#d4edda' },
+  hasFaults: { backgroundColor: '#f8d7da' },
+  statusText: { fontSize: 16, fontWeight: 'bold' },
+  faultItem: { padding: 8, backgroundColor: '#fdf2f2', borderRadius: 4, marginBottom: 5 },
+  footer: { textAlign: 'center', marginTop: 30, fontSize: 12, color: '#888' }
+});
+
+// ============== GLOBAL STYLES ==============
+const styles = StyleSheet.create({
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  loadingText: { fontSize: 18, color: '#0A337D' }
+});
