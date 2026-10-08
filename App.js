@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { auth, db, storage, isDemoMode } from './firebase';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   ScrollView, Alert, Image, Platform
@@ -133,6 +133,9 @@ function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState('driver');
 
+  // Import the demo flag at top of file too:
+  // import { auth, db, storage, isDemoMode } from './firebase';
+
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
       return Alert.alert('Error', 'Passwords do not match');
@@ -140,6 +143,17 @@ function SignUpScreen({ navigation }) {
     if (password.length < 6) {
       return Alert.alert('Error', 'Password must be at least 6 characters');
     }
+
+    // 👇 This is the fix — tells you what's happening
+    if (isDemoMode) {
+      Alert.alert(
+        '🔧 Demo Mode',
+        'Account creation is for demonstration only.\n\nTo enable real accounts:\n1. Go to Firebase Console\n2. Create project & copy your config\n3. Replace the PLACEHOLDER values in firebase.js',
+        [{ text: 'Got it', style: 'default' }]
+      );
+      return;
+    }
+
     try {
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, 'users', userCred.user.uid), {
@@ -156,6 +170,82 @@ function SignUpScreen({ navigation }) {
       Alert.alert('Sign Up Failed', err.message);
     }
   };
+
+  return (
+    <SafeAreaView style={signupStyles.container}>
+      <ScrollView>
+        <Text style={signupStyles.title}>Create Account</Text>
+        <Text style={signupStyles.tagline}>Join LSD Solutions</Text>
+        
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Your Name" 
+          value={name} 
+          onChangeText={setName} 
+        />
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Email Address" 
+          value={email} 
+          onChangeText={setEmail} 
+          autoCapitalize="none" 
+          keyboardType="email-address"
+        />
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Password" 
+          value={password} 
+          onChangeText={setPassword} 
+          secureTextEntry 
+        />
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Confirm Password" 
+          value={confirmPassword} 
+          onChangeText={setConfirmPassword} 
+          secureTextEntry 
+        />
+        
+        <Text style={signupStyles.label}>Account Type</Text>
+        <View style={signupStyles.typeRow}>
+          <TouchableOpacity 
+            style={[
+              signupStyles.typeBtn,
+              accountType === 'driver' && signupStyles.typeActive
+            ]}
+            onPress={() => setAccountType('driver')}
+          >
+            <Text style={accountType === 'driver' ? signupStyles.typeTextActive : signupStyles.typeText}>
+              🚛 Driver
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[
+              signupStyles.typeBtn,
+              accountType === 'company' && signupStyles.typeActive
+            ]}
+            onPress={() => setAccountType('company')}
+          >
+            <Text style={accountType === 'company' ? signupStyles.typeTextActive : signupStyles.typeText}>
+              🏢 Company
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={signupStyles.button} onPress={handleSignUp}>
+          <Text style={signupStyles.buttonText}>Create Account</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={signupStyles.backLink} 
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={signupStyles.backText}>← Back to Sign In</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
   return (
     <SafeAreaView style={signupStyles.container}>
