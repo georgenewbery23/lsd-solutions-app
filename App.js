@@ -80,17 +80,19 @@ const AppProvider = ({children}) => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists()) setUserProfile(snap.data());
-      } else setUserProfile(null);
+ useEffect(() => {
+  let unsubscribe = () => {};
+  if (auth && onAuthStateChanged) {
+    unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
     });
-    return unsub;
-  }, []);
+  } else {
+    // No Firebase — skip auth, show login screen
+    setLoading(false);
+  }
+  return unsubscribe;
+}, []);
 
   const registerCompany = async (email, password, companyData) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
