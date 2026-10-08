@@ -10,9 +10,7 @@
     "web": {
       "bundler": "webpack"
     },
-    "icon": "./assets/lsd-logo.png",
     "splash": {
-      "image": "./assets/lsd-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#0A337D"
     },
@@ -22,20 +20,6 @@
     },
     "android": {
       "package": "com.lsdsolutions.hgv"
-    },
-    "plugins": [
-      [
-        "expo-document-picker",
-        {
-          "photosPermission": "Allow access to upload defect photos"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow access to upload defect photos"
-        }
-      ]
-    ]
+    }
   }
 }
