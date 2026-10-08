@@ -22,7 +22,6 @@ try {
   console.log("✅ Firebase initialized");
 } catch (err) {
   console.warn("⚠️ Firebase not configured yet — running in demo mode:", err.message);
-  // Create mock objects so the app doesn't crash
   auth = {};
   db = {};
   storage = {};
