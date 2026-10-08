@@ -1,22 +1,15 @@
-{
-  "name": "lsd-solutions-app",
-  "version": "1.0.0",
-  "main": "App.js",
-  "scripts": {
-    "start": "expo start",
-    "web": "expo start --web",
-    "build:web": "npx expo export:web"
-  },
   "dependencies": {
-    "expo": "~50.0.0",
-    "expo-status-bar": "~1.11.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-native": "0.73.4",
-    "react-native-web": "~0.19.6",
-    "react-native-safe-area-context": "4.8.2"
+    "expo": "~52.0.0",
+    "expo-document-picker": "~13.0.0",
+    "expo-image-picker": "~16.0.0",
+    "@react-navigation/native": "^6.1.18",
+    "@react-navigation/stack": "^6.4.1",
+    "react-native-screens": "~4.4.0",
+    "react-native-safe-area-context": "5.0.0",
+    "@react-native-async-storage/async-storage": "2.1.0",
+    "react-native-calendars": "^1.1307.0",
+    "firebase": "^11.5.0",
+    "react": "18.3.1",
+    "react-native": "0.76.7",
+    "react-native-web": "~0.19.13"
   },
-  "devDependencies": {
-    "@expo/webpack-config": "~19.0.0"
-  }
-}
