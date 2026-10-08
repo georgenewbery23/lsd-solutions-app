@@ -1,12 +1,41 @@
 {
   "expo": {
     "name": "LSD Solutions — HGV Walkaround",
-    "slug": "lsd-solutions-app",
+    "slug": "lsd-solutions-hgv",
     "version": "1.0.0",
+    "description": "For all your long haul, shunting & delivery needs",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"],
     "web": {
       "bundler": "webpack"
-    }
+    },
+    "icon": "./assets/lsd-logo.png",
+    "splash": {
+      "image": "./assets/lsd-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A337D"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.lsdsolutions.hgv"
+    },
+    "plugins": [
+      [
+        "expo-document-picker",
+        {
+          "photosPermission": "Allow access to upload defect photos"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to upload defect photos"
+        }
+      ]
+    ]
   }
 }
