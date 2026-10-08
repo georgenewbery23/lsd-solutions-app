@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// 👇 You'll replace these with your real Firebase credentials later
 const firebaseConfig = {
   apiKey: "PLACEHOLDER",
   authDomain: "PLACEHOLDER.firebaseapp.com",
@@ -13,6 +14,7 @@ const firebaseConfig = {
 };
 
 let app, auth, db, storage;
+let isDemoMode = false;
 
 try {
   app = initializeApp(firebaseConfig);
@@ -20,12 +22,19 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   console.log("✅ Firebase initialized");
+  
+  // Detect if still using placeholders
+  if (firebaseConfig.apiKey === "PLACEHOLDER") {
+    isDemoMode = true;
+    console.log("⚠️ Running in DEMO MODE — connect Firebase for real accounts");
+  }
 } catch (err) {
-  console.warn("⚠️ Firebase not configured yet — running in demo mode:", err.message);
+  isDemoMode = true;
+  console.warn("⚠️ Firebase not configured — DEMO MODE active:", err.message);
   auth = {};
   db = {};
   storage = {};
 }
 
-export { auth, db, storage };
+export { auth, db, storage, isDemoMode };
 export default app;
