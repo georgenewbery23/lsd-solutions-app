@@ -6,15 +6,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Wrap imports in try/catch ---
-let auth, db, storage;
-try {
-  const fb = require('./firebase');
-  auth = fb.auth;
-  db = fb.db;
-  storage = fb.storage;
-} catch (e) {
-  console.warn("Firebase import failed:", e);
-  auth = {}; db = {}; storage = {};
+import { 
+  getAuth, 
+  onAuthStateChanged,  // ⬅️ ADD THIS LINE
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut 
+} from 'firebase/auth';
 }
 
 let initializeAppCheck, getAppCheck;
