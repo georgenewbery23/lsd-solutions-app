@@ -1,3 +1,14 @@
+{
+  "name": "lsd-solutions-hgv",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build:web": "npx expo export:web"
+  },
   "dependencies": {
     "expo": "~52.0.0",
     "expo-document-picker": "~13.0.0",
@@ -13,3 +24,11 @@
     "react-native": "0.76.7",
     "react-native-web": "~0.19.13"
   },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@expo/webpack-config": "~19.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0 <22.0.0"
+  }
+}
