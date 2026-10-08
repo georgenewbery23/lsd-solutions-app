@@ -4,17 +4,28 @@ import {
   ScrollView, Alert, Image, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth, db, storage } from './firebase';
-import {
-  createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged
-} from 'firebase/auth';
-import {
-  doc, setDoc, getDoc, updateDoc, collection, query, where,
-  getDocs, addDoc, serverTimestamp
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import * as ImagePicker from 'expo-image-picker';
+
+// --- Wrap imports in try/catch ---
+let auth, db, storage;
+try {
+  const fb = require('./firebase');
+  auth = fb.auth;
+  db = fb.db;
+  storage = fb.storage;
+} catch (e) {
+  console.warn("Firebase import failed:", e);
+  auth = {}; db = {}; storage = {};
+}
+
+let initializeAppCheck, getAppCheck;
+try {
+  const fbAppCheck = require('firebase/app-check');
+  initializeAppCheck = fbAppCheck.initializeAppCheck;
+  getAppCheck = fbAppCheck.getAppCheck;
+} catch {
+  initializeAppCheck = null;
+  getAppCheck = null;
+}
 
 // ─── THEME ─────────────────────────────────────────────
 const COLORS = {
