@@ -4,6 +4,7 @@
     "slug": "lsd-solutions-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light"
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"]
   }
 }
