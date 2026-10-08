@@ -18,8 +18,5 @@
   },
   "devDependencies": {
     "@expo/webpack-config": "~19.0.0"
-  },
-  "engines": {
-    "node": ">=20.0.0 <22.0.0"
   }
 }
