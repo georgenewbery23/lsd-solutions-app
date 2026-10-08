@@ -31,6 +31,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set browser tab title
+    if (Platform.OS === 'web') {
+      document.title = "LSD Solutions — HGV Walkaround";
+    }
+  }, []);
+
+  useEffect(() => {
     let unsubscribe = () => {};
     if (auth && onAuthStateChanged) {
       unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -63,7 +70,10 @@ export default function App() {
             <Stack.Screen name="Report" component={ReportScreen} options={{ title: 'Check Report' }} />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} options={{ title: 'Create Account' }} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
@@ -87,11 +97,138 @@ function LoginScreen({ navigation }) {
     <SafeAreaView style={loginStyles.container}>
       <Text style={loginStyles.title}>LSD Solutions</Text>
       <Text style={loginStyles.tagline}>For all your long haul, shunting & delivery needs</Text>
-      <TextInput style={loginStyles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
-      <TextInput style={loginStyles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput 
+        style={loginStyles.input} 
+        placeholder="Email" 
+        value={email} 
+        onChangeText={setEmail} 
+        autoCapitalize="none" 
+        keyboardType="email-address"
+      />
+      <TextInput 
+        style={loginStyles.input} 
+        placeholder="Password" 
+        value={password} 
+        onChangeText={setPassword} 
+        secureTextEntry 
+      />
       <TouchableOpacity style={loginStyles.button} onPress={handleLogin}>
         <Text style={loginStyles.buttonText}>Sign In</Text>
       </TouchableOpacity>
+      <TouchableOpacity 
+        style={loginStyles.secondaryButton} 
+        onPress={() => navigation.navigate('SignUp')}
+      >
+        <Text style={loginStyles.secondaryText}>Don't have an account? Sign Up →</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
+
+// ============== SIGN UP SCREEN ==============
+function SignUpScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [accountType, setAccountType] = useState('driver');
+
+  const handleSignUp = async () => {
+    if (password !== confirmPassword) {
+      return Alert.alert('Error', 'Passwords do not match');
+    }
+    if (password.length < 6) {
+      return Alert.alert('Error', 'Password must be at least 6 characters');
+    }
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, 'users', userCred.user.uid), {
+        uid: userCred.user.uid,
+        email: email,
+        name: name,
+        role: accountType,
+        createdAt: serverTimestamp()
+      });
+      Alert.alert('✅ Account Created', 'Welcome to LSD Solutions!', [
+        { text: 'OK', onPress: () => navigation.replace('SelectType') }
+      ]);
+    } catch (err) {
+      Alert.alert('Sign Up Failed', err.message);
+    }
+  };
+
+  return (
+    <SafeAreaView style={signupStyles.container}>
+      <ScrollView>
+        <Text style={signupStyles.title}>Create Account</Text>
+        <Text style={signupStyles.tagline}>Join LSD Solutions</Text>
+        
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Your Name" 
+          value={name} 
+          onChangeText={setName} 
+        />
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Email Address" 
+          value={email} 
+          onChangeText={setEmail} 
+          autoCapitalize="none" 
+          keyboardType="email-address"
+        />
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Password" 
+          value={password} 
+          onChangeText={setPassword} 
+          secureTextEntry 
+        />
+        <TextInput 
+          style={signupStyles.input} 
+          placeholder="Confirm Password" 
+          value={confirmPassword} 
+          onChangeText={setConfirmPassword} 
+          secureTextEntry 
+        />
+        
+        <Text style={signupStyles.label}>Account Type</Text>
+        <View style={signupStyles.typeRow}>
+          <TouchableOpacity 
+            style={[
+              signupStyles.typeBtn,
+              accountType === 'driver' && signupStyles.typeActive
+            ]}
+            onPress={() => setAccountType('driver')}
+          >
+            <Text style={accountType === 'driver' ? signupStyles.typeTextActive : signupStyles.typeText}>
+              🚛 Driver
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[
+              signupStyles.typeBtn,
+              accountType === 'company' && signupStyles.typeActive
+            ]}
+            onPress={() => setAccountType('company')}
+          >
+            <Text style={accountType === 'company' ? signupStyles.typeTextActive : signupStyles.typeText}>
+              🏢 Company
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={signupStyles.button} onPress={handleSignUp}>
+          <Text style={signupStyles.buttonText}>Create Account</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={signupStyles.backLink} 
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={signupStyles.backText}>← Back to Sign In</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -101,8 +238,27 @@ const loginStyles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: 'bold', color: '#0A337D', marginBottom: 5 },
   tagline: { fontSize: 14, color: '#666', marginBottom: 40, textAlign: 'center' },
   input: { width: '100%', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 15 },
-  button: { backgroundColor: '#0A337D', padding: 15, borderRadius: 8, width: '100%', alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' }
+  button: { backgroundColor: '#0A337D', padding: 15, borderRadius: 8, width: '100%', alignItems: 'center', marginTop: 10 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  secondaryButton: { marginTop: 20, padding: 10 },
+  secondaryText: { color: '#0A337D', fontSize: 15 }
+});
+
+const signupStyles = StyleSheet.create({
+  container: { flex: 1, padding: 25, backgroundColor: '#fff' },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#0A337D', textAlign: 'center', marginBottom: 5 },
+  tagline: { fontSize: 14, color: '#666', marginBottom: 30, textAlign: 'center' },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 14, marginBottom: 15, fontSize: 15 },
+  label: { fontSize: 16, fontWeight: '600', marginTop: 10, marginBottom: 10 },
+  typeRow: { flexDirection: 'row', gap: 10, marginBottom: 25 },
+  typeBtn: { flex: 1, padding: 15, borderRadius: 8, borderWidth: 2, borderColor: '#ccc', alignItems: 'center' },
+  typeActive: { borderColor: '#0A337D', backgroundColor: '#E8F0FE' },
+  typeText: { fontSize: 15, color: '#666' },
+  typeTextActive: { fontSize: 15, color: '#0A337D', fontWeight: '600' },
+  button: { backgroundColor: '#0A337D', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 10 },
+  buttonText: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
+  backLink: { marginTop: 25, alignItems: 'center' },
+  backText: { color: '#0A337D', fontSize: 15 }
 });
 
 // ============== SELECT TYPE SCREEN ==============
@@ -123,7 +279,7 @@ function SelectTypeScreen({ navigation }) {
         <Text style={selectStyles.cardDesc}>Check trailer only</Text>
       </TouchableOpacity>
       <TouchableOpacity style={{ marginTop: 30 }} onPress={() => signOut(auth)}>
-        <Text style={{ color: 'red' }}>Sign Out</Text>
+        <Text style={{ color: 'red', textAlign: 'center' }}>Sign Out</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
