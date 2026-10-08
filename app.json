@@ -7,7 +7,7 @@
     "userInterfaceStyle": "light",
     "platforms": ["ios", "android", "web"],
     "web": {
-      "bundler": "metro"
+      "bundler": "webpack"
     }
   }
 }
