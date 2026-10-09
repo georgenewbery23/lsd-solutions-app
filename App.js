@@ -5,8 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// ✅ FIXED: Firebase imports — aliased to avoid conflicts
-// ✅ NEW — matches what firebase.js now exports
+// ✅ Correct Firebase imports
 import { auth, db, storage } from './firebase';
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -18,6 +17,8 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
 
 // ─── THEME ─────────────────────────────────────────────
 const COLORS = {
@@ -75,25 +76,36 @@ const AppProvider = ({children}) => {
   const [savedCompanies, setSavedCompanies] = useState([]);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(Auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
       setCurrentUser(user);
       if (user) {
-        const snap = await getDoc(doc(Db, 'users', user.uid));
-        if (snap.exists()) setUserProfile(snap.data());
-      } else setUserProfile(null);
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            setUserProfile(snap.data());
+          }
+        } catch (e) {
+          console.log('Could not load user profile:', e);
+        }
+      } else {
+        setUserProfile(null);
+      }
       setLoading(false);
     });
-    return unsub;
+    return () => unsubscribe();
   }, []);
 
   const registerCompany = async (email, password, companyData) => {
-    const cred = await createUserWithEmailAndPassword(Auth, email, password);
-    await setDoc(doc(Db, 'users', cred.user.uid), {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'users', cred.user.uid), {
       uid: cred.user.uid, email, role: 'company',
       ...companyData,
       subscription: {
-        status: 'trial', trialEnd: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
-        ratePerVehicle: 2.00, activeVehicles: []
+        status: 'trial', 
+        trialEnd: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+        ratePerVehicle: 2.00, 
+        activeVehicles: []
       },
       createdAt: serverTimestamp()
     });
@@ -101,8 +113,8 @@ const AppProvider = ({children}) => {
   };
 
   const registerDriver = async (email, password, driverData) => {
-    const cred = await createUserWithEmailAndPassword(Auth, email, password);
-    await setDoc(doc(Db, 'users', cred.user.uid), {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'users', cred.user.uid), {
       uid: cred.user.uid, email, role: 'driver',
       ...driverData, savedCompanies: [],
       createdAt: serverTimestamp()
@@ -111,31 +123,31 @@ const AppProvider = ({children}) => {
   };
 
   const login = async (email, password) => {
-    await signInWithEmailAndPassword(Auth, email, password);
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
-    await signOut(Auth);
+    await signOut(auth);
     setUserProfile(null);
   };
 
   const addVehicle = async (reg, trailerNumber=null) => {
-    if (!userProfile || userProfile.role !== 'company') return;
+    if (!userProfile || userProfile.role !== 'company' || !currentUser) return;
     const vehicles = [...(userProfile.subscription?.activeVehicles||[])];
     vehicles.push({reg, trailerNumber, addedAt: new Date().toISOString(), active:true});
-    await updateDoc(doc(Db, 'users', currentUser.uid), {
+    await updateDoc(doc(db, 'users', currentUser.uid), {
       'subscription.activeVehicles': vehicles
     });
     setUserProfile(p => ({...p, subscription:{...p.subscription, activeVehicles:vehicles}}));
   };
 
   const submitCheck = async (checkData) => {
-    await addDoc(collection(Db, 'checks'), {
+    await addDoc(collection(db, 'checks'), {
       ...checkData, driverId: currentUser.uid,
       companyId: checkData.companyId, submittedAt: serverTimestamp()
     });
     if (checkData.hasDefect) {
-      await addDoc(collection(Db, 'notifications'), {
+      await addDoc(collection(db, 'notifications'), {
         companyId: checkData.companyId, type: 'defect',
         message: `Defect reported on ${checkData.vehicleReg}`,
         checkData, read: false, createdAt: serverTimestamp()
@@ -145,7 +157,7 @@ const AppProvider = ({children}) => {
 
   const saveCompanyToProfile = async (companyId) => {
     const saved = [...(userProfile.savedCompanies||[]), companyId];
-    await updateDoc(doc(Db, 'users', currentUser.uid), {savedCompanies:saved});
+    await updateDoc(doc(db, 'users', currentUser.uid), {savedCompanies:saved});
     setUserProfile(p => ({...p, savedCompanies:saved}));
   };
 
@@ -164,7 +176,9 @@ const AppProvider = ({children}) => {
 
 // ─── SCREENS ─────────────────────────────────────────────
 const LoadingScreen = () => (
-  <View style={styles.centered}><Text style={styles.loadingText}>Loading LSD Solutions...</Text></View>
+  <View style={styles.centered}>
+    <Text style={styles.loadingText}>Loading LSD Solutions...</Text>
+  </View>
 );
 
 const HomeScreen = ({navigation}) => {
@@ -180,7 +194,7 @@ const HomeScreen = ({navigation}) => {
     if (!userProfile) return;
     if (userProfile.role === 'company') navigation.replace('CompanyPortal');
     if (userProfile.role === 'driver') navigation.replace('DriverPortal');
-  }, [userProfile]);
+  }, [userProfile, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -234,9 +248,16 @@ const CompanyRegisterScreen = ({navigation}) => {
     <ScrollView style={styles.formScroll}>
       <Text style={styles.heading}>Company Registration</Text>
       {['email','password','name','tradingAs','address','operatorLicence'].map(f => (
-        <TextInput key={f} style={styles.input} placeholder={f.replace(/([A-Z])/g,' $1').trim().replace(/^./,t=>t.toUpperCase())}
-          value={form[f]} onChangeText={v=>setForm(p=>({...p,[f]:v}))}
-          secureTextEntry={f==='password'} autoCapitalize='none' keyboardType={f==='email'?'email-address':'default'} />
+        <TextInput 
+          key={f} 
+          style={styles.input} 
+          placeholder={f.replace(/([A-Z])/g,' $1').trim().replace(/^./,t=>t.toUpperCase())}
+          value={form[f]} 
+          onChangeText={v=>setForm(p=>({...p,[f]:v}))}
+          secureTextEntry={f==='password'} 
+          autoCapitalize='none' 
+          keyboardType={f==='email'?'email-address':'default'} 
+        />
       ))}
       <TouchableOpacity style={styles.btnPrimary} onPress={handle}>
         <Text style={styles.btnText}>Register — 30 Day Free Trial</Text>
@@ -258,9 +279,16 @@ const DriverRegisterScreen = ({navigation}) => {
     <ScrollView style={styles.formScroll}>
       <Text style={styles.heading}>Driver Registration</Text>
       {['name','email','password'].map(f => (
-        <TextInput key={f} style={styles.input} placeholder={f.charAt(0).toUpperCase()+f.slice(1)}
-          value={form[f]} onChangeText={v=>setForm(p=>({...p,[f]:v}))}
-          secureTextEntry={f==='password'} autoCapitalize='none' keyboardType={f==='email'?'email-address':'default'} />
+        <TextInput 
+          key={f} 
+          style={styles.input} 
+          placeholder={f.charAt(0).toUpperCase()+f.slice(1)}
+          value={form[f]} 
+          onChangeText={v=>setForm(p=>({...p,[f]:v}))}
+          secureTextEntry={f==='password'} 
+          autoCapitalize='none' 
+          keyboardType={f==='email'?'email-address':'default'} 
+        />
       ))}
       <TouchableOpacity style={styles.btnPrimary} onPress={handle}>
         <Text style={styles.btnText}>Register</Text>
@@ -310,7 +338,9 @@ const CompanyPortalScreen = ({navigation}) => {
         </View>
 
         <Text style={styles.subHeading}>Fleet List</Text>
-        {vehicles.map((v,i)=>(
+        {vehicles.length === 0 ? (
+          <Text style={styles.text}>No vehicles added yet.</Text>
+        ) : vehicles.map((v,i)=>(
           <View key={i} style={styles.itemRow}>
             <Text style={styles.itemText}>{v.reg} {v.trailerNumber&&`/ ${v.trailerNumber}`}</Text>
             <Text style={styles.itemStatus}>Active</Text>
@@ -405,11 +435,15 @@ const CheckListScreen = ({route, navigation}) => {
       setElapsed(Math.floor((Date.now()-startTime?.getTime())/1000));
     }, 1000);
     return ()=>clearInterval(timer);
-  },[]);
+  },[startTime]);
 
   const pickPhoto = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({mediaTypes:['image']});
-    if (!res.canceled) setDefectPhoto(res.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({mediaTypes:['image']});
+      if (!result.canceled) setDefectPhoto(result.assets[0].uri);
+    } catch (e) {
+      Alert.alert('Note', 'Photo upload not available on web demo');
+    }
   };
 
   const submit = async () => {
@@ -428,7 +462,7 @@ const CheckListScreen = ({route, navigation}) => {
 
     Alert.alert(
       '✅ Check Submitted', 
-      `Date: ${new Date(startTime).toLocaleDateString()}\nDuration: ${Math.floor(duration/60)}m ${duration%60}s\n\nThank you for completing your walkaround check.`,
+      `Date: ${new Date(startTime).toLocaleDateString()}\nDuration: ${Math.floor(duration/60)}m ${duration%60}s`,
       [{text:'Done', onPress:()=>navigation.navigate('DriverPortal')}]
     );
   };
@@ -469,10 +503,7 @@ const CheckListScreen = ({route, navigation}) => {
   );
 };
 
-// ─── MAIN APP & NAVIGATION ──────────────────────────────
-import { createStackNavigator } from '@react-navigation/stack';
-import { NavigationContainer } from '@react-navigation/native';
-
+// ─── MAIN APP ───────────────────────────────────────────
 const Stack = createStackNavigator();
 
 const App = () => (
