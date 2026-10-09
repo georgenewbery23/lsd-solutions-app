@@ -75,10 +75,10 @@ const AppProvider = ({children}) => {
   const [savedCompanies, setSavedCompanies] = useState([]);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(fbAuth, async (user) => {
+    const unsub = onAuthStateChanged(Auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        const snap = await getDoc(doc(fbDb, 'users', user.uid));
+        const snap = await getDoc(doc(Db, 'users', user.uid));
         if (snap.exists()) setUserProfile(snap.data());
       } else setUserProfile(null);
       setLoading(false);
@@ -87,8 +87,8 @@ const AppProvider = ({children}) => {
   }, []);
 
   const registerCompany = async (email, password, companyData) => {
-    const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
-    await setDoc(doc(fbDb, 'users', cred.user.uid), {
+    const cred = await createUserWithEmailAndPassword(Auth, email, password);
+    await setDoc(doc(Db, 'users', cred.user.uid), {
       uid: cred.user.uid, email, role: 'company',
       ...companyData,
       subscription: {
@@ -101,8 +101,8 @@ const AppProvider = ({children}) => {
   };
 
   const registerDriver = async (email, password, driverData) => {
-    const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
-    await setDoc(doc(fbDb, 'users', cred.user.uid), {
+    const cred = await createUserWithEmailAndPassword(Auth, email, password);
+    await setDoc(doc(Db, 'users', cred.user.uid), {
       uid: cred.user.uid, email, role: 'driver',
       ...driverData, savedCompanies: [],
       createdAt: serverTimestamp()
@@ -111,11 +111,11 @@ const AppProvider = ({children}) => {
   };
 
   const login = async (email, password) => {
-    await signInWithEmailAndPassword(fbAuth, email, password);
+    await signInWithEmailAndPassword(Auth, email, password);
   };
 
   const logout = async () => {
-    await signOut(fbAuth);
+    await signOut(Auth);
     setUserProfile(null);
   };
 
@@ -123,19 +123,19 @@ const AppProvider = ({children}) => {
     if (!userProfile || userProfile.role !== 'company') return;
     const vehicles = [...(userProfile.subscription?.activeVehicles||[])];
     vehicles.push({reg, trailerNumber, addedAt: new Date().toISOString(), active:true});
-    await updateDoc(doc(fbDb, 'users', currentUser.uid), {
+    await updateDoc(doc(Db, 'users', currentUser.uid), {
       'subscription.activeVehicles': vehicles
     });
     setUserProfile(p => ({...p, subscription:{...p.subscription, activeVehicles:vehicles}}));
   };
 
   const submitCheck = async (checkData) => {
-    await addDoc(collection(fbDb, 'checks'), {
+    await addDoc(collection(Db, 'checks'), {
       ...checkData, driverId: currentUser.uid,
       companyId: checkData.companyId, submittedAt: serverTimestamp()
     });
     if (checkData.hasDefect) {
-      await addDoc(collection(fbDb, 'notifications'), {
+      await addDoc(collection(Db, 'notifications'), {
         companyId: checkData.companyId, type: 'defect',
         message: `Defect reported on ${checkData.vehicleReg}`,
         checkData, read: false, createdAt: serverTimestamp()
@@ -145,7 +145,7 @@ const AppProvider = ({children}) => {
 
   const saveCompanyToProfile = async (companyId) => {
     const saved = [...(userProfile.savedCompanies||[]), companyId];
-    await updateDoc(doc(fbDb, 'users', currentUser.uid), {savedCompanies:saved});
+    await updateDoc(doc(Db, 'users', currentUser.uid), {savedCompanies:saved});
     setUserProfile(p => ({...p, savedCompanies:saved}));
   };
 
