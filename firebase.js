@@ -1,11 +1,8 @@
-// ✅ LSD Solutions Firebase Configuration
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAnalytics } from "firebase/analytics";
 
-// Your real Firebase credentials
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
   authDomain: "lsd-solutions.firebaseapp.com",
@@ -16,13 +13,8 @@ const firebaseConfig = {
   measurementId: "G-7YF4T8BBPT"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-// ✅ Export everything your app needs
-export { auth, db, storage, analytics };
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 export default app;
