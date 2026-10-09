@@ -98,15 +98,172 @@
     </div>
 
     <!-- DRIVER DASHBOARD -->
+     <!-- DRIVER DASHBOARD -->
     <div id="page-driver-dashboard" class="page">
       <h2>🚛 Driver Portal</h2>
       <p style="text-align:center; margin-bottom:30px;">Welcome, <span id="driver-name-display"></span></p>
-      <button class="btn btn-primary" style="padding:20px; font-size:18px;">✅ Start Walkaround Check</button>
-      <button class="btn btn-secondary">📋 My Checks</button>
-      <button class="btn btn-secondary">📁 My Documents</button>
-      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
+      
+      <!-- MAIN MENU -->
+      <button class="btn btn-primary" onclick="showDriverPage('walkaround')">✅ Vehicle Walkaround</button>
+      <button class="btn btn-secondary" onclick="showDriverPage('available-work')">📋 Available Work</button>
+      <button class="btn btn-secondary" onclick="showDriverPage('calendar')">📅 My Calendar</button>
+      <button class="btn btn-secondary" onclick="showDriverPage('profile')">👤 My Profile</button>
+      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828; margin-top:30px;" onclick="handleSignOut()">Sign Out</button>
+      
+      <!-- ====================================== -->
+      <!-- SUBPAGE: VEHICLE WALKAROUND -->
+      <!-- ====================================== -->
+      <div id="driver-walkaround" class="subpage" style="display:none; margin-top:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h3>✅ Vehicle Walkaround</h3>
+          <span class="link" onclick="hideDriverSubpage()">← Back</span>
+        </div>
+        <button class="btn btn-primary">🔄 Start New Check</button>
+        <button class="btn btn-secondary">📝 My Check History</button>
+        <button class="btn btn-secondary">📊 Reports & Defects</button>
+      </div>
+      
+      <!-- ====================================== -->
+      <!-- SUBPAGE: AVAILABLE WORK -->
+      <!-- ====================================== -->
+      <div id="driver-available-work" class="subpage" style="display:none; margin-top:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h3>📋 Available Work</h3>
+          <span class="link" onclick="hideDriverSubpage()">← Back</span>
+        </div>
+        <p style="color:#666; font-size:14px; margin-bottom:15px;">Work posted by companies near you</p>
+        
+        <!-- Example Job Listing -->
+        <div class="card" style="border-left:4px solid #0A337D;">
+          <h4>🚛 Local Delivery — Enfield</h4>
+          <p><strong>Company:</strong> Example Logistics Ltd</p>
+          <p><strong>Date:</strong> 12 Oct 2026</p>
+          <p><strong>Time:</strong> 08:00 — 16:00</p>
+          <p><strong>Rate:</strong> £18.50/hr</p>
+          <p><strong>Vehicle:</strong> HGV Class 2</p>
+          <button class="btn btn-primary" style="padding:8px; font-size:14px; margin-top:10px;">Apply for this work</button>
+        </div>
+        
+        <div class="card" style="border-left:4px solid #0A337D;">
+          <h4>🚛 Long Haul — London → Birmingham</h4>
+          <p><strong>Company:</strong> Transport Solutions</p>
+          <p><strong>Date:</strong> 15 Oct 2026</p>
+          <p><strong>Time:</strong> 06:00 — 18:00</p>
+          <p><strong>Rate:</strong> £22.00/hr</p>
+          <p><strong>Vehicle:</strong> HGV Class 1 — Trailer</p>
+          <button class="btn btn-primary" style="padding:8px; font-size:14px; margin-top:10px;">Apply for this work</button>
+        </div>
+      </div>
+      
+      <!-- ====================================== -->
+      <!-- SUBPAGE: MY CALENDAR -->
+      <!-- ====================================== -->
+      <div id="driver-calendar" class="subpage" style="display:none; margin-top:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h3>📅 My Calendar</h3>
+          <span class="link" onclick="hideDriverSubpage()">← Back</span>
+        </div>
+        
+        <!-- VIEW SWITCHER -->
+        <div style="display:flex; gap:5px; margin-bottom:15px;">
+          <button class="btn btn-primary" style="padding:6px 10px; font-size:13px; flex:1;" onclick="setCalendarView('month')">Month</button>
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px; flex:1;" onclick="setCalendarView('week')">Week</button>
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px; flex:1;" onclick="setCalendarView('day')">Day</button>
+        </div>
+        
+        <!-- COLOUR KEY -->
+        <div class="card" style="padding:12px; margin-bottom:15px;">
+          <p style="font-size:13px; font-weight:600; margin-bottom:8px">🗝️ Calendar Key</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:13px;">
+            <span><span style="display:inline-block; width:14px; height:14px; background:#4CAF50; border-radius:3px; margin-right:6px;"></span>Available</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#FFC107; border-radius:3px; margin-right:6px;"></span>Unavailable</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#2196F3; border-radius:3px; margin-right:6px;"></span>Work Booked</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#FF9800; border-radius:3px; margin-right:6px;"></span>Pending</span>
+          </div>
+        </div>
+        
+        <!-- CALENDAR DISPLAY AREA -->
+        <div id="calendar-display" class="card">
+          <p style="text-align:center; color:#666;">Calendar will display here</p>
+          <p style="text-align:center; color:#996; font-size:13px; margin-top:10px;">Tap a day to set your status or view bookings</p>
+        </div>
+        
+        <!-- SET STATUS -->
+        <div style="margin-top:15px;">
+          <p style="font-weight:600; margin-bottom:8px;">Set Status for Selected Day:</p>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button style="background:#4CAF50; color:white; border:none; padding:8px 12px; border-radius:6px; font-size:13px;" onclick="setStatus('available')">🟩 Available</button>
+            <button style="background:#FFC107; color:#333; border:none; padding:8px 12px; border-radius:6px; font-size:13px;" onclick="setStatus('unavailable')">🟨 Unavailable</button>
+            <button style="background:#2196F3; color:white; border:none; padding:8px 12px; border-radius:6px; font-size:13px;" onclick="setStatus('booked')">🟦 Booked</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ====================================== -->
+      <!-- SUBPAGE: MY PROFILE -->
+      <!-- ====================================== -->
+      <div id="driver-profile" class="subpage" style="display:none; margin-top:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h3>👤 My Profile</h3>
+          <span class="link" onclick="hideDriverSubpage()">← Back</span>
+        </div>
+        
+        <!-- PROFILE PHOTO -->
+        <div style="text-align:center; margin-bottom:25px;">
+          <div id="profile-photo-area" style="width:100px; height:100px; background:#ddd; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:36px; color:#888;">👤</div>
+          <button class="btn btn-secondary" style="padding:8px 12px; font-size:14px; width:auto; display:inline-block;">📷 Upload Photo</button>
+        </div>
+        
+        <!-- PERSONAL INFO -->
+        <h4 style="margin-bottom:10px; color:#0A337D;">Personal Information</h4>
+        <input type="text" placeholder="Full Name">
+        <input type="tel" placeholder="Phone Number">
+        <input type="text" placeholder="Location / Base">
+        <input type="text" placeholder="HGV Licence Category (e.g. C, C+E)">
+        
+        <!-- QUALIFICATIONS / CV -->
+        <h4 style="margin:25px 0 10px; color:#0A337D;">Qualifications & Experience</h4>
+        <textarea placeholder="Brief bio, years of experience, types of work preferred, equipment you can operate..." style="width:100%; min-height:100px; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:14px; margin-bottom:10px;"></textarea>
+        
+        <!-- DOCUMENTS -->
+        <h4 style="margin:25px 0 10px; color:#0A337D;">📁 My Documents</h4>
+        
+        <!-- DRIVING LICENCE -->
+        <div class="card" style="background:#f9f9f9;">
+          <h5 style="font-size:15px; margin-bottom:10px;">🚗 Driving Licence</h5>
+          <input type="text" placeholder="Licence Number">
+          <div style="display:flex; gap:10px;">
+            <input type="date" placeholder="Valid From" style="flex:1;">
+            <input type="date" placeholder="Expiry Date" style="flex:1;">
+          </div>
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px; margin-top:8px; width:auto;">📎 Upload Photo/File</button>
+        </div>
+        
+        <!-- CPC CARD -->
+        <div class="card" style="background:#f9f9f9; margin-top:12px;">
+          <h5 style="font-size:15px; margin-bottom:10px;">📋 Driver CPC</h5>
+          <input type="text" placeholder="CPC Card Number">
+          <input type="date" placeholder="Expiry Date">
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px; margin-top:8px; width:auto;">📎 Upload Photo/File</button>
+        </div>
+        
+        <!-- DIGI CARD -->
+        <div class="card" style="background:#f9f9f9; margin-top:12px;">
+          <h5 style="font-size:15px; margin-bottom:10px;">⏱️ Tachograph Card</h5>
+          <input type="text" placeholder="Card Number">
+          <input type="date" placeholder="Expiry Date">
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:13px; margin-top:8px; width:auto;">📎 Upload Photo/File</button>
+        </div>
+        
+        <!-- ADD MORE DOCUMENTS -->
+        <div style="margin-top:15px;">
+          <button class="btn btn-secondary" style="width:100%;">➕ Add Another Document</button>
+        </div>
+        
+        <!-- SAVE PROFILE -->
+        <button class="btn btn-primary" style="margin-top:25px;">💾 Save Profile</button>
+      </div>
     </div>
-  </div>
 
   <script type="module">
     import { auth, db } from './firebase.js';
@@ -234,6 +391,31 @@
       userProfile = null;
       currentUser = null;
       showPage('home');
+    };
+        // ========== DRIVER SUBPAGE NAVIGATION ==========
+    let currentSubpage = null;
+    
+    window.showDriverPage = function(pageName) {
+      // Hide all subpages
+      document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
+      // Show selected subpage
+      const subpage = document.getElementById('driver-' + pageName);
+      if (subpage) subpage.style.display = 'block';
+      currentSubpage = pageName;
+    };
+    
+    window.hideDriverSubpage = function() {
+      document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
+      currentSubpage = null;
+    };
+    
+    window.setCalendarView = function(view) {
+      console.log('Switching to', view, 'view');
+      // Future: Implement actual calendar rendering for month/week/day
+    };
+    
+    window.setStatus = function(status) {
+      alert(`Status set to: ${status}\n\nThis will save to your calendar in the next update! ✅`);
     };
   </script>
 </body>
