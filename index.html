@@ -84,33 +84,70 @@
 
   <script type="module">
     import { auth, db } from './firebase.js';
-    import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-    import { doc, setDoc } from 'firebase/firestore';
+    import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+    import { doc, setDoc, getDoc } from 'firebase/firestore';
+
+    let currentUser = null;
+    let userProfile = null;
+
+    // Auto-redirect if already logged in
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            userProfile = snap.data();
+            navigateAfterLogin();
+          }
+        } catch (e) {
+          console.log('Profile load error:', e);
+        }
+      }
+    });
 
     window.showPage = function(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById('page-' + id).classList.add('active');
+      const page = document.getElementById('page-' + id);
+      if (page) page.classList.add('active');
       document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
     };
 
-    function showMsg(id, isError, text) {
-      const el = document.getElementById(id);
-      el.style.display = 'block';
-      if (isError) el.textContent = text;
+    function hideAllMessages() {
+      document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
     }
 
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function navigateAfterLogin() {
+      if (!userProfile) return;
+      if (userProfile.role === 'company') {
+        showPage('company-dashboard');
+      } else if (userProfile.role === 'driver') {
+        showPage('driver-dashboard');
+      }
+    }
+
+    // LOGIN
     window.handleLogin = async function() {
       const email = document.getElementById('login-email').value;
       const pass = document.getElementById('login-password').value;
       try {
         await signInWithEmailAndPassword(auth, email, pass);
         alert('✅ Welcome!');
+        // Profile will load via onAuthStateChanged and redirect automatically
       } catch (e) {
-        showMsg('login-error', true, e.message);
+        showError('login-error', e.message);
       }
     };
 
+    // COMPANY REGISTER
     window.handleCompanyRegister = async function() {
+      hideAllMessages();
       const email = document.getElementById('comp-email').value;
       const password = document.getElementById('comp-password').value;
       const data = {
@@ -120,29 +157,64 @@
         operatorLicence: document.getElementById('comp-licence').value,
         contactEmail: email,
         role: 'company',
-        subscription: { status: 'trial', trialEnd: new Date(Date.now() + 2592000000).toISOString(), ratePerVehicle: 2.00, activeVehicles: [] }
+        subscription: {
+          status: 'trial',
+          trialEnd: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+          ratePerVehicle: 2.00,
+          activeVehicles: []
+        }
       };
+
+      if (!email || !password) return showError('company-error', 'Please fill in all fields');
+
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, 'users', cred.user.uid), { uid: cred.user.uid, ...data, createdAt: new Date().toISOString() });
-        document.getElementById('company-success').style.display = 'block';
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          uid: cred.user.uid,
+          ...data,
+          createdAt: new Date().toISOString()
+        });
+        alert('✅ Account created! Welcome to LSD Solutions.');
+        userProfile = data;
+        navigateAfterLogin();
       } catch (e) {
-        showMsg('company-error', true, e.message);
+        showError('company-error', e.message);
       }
     };
 
+    // DRIVER REGISTER
     window.handleDriverRegister = async function() {
+      hideAllMessages();
       const name = document.getElementById('driver-name').value;
       const email = document.getElementById('driver-email').value;
       const password = document.getElementById('driver-password').value;
+
+      if (!name || !email || !password) return showError('driver-error', 'Please fill in all fields');
+
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, 'users', cred.user.uid), { uid: cred.user.uid, name, email, role: 'driver', createdAt: new Date().toISOString() });
-        document.getElementById('driver-success').style.display = 'block';
+        const profile = {
+          uid: cred.user.uid,
+          name,
+          email,
+          role: 'driver',
+          savedCompanies: [],
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(doc(db, 'users', cred.user.uid), profile);
+        alert('✅ Account created! Welcome to LSD Solutions.');
+        userProfile = profile;
+        navigateAfterLogin();
       } catch (e) {
-        showMsg('driver-error', true, e.message);
+        showError('driver-error', e.message);
       }
     };
+
+    // SIGNOUT
+    window.handleSignOut = async function() {
+      await signOut(auth);
+      userProfile = null;
+      currentUser = null;
+      showPage('home');
+    };
   </script>
-</body>
-</html>
