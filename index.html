@@ -215,25 +215,7 @@
     let userProfile = null;
     let authReady = false;
 
-    // Wait for Firebase to be ready
-    onAuthStateChanged(auth, async (user) => {
-      authReady = true;
-      currentUser = user;
-      if (user) {
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (snap.exists()) {
-            userProfile = snap.data();
-            navigateAfterLogin();
-          } else {
-            console.log('User document not found in Firestore');
-          }
-        } catch (e) {
-          console.log('Profile load error:', e);
-        }
-      }
-    });
-
+    // ===== PAGE NAVIGATION =====
     window.showPage = function(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       const page = document.getElementById('page-' + id);
@@ -244,8 +226,10 @@
 
     function showError(id, msg) {
       const el = document.getElementById(id);
-      el.textContent = msg;
-      el.style.display = 'block';
+      if (el) {
+        el.textContent = msg;
+        el.style.display = 'block';
+      }
     }
 
     function navigateAfterLogin() {
@@ -253,18 +237,67 @@
       const companyNameEl = document.getElementById('company-name-display');
       const driverNameEl = document.getElementById('driver-name-display');
       if (userProfile.role === 'company' && companyNameEl) {
-        companyNameEl.textContent = userProfile.companyName;
+        companyNameEl.textContent = userProfile.companyName || 'Company';
       }
       if (userProfile.role === 'driver' && driverNameEl) {
-        driverNameEl.textContent = userProfile.name;
+        driverNameEl.textContent = userProfile.name || 'Driver';
       }
       if (userProfile.role === 'company') {
         showPage('company-dashboard');
       } else if (userProfile.role === 'driver') {
         showPage('driver-dashboard');
+      } else {
+        console.log('No role found in profile');
+        alert('⚠️ Account created but role missing. Please create a new account.');
+        showPage('home');
       }
     }
 
+    // ===== FIREBASE AUTH STATE =====
+    onAuthStateChanged(auth, async (user) => {
+      authReady = true;
+      currentUser = user;
+      
+      if (!user) {
+        console.log('No user signed in');
+        return;
+      }
+
+      console.log('Auth successful, loading profile...');
+      
+      // Add timeout — don't wait forever for Firestore
+      let profileLoaded = false;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('timeout')), 8000)
+      );
+
+      try {
+        const snap = await Promise.race([
+          getDoc(doc(db, 'users', user.uid)),
+          timeoutPromise
+        ]);
+        
+        if (snap && snap.exists()) {
+          userProfile = snap.data();
+          console.log('Profile loaded:', userProfile);
+          navigateAfterLogin();
+        } else {
+          console.log('User document NOT found in Firestore');
+          alert('✅ Signed in! ⚠️ But profile not found.\n\nPlease create a NEW account — this email was registered before the database was set up.');
+          showPage('home');
+        }
+      } catch (e) {
+        if (e.message === 'timeout' || e.code === 'unavailable') {
+          console.log('Firestore offline/slow — will retry in background');
+          alert('✅ Signed in! ⏳ Connecting to database...\n\nIf page stays on Sign In, please refresh and try again.');
+        } else {
+          console.log('Profile load error:', e);
+          alert('✅ Signed in! But there was a delay loading your profile.\n\nPlease refresh and sign in again.');
+        }
+      }
+    });
+
+    // ===== SIGN IN =====
     window.handleLogin = async function() {
       const email = document.getElementById('login-email').value;
       const pass = document.getElementById('login-password').value;
@@ -275,38 +308,29 @@
       }
       
       if (!authReady) {
-        showError('login-error', '⏳ Connecting... please try again in a moment');
+        showError('login-error', '⏳ Connecting... please wait and try again');
         return;
       }
       
       try {
         showError('login-error', '⏳ Signing in...');
         await signInWithEmailAndPassword(auth, email, pass);
-        // Success — onAuthStateChanged will handle the redirect
+        // onAuthStateChanged handles the rest
       } catch (e) {
         console.log('Login error:', e.code, e.message);
         let friendlyError = '❌ Sign in failed. Please check your details.';
-        if (e.code === 'auth/user-not-found') friendlyError = '❌ No account found with this email';
-        if (e.code === 'auth/wrong-password') friendlyError = '❌ Incorrect password';
-        if (e.code === 'auth/invalid-email') friendlyError = '❌ Please enter a valid email address';
+        if (e.code === 'auth/user-not-found') friendlyError = '❌ No account found — please create one first.';
+        if (e.code === 'auth/wrong-password') friendlyError = '❌ Incorrect password.';
+        if (e.code === 'auth/invalid-email') friendlyError = '❌ Please enter a valid email address.';
         showError('login-error', friendlyError);
       }
     };
 
+    // ===== COMPANY REGISTER =====
     window.handleCompanyRegister = async function() {
       const email = document.getElementById('comp-email').value;
       const password = document.getElementById('comp-password').value;
       const companyName = document.getElementById('comp-name').value;
-      
-      const data = {
-        companyName: companyName,
-        tradingAs: document.getElementById('comp-trading').value,
-        registeredAddress: document.getElementById('comp-address').value,
-        operatorLicence: document.getElementById('comp-licence').value,
-        contactEmail: email,
-        role: 'company',
-        createdAt: new Date().toISOString()
-      };
       
       if (!email || !password || !companyName) {
         showError('company-error', '⚠️ Please fill in all required fields');
@@ -316,12 +340,24 @@
       try {
         showError('company-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
+        
+        const data = {
+          companyName: companyName,
+          tradingAs: document.getElementById('comp-trading').value || '',
+          registeredAddress: document.getElementById('comp-address').value || '',
+          operatorLicence: document.getElementById('comp-licence').value || '',
+          contactEmail: email,
+          role: 'company',
+          createdAt: new Date().toISOString()
+        };
+        
         await setDoc(doc(db, 'users', cred.user.uid), {
           uid: cred.user.uid,
           ...data
         });
-        document.getElementById('company-success').style.display = 'block';
+        
         userProfile = data;
+        document.getElementById('company-success').style.display = 'block';
         alert('✅ Welcome! Your company account is ready.');
         navigateAfterLogin();
       } catch (e) {
@@ -330,6 +366,7 @@
       }
     };
 
+    // ===== DRIVER REGISTER =====
     window.handleDriverRegister = async function() {
       const name = document.getElementById('driver-name').value;
       const email = document.getElementById('driver-email').value;
@@ -343,16 +380,19 @@
       try {
         showError('driver-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
+        
         const profile = {
           uid: cred.user.uid,
-          name,
-          email,
+          name: name,
+          email: email,
           role: 'driver',
           createdAt: new Date().toISOString()
         };
+        
         await setDoc(doc(db, 'users', cred.user.uid), profile);
-        document.getElementById('driver-success').style.display = 'block';
+        
         userProfile = profile;
+        document.getElementById('driver-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
         navigateAfterLogin();
       } catch (e) {
@@ -361,6 +401,7 @@
       }
     };
 
+    // ===== SIGN OUT =====
     window.handleSignOut = async function() {
       await signOut(auth);
       userProfile = null;
@@ -368,6 +409,7 @@
       showPage('home');
     };
 
+    // ===== DRIVER SUBPAGES =====
     window.showDriverPage = function(pageName) {
       document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
       const subpage = document.getElementById('driver-' + pageName);
