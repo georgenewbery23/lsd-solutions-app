@@ -147,8 +147,18 @@
       el.style.display = 'block';
     }
 
-    function navigateAfterLogin() {
+        function navigateAfterLogin() {
       if (!userProfile) return;
+      // Display company or driver name
+      const companyNameEl = document.getElementById('company-name-display');
+      const driverNameEl = document.getElementById('driver-name-display');
+      if (userProfile.role === 'company' && companyNameEl) {
+        companyNameEl.textContent = userProfile.companyName;
+      }
+      if (userProfile.role === 'driver' && driverNameEl) {
+        driverNameEl.textContent = userProfile.name;
+      }
+      // Navigate
       if (userProfile.role === 'company') {
         showPage('company-dashboard');
       } else if (userProfile.role === 'driver') {
