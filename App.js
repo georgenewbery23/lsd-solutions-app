@@ -506,15 +506,24 @@ const CheckListScreen = ({route, navigation}) => {
 // ─── MAIN APP ───────────────────────────────────────────
 const Stack = createStackNavigator();
 
-// ✅ SIMPLE TEST VERSION
 const App = () => (
-  <div style={{padding: '40px', textAlign: 'center', fontFamily: 'sans-serif'}}>
-    <h1 style={{color: '#0A337D'}}>✅ LSD Solutions — Works!</h1>
-    <p>If you see this, your hosting is working. The issue is inside the app code.</p>
-  </div>
+  <AppProvider>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{headerStyle:{backgroundColor:COLORS.primary},headerTintColor:'#fff'}}>
+        <Stack.Screen name='Home' component={HomeScreen} options={{headerShown:false}} />
+        <Stack.Screen name='SelectRole' component={SelectRoleScreen} options={{title:'Create Account'}} />
+        <Stack.Screen name='CompanyRegister' component={CompanyRegisterScreen} options={{title:'Company Sign Up'}} />
+        <Stack.Screen name='DriverRegister' component={DriverRegisterScreen} options={{title:'Driver Sign Up'}} />
+        <Stack.Screen name='Login' component={LoginScreen} />
+        <Stack.Screen name='CompanyPortal' component={CompanyPortalScreen} options={{title:'Company Dashboard'}} />
+        <Stack.Screen name='DriverPortal' component={DriverPortalScreen} options={{title:'Driver Dashboard'}} />
+        <Stack.Screen name='CheckTypeSelect' component={CheckTypeSelectScreen} options={{title:'Walkaround Check'}} />
+        <Stack.Screen name='CheckEntry' component={CheckEntryScreen} options={{title:'Vehicle Details'}} />
+        <Stack.Screen name='CheckList' component={CheckListScreen} options={{title:'DVSA Inspection'}} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  </AppProvider>
 );
-
-export default App;
 
 // ─── STYLES ─────────────────────────────────────────────
 const styles = StyleSheet.create({
