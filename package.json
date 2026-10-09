@@ -2,7 +2,7 @@
   "name": "lsd-solutions-hgv",
   "version": "1.0.0",
   "description": "LSD Solutions — HGV Walkaround Check App",
-  "main": "App.js",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
@@ -14,7 +14,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.5",
-    "react-native-web": "~0.25.2",
+    "react-native-web": "^0.19.13",
     "react-native-safe-area-context": "~5.3.0",
     "react-native-screens": "~4.4.0",
     "@react-navigation/native": "^6.1.18",
