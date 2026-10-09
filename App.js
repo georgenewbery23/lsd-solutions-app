@@ -1,4 +1,4 @@
-import { auth, db, storage, isDemoMode } from './firebase';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   ScrollView, Alert, Image, Platform
@@ -7,19 +7,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 
-// Firebase imports — clean, no duplicates
-import { auth as fbAuth, db, storage, isDemoMode } from './firebase';
+// === FIREBASE — Aliased to avoid ANY conflicts ===
+import { 
+  auth as fbAuth, 
+  db as fbDb, 
+  storage as fbStorage, 
+  isDemoMode 
+} from './firebase';
+
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut
 } from 'firebase/auth';
+
 import {
   doc, setDoc, getDoc, updateDoc, collection, query, where,
   getDocs, addDoc, serverTimestamp
 } from 'firebase/firestore';
+
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+import * as ImagePicker from 'expo-image-picker';
+
 const Stack = createStackNavigator();
 
 // ============== MAIN APP ==============
