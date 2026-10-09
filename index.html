@@ -213,8 +213,11 @@
 
     let currentUser = null;
     let userProfile = null;
+    let authReady = false;
 
+    // Wait for Firebase to be ready
     onAuthStateChanged(auth, async (user) => {
+      authReady = true;
       currentUser = user;
       if (user) {
         try {
@@ -222,6 +225,8 @@
           if (snap.exists()) {
             userProfile = snap.data();
             navigateAfterLogin();
+          } else {
+            console.log('User document not found in Firestore');
           }
         } catch (e) {
           console.log('Profile load error:', e);
@@ -263,22 +268,38 @@
     window.handleLogin = async function() {
       const email = document.getElementById('login-email').value;
       const pass = document.getElementById('login-password').value;
+      
       if (!email || !pass) {
-        showError('login-error', 'Please enter email and password');
+        showError('login-error', '⚠️ Please enter email and password');
         return;
       }
+      
+      if (!authReady) {
+        showError('login-error', '⏳ Connecting... please try again in a moment');
+        return;
+      }
+      
       try {
+        showError('login-error', '⏳ Signing in...');
         await signInWithEmailAndPassword(auth, email, pass);
+        // Success — onAuthStateChanged will handle the redirect
       } catch (e) {
-        showError('login-error', e.message);
+        console.log('Login error:', e.code, e.message);
+        let friendlyError = '❌ Sign in failed. Please check your details.';
+        if (e.code === 'auth/user-not-found') friendlyError = '❌ No account found with this email';
+        if (e.code === 'auth/wrong-password') friendlyError = '❌ Incorrect password';
+        if (e.code === 'auth/invalid-email') friendlyError = '❌ Please enter a valid email address';
+        showError('login-error', friendlyError);
       }
     };
 
     window.handleCompanyRegister = async function() {
       const email = document.getElementById('comp-email').value;
       const password = document.getElementById('comp-password').value;
+      const companyName = document.getElementById('comp-name').value;
+      
       const data = {
-        companyName: document.getElementById('comp-name').value,
+        companyName: companyName,
         tradingAs: document.getElementById('comp-trading').value,
         registeredAddress: document.getElementById('comp-address').value,
         operatorLicence: document.getElementById('comp-licence').value,
@@ -286,11 +307,14 @@
         role: 'company',
         createdAt: new Date().toISOString()
       };
-      if (!email || !password || !data.companyName) {
-        showError('company-error', 'Please fill in all required fields');
+      
+      if (!email || !password || !companyName) {
+        showError('company-error', '⚠️ Please fill in all required fields');
         return;
       }
+      
       try {
+        showError('company-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, 'users', cred.user.uid), {
           uid: cred.user.uid,
@@ -298,9 +322,11 @@
         });
         document.getElementById('company-success').style.display = 'block';
         userProfile = data;
-        setTimeout(() => navigateAfterLogin(), 800);
+        alert('✅ Welcome! Your company account is ready.');
+        navigateAfterLogin();
       } catch (e) {
-        showError('company-error', e.message);
+        console.log('Register error:', e.code, e.message);
+        showError('company-error', '❌ ' + e.message);
       }
     };
 
@@ -308,11 +334,14 @@
       const name = document.getElementById('driver-name').value;
       const email = document.getElementById('driver-email').value;
       const password = document.getElementById('driver-password').value;
+      
       if (!name || !email || !password) {
-        showError('driver-error', 'Please fill in all required fields');
+        showError('driver-error', '⚠️ Please fill in all required fields');
         return;
       }
+      
       try {
+        showError('driver-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const profile = {
           uid: cred.user.uid,
@@ -324,9 +353,11 @@
         await setDoc(doc(db, 'users', cred.user.uid), profile);
         document.getElementById('driver-success').style.display = 'block';
         userProfile = profile;
-        setTimeout(() => navigateAfterLogin(), 800);
+        alert('✅ Welcome! Your account is ready.');
+        navigateAfterLogin();
       } catch (e) {
-        showError('driver-error', e.message);
+        console.log('Register error:', e.code, e.message);
+        showError('driver-error', '❌ ' + e.message);
       }
     };
 
@@ -337,7 +368,6 @@
       showPage('home');
     };
 
-    // Driver subpages
     window.showDriverPage = function(pageName) {
       document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
       const subpage = document.getElementById('driver-' + pageName);
@@ -348,5 +378,3 @@
       document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
     };
   </script>
-</body>
-</html>
