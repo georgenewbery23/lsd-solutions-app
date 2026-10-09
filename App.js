@@ -6,7 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // ✅ FIXED: Firebase imports — aliased to avoid conflicts
-import { auth as fbAuth, db as fbDb, storage as fbStorage } from './firebase';
+// ✅ NEW — matches what firebase.js now exports
+import { auth, db, storage } from './firebase';
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signOut, onAuthStateChanged
