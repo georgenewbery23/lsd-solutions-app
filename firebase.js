@@ -9,8 +9,7 @@ const firebaseConfig = {
   projectId: "lsd-solutions",
   storageBucket: "lsd-solutions.firebasestorage.app",
   messagingSenderId: "833767217116",
-  appId: "1:833767217116:web:b29188de76b5778a086119",
-  measurementId: "G-7YF4T8BBPT"
+  appId: "1:833767217116:web:b29188de76b5778a086119"
 };
 
 const app = initializeApp(firebaseConfig);
