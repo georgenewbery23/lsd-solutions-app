@@ -24,6 +24,30 @@
     .success { background: #e8f5e9; color: #2E7D32; }
   </style>
 </head>
+    <!-- COMPANY DASHBOARD -->
+    <div id="page-company-dashboard" class="page">
+      <h2>🏢 Company Portal</h2>
+      <p style="text-align:center; margin-bottom:20px;">Welcome, <span id="company-name-display"></span></p>
+      <div style="background:white; padding:20px; border-radius:10px; margin-bottom:20px;">
+        <h3>Subscription Status</h3>
+        <p>✅ 30-Day Free Trial Active</p>
+        <p>Rate: £2.00 per vehicle / month</p>
+      </div>
+      <button class="btn btn-primary" style="margin-top:20px;">🚛 Manage Fleet</button>
+      <button class="btn btn-secondary">📄 Driver Documents</button>
+      <button class="btn btn-secondary">📊 Reports</button>
+      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
+    </div>
+
+    <!-- DRIVER DASHBOARD -->
+    <div id="page-driver-dashboard" class="page">
+      <h2>🚛 Driver Portal</h2>
+      <p style="text-align:center; margin-bottom:30px;">Welcome, <span id="driver-name-display"></span></p>
+      <button class="btn btn-primary" style="margin-top:20px; padding:20px; font-size:18px;">✅ Start Walkaround Check</button>
+      <button class="btn btn-secondary">📋 My Checks</button>
+      <button class="btn btn-secondary">📁 My Documents</button>
+      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
+    </div>
 <body>
   <div class="container">
     <!-- HOME -->
