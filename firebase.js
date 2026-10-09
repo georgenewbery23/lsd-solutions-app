@@ -1,9 +1,11 @@
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-// 👇 You'll replace these with your real Firebase credentials later
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
   authDomain: "lsd-solutions.firebaseapp.com",
@@ -14,28 +16,6 @@ const firebaseConfig = {
   measurementId: "G-7YF4T8BBPT"
 };
 
-let app, auth, db, storage;
-let isDemoMode = false;
-
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  console.log("✅ Firebase initialized");
-  
-  // Detect if still using placeholders
-  if (firebaseConfig.apiKey === "PLACEHOLDER") {
-    isDemoMode = true;
-    console.log("⚠️ Running in DEMO MODE — connect Firebase for real accounts");
-  }
-} catch (err) {
-  isDemoMode = true;
-  console.warn("⚠️ Firebase not configured — DEMO MODE active:", err.message);
-  auth = {};
-  db = {};
-  storage = {};
-}
-
-export { auth, db, storage, isDemoMode };
-export default app;
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
