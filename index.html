@@ -22,32 +22,9 @@
     .message { padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; }
     .error { background: #ffebee; color: #c62828; }
     .success { background: #e8f5e9; color: #2E7D32; }
+    .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
   </style>
 </head>
-    <!-- COMPANY DASHBOARD -->
-    <div id="page-company-dashboard" class="page">
-      <h2>🏢 Company Portal</h2>
-      <p style="text-align:center; margin-bottom:20px;">Welcome, <span id="company-name-display"></span></p>
-      <div style="background:white; padding:20px; border-radius:10px; margin-bottom:20px;">
-        <h3>Subscription Status</h3>
-        <p>✅ 30-Day Free Trial Active</p>
-        <p>Rate: £2.00 per vehicle / month</p>
-      </div>
-      <button class="btn btn-primary" style="margin-top:20px;">🚛 Manage Fleet</button>
-      <button class="btn btn-secondary">📄 Driver Documents</button>
-      <button class="btn btn-secondary">📊 Reports</button>
-      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
-    </div>
-
-    <!-- DRIVER DASHBOARD -->
-    <div id="page-driver-dashboard" class="page">
-      <h2>🚛 Driver Portal</h2>
-      <p style="text-align:center; margin-bottom:30px;">Welcome, <span id="driver-name-display"></span></p>
-      <button class="btn btn-primary" style="margin-top:20px; padding:20px; font-size:18px;">✅ Start Walkaround Check</button>
-      <button class="btn btn-secondary">📋 My Checks</button>
-      <button class="btn btn-secondary">📁 My Documents</button>
-      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
-    </div>
 <body>
   <div class="container">
     <!-- HOME -->
@@ -104,6 +81,31 @@
       <button class="btn btn-primary" onclick="handleDriverRegister()">Register</button>
       <p class="link" onclick="showPage('select-role')">← Back</p>
     </div>
+
+    <!-- COMPANY DASHBOARD -->
+    <div id="page-company-dashboard" class="page">
+      <h2>🏢 Company Portal</h2>
+      <p style="text-align:center; margin-bottom:20px;">Welcome, <span id="company-name-display"></span></p>
+      <div class="card">
+        <h3>Subscription Status</h3>
+        <p>✅ 30-Day Free Trial Active</p>
+        <p>Rate: £2.00 per vehicle / month</p>
+      </div>
+      <button class="btn btn-primary">🚛 Manage Fleet</button>
+      <button class="btn btn-secondary">📄 Driver Documents</button>
+      <button class="btn btn-secondary">📊 Reports</button>
+      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
+    </div>
+
+    <!-- DRIVER DASHBOARD -->
+    <div id="page-driver-dashboard" class="page">
+      <h2>🚛 Driver Portal</h2>
+      <p style="text-align:center; margin-bottom:30px;">Welcome, <span id="driver-name-display"></span></p>
+      <button class="btn btn-primary" style="padding:20px; font-size:18px;">✅ Start Walkaround Check</button>
+      <button class="btn btn-secondary">📋 My Checks</button>
+      <button class="btn btn-secondary">📁 My Documents</button>
+      <button class="btn btn-secondary" style="color:#C62828; border-color:#C62828;" onclick="handleSignOut()">Sign Out</button>
+    </div>
   </div>
 
   <script type="module">
@@ -114,7 +116,6 @@
     let currentUser = null;
     let userProfile = null;
 
-    // Auto-redirect if already logged in
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if (user) {
@@ -137,19 +138,14 @@
       document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
     };
 
-    function hideAllMessages() {
-      document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
-    }
-
     function showError(id, msg) {
       const el = document.getElementById(id);
       el.textContent = msg;
       el.style.display = 'block';
     }
 
-        function navigateAfterLogin() {
+    function navigateAfterLogin() {
       if (!userProfile) return;
-      // Display company or driver name
       const companyNameEl = document.getElementById('company-name-display');
       const driverNameEl = document.getElementById('driver-name-display');
       if (userProfile.role === 'company' && companyNameEl) {
@@ -158,7 +154,6 @@
       if (userProfile.role === 'driver' && driverNameEl) {
         driverNameEl.textContent = userProfile.name;
       }
-      // Navigate
       if (userProfile.role === 'company') {
         showPage('company-dashboard');
       } else if (userProfile.role === 'driver') {
@@ -166,22 +161,18 @@
       }
     }
 
-    // LOGIN
     window.handleLogin = async function() {
       const email = document.getElementById('login-email').value;
       const pass = document.getElementById('login-password').value;
       try {
         await signInWithEmailAndPassword(auth, email, pass);
         alert('✅ Welcome!');
-        // Profile will load via onAuthStateChanged and redirect automatically
       } catch (e) {
         showError('login-error', e.message);
       }
     };
 
-    // COMPANY REGISTER
     window.handleCompanyRegister = async function() {
-      hideAllMessages();
       const email = document.getElementById('comp-email').value;
       const password = document.getElementById('comp-password').value;
       const data = {
@@ -198,9 +189,7 @@
           activeVehicles: []
         }
       };
-
       if (!email || !password) return showError('company-error', 'Please fill in all fields');
-
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, 'users', cred.user.uid), {
@@ -208,7 +197,7 @@
           ...data,
           createdAt: new Date().toISOString()
         });
-        alert('✅ Account created! Welcome to LSD Solutions.');
+        alert('✅ Account created! Signing you in...');
         userProfile = data;
         navigateAfterLogin();
       } catch (e) {
@@ -216,15 +205,11 @@
       }
     };
 
-    // DRIVER REGISTER
     window.handleDriverRegister = async function() {
-      hideAllMessages();
       const name = document.getElementById('driver-name').value;
       const email = document.getElementById('driver-email').value;
       const password = document.getElementById('driver-password').value;
-
       if (!name || !email || !password) return showError('driver-error', 'Please fill in all fields');
-
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const profile = {
@@ -236,7 +221,7 @@
           createdAt: new Date().toISOString()
         };
         await setDoc(doc(db, 'users', cred.user.uid), profile);
-        alert('✅ Account created! Welcome to LSD Solutions.');
+        alert('✅ Account created! Signing you in...');
         userProfile = profile;
         navigateAfterLogin();
       } catch (e) {
@@ -244,7 +229,6 @@
       }
     };
 
-    // SIGNOUT
     window.handleSignOut = async function() {
       await signOut(auth);
       userProfile = null;
@@ -252,3 +236,5 @@
       showPage('home');
     };
   </script>
+</body>
+</html>
