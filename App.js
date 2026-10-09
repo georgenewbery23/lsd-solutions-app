@@ -7,8 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 
-// Firebase imports
-import { auth, db, storage } from './firebase';
+// Firebase imports — ONE clean import block
+import { auth, db, storage, isDemoMode } from './firebase';
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -20,7 +20,6 @@ import {
   getDocs, addDoc, serverTimestamp
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
 import * as ImagePicker from 'expo-image-picker';
 
 const Stack = createStackNavigator();
