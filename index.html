@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LSD Solutions — HGV Services</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #f5f7fa; min-height: 100vh; }
+    .container { max-width: 420px; margin: 0 auto; padding: 40px 20px; }
+    .logo { text-align: center; margin: 60px 0 40px; }
+    .logo h1 { font-size: 28px; color: #0A337D; letter-spacing: 2px; }
+    .logo p { color: #666; margin-top: 8px; }
+    .btn { display: block; width: 100%; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: 600; border: none; cursor: pointer; text-align: center; text-decoration: none; margin-bottom: 12px; }
+    .btn-primary { background: #0A337D; color: white; }
+    .btn-secondary { background: white; color: #0A337D; border: 2px solid #0A337D; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h2 { font-size: 22px; text-align: center; margin-bottom: 30px; color: #0A337D; }
+    input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 12px; }
+    .link { text-align: center; margin-top: 20px; font-size: 14px; color: #0A337D; cursor: pointer; text-decoration: underline; }
+    .message { padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; }
+    .error { background: #ffebee; color: #c62828; }
+    .success { background: #e8f5e9; color: #2E7D32; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="logo">
+        <h1>LSD SOLUTIONS</h1>
+        <p>For all your long haul, shunting & delivery needs</p>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('login')">Sign In</button>
+      <button class="btn btn-secondary" onclick="showPage('select-role')">Create Account</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="page-login" class="page">
+      <h2>Sign In</h2>
+      <div id="login-error" class="message error"></div>
+      <input type="email" id="login-email" placeholder="Email">
+      <input type="password" id="login-password" placeholder="Password">
+      <button class="btn btn-primary" onclick="handleLogin()">Sign In</button>
+      <p class="link" onclick="showPage('home')">← Back</p>
+    </div>
+
+    <!-- SELECT ROLE -->
+    <div id="page-select-role" class="page">
+      <h2>Select Account Type</h2>
+      <button class="btn btn-primary" onclick="showPage('company-register')">🏢 Company — £2/vehicle/month</button>
+      <button class="btn btn-secondary" onclick="showPage('driver-register')">🚛 Driver — Free</button>
+      <p class="link" onclick="showPage('home')">← Back</p>
+    </div>
+
+    <!-- COMPANY REGISTER -->
+    <div id="page-company-register" class="page">
+      <h2>Company Sign Up</h2>
+      <div id="company-error" class="message error"></div>
+      <div id="company-success" class="message success">✅ Account created! You can now sign in.</div>
+      <input type="text" id="comp-name" placeholder="Company Name">
+      <input type="text" id="comp-trading" placeholder="Trading As">
+      <input type="text" id="comp-address" placeholder="Registered Address">
+      <input type="text" id="comp-licence" placeholder="Operator Licence No">
+      <input type="email" id="comp-email" placeholder="Email">
+      <input type="password" id="comp-password" placeholder="Password">
+      <button class="btn btn-primary" onclick="handleCompanyRegister()">Register — 30 Day Free Trial</button>
+      <p class="link" onclick="showPage('select-role')">← Back</p>
+    </div>
+
+    <!-- DRIVER REGISTER -->
+    <div id="page-driver-register" class="page">
+      <h2>Driver Sign Up</h2>
+      <div id="driver-error" class="message error"></div>
+      <div id="driver-success" class="message success">✅ Account created! You can now sign in.</div>
+      <input type="text" id="driver-name" placeholder="Your Full Name">
+      <input type="email" id="driver-email" placeholder="Email">
+      <input type="password" id="driver-password" placeholder="Password">
+      <button class="btn btn-primary" onclick="handleDriverRegister()">Register</button>
+      <p class="link" onclick="showPage('select-role')">← Back</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './firebase.js';
+    import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+    import { doc, setDoc } from 'firebase/firestore';
+
+    window.showPage = function(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
+    };
+
+    function showMsg(id, isError, text) {
+      const el = document.getElementById(id);
+      el.style.display = 'block';
+      if (isError) el.textContent = text;
+    }
+
+    window.handleLogin = async function() {
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-password').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        alert('✅ Welcome!');
+      } catch (e) {
+        showMsg('login-error', true, e.message);
+      }
+    };
+
+    window.handleCompanyRegister = async function() {
+      const email = document.getElementById('comp-email').value;
+      const password = document.getElementById('comp-password').value;
+      const data = {
+        companyName: document.getElementById('comp-name').value,
+        tradingAs: document.getElementById('comp-trading').value,
+        registeredAddress: document.getElementById('comp-address').value,
+        operatorLicence: document.getElementById('comp-licence').value,
+        contactEmail: email,
+        role: 'company',
+        subscription: { status: 'trial', trialEnd: new Date(Date.now() + 2592000000).toISOString(), ratePerVehicle: 2.00, activeVehicles: [] }
+      };
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, 'users', cred.user.uid), { uid: cred.user.uid, ...data, createdAt: new Date().toISOString() });
+        document.getElementById('company-success').style.display = 'block';
+      } catch (e) {
+        showMsg('company-error', true, e.message);
+      }
+    };
+
+    window.handleDriverRegister = async function() {
+      const name = document.getElementById('driver-name').value;
+      const email = document.getElementById('driver-email').value;
+      const password = document.getElementById('driver-password').value;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, 'users', cred.user.uid), { uid: cred.user.uid, name, email, role: 'driver', createdAt: new Date().toISOString() });
+        document.getElementById('driver-success').style.display = 'block';
+      } catch (e) {
+        showMsg('driver-error', true, e.message);
+      }
+    };
+  </script>
+</body>
+</html>
