@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LSD Solutions — HGV Services</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
     body { background: #f5f7fa; min-height: 100vh; }
@@ -206,7 +207,7 @@
     </div>
   </div>
 
-  <script type="module">
+   <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -221,7 +222,7 @@
       const page = document.getElementById('page-' + id);
       if (page) page.classList.add('active');
       document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
-      hideDriverSubpage();
+      if (window.hideDriverSubpage) hideDriverSubpage();
     };
 
     function showError(id, msg) {
@@ -247,52 +248,44 @@
       } else if (userProfile.role === 'driver') {
         showPage('driver-dashboard');
       } else {
-        console.log('No role found in profile');
-        alert('⚠️ Account created but role missing. Please create a new account.');
+        alert('⚠️ Account exists but role not set. Please create a new account.');
         showPage('home');
       }
     }
 
-    // ===== FIREBASE AUTH STATE =====
+    // ===== FIREBASE CONNECTION HANDLING =====
     onAuthStateChanged(auth, async (user) => {
       authReady = true;
       currentUser = user;
       
-      if (!user) {
-        console.log('No user signed in');
-        return;
-      }
+      if (!user) return;
 
-      console.log('Auth successful, loading profile...');
-      
-      // Add timeout — don't wait forever for Firestore
-      let profileLoaded = false;
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('timeout')), 8000)
-      );
+      console.log('✅ Auth signed in — loading profile...');
 
+      // Timeout after 8 seconds — never get stuck forever
       try {
+        const timeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), 8000)
+        );
+        
         const snap = await Promise.race([
           getDoc(doc(db, 'users', user.uid)),
-          timeoutPromise
+          timeout
         ]);
-        
-        if (snap && snap.exists()) {
+
+        if (snap.exists()) {
           userProfile = snap.data();
-          console.log('Profile loaded:', userProfile);
           navigateAfterLogin();
         } else {
-          console.log('User document NOT found in Firestore');
-          alert('✅ Signed in! ⚠️ But profile not found.\n\nPlease create a NEW account — this email was registered before the database was set up.');
+          alert('✅ Signed in! ⚠️ No profile found.\n\nThis email was created before the database was ready.\n\nPlease create a NEW account with a different email — it will work instantly.');
           showPage('home');
         }
       } catch (e) {
-        if (e.message === 'timeout' || e.code === 'unavailable') {
-          console.log('Firestore offline/slow — will retry in background');
-          alert('✅ Signed in! ⏳ Connecting to database...\n\nIf page stays on Sign In, please refresh and try again.');
+        console.log('❌ Firestore issue:', e.code || e.message);
+        if (e.message === 'timeout' || e.code === 'unavailable' || e.message.includes('offline')) {
+          alert('✅ Signed in! ⏳ Database connection slow.\n\nPlease:\n1. Check your internet connection\n2. Refresh the page and sign in again\n3. Or create a NEW account which will work immediately');
         } else {
-          console.log('Profile load error:', e);
-          alert('✅ Signed in! But there was a delay loading your profile.\n\nPlease refresh and sign in again.');
+          alert('✅ Signed in! But there was an error loading your profile.\n\nPlease refresh and try again.');
         }
       }
     });
@@ -308,7 +301,7 @@
       }
       
       if (!authReady) {
-        showError('login-error', '⏳ Connecting... please wait and try again');
+        showError('login-error', '⏳ Connecting... wait a moment then try again');
         return;
       }
       
@@ -317,12 +310,12 @@
         await signInWithEmailAndPassword(auth, email, pass);
         // onAuthStateChanged handles the rest
       } catch (e) {
-        console.log('Login error:', e.code, e.message);
-        let friendlyError = '❌ Sign in failed. Please check your details.';
-        if (e.code === 'auth/user-not-found') friendlyError = '❌ No account found — please create one first.';
-        if (e.code === 'auth/wrong-password') friendlyError = '❌ Incorrect password.';
-        if (e.code === 'auth/invalid-email') friendlyError = '❌ Please enter a valid email address.';
-        showError('login-error', friendlyError);
+        console.log('Login error:', e.code);
+        let friendly = '❌ Sign in failed — check your details';
+        if (e.code === 'auth/user-not-found') friendly = '❌ No account found — create one first';
+        if (e.code === 'auth/wrong-password') friendly = '❌ Incorrect password';
+        if (e.code === 'auth/invalid-email') friendly = '❌ Enter a valid email address';
+        showError('login-error', friendly);
       }
     };
 
@@ -333,7 +326,7 @@
       const companyName = document.getElementById('comp-name').value;
       
       if (!email || !password || !companyName) {
-        showError('company-error', '⚠️ Please fill in all required fields');
+        showError('company-error', '⚠️ Fill in all required fields');
         return;
       }
       
@@ -351,17 +344,12 @@
           createdAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          uid: cred.user.uid,
-          ...data
-        });
-        
+        await setDoc(doc(db, 'users', cred.user.uid), { uid: cred.user.uid, ...data });
         userProfile = data;
         document.getElementById('company-success').style.display = 'block';
         alert('✅ Welcome! Your company account is ready.');
         navigateAfterLogin();
       } catch (e) {
-        console.log('Register error:', e.code, e.message);
         showError('company-error', '❌ ' + e.message);
       }
     };
@@ -373,7 +361,7 @@
       const password = document.getElementById('driver-password').value;
       
       if (!name || !email || !password) {
-        showError('driver-error', '⚠️ Please fill in all required fields');
+        showError('driver-error', '⚠️ Fill in all required fields');
         return;
       }
       
@@ -390,18 +378,16 @@
         };
         
         await setDoc(doc(db, 'users', cred.user.uid), profile);
-        
         userProfile = profile;
         document.getElementById('driver-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
         navigateAfterLogin();
       } catch (e) {
-        console.log('Register error:', e.code, e.message);
         showError('driver-error', '❌ ' + e.message);
       }
     };
 
-    // ===== SIGN OUT =====
+    // ===== SIGN OUT & SUBPAGES =====
     window.handleSignOut = async function() {
       await signOut(auth);
       userProfile = null;
@@ -409,7 +395,6 @@
       showPage('home');
     };
 
-    // ===== DRIVER SUBPAGES =====
     window.showDriverPage = function(pageName) {
       document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
       const subpage = document.getElementById('driver-' + pageName);
