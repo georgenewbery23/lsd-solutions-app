@@ -265,7 +265,7 @@
       // Timeout after 8 seconds — never get stuck forever
       try {
         const timeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('timeout')), 8000)
+          setTimeout(() => reject(new Error('timeout')), 20000)
         );
         
         const snap = await Promise.race([
