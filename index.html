@@ -207,7 +207,7 @@
     </div>
   </div>
 
-    <script type="module">
+  <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -247,7 +247,7 @@
 
     function navigateAfterLogin() {
       if (!userProfile || !userProfile.role) {
-        console.log('No role yet — waiting...');
+        console.log('Role not set yet');
         return;
       }
       updateDisplayName();
@@ -255,26 +255,6 @@
         showPage('company-dashboard');
       } else if (userProfile.role === 'driver') {
         showPage('driver-dashboard');
-      }
-    }
-
-    // ===== LOAD PROFILE IN BACKGROUND =====
-    async function loadProfile(uid) {
-      try {
-        const snap = await getDoc(doc(db, 'users', uid));
-        if (snap.exists()) {
-          userProfile = snap.data();
-          console.log('✅ Profile loaded');
-          updateDisplayName();
-          navigateAfterLogin(); // Navigate now that we have role
-        } else {
-          console.log('⚠️ No profile document found for this user');
-          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account.');
-          showPage('home');
-        }
-      } catch (e) {
-        console.log('❌ Profile load error:', e);
-        alert('✅ Signed in! But database is slow.\n\nPlease refresh and sign in again.');
       }
     }
 
@@ -289,7 +269,36 @@
       }
 
       console.log('✅ Auth successful — loading profile...');
-      await loadProfile(user.uid);
+      
+      // Retry a few times in case of temporary network blips
+      let retries = 0;
+      const maxRetries = 5;
+      
+      const loadWithRetry = async () => {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            userProfile = snap.data();
+            console.log('✅ Profile loaded successfully');
+            navigateAfterLogin();
+          } else {
+            console.log('⚠️ No profile document found');
+            alert('✅ Signed in! Please create a NEW account — this one was made before the database was ready.');
+            showPage('home');
+          }
+        } catch (e) {
+          retries++;
+          console.log(`Retry ${retries}/${maxRetries}:`, e.code || e.message);
+          if (retries < maxRetries) {
+            setTimeout(loadWithRetry, 1000 * retries); // Wait 1s, 2s, 3s...
+          } else {
+            console.log('❌ Failed after retries');
+            alert('✅ Signed in! Database is slow.\n\nPlease refresh the page — it will work on retry.');
+          }
+        }
+      };
+      
+      loadWithRetry();
     });
 
     // ===== SIGN IN =====
@@ -310,7 +319,6 @@
       try {
         showError('login-error', '⏳ Signing in...');
         await signInWithEmailAndPassword(auth, email, pass);
-        // onAuthStateChanged handles everything
       } catch (e) {
         console.log('Login error:', e.code);
         let friendly = '❌ Sign in failed — check your details';
@@ -337,6 +345,7 @@
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
         userProfile = {
+          uid: cred.user.uid,
           companyName: companyName,
           tradingAs: document.getElementById('comp-trading').value || '',
           registeredAddress: document.getElementById('comp-address').value || '',
@@ -346,10 +355,7 @@
           createdAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          uid: cred.user.uid,
-          ...userProfile
-        });
+        await setDoc(doc(db, 'users', cred.user.uid), userProfile);
         
         document.getElementById('company-success').style.display = 'block';
         alert('✅ Welcome! Your company account is ready.');
