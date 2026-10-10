@@ -8,10 +8,9 @@ const firebaseConfig = {
   projectId: "lsd-solutions",
   storageBucket: "lsd-solutions.firebasestorage.app",
   messagingSenderId: "833767217116",
-  appId: "1:833767217116:web:b29188de76b5778a086119"
+  appId: "1:833767217116:web:b8c5d6e7f8a9b0c1d2e3f4"
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export default app;
