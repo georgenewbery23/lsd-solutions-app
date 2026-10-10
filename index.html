@@ -207,7 +207,7 @@
     </div>
   </div>
 
-   <script type="module">
+    <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -233,7 +233,7 @@
       }
     }
 
-    function navigateAfterLogin() {
+    function updateDisplayName() {
       if (!userProfile) return;
       const companyNameEl = document.getElementById('company-name-display');
       const driverNameEl = document.getElementById('driver-name-display');
@@ -243,51 +243,53 @@
       if (userProfile.role === 'driver' && driverNameEl) {
         driverNameEl.textContent = userProfile.name || 'Driver';
       }
+    }
+
+    function navigateAfterLogin() {
+      if (!userProfile || !userProfile.role) {
+        console.log('No role yet — waiting...');
+        return;
+      }
+      updateDisplayName();
       if (userProfile.role === 'company') {
         showPage('company-dashboard');
       } else if (userProfile.role === 'driver') {
         showPage('driver-dashboard');
-      } else {
-        alert('⚠️ Account exists but role not set. Please create a new account.');
-        showPage('home');
       }
     }
 
-    // ===== FIREBASE CONNECTION HANDLING =====
+    // ===== LOAD PROFILE IN BACKGROUND =====
+    async function loadProfile(uid) {
+      try {
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+          userProfile = snap.data();
+          console.log('✅ Profile loaded');
+          updateDisplayName();
+          navigateAfterLogin(); // Navigate now that we have role
+        } else {
+          console.log('⚠️ No profile document found for this user');
+          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account.');
+          showPage('home');
+        }
+      } catch (e) {
+        console.log('❌ Profile load error:', e);
+        alert('✅ Signed in! But database is slow.\n\nPlease refresh and sign in again.');
+      }
+    }
+
+    // ===== FIREBASE AUTH STATE =====
     onAuthStateChanged(auth, async (user) => {
       authReady = true;
       currentUser = user;
       
-      if (!user) return;
-
-      console.log('✅ Auth signed in — loading profile...');
-
-      // Timeout after 8 seconds — never get stuck forever
-      try {
-        const timeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('timeout')), 30000)
-        );
-        
-        const snap = await Promise.race([
-          getDoc(doc(db, 'users', user.uid)),
-          timeout
-        ]);
-
-        if (snap.exists()) {
-          userProfile = snap.data();
-          navigateAfterLogin();
-        } else {
-          alert('✅ Signed in! ⚠️ No profile found.\n\nThis email was created before the database was ready.\n\nPlease create a NEW account with a different email — it will work instantly.');
-          showPage('home');
-        }
-      } catch (e) {
-        console.log('❌ Firestore issue:', e.code || e.message);
-        if (e.message === 'timeout' || e.code === 'unavailable' || e.message.includes('offline')) {
-          alert('✅ Signed in! ⏳ Database connection slow.\n\nPlease:\n1. Check your internet connection\n2. Refresh the page and sign in again\n3. Or create a NEW account which will work immediately');
-        } else {
-          alert('✅ Signed in! But there was an error loading your profile.\n\nPlease refresh and try again.');
-        }
+      if (!user) {
+        console.log('No user signed in');
+        return;
       }
+
+      console.log('✅ Auth successful — loading profile...');
+      await loadProfile(user.uid);
     });
 
     // ===== SIGN IN =====
@@ -308,7 +310,7 @@
       try {
         showError('login-error', '⏳ Signing in...');
         await signInWithEmailAndPassword(auth, email, pass);
-        // onAuthStateChanged handles the rest
+        // onAuthStateChanged handles everything
       } catch (e) {
         console.log('Login error:', e.code);
         let friendly = '❌ Sign in failed — check your details';
@@ -334,7 +336,7 @@
         showError('company-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        const data = {
+        userProfile = {
           companyName: companyName,
           tradingAs: document.getElementById('comp-trading').value || '',
           registeredAddress: document.getElementById('comp-address').value || '',
@@ -344,12 +346,16 @@
           createdAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, 'users', cred.user.uid), { uid: cred.user.uid, ...data });
-        userProfile = data;
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          uid: cred.user.uid,
+          ...userProfile
+        });
+        
         document.getElementById('company-success').style.display = 'block';
         alert('✅ Welcome! Your company account is ready.');
         navigateAfterLogin();
       } catch (e) {
+        console.log('Register error:', e.code, e.message);
         showError('company-error', '❌ ' + e.message);
       }
     };
@@ -369,7 +375,7 @@
         showError('driver-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        const profile = {
+        userProfile = {
           uid: cred.user.uid,
           name: name,
           email: email,
@@ -377,12 +383,13 @@
           createdAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, 'users', cred.user.uid), profile);
-        userProfile = profile;
+        await setDoc(doc(db, 'users', cred.user.uid), userProfile);
+        
         document.getElementById('driver-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
         navigateAfterLogin();
       } catch (e) {
+        console.log('Register error:', e.code, e.message);
         showError('driver-error', '❌ ' + e.message);
       }
     };
