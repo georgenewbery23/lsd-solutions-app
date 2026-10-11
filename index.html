@@ -207,14 +207,13 @@
     </div>
   </div>
 
-  <script type="module">
+    <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
 
     let currentUser = null;
     let userProfile = null;
-    let authReady = false;
 
     // ===== PAGE NAVIGATION =====
     window.showPage = function(id) {
@@ -233,72 +232,53 @@
       }
     }
 
-    function updateDisplayName() {
-      if (!userProfile) return;
+    function navigateAfterLogin() {
+      if (!userProfile || !userProfile.role) return;
+      
       const companyNameEl = document.getElementById('company-name-display');
       const driverNameEl = document.getElementById('driver-name-display');
+      
       if (userProfile.role === 'company' && companyNameEl) {
         companyNameEl.textContent = userProfile.companyName || 'Company';
-      }
-      if (userProfile.role === 'driver' && driverNameEl) {
-        driverNameEl.textContent = userProfile.name || 'Driver';
-      }
-    }
-
-    function navigateAfterLogin() {
-      if (!userProfile || !userProfile.role) {
-        console.log('Role not set yet');
-        return;
-      }
-      updateDisplayName();
-      if (userProfile.role === 'company') {
         showPage('company-dashboard');
-      } else if (userProfile.role === 'driver') {
+      } else if (userProfile.role === 'driver' && driverNameEl) {
+        driverNameEl.textContent = userProfile.name || 'Driver';
         showPage('driver-dashboard');
       }
     }
 
-    // ===== FIREBASE AUTH STATE =====
+    // ===== FIREBASE AUTH & PROFILE LOAD =====
     onAuthStateChanged(auth, async (user) => {
-      authReady = true;
-      currentUser = user;
+      if (!user) return;
       
-      if (!user) {
-        console.log('No user signed in');
-        return;
-      }
-
-      console.log('✅ Auth successful — loading profile...');
+      console.log('✅ Signed in — loading profile...');
       
-      // Retry a few times in case of temporary network blips
-      let retries = 0;
-      const maxRetries = 5;
-      
-      const loadWithRetry = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        
+        if (snap.exists()) {
+          userProfile = snap.data();
+          console.log('✅ Profile loaded — welcome!');
+          navigateAfterLogin();
+        } else {
+          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account with a fresh email.');
+          showPage('home');
+        }
+      } catch (e) {
+        console.warn('⚠️ First attempt slow — retrying once...', e.code);
+        // ONE retry only — enough time for connection to warm up
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) {
             userProfile = snap.data();
-            console.log('✅ Profile loaded successfully');
+            console.log('✅ Profile loaded on retry!');
             navigateAfterLogin();
-          } else {
-            console.log('⚠️ No profile document found');
-            alert('✅ Signed in! Please create a NEW account — this one was made before the database was ready.');
-            showPage('home');
           }
-        } catch (e) {
-          retries++;
-          console.log(`Retry ${retries}/${maxRetries}:`, e.code || e.message);
-          if (retries < maxRetries) {
-            setTimeout(loadWithRetry, 1000 * retries); // Wait 1s, 2s, 3s...
-          } else {
-            console.log('❌ Failed after retries');
-            alert('✅ Signed in! Database is slow.\n\nPlease refresh the page — it will work on retry.');
-          }
+        } catch (e2) {
+          console.error('❌ Failed:', e2);
+          alert('⚠️ Connection slow — please refresh and try again.');
         }
-      };
-      
-      loadWithRetry();
+      }
     });
 
     // ===== SIGN IN =====
@@ -307,12 +287,7 @@
       const pass = document.getElementById('login-password').value;
       
       if (!email || !pass) {
-        showError('login-error', '⚠️ Please enter email and password');
-        return;
-      }
-      
-      if (!authReady) {
-        showError('login-error', '⏳ Connecting... wait a moment then try again');
+        showError('login-error', '⚠️ Enter email and password');
         return;
       }
       
@@ -320,11 +295,9 @@
         showError('login-error', '⏳ Signing in...');
         await signInWithEmailAndPassword(auth, email, pass);
       } catch (e) {
-        console.log('Login error:', e.code);
-        let friendly = '❌ Sign in failed — check your details';
+        let friendly = '❌ Sign in failed — check details';
         if (e.code === 'auth/user-not-found') friendly = '❌ No account found — create one first';
         if (e.code === 'auth/wrong-password') friendly = '❌ Incorrect password';
-        if (e.code === 'auth/invalid-email') friendly = '❌ Enter a valid email address';
         showError('login-error', friendly);
       }
     };
@@ -336,7 +309,7 @@
       const companyName = document.getElementById('comp-name').value;
       
       if (!email || !password || !companyName) {
-        showError('company-error', '⚠️ Fill in all required fields');
+        showError('company-error', '⚠️ Fill all required fields');
         return;
       }
       
@@ -356,12 +329,10 @@
         };
         
         await setDoc(doc(db, 'users', cred.user.uid), userProfile);
-        
         document.getElementById('company-success').style.display = 'block';
-        alert('✅ Welcome! Your company account is ready.');
+        alert('✅ Welcome! Your account is ready.');
         navigateAfterLogin();
       } catch (e) {
-        console.log('Register error:', e.code, e.message);
         showError('company-error', '❌ ' + e.message);
       }
     };
@@ -373,7 +344,7 @@
       const password = document.getElementById('driver-password').value;
       
       if (!name || !email || !password) {
-        showError('driver-error', '⚠️ Fill in all required fields');
+        showError('driver-error', '⚠️ Fill all required fields');
         return;
       }
       
@@ -390,12 +361,10 @@
         };
         
         await setDoc(doc(db, 'users', cred.user.uid), userProfile);
-        
         document.getElementById('driver-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
         navigateAfterLogin();
       } catch (e) {
-        console.log('Register error:', e.code, e.message);
         showError('driver-error', '❌ ' + e.message);
       }
     };
