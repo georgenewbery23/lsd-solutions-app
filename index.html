@@ -41,7 +41,6 @@
 </head>
 <body>
 
-<!-- SIGN IN PAGE -->
 <div id="page-signin" class="page" style="display: block;">
   <div class="container">
     <div class="logo">
@@ -58,7 +57,6 @@
   </div>
 </div>
 
-<!-- REGISTER PAGE -->
 <div id="page-register" class="page">
   <div class="container">
     <div class="logo">
@@ -84,20 +82,17 @@
   </div>
 </div>
 
-<!-- LOADING PAGE -->
 <div id="page-loading" class="page">
   <div class="container" style="text-align: center; padding-top: 80px;">
     <h2>Loading...</h2>
-    <p id="status-text" class="status">Connecting to database...</p>
+    <p id="status-text" class="status">Connecting...</p>
   </div>
 </div>
 
-<!-- DASHBOARD PAGE -->
 <div id="page-dashboard" class="page">
   <div id="dashboard-content"></div>
 </div>
 
-<!-- FIREBASE SCRIPTS -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -115,13 +110,7 @@
 
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  
-  // ✅ EXPLICITLY USE YOUR EXISTING DATABASE: (default) (europe-west2)
   const db = firebase.firestore();
-  db.settings({
-    host: 'us-central1-firestore.googleapis.com',
-    ssl: true
-  });
 
   let currentUser = null;
   let profileLoaded = false;
@@ -134,10 +123,8 @@
   const statusText = document.getElementById('status-text');
 
   function showPage(pageToShow) {
-    [pageSignIn, pageRegister, pageLoading, pageDashboard].forEach(p => {
-      if (p) p.style.display = 'none';
-    });
-    if (pageToShow) pageToShow.style.display = 'block';
+    [pageSignIn, pageRegister, pageLoading, pageDashboard].forEach(p => p && (p.style.display = 'none'));
+    pageToShow && (pageToShow.style.display = 'block');
   }
 
   function setStatus(msg) {
@@ -147,46 +134,36 @@
 
   function getDashboardHTML(role) {
     if (role === 'company') {
-      return `
-        <div class="dashboard-container">
-          <div class="dashboard-header">
-            <h1>🏢 Company Portal</h1>
-            <p>Welcome to LSD Solutions — Management Dashboard</p>
-          </div>
-          <div class="grid">
-            <div class="card"><h3>🚛 Drivers</h3><p>Manage your driver list</p></div>
-            <div class="card"><h3>📋 Vehicles</h3><p>Fleet & walkaround checks</p></div>
-            <div class="card"><h3>📄 Documents</h3><p>Licences, CPC, tacho records</p></div>
-            <div class="card"><h3>💰 Payments</h3><p>Invoices & transactions</p></div>
-            <div class="card"><h3>📅 Calendar</h3><p>Jobs & availability</p></div>
-            <div class="card"><h3>👤 Profile</h3><p>Company details & settings</p></div>
-          </div>
-          <button class="btn-danger sign-out-btn" onclick="handleSignOut()">Sign Out</button>
+      return `<div class="dashboard-container">
+        <div class="dashboard-header"><h1>🏢 Company Portal</h1><p>Welcome to LSD Solutions — Management Dashboard</p></div>
+        <div class="grid">
+          <div class="card"><h3>🚛 Drivers</h3><p>Manage your driver list</p></div>
+          <div class="card"><h3>📋 Vehicles</h3><p>Fleet & walkaround checks</p></div>
+          <div class="card"><h3>📄 Documents</h3><p>Licences, CPC, tacho records</p></div>
+          <div class="card"><h3>💰 Payments</h3><p>Invoices & transactions</p></div>
+          <div class="card"><h3>📅 Calendar</h3><p>Jobs & availability</p></div>
+          <div class="card"><h3>👤 Profile</h3><p>Company details & settings</p></div>
         </div>
-      `;
+        <button class="btn-danger sign-out-btn" onclick="handleSignOut()">Sign Out</button>
+      </div>`;
     } else {
-      return `
-        <div class="dashboard-container">
-          <div class="dashboard-header">
-            <h1>🚛 Driver Portal</h1>
-            <p>Welcome back — LSD Solutions</p>
-          </div>
-          <div class="grid">
-            <div class="card"><h3>✅ Vehicle Check</h3><p>Daily walkaround</p></div>
-            <div class="card"><h3>📋 My Checks</h3><p>History & defects</p></div>
-            <div class="card"><h3>📅 My Calendar</h3><p>Work & availability</p></div>
-            <div class="card"><h3>🔍 Available Work</h3><p>Jobs from operators</p></div>
-            <div class="card"><h3>📄 My Documents</h3><p>Licence, CPC, tacho</p></div>
-            <div class="card"><h3>👤 My Profile</h3><p>Personal info</p></div>
-          </div>
-          <button class="btn-danger sign-out-btn" onclick="handleSignOut()">Sign Out</button>
+      return `<div class="dashboard-container">
+        <div class="dashboard-header"><h1>🚛 Driver Portal</h1><p>Welcome back — LSD Solutions</p></div>
+        <div class="grid">
+          <div class="card"><h3>✅ Vehicle Check</h3><p>Daily walkaround</p></div>
+          <div class="card"><h3>📋 My Checks</h3><p>History & defects</p></div>
+          <div class="card"><h3>📅 My Calendar</h3><p>Work & availability</p></div>
+          <div class="card"><h3>🔍 Available Work</h3><p>Jobs from operators</p></div>
+          <div class="card"><h3>📄 My Documents</h3><p>Licence, CPC, tacho</p></div>
+          <div class="card"><h3>👤 My Profile</h3><p>Personal info</p></div>
         </div>
-      `;
+        <button class="btn-danger sign-out-btn" onclick="handleSignOut()">Sign Out</button>
+      </div>`;
     }
   }
 
   function showDashboard(role) {
-    console.log('🖥️ Showing dashboard for role:', role);
+    console.log('🖥️ Dashboard:', role);
     dashboardContent.innerHTML = getDashboardHTML(role);
     showPage(pageDashboard);
   }
@@ -196,34 +173,28 @@
     setStatus('Loading your profile...');
 
     try {
-      const profileRef = db.collection('users').doc(user.uid);
-      const snap = await profileRef.get();
-
+      const snap = await db.collection('users').doc(user.uid).get();
       if (snap.exists) {
         const data = snap.data();
-        console.log('✅ Profile loaded:', data);
+        console.log('✅ Profile:', data);
         profileLoaded = true;
         showDashboard(data.role || 'driver');
       } else {
-        console.log('⚠️ No profile doc — defaulting to driver');
+        console.log('⚠️ No profile doc');
         profileLoaded = true;
         showDashboard('driver');
       }
     } catch (err) {
-      console.warn('⚠️ Profile load error:', err.code);
-      setStatus('Waiting...');
+      console.warn('⚠️ Load error:', err.code);
+      setStatus('Still connecting...');
       setTimeout(() => {
-        if (!profileLoaded) {
-          console.log('⏰ Fallback — showing driver portal');
-          showDashboard('driver');
-        }
-      }, 8000);
+        if (!profileLoaded) showDashboard('driver');
+      }, 5000);
     }
   }
 
   firebase.auth().onAuthStateChanged(async (user) => {
-    console.log('🔐 Auth state:', user ? 'Signed in' : 'Signed out');
-    
+    console.log('🔐', user ? 'Signed in' : 'Signed out');
     if (user) {
       currentUser = user;
       showPage(pageLoading);
@@ -240,13 +211,11 @@
     const email = document.getElementById('si-email').value.trim();
     const pass = document.getElementById('si-password').value;
     if (!email || !pass) return alert('Please fill in all fields');
-
     try {
       showPage(pageLoading);
       setStatus('Signing you in...');
       await auth.signInWithEmailAndPassword(email, pass);
     } catch (err) {
-      console.error('❌ Sign in error:', err);
       alert('Sign in failed: ' + err.message);
       showPage(pageSignIn);
     }
@@ -257,20 +226,15 @@
     const email = document.getElementById('reg-email').value.trim();
     const pass = document.getElementById('reg-password').value;
     if (!name || !email || !pass) return alert('Please fill in all fields');
-
     try {
       showPage(pageLoading);
       setStatus('Creating company account...');
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      
       await db.collection('users').doc(cred.user.uid).set({
-        name: name,
-        email: email,
-        role: 'company',
+        name, email, role: 'company',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     } catch (err) {
-      console.error('❌ Company register error:', err);
       alert('Registration failed: ' + err.message);
       showPage(pageRegister);
     }
@@ -281,31 +245,21 @@
     const email = document.getElementById('dr-email').value.trim();
     const pass = document.getElementById('dr-password').value;
     if (!name || !email || !pass) return alert('Please fill in all fields');
-
     try {
       showPage(pageLoading);
       setStatus('Creating driver account...');
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      
       await db.collection('users').doc(cred.user.uid).set({
-        name: name,
-        email: email,
-        role: 'driver',
+        name, email, role: 'driver',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     } catch (err) {
-      console.error('❌ Driver register error:', err);
       alert('Registration failed: ' + err.message);
       showPage(pageRegister);
     }
   };
 
-  window.handleSignOut = async function () {
-    await auth.signOut();
-    currentUser = null;
-    profileLoaded = false;
-  };
-
+  window.handleSignOut = async () => { await auth.signOut(); currentUser = null; profileLoaded = false; };
   window.showRegister = () => showPage(pageRegister);
   window.showSignIn = () => showPage(pageSignIn);
 </script>
