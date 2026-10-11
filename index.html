@@ -270,44 +270,40 @@ enableIndexedDbPersistence(db)
     }
 
     // ===== FIREBASE AUTH STATE — IMMEDIATE NAVIGATION =====
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      
-      console.log('✅ Signed in — checking profile...');
-      
-      // First: Try to load with timeout — don't wait forever
-      let loaded = false;
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('slow')), 10000)
-      );
-      
-      try {
-        const snap = await Promise.race([
-          getDoc(doc(db, 'users', user.uid)),
-          timeout
-        ]);
-        
-        if (snap.exists()) {
-          userProfile = snap.data();
-          navigateAfterLogin();
-          loaded = true;
-        } else {
-          // No profile = old account → tell user to create new
-          alert('✅ Signed in! ⚠️ This account was created before the database was ready.\n\nPlease create a NEW account with a fresh email.');
-          showPage('home');
-        }
-      } catch (e) {
-        if (e.message === 'slow' || e.code === 'unavailable') {
-          console.log('Database slow — will retry in background');
-          // Show a helpful message but DON'T block — let them refresh
-          if (!hasNavigated) {
-            alert('✅ Signed in! ⏳ Database connecting slowly...\n\nPlease refresh the page once and it will load.');
-          }
-          // Keep trying in background
-          loadProfileBackground(user.uid);
-        }
-      }
-    });
+      // Replace your onAuthStateChanged block with this:
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  console.log('✅ Signed in — loading...');
+
+  // Try cached data FIRST — instant display
+  let usedCache = false;
+  try {
+    const snap = await getDoc(doc(db, 'users', user.uid), { source: 'cache' });
+    if (snap.exists()) {
+      userProfile = snap.data();
+      navigateAfterLogin();
+      usedCache = true;
+      console.log('⚡ Loaded from cache');
+    }
+  } catch {}
+
+  // Then refresh from server in background
+  try {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      userProfile = snap.data();
+      if (!usedCache) navigateAfterLogin();
+      console.log('✅ Fresh data loaded');
+    } else if (!usedCache) {
+      alert('⚠️ No profile — create a NEW account.');
+      showPage('home');
+    }
+  } catch (e) {
+    if (!usedCache) {
+      alert('⏳ Connection slow — please refresh once.');
+    }
+  }
+});
 
     // ===== SIGN IN =====
     window.handleLogin = async function() {
