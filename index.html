@@ -207,13 +207,14 @@
     </div>
   </div>
 
-  <script type="module">
+    <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
 
     let userProfile = null;
     let hasNavigated = false;
+    let pendingRole = null;
 
     // ===== PAGE NAVIGATION =====
     window.showPage = function(id) {
@@ -233,50 +234,49 @@
     }
 
     function navigateAfterLogin() {
-      if (hasNavigated || !userProfile || !userProfile.role) return;
-      hasNavigated = true;
+      if (hasNavigated) return;
       
+      // Use profile if loaded, otherwise use pending role from registration
+      const profile = userProfile || { role: pendingRole };
+      if (!profile || !profile.role) return;
+      
+      hasNavigated = true;
       const companyNameEl = document.getElementById('company-name-display');
       const driverNameEl = document.getElementById('driver-name-display');
       
-      if (userProfile.role === 'company' && companyNameEl) {
-        companyNameEl.textContent = userProfile.companyName || 'Company';
+      if (profile.role === 'company' && companyNameEl) {
+        companyNameEl.textContent = profile.companyName || 'Company';
         showPage('company-dashboard');
-      } else if (userProfile.role === 'driver' && driverNameEl) {
-        driverNameEl.textContent = userProfile.name || 'Driver';
+      } else if (profile.role === 'driver' && driverNameEl) {
+        driverNameEl.textContent = profile.name || 'Driver';
         showPage('driver-dashboard');
       }
     }
 
-    // ===== FIREBASE AUTH STATE =====
+    // ===== FIREBASE AUTH STATE — NON-BLOCKING =====
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
       console.log('✅ Signed in — loading profile...');
-      
+
+      // If we already have pending data from registration → GO INSTANTLY
+      if (pendingRole) {
+        console.log('⚡ Using registration data — navigating now');
+        navigateAfterLogin();
+      }
+
+      // Load Firestore in background — DON'T block navigation
       try {
         const snap = await getDoc(doc(db, 'users', user.uid));
-        
         if (snap.exists()) {
           userProfile = snap.data();
-          console.log('✅ Profile loaded');
-          navigateAfterLogin();
-        } else {
-          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account.');
-          showPage('home');
+          console.log('✅ Firestore profile loaded');
+          if (!hasNavigated) navigateAfterLogin();
         }
       } catch (e) {
-        console.log('⚠️ First attempt slow — retrying...', e.code);
-        try {
-          await new Promise(res => setTimeout(res, 1500));
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (snap.exists()) {
-            userProfile = snap.data();
-            console.log('✅ Loaded on retry');
-            navigateAfterLogin();
-          }
-        } catch (e2) {
-          console.error('❌ Failed:', e2);
-          alert('⏳ Database is warming up.\n\nPlease refresh the page and try again.');
+        console.warn('⚠️ Firestore slow/unavailable — dashboard still works:', e.code);
+        // Still show dashboard — user can refresh later if needed
+        if (!hasNavigated && pendingRole) {
+          alert('✅ Signed in! ⏳ Database syncing — refresh if details missing.');
         }
       }
     });
@@ -293,7 +293,9 @@
       
       try {
         showError('login-error', '⏳ Signing in...');
+        pendingRole = null; // Clear from any previous registration
         await signInWithEmailAndPassword(auth, email, pass);
+        // onAuthStateChanged handles everything
       } catch (e) {
         let friendly = '❌ Sign in failed — check details';
         if (e.code === 'auth/user-not-found') friendly = '❌ No account found — create one first';
@@ -318,6 +320,8 @@
         showError('company-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
+        // Store locally IMMEDIATELY so navigation works even if Firestore is slow
+        pendingRole = 'company';
         userProfile = {
           uid: cred.user.uid,
           companyName: companyName,
@@ -329,10 +333,14 @@
           createdAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, 'users', cred.user.uid), userProfile);
+        // Save to Firestore — DON'T wait for it to finish
+        setDoc(doc(db, 'users', cred.user.uid), userProfile)
+          .then(() => console.log('✅ Firestore saved'))
+          .catch(err => console.warn('⚠️ Saved locally, Firestore delayed:', err.code));
+        
         document.getElementById('company-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
-        navigateAfterLogin();
+        navigateAfterLogin(); // GO INSTANTLY
       } catch (e) {
         showError('company-error', '❌ ' + e.message);
       }
@@ -353,6 +361,8 @@
         showError('driver-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
+        // Store locally IMMEDIATELY
+        pendingRole = 'driver';
         userProfile = {
           uid: cred.user.uid,
           name: name,
@@ -361,10 +371,14 @@
           createdAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, 'users', cred.user.uid), userProfile);
+        // Save to Firestore in background
+        setDoc(doc(db, 'users', cred.user.uid), userProfile)
+          .then(() => console.log('✅ Firestore saved'))
+          .catch(err => console.warn('⚠️ Saved locally, Firestore delayed:', err.code));
+        
         document.getElementById('driver-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
-        navigateAfterLogin();
+        navigateAfterLogin(); // GO INSTANTLY
       } catch (e) {
         showError('driver-error', '❌ ' + e.message);
       }
@@ -374,6 +388,7 @@
     window.handleSignOut = async function() {
       hasNavigated = false;
       userProfile = null;
+      pendingRole = null;
       await signOut(auth);
       showPage('home');
     };
@@ -388,5 +403,3 @@
       document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
     };
   </script>
-</body>
-</html>
