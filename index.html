@@ -1,15 +1,10 @@
-import { enableIndexedDbPersistence } from "firebase/firestore";
-
-// Cache locally = instant loads on return visits
-enableIndexedDbPersistence(db)
-  .catch(err => console.log('Local cache ready:', err.code));
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LSD Solutions</title>
-<link rel="icon" type="image/png" href="assets/lsd-logo.png">  
+  <link rel="icon" type="image/png" href="assets/lsd-logo.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
     body { background: #f5f7fa; min-height: 100vh; }
@@ -52,8 +47,8 @@ enableIndexedDbPersistence(db)
     <div id="page-login" class="page">
       <h2>Sign In</h2>
       <div id="login-error" class="message error"></div>
-      <input type="email" id="login-email" placeholder="Email">
-      <input type="password" id="login-password" placeholder="Password">
+      <input type="email" id="login-email" name="login-email" placeholder="Email">
+      <input type="password" id="login-password" name="login-password" placeholder="Password">
       <button class="btn btn-primary" onclick="handleLogin()">Sign In</button>
       <p class="link" onclick="showPage('home')">← Back</p>
     </div>
@@ -71,12 +66,12 @@ enableIndexedDbPersistence(db)
       <h2>Company Registration</h2>
       <div id="company-error" class="message error"></div>
       <div id="company-success" class="message success">✅ Account created! You can now sign in.</div>
-      <input type="text" id="comp-name" placeholder="Company Name">
-      <input type="text" id="comp-trading" placeholder="Trading As">
-      <input type="text" id="comp-address" placeholder="Registered Address">
-      <input type="text" id="comp-licence" placeholder="Operator Licence Number">
-      <input type="email" id="comp-email" placeholder="Email Address">
-      <input type="password" id="comp-password" placeholder="Create Password">
+      <input type="text" id="comp-name" name="comp-name" placeholder="Company Name">
+      <input type="text" id="comp-trading" name="comp-trading" placeholder="Trading As">
+      <input type="text" id="comp-address" name="comp-address" placeholder="Registered Address">
+      <input type="text" id="comp-licence" name="comp-licence" placeholder="Operator Licence Number">
+      <input type="email" id="comp-email" name="comp-email" placeholder="Email Address">
+      <input type="password" id="comp-password" name="comp-password" placeholder="Create Password">
       <button class="btn btn-primary" onclick="handleCompanyRegister()">Register</button>
       <p class="link" onclick="showPage('select-role')">← Back</p>
     </div>
@@ -86,9 +81,9 @@ enableIndexedDbPersistence(db)
       <h2>Driver Registration</h2>
       <div id="driver-error" class="message error"></div>
       <div id="driver-success" class="message success">✅ Account created! You can now sign in.</div>
-      <input type="text" id="driver-name" placeholder="Full Name">
-      <input type="email" id="driver-email" placeholder="Email Address">
-      <input type="password" id="driver-password" placeholder="Create Password">
+      <input type="text" id="driver-name" name="driver-name" placeholder="Full Name">
+      <input type="email" id="driver-email" name="driver-email" placeholder="Email Address">
+      <input type="password" id="driver-password" name="driver-password" placeholder="Create Password">
       <button class="btn btn-primary" onclick="handleDriverRegister()">Register</button>
       <p class="link" onclick="showPage('select-role')">← Back</p>
     </div>
@@ -212,7 +207,7 @@ enableIndexedDbPersistence(db)
     </div>
   </div>
 
-    <script type="module">
+  <script type="module">
     import { auth, db } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -257,7 +252,7 @@ enableIndexedDbPersistence(db)
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
       console.log('✅ Signed in — loading profile...');
-
+      
       try {
         const snap = await getDoc(doc(db, 'users', user.uid));
         
@@ -271,7 +266,6 @@ enableIndexedDbPersistence(db)
         }
       } catch (e) {
         console.log('⚠️ First attempt slow — retrying...', e.code);
-        // ONE retry — connection warms up
         try {
           await new Promise(res => setTimeout(res, 1500));
           const snap = await getDoc(doc(db, 'users', user.uid));
@@ -394,3 +388,5 @@ enableIndexedDbPersistence(db)
       document.querySelectorAll('.subpage').forEach(el => el.style.display = 'none');
     };
   </script>
+</body>
+</html>
