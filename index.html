@@ -879,13 +879,29 @@ window.saveInfringement = async function() {
     switchTab(getNavItems(userProfile.role)[0].id);
   });
 
-  window.handleSignIn = async () => {
-    const email = document.getElementById('si-email').value.trim();
-    const pass = document.getElementById('si-password').value;
-    if (!email || !pass) return alert('Please fill in all fields');
-    try { showPage('loading'); setStatus('Signing you in...'); await auth.signInWithEmailAndPassword(email, pass); }
-    catch(e) { alert('Sign in failed: ' + e.message); showPage('signin'); }
-  };
+  window.handleSignIn = async function () {
+  console.log('👉 Sign in button clicked');
+  const email = document.getElementById('si-email').value.trim();
+  const pass = document.getElementById('si-password').value;
+  
+  console.log('📧 Email:', email ? 'entered' : 'empty');
+  console.log('🔑 Password:', pass ? 'entered' : 'empty');
+  
+  if (!email || !pass) {
+    alert('⚠️ Please fill in both email and password');
+    return;
+  }
+  
+  try {
+    showPage('loading');
+    setStatus('Signing you in...');
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    console.error('❌ Sign in error:', e);
+    alert('Sign in failed: ' + e.message);
+    showPage('signin');
+  }
+};
 
   window.handleCompanyRegister = async () => {
     const name = document.getElementById('reg-name').value.trim();
@@ -921,6 +937,32 @@ window.saveInfringement = async function() {
 
   document.getElementById('si-email').value = '';
   document.getElementById('si-password').value = '';
+// Make all functions globally accessible
+window.showPage = showPage;
+window.switchTab = switchTab;
+window.handleSignIn = handleSignIn;
+window.handleCompanyRegister = handleCompanyRegister;
+window.handleDriverRegister = handleDriverRegister;
+window.handleSignOut = handleSignOut;
+window.switchDocPage = switchDocPage;
+window.previewDocPhoto = previewDocPhoto;
+window.saveDoc = saveDoc;
+window.addInfringement = addInfringement;
+window.saveInfringement = saveInfringement;
+window.changeCal = changeCal;
+window.setAvail = setAvail;
+window.postJob = postJob;
+window.closeJob = closeJob;
+window.uploadDocument = uploadDocument;
+window.saveProfile = saveProfile;
+window.viewDriverDetail = viewDriverDetail;
+window.viewVehicleChecks = viewVehicleChecks;
+window.showDefect = showDefect;
+window.showOtherDefect = showOtherDefect;
+window.hideDefect = hideDefect;
+window.saveDefect = saveDefect;
+window.submitCheck = submitCheck;
+window.showPhotoPreviews = showPhotoPreviews;
 </script>
 
 </body>
