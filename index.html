@@ -708,3 +708,19 @@
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
       await db.collection('users').doc(cred.user.uid).set({name, email, role:'driver', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     } catch(e) { alert('Registration failed: ' + e.message);
+    (e) { alert('Registration failed: ' + e.message); showPage('register'); }
+  };
+
+  window.handleSignOut = async () => {
+    await auth.signOut();
+    currentUser = null;
+    userProfile = null;
+    showPage('signin');
+  };
+
+  document.getElementById('si-email').value = '';
+  document.getElementById('si-password').value = '';
+</script>
+
+</body>
+</html>
