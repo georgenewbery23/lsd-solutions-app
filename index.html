@@ -71,7 +71,7 @@
     .card {
       background: white; padding: 24px; border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      transition: transform 0.2s;
+      transition: transform 0.2s; cursor: pointer;
     }
     .card:hover { transform: translateY(-2px); }
     .card h3 { margin: 0 0 8px; font-size: 18px; }
@@ -87,8 +87,8 @@
     .checklist-item input[type="checkbox"] { width: auto; margin: 0; }
     .defect-box { background: #fef3c7; padding: 16px; border-radius: 8px; margin: 12px 0; }
     .photo-preview {
-      width: 80px; height: 80px; object-fit: cover; border-radius: 6px;
-      margin: 4px; border: 1px solid var(--border);
+      width: 100px; height: 100px; object-fit: cover; border-radius: 6px;
+      margin: 8px 8px 0 0; border: 1px solid var(--border);
     }
     .item-card {
       background: white; padding: 16px; border-radius: 10px; margin-bottom: 12px;
@@ -96,6 +96,11 @@
     }
     .item-card.major { border-left-color: var(--danger); }
     .item-card.advisory { border-left-color: var(--warning); }
+    .thumb-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .thumb-grid img {
+      width: 80px; height: 80px; object-fit: cover; border-radius: 4px;
+      cursor: pointer; border: 1px solid var(--border);
+    }
 
     /* Calendar */
     .cal-header {
@@ -112,7 +117,6 @@
     }
     .cal-day:hover { background: #f0f4f8; }
     .cal-day.today { border-color: var(--primary); border-width: 2px; }
-    .cal-label { font-size: 11px; padding: 2px 4px; border-radius: 3px; margin-top: 2px; }
     .key-box { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
     .key-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
     .key-swatch { width: 14px; height: 14px; border-radius: 3px; }
@@ -129,8 +133,8 @@
     .alert-info { background: #e0f2fe; color: #075985; }
     .alert-success { background: #dcfce7; color: #166534; }
     .alert-warning { background: #fef3c7; color: #92400e; }
-    .alert-danger { background: #fee2e2; color: #991b1b; }
     .empty { color: var(--muted); text-align: center; padding: 30px; }
+    .upload-status { font-size: 13px; color: var(--muted); margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -196,11 +200,7 @@
       </div>
       <button class="btn-sm btn-danger" onclick="handleSignOut()">Sign Out</button>
     </div>
-
-    <!-- Navigation -->
     <div class="dash-nav" id="dash-nav"></div>
-
-    <!-- Content Area -->
     <div class="dash-content" id="dash-content"></div>
   </div>
 </div>
@@ -209,6 +209,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
   // ===== CONFIG =====
@@ -216,7 +217,7 @@
     apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
     authDomain: "lsd-solutions.firebaseapp.com",
     projectId: "lsd-solutions",
-    storageBucket: "lsd-solutions.firebasestorage.app",
+    storageBucket: "lsd-solutions.appspot.com",
     messagingSenderId: "833767217116",
     appId: "1:833767217116:web:b29188de76b5778a086119",
     measurementId: "G-7YF4T8BBPT"
@@ -226,6 +227,7 @@
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+  const storage = firebase.storage();
 
   let currentUser = null;
   let userProfile = null;
@@ -233,11 +235,11 @@
 
   // Calendar state
   let calDate = new Date();
-  let calView = 'month';
   let availData = {};
   let jobsData = [];
   let checksData = [];
   let defectsData = [];
+  let pendingPhotoURLs = [];
 
   // ===== PAGE ROUTING =====
   const pages = {
@@ -293,20 +295,24 @@
     renderContent(tabId);
   }
 
+  // ===== UPLOAD PHOTO TO STORAGE =====
+  async function uploadDefectPhoto(file, userId) {
+    const timestamp = Date.now();
+    const ref = storage.ref(`defects/${userId}/${timestamp}_${file.name}`);
+    await ref.put(file);
+    return await ref.getDownloadURL();
+  }
+
   // ===== LOAD ALL DATA FROM FIRESTORE =====
   async function loadAllData() {
     if (!currentUser) return;
 
-    // Load availability
     const availSnap = await db.collection('availability')
       .where('userId', '==', currentUser.uid)
       .get();
     availData = {};
-    availSnap.forEach(doc => {
-      availData[doc.data().date] = doc.data().status;
-    });
+    availSnap.forEach(doc => { availData[doc.data().date] = doc.data().status; });
 
-    // Load checks
     const checksSnap = await db.collection('checks')
       .where('userId', '==', currentUser.uid)
       .orderBy('completedAt', 'desc')
@@ -314,7 +320,6 @@
       .get();
     checksData = checksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Load defects
     const defectsSnap = await db.collection('defects')
       .where('userId', '==', currentUser.uid)
       .orderBy('timestamp', 'desc')
@@ -322,7 +327,6 @@
       .get();
     defectsData = defectsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Load jobs (all open jobs for everyone)
     const jobsSnap = await db.collection('jobs')
       .where('status', '==', 'open')
       .orderBy('createdAt', 'desc')
@@ -385,10 +389,11 @@
             <option value="major">🔴 Major — Needs immediate attention</option>
           </select>
           
-          <label>Add Photos (filenames recorded — full upload coming soon)</label>
-          <input type="file" id="defect-photos" accept="image/*" multiple />
+          <label>Add Photos</label>
+          <input type="file" id="defect-photos" accept="image/*" multiple onchange="showPhotoPreviews(this)" />
+          <div id="photo-preview-area" class="thumb-grid"></div>
           
-          <button class="btn-primary mt-20" onclick="saveDefect()">Save Defect</button>
+          <button class="btn-primary mt-20" id="save-defect-btn" onclick="saveDefect()">📸 Save Defect with Photos</button>
           <button class="btn-sm" style="background:transparent; color:var(--muted);" onclick="hideDefect()">Cancel</button>
         </div>
       </div>
@@ -401,53 +406,84 @@
   }
 
   let currentDefectItem = null;
+  let selectedPhotoFiles = [];
+
+  function showPhotoPreviews(input) {
+    selectedPhotoFiles = Array.from(input.files);
+    const area = document.getElementById('photo-preview-area');
+    area.innerHTML = '';
+    selectedPhotoFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        area.innerHTML += `<img src="${e.target.result}" alt="Preview" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   function showDefect(item) {
     currentDefectItem = item;
+    selectedPhotoFiles = [];
     document.getElementById('defect-item').value = item;
+    document.getElementById('photo-preview-area').innerHTML = '';
     document.getElementById('defect-form').classList.remove('hidden');
     document.getElementById('defect-desc').focus();
   }
+
   function showOtherDefect() {
     currentDefectItem = 'Other Defect';
+    selectedPhotoFiles = [];
     document.getElementById('defect-item').value = '';
     document.getElementById('defect-item').placeholder = 'Enter defect name';
+    document.getElementById('photo-preview-area').innerHTML = '';
     document.getElementById('defect-form').classList.remove('hidden');
     document.getElementById('defect-desc').focus();
   }
+
   function hideDefect() {
     document.getElementById('defect-form').classList.add('hidden');
+    document.getElementById('photo-preview-area').innerHTML = '';
+    selectedPhotoFiles = [];
     currentDefectItem = null;
   }
+
   async function saveDefect() {
     const item = document.getElementById('defect-item').value.trim() || 'Unspecified';
     const desc = document.getElementById('defect-desc').value.trim();
     const severity = document.getElementById('defect-severity').value;
-    const photoInput = document.getElementById('defect-photos');
-    const photoNames = photoInput.files.length > 0 
-      ? Array.from(photoInput.files).map(f => f.name) 
-      : [];
     
     if (!desc) return alert('Please describe the defect');
     
+    const btn = document.getElementById('save-defect-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Uploading photos...';
+
+    // Upload all photos first
+    const photoURLs = [];
+    for (const file of selectedPhotoFiles) {
+      const url = await uploadDefectPhoto(file, currentUser.uid);
+      photoURLs.push(url);
+    }
+
+    // Save to Firestore
     await db.collection('defects').add({
       userId: currentUser.uid,
       item,
       description: desc,
       severity,
-      photoNames,
+      photoURLs,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
-    
-    alert(`✅ Defect saved — ${severity.toUpperCase()}`);
+
+    alert(`✅ Defect saved — ${severity.toUpperCase()}\n${photoURLs.length} photo(s) uploaded`);
     hideDefect();
-    loadAllData();
+    await loadAllData();
+    renderContent('mychecks');
   }
+
   async function submitCheck() {
     const reg = document.getElementById('vreg').value.trim() || 'Not Recorded';
-    
-    // Collect checked items
     const checkedItems = [];
-    const defectsReported = [];
     document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(cb => {
       if (cb.checked) checkedItems.push(cb.id.replace('check-', '').replace(/-/g, ' '));
     });
@@ -467,10 +503,7 @@
   // ===== MY CHECKS HISTORY =====
   function renderMyChecks() {
     if (checksData.length === 0 && defectsData.length === 0) {
-      return `
-        <h3>My Checks & Defects</h3>
-        <p class="empty">No checks submitted yet. Complete your first vehicle check above.</p>
-      `;
+      return `<h3>My Checks & Defects</h3><p class="empty">No checks submitted yet. Complete your first vehicle check above.</p>`;
     }
 
     let html = `<h3>My Checks (Last 20)</h3>`;
@@ -501,12 +534,15 @@
             <strong>${d.severity === 'major' ? '🔴' : '⚠️'} ${d.item}</strong>
             <p style="margin:4px 0; font-size:13px; color:var(--muted);">${date}</p>
             <p style="font-size:14px; margin-top:8px;">${d.description}</p>
-            ${d.photoNames?.length > 0 ? `<p style="font-size:12px; color:var(--muted);">📎 Photos: ${d.photoNames.join(', ')}</p>` : ''}
+            ${d.photoURLs?.length > 0 ? `
+              <div class="thumb-grid">
+                ${d.photoURLs.map(url => `<a href="${url}" target="_blank"><img src="${url}" alt="Defect photo" /></a>`).join('')}
+              </div>
+            ` : ''}
           </div>
         `;
       });
     }
-
     return html;
   }
 
@@ -554,11 +590,11 @@
       <p style="margin-top:16px; font-size:13px; color:var(--muted);">Click any day to set your availability status</p>
     `;
   }
-  function changeCal(dir) {
+  window.changeCal = function(dir) {
     calDate.setMonth(calDate.getMonth()+dir);
     renderContent('calendar');
-  }
-  async function setAvail(dateStr) {
+  };
+  window.setAvail = async function(dateStr) {
     const choice = prompt(`Set status for ${dateStr}:\n\n- available\n- unavailable\n- booked\n\nType one of the above:`);
     if (!choice) return;
     const valid = ['available','unavailable','booked'];
@@ -573,17 +609,13 @@
     await loadAllData();
     renderContent('calendar');
     alert(`✅ Status set to: ${choice}`);
-  }
+  };
 
   // ===== AVAILABLE WORK (Driver) =====
   function renderAvailableWork() {
     if (jobsData.length === 0) {
-      return `
-        <h3>Available Work</h3>
-        <p class="alert alert-info">No jobs posted yet. Check back soon!</p>
-      `;
+      return `<h3>Available Work</h3><p class="alert alert-info">No jobs posted yet. Check back soon!</p>`;
     }
-
     let html = `<h3>Available Work — ${jobsData.length} job${jobsData.length!==1?'s':''} listed</h3>`;
     jobsData.forEach(job => {
       html += `
@@ -646,7 +678,7 @@
       </div>
     `;
   }
-  async function postJob() {
+  window.postJob = async function() {
     const title = document.getElementById('job-title').value.trim();
     const date = document.getElementById('job-date').value;
     const start = document.getElementById('job-start').value;
@@ -668,14 +700,14 @@
     alert('✅ Job posted — visible to all drivers');
     await loadAllData();
     renderContent('work');
-  }
-  async function closeJob(jobId) {
+  };
+  window.closeJob = async function(jobId) {
     if (!confirm('Mark this job as filled/closed? It will no longer appear to drivers.')) return;
     await db.collection('jobs').doc(jobId).update({ status: 'closed' });
     await loadAllData();
     renderContent('work');
     alert('✅ Job closed');
-  }
+  };
 
   // ===== DOCUMENTS =====
   function renderDocuments() {
@@ -685,10 +717,10 @@
     
     return `
       <h3>${userProfile?.role==='company'?'Company':'My'} Documents</h3>
-      <p class="alert alert-info">Store and manage your required documentation — upload storage coming next</p>
+      <p class="alert alert-info">Click to upload — documents stored securely</p>
       <div class="grid">
         ${docs.map(d => `
-          <div class="card" onclick="alert('Upload interface for: ${d}\\n\\nReady to connect to Firebase Storage — next step!')">
+          <div class="card" onclick="uploadDocument('${d}')">
             <h3>📄 ${d}</h3>
             <p>Click to upload / view</p>
           </div>
@@ -696,6 +728,26 @@
       </div>
     `;
   }
+  window.uploadDocument = function(docName) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const ref = storage.ref(`users/${currentUser.uid}/documents/${docName.replace(/\s+/g,'_')}_${file.name}`);
+      await ref.put(file);
+      const url = await ref.getDownloadURL();
+      await db.collection('documents').add({
+        userId: currentUser.uid,
+        name: docName,
+        fileName: file.name,
+        fileURL: url,
+        uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      alert(`✅ "${docName}" uploaded successfully!`);
+    };
+    input.click();
+  };
 
   // ===== PROFILE =====
   function renderProfile() {
@@ -716,7 +768,7 @@
       <button class="btn-primary" onclick="saveProfile()">💾 Save Changes</button>
     `;
   }
-  async function saveProfile() {
+  window.saveProfile = async function() {
     const newName = document.getElementById('p-name').value.trim();
     if (!newName) return alert('Please enter your name');
     
@@ -724,20 +776,14 @@
     userProfile.name = newName;
     document.getElementById('dash-subtitle').textContent = `Welcome, ${newName}`;
     alert('✅ Profile updated');
-  }
+  };
 
   // ===== COMPANY ONLY =====
   function renderCompanyDrivers() {
-    return `
-      <h3>Driver Management</h3>
-      <p class="alert alert-info">View and manage your approved drivers — coming soon</p>
-    `;
+    return `<h3>Driver Management</h3><p class="alert alert-info">View and manage your approved drivers — coming soon</p>`;
   }
   function renderCompanyVehicles() {
-    return `
-      <h3>Fleet & Checks</h3>
-      <p class="alert alert-info">Vehicle list and completed walkaround reports — coming soon</p>
-    `;
+    return `<h3>Fleet & Checks</h3><p class="alert alert-info">Vehicle list and completed walkaround reports — coming soon</p>`;
   }
 
   // ===== AUTH HANDLERS =====
@@ -749,33 +795,22 @@
 
   firebase.auth().onAuthStateChanged(async (user) => {
     authChecked = true;
-    
-    // Always start at sign-in page
-    if (!user) {
-      showPage('signin');
-      return;
-    }
+    if (!user) { showPage('signin'); return; }
 
     showPage('loading');
     setStatus('Loading your profile...');
     
     currentUser = user;
     userProfile = await loadProfileData(user.uid);
-    
-    // Load all Firestore data
     await loadAllData();
     
-    // Update dashboard
     document.getElementById('dash-title').textContent = 
       userProfile.role==='company' ? '🏢 Company Portal' : '🚛 Driver Portal';
     document.getElementById('dash-subtitle').textContent = `Welcome, ${userProfile.name}`;
     
     renderNav(userProfile.role);
     showPage('dashboard');
-    
-    // Auto-select first tab
-    const firstTab = getNavItems(userProfile.role)[0].id;
-    switchTab(firstTab);
+    switchTab(getNavItems(userProfile.role)[0].id);
   });
 
   window.handleSignIn = async function () {
@@ -844,16 +879,12 @@
   // Expose globally
   window.switchTab = switchTab;
   window.showPage = showPage;
-  window.changeCal = changeCal;
-  window.setAvail = setAvail;
   window.showDefect = showDefect;
   window.showOtherDefect = showOtherDefect;
   window.hideDefect = hideDefect;
+  window.showPhotoPreviews = showPhotoPreviews;
   window.saveDefect = saveDefect;
   window.submitCheck = submitCheck;
-  window.postJob = postJob;
-  window.closeJob = closeJob;
-  window.saveProfile = saveProfile;
 </script>
 </body>
 </html>
