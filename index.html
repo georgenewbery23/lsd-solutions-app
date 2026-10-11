@@ -17,13 +17,13 @@
     .page { display: none; min-height: 100vh; }
     .active { display: block !important; }
 
-    /* Auth Pages */
     .container { max-width: 440px; margin: 0 auto; padding: 40px 24px; }
     .logo { text-align: center; margin-bottom: 40px; }
     .logo h1 { font-size: 28px; color: var(--primary); margin-bottom: 4px; }
     .logo p { color: var(--muted); font-size: 15px; }
     h2 { font-size: 22px; color: var(--primary); margin-bottom: 24px; text-align: center; }
     h3 { font-size: 16px; color: var(--primary); margin: 24px 0 10px; }
+    h4 { font-size: 15px; color: var(--primary); margin: 16px 0 8px; }
     input, select, textarea {
       width: 100%; padding: 14px 16px; margin-bottom: 14px;
       border: 1px solid var(--border); border-radius: 8px; font-size: 16px;
@@ -49,7 +49,6 @@
     a:hover { text-decoration: underline; }
     .status { text-align: center; margin-top: 30px; color: var(--muted); font-size: 15px; }
 
-    /* Dashboard Layout */
     .dash-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
     .dash-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -67,18 +66,16 @@
     .dash-content { animation: fadeIn 0.3s; }
     @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
 
-    /* Cards & Grids */
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
     .card {
-      background: white; padding: 24px; border-radius: 12px;
+      background: white; padding: 20px; border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       transition: transform 0.2s;
     }
     .card:hover { transform: translateY(-2px); }
-    .card h3 { margin: 0 0 8px; font-size: 18px; }
+    .card h3 { margin: 0 0 4px; font-size: 24px; }
     .card p { color: var(--muted); font-size: 14px; }
 
-    /* Forms & Lists */
     .form-group { margin-bottom: 16px; }
     label { display: block; margin-bottom: 6px; font-weight: 500; }
     .checklist-item {
@@ -87,9 +84,10 @@
     }
     .checklist-item input[type="checkbox"] { width: auto; margin: 0; }
     .defect-box { background: #fef3c7; padding: 16px; border-radius: 8px; margin: 12px 0; }
-    .photo-preview {
-      width: 100px; height: 100px; object-fit: cover; border-radius: 6px;
-      margin: 8px 8px 0 0; border: 1px solid var(--border);
+    .thumb-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .thumb-grid img {
+      width: 80px; height: 80px; object-fit: cover; border-radius: 4px;
+      cursor: pointer; border: 1px solid var(--border);
     }
     .item-card {
       background: white; padding: 16px; border-radius: 10px; margin-bottom: 12px;
@@ -98,11 +96,6 @@
     .item-card.major { border-left-color: var(--danger); }
     .item-card.advisory { border-left-color: var(--warning); }
     .item-card.info { border-left-color: var(--info); }
-    .thumb-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .thumb-grid img {
-      width: 80px; height: 80px; object-fit: cover; border-radius: 4px;
-      cursor: pointer; border: 1px solid var(--border);
-    }
     .status-badge {
       display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
     }
@@ -111,7 +104,11 @@
     .badge-red { background: #fee2e2; color: #991b1b; }
     .badge-blue { background: #dbeafe; color: #1e40af; }
 
-    /* Calendar */
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 10px; overflow: hidden; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    th { background: var(--light); font-weight: 600; color: var(--primary); }
+    tr:hover { background: #f9fafb; }
+
     .cal-header {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 16px;
@@ -133,13 +130,6 @@
     .unavail-bg { background: #fee2e2; }
     .booked-bg { background: #dbeafe; }
 
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 10px; overflow: hidden; }
-    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-    th { background: var(--light); font-weight: 600; color: var(--primary); }
-    tr:hover { background: #f9fafb; }
-
-    /* Utilities */
     .hidden { display: none !important; }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
@@ -148,15 +138,13 @@
     .alert { padding: 12px 16px; border-radius: 8px; margin: 16px 0; }
     .alert-info { background: #e0f2fe; color: #075985; }
     .alert-success { background: #dcfce7; color: #166534; }
-    .alert-warning { background: #fef3c7; color: #92400e; }
-    .alert-danger { background: #fee2e2; color: #991b1b; }
     .empty { color: var(--muted); text-align: center; padding: 30px; }
-    .upload-status { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    details { margin-top: 8px; }
+    summary { cursor: pointer; font-size: 13px; color: var(--primary); }
   </style>
 </head>
 <body>
 
-<!-- ============== SIGN IN ============== -->
 <div id="page-signin" class="page active">
   <div class="container">
     <div class="logo">
@@ -173,33 +161,26 @@
   </div>
 </div>
 
-<!-- ============== REGISTER ============== -->
 <div id="page-register" class="page">
   <div class="container">
-    <div class="logo">
-      <h1>LSD Solutions</h1>
-    </div>
+    <div class="logo"><h1>LSD Solutions</h1></div>
     <h2>Create Account</h2>
-
     <h3>Register as a Company</h3>
     <input type="text" id="reg-name" placeholder="Company name" />
     <input type="email" id="reg-email" placeholder="Email address" />
     <input type="password" id="reg-password" placeholder="Password" />
     <button class="btn-primary" onclick="handleCompanyRegister()">Register as Company</button>
-
     <h3>Register as a Driver</h3>
     <input type="text" id="dr-name" placeholder="Your full name" />
     <input type="email" id="dr-email" placeholder="Email address" />
     <input type="password" id="dr-password" placeholder="Password" />
     <button class="btn-accent" onclick="handleDriverRegister()">Register as Driver</button>
-
     <div class="link-row">
       <a href="#" onclick="showPage('signin'); return false;">← Back to Sign In</a>
     </div>
   </div>
 </div>
 
-<!-- ============== LOADING ============== -->
 <div id="page-loading" class="page">
   <div class="container" style="text-align: center; padding-top: 80px;">
     <h2>Loading...</h2>
@@ -207,7 +188,6 @@
   </div>
 </div>
 
-<!-- ============== DASHBOARD ============== -->
 <div id="page-dashboard" class="page">
   <div class="dash-container">
     <div class="dash-header">
@@ -222,14 +202,12 @@
   </div>
 </div>
 
-<!-- Firebase Scripts -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
-  // ===== CONFIG =====
   const firebaseConfig = {
     apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
     authDomain: "lsd-solutions.firebaseapp.com",
@@ -240,7 +218,6 @@
     measurementId: "G-7YF4T8BBPT"
   };
 
-  // ===== INIT =====
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
@@ -248,18 +225,10 @@
 
   let currentUser = null;
   let userProfile = null;
-  let authChecked = false;
-
-  // Calendar state
   let calDate = new Date();
-  let availData = {};
-  let jobsData = [];
-  let checksData = [];
-  let defectsData = [];
-  let usersData = [];
-  let vehiclesData = [];
+  let availData = {}, jobsData = [], checksData = [], defectsData = [], usersData = [];
+  let selectedPhotoFiles = [];
 
-  // ===== PAGE ROUTING =====
   const pages = {
     signin: document.getElementById('page-signin'),
     register: document.getElementById('page-register'),
@@ -271,38 +240,16 @@
     Object.values(pages).forEach(p => p.classList.remove('active'));
     pages[name].classList.add('active');
   }
+  function setStatus(msg) { console.log('📢', msg); document.getElementById('status-text').textContent = msg; }
 
-  function setStatus(msg) {
-    console.log('📢', msg);
-    document.getElementById('status-text').textContent = msg;
-  }
-
-  // ===== DASHBOARD NAVIGATION =====
   function getNavItems(role) {
-    if (role === 'company') {
-      return [
-        { id: 'drivers', label: '👥 Drivers' },
-        { id: 'vehicles', label: '🚛 Vehicle Checks' },
-        { id: 'work', label: '📤 Post Work' },
-        { id: 'calendar', label: '📅 Calendar' },
-        { id: 'docs', label: '📄 Documents' },
-        { id: 'profile', label: '👤 Profile' }
-      ];
-    }
-    return [
-      { id: 'check', label: '✅ Vehicle Check' },
-      { id: 'mychecks', label: '📋 My Checks' },
-      { id: 'calendar', label: '📅 My Calendar' },
-      { id: 'work', label: '🔍 Available Work' },
-      { id: 'docs', label: '📄 My Documents' },
-      { id: 'profile', label: '👤 My Profile' }
-    ];
+    return role === 'company'
+      ? [ {id:'drivers',label:'👥 Drivers'}, {id:'vehicles',label:'🚛 Vehicle Checks'}, {id:'work',label:'📤 Post Work'}, {id:'calendar',label:'📅 Calendar'}, {id:'docs',label:'📄 Documents'}, {id:'profile',label:'👤 Profile'} ]
+      : [ {id:'check',label:'✅ Vehicle Check'}, {id:'mychecks',label:'📋 My Checks'}, {id:'calendar',label:'📅 My Calendar'}, {id:'work',label:'🔍 Available Work'}, {id:'docs',label:'📄 My Documents'}, {id:'profile',label:'👤 My Profile'} ];
   }
 
   function renderNav(role) {
-    const nav = document.getElementById('dash-nav');
-    const items = getNavItems(role);
-    nav.innerHTML = items.map(i =>
+    document.getElementById('dash-nav').innerHTML = getNavItems(role).map(i =>
       `<button data-nav="${i.id}" onclick="switchTab('${i.id}')">${i.label}</button>`
     ).join('');
   }
@@ -313,641 +260,450 @@
     renderContent(tabId);
   }
 
-  // ===== UPLOAD PHOTO TO STORAGE =====
   async function uploadDefectPhoto(file, userId) {
-    const timestamp = Date.now();
-    const ref = storage.ref(`defects/${userId}/${timestamp}_${file.name}`);
+    const ref = storage.ref(`defects/${userId}/${Date.now()}_${file.name}`);
     await ref.put(file);
     return await ref.getDownloadURL();
   }
 
-  // ===== LOAD ALL DATA FROM FIRESTORE =====
   async function loadAllData() {
     if (!currentUser) return;
-
-    const availSnap = await db.collection('availability')
-      .where('userId', '==', currentUser.uid)
-      .get();
-    availData = {};
-    availSnap.forEach(doc => { availData[doc.data().date] = doc.data(); });
-
-    const checksSnap = await db.collection('checks')
-      .orderBy('completedAt', 'desc')
-      .limit(50)
-      .get();
-    checksData = checksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    const defectsSnap = await db.collection('defects')
-      .orderBy('timestamp', 'desc')
-      .limit(50)
-      .get();
-    defectsData = defectsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    const jobsSnap = await db.collection('jobs')
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get();
-    jobsData = jobsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    const usersSnap = await db.collection('users').limit(50).get();
-    usersData = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    const vehiclesSnap = await db.collection('vehicles').limit(50).get();
-    vehiclesData = vehiclesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const [availSnap, checksSnap, defectsSnap, jobsSnap, usersSnap] = await Promise.all([
+      db.collection('availability').where('userId','==',currentUser.uid).get(),
+      db.collection('checks').orderBy('completedAt','desc').limit(50).get(),
+      db.collection('defects').orderBy('timestamp','desc').limit(50).get(),
+      db.collection('jobs').orderBy('createdAt','desc').limit(50).get(),
+      db.collection('users').limit(50).get()
+    ]);
+    availData = {}; availSnap.forEach(d => availData[d.data().date] = d.data());
+    checksData = checksSnap.docs.map(d => ({id:d.id, ...d.data()}));
+    defectsData = defectsSnap.docs.map(d => ({id:d.id, ...d.data()}));
+    jobsData = jobsSnap.docs.map(d => ({id:d.id, ...d.data()}));
+    usersData = usersSnap.docs.map(d => ({id:d.id, ...d.data()}));
   }
 
-  // ===== CONTENT RENDERERS =====
   function renderContent(tab) {
     const role = userProfile?.role || 'driver';
-    const content = document.getElementById('dash-content');
-
     switch(tab) {
-      case 'check': content.innerHTML = renderVehicleCheck(); break;
-      case 'mychecks': content.innerHTML = renderMyChecks(); break;
-      case 'work': content.innerHTML = role==='company' ? renderCompanyWork() : renderAvailableWork(); break;
-      case 'calendar': content.innerHTML = renderCalendar(); break;
-      case 'docs': content.innerHTML = renderDocuments(); break;
-      case 'profile': content.innerHTML = renderProfile(); break;
-      case 'drivers': content.innerHTML = renderCompanyDrivers(); break;
-      case 'vehicles': content.innerHTML = renderCompanyVehicles(); break;
+      case 'check': return dashContent.innerHTML = renderVehicleCheck();
+      case 'mychecks': return dashContent.innerHTML = renderMyChecks();
+      case 'work': return dashContent.innerHTML = role==='company' ? renderCompanyWork() : renderAvailableWork();
+      case 'calendar': return dashContent.innerHTML = renderCalendar();
+      case 'docs': return dashContent.innerHTML = renderDocuments();
+      case 'profile': return dashContent.innerHTML = renderProfile();
+      case 'drivers': return dashContent.innerHTML = renderCompanyDrivers();
+      case 'vehicles': return dashContent.innerHTML = renderCompanyVehicles();
     }
   }
 
-  // ===== VEHICLE WALKAROUND CHECK (Driver) =====
   function renderVehicleCheck() {
     return `
       <h3>Daily Vehicle Walkaround Check</h3>
-      <p style="color: var(--muted); margin-bottom: 20px;">Complete before starting your shift</p>
-      
-      <div class="form-group">
-        <label>Vehicle Registration</label>
-        <input type="text" id="vreg" placeholder="e.g. AB12 CDE" />
-      </div>
-
+      <p style="color:var(--muted); margin-bottom:20px;">Complete before starting your shift</p>
+      <div class="form-group"><label>Vehicle Registration</label><input type="text" id="vreg" placeholder="e.g. AB12 CDE" /></div>
       <h3>Checklist Items</h3>
-      ${['Tyres & Wheels', 'Brakes', 'Lights & Indicators', 'Mirrors', 'Windscreen & Wipers', 
-         'Fluid Levels (Oil, Coolant, Screenwash)', 'Fuel Caps & Security', 
-         'Coupling / Fifth Wheel', 'Body & Exterior', 'Number Plates', 
-         'Horns & Warning Devices', 'Tachograph Equipment', 'Fire Extinguisher & First Aid',
-         'Load Security / Doors'].map(item => `
+      ${['Tyres & Wheels','Brakes','Lights & Indicators','Mirrors','Windscreen & Wipers','Fluid Levels (Oil, Coolant, Screenwash)','Fuel Caps & Security','Coupling / Fifth Wheel','Body & Exterior','Number Plates','Horns & Warning Devices','Tachograph Equipment','Fire Extinguisher & First Aid','Load Security / Doors'].map(item => `
         <div class="checklist-item">
           <input type="checkbox" id="check-${item.replace(/\s+/g,'-')}" />
           <label for="check-${item.replace(/\s+/g,'-')}">${item}</label>
-          <button class="btn-sm btn-warning" style="margin-left:auto; width:auto; padding:4px 8px; font-size:12px;" 
-            onclick="showDefect('${item}')">Report Defect</button>
-        </div>
-      `).join('')}
-
+          <button class="btn-sm btn-warning" style="margin-left:auto; width:auto; padding:4px 8px; font-size:12px;" onclick="showDefect('${item}')">Report Defect</button>
+        </div>`).join('')}
       <div id="defect-form" class="hidden mt-20">
         <div class="defect-box">
           <h4>Report Defect</h4>
           <input type="text" id="defect-item" placeholder="Defect / Component" />
           <textarea id="defect-desc" rows="3" placeholder="Describe the issue in detail..." style="resize:none;"></textarea>
-          
           <label>Severity</label>
           <select id="defect-severity">
-            <option value="advisory">⚠️ Advisory — Monitor / Repair when convenient</option>
-            <option value="major">🔴 Major — Needs immediate attention</option>
+            <option value="advisory">⚠️ Advisory</option>
+            <option value="major">🔴 Major — Immediate attention</option>
           </select>
-          
           <label>Add Photos</label>
           <input type="file" id="defect-photos" accept="image/*" multiple onchange="showPhotoPreviews(this)" />
           <div id="photo-preview-area" class="thumb-grid"></div>
-          
-          <button class="btn-primary mt-20" id="save-defect-btn" onclick="saveDefect()">📸 Save Defect with Photos</button>
+          <button class="btn-primary mt-20" id="save-defect-btn" onclick="saveDefect()">📸 Save Defect</button>
           <button class="btn-sm" style="background:transparent; color:var(--muted);" onclick="hideDefect()">Cancel</button>
         </div>
       </div>
-
       <h3 style="margin-top:30px;">Other Defects</h3>
       <button class="btn-accent" onclick="showOtherDefect()">Add Any Other Defect</button>
-      
       <button class="btn-primary mt-20" onclick="submitCheck()">✅ Submit Completed Check</button>
     `;
   }
-
-  let currentDefectItem = null;
-  let selectedPhotoFiles = [];
 
   function showPhotoPreviews(input) {
     selectedPhotoFiles = Array.from(input.files);
     const area = document.getElementById('photo-preview-area');
     area.innerHTML = '';
-    selectedPhotoFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        area.innerHTML += `<img src="${e.target.result}" alt="Preview" />`;
-      };
-      reader.readAsDataURL(file);
+    selectedPhotoFiles.forEach(f => {
+      const r = new FileReader(); r.onload = e => area.innerHTML += `<img src="${e.target.result}" alt="Preview" />`; r.readAsDataURL(f);
     });
   }
 
   function showDefect(item) {
-    currentDefectItem = item;
     selectedPhotoFiles = [];
-    document.getElementById('defect-item').value = item;
+    document.getElementById('defect-item').value = item || '';
     document.getElementById('photo-preview-area').innerHTML = '';
     document.getElementById('defect-form').classList.remove('hidden');
-    document.getElementById('defect-desc').focus();
   }
-
-  function showOtherDefect() {
-    currentDefectItem = 'Other Defect';
-    selectedPhotoFiles = [];
-    document.getElementById('defect-item').value = '';
-    document.getElementById('defect-item').placeholder = 'Enter defect name';
-    document.getElementById('photo-preview-area').innerHTML = '';
-    document.getElementById('defect-form').classList.remove('hidden');
-    document.getElementById('defect-desc').focus();
-  }
-
-  function hideDefect() {
-    document.getElementById('defect-form').classList.add('hidden');
-    document.getElementById('photo-preview-area').innerHTML = '';
-    selectedPhotoFiles = [];
-    currentDefectItem = null;
-  }
+  function showOtherDefect() { showDefect(null); document.getElementById('defect-item').placeholder = 'Enter defect name'; }
+  function hideDefect() { document.getElementById('defect-form').classList.add('hidden'); selectedPhotoFiles = []; }
 
   async function saveDefect() {
     const item = document.getElementById('defect-item').value.trim() || 'Unspecified';
     const desc = document.getElementById('defect-desc').value.trim();
     const severity = document.getElementById('defect-severity').value;
-    
     if (!desc) return alert('Please describe the defect');
-    
     const btn = document.getElementById('save-defect-btn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Uploading photos...';
-
+    btn.disabled = true; btn.textContent = '⏳ Uploading...';
     const photoURLs = [];
-    for (const file of selectedPhotoFiles) {
-      const url = await uploadDefectPhoto(file, currentUser.uid);
-      photoURLs.push(url);
-    }
-
+    for (const f of selectedPhotoFiles) photoURLs.push(await uploadDefectPhoto(f, currentUser.uid));
     await db.collection('defects').add({
-      userId: currentUser.uid,
-      userName: userProfile.name,
-      item,
-      description: desc,
-      severity,
-      photoURLs,
+      userId: currentUser.uid, userName: userProfile.name, item, description: desc, severity, photoURLs,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
-
-    alert(`✅ Defect saved — ${severity.toUpperCase()}\n${photoURLs.length} photo(s) uploaded`);
-    hideDefect();
-    btn.disabled = false;
-    btn.textContent = '📸 Save Defect with Photos';
-    await loadAllData();
-    renderContent('mychecks');
+    alert(`✅ Defect saved — ${photoURLs.length} photo(s) uploaded`);
+    hideDefect(); btn.disabled = false; btn.textContent = '📸 Save Defect';
+    await loadAllData(); renderContent('mychecks');
   }
 
   async function submitCheck() {
     const reg = document.getElementById('vreg').value.trim() || 'Not Recorded';
     const checkedItems = [];
-    document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(cb => {
-      if (cb.checked) checkedItems.push(cb.id.replace('check-', '').replace(/-/g, ' '));
-    });
-    
+    document.querySelectorAll('.checklist-item input:checked').forEach(cb =>
+      checkedItems.push(cb.id.replace('check-','').replace(/-/g,' '))
+    );
     await db.collection('checks').add({
-      userId: currentUser.uid,
-      userName: userProfile.name,
-      vehicleReg: reg,
-      checkedItems,
-      completedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      status: 'submitted'
+      userId: currentUser.uid, userName: userProfile.name, vehicleReg: reg, checkedItems,
+      completedAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'submitted'
     });
-    
-    alert('✅ Walkaround check submitted — Thank you');
+    alert('✅ Check submitted');
     renderContent('check');
   }
 
-  // ===== MY CHECKS HISTORY (Driver) =====
   function renderMyChecks() {
-    if (checksData.length === 0 && defectsData.length === 0) {
-      return `<h3>My Checks & Defects</h3><p class="empty">No checks submitted yet. Complete your first vehicle check above.</p>`;
-    }
-
+    const myChecks = checksData.filter(c => c.userId === currentUser.uid);
+    const myDefects = defectsData.filter(d => d.userId === currentUser.uid);
     let html = `<h3>My Checks (Last 50)</h3>`;
-    
-    const myChecks = checksData.filter(c => c.userId === currentUser?.uid);
-    const myDefects = defectsData.filter(d => d.userId === currentUser?.uid);
-
-    if (myChecks.length === 0) {
-      html += `<p class="empty">No checks submitted yet.</p>`;
-    } else {
-      myChecks.forEach(check => {
-        const date = check.completedAt?.toDate ? check.completedAt.toDate().toLocaleString() : 'Recently';
-        html += `
-          <div class="item-card info">
-            <strong>🚛 ${check.vehicleReg || 'Vehicle'}</strong>
-            <p style="margin:4px 0; font-size:13px; color:var(--muted);">${date}</p>
-            <p style="font-size:13px;">${check.checkedItems?.length || 0} items checked</p>
-          </div>
-        `;
-      });
-    }
-
+    if (!myChecks.length) html += `<p class="empty">No checks submitted yet.</p>`;
+    else myChecks.forEach(c => {
+      const date = c.completedAt?.toDate ? c.completedAt.toDate().toLocaleString() : 'Recently';
+      html += `<div class="item-card info"><strong>🚛 ${c.vehicleReg||'Vehicle'}</strong><p style="font-size:13px; color:var(--muted);">${date}</p><p>${c.checkedItems?.length||0} items checked</p></div>`;
+    });
     html += `<h3 style="margin-top:30px;">Reported Defects</h3>`;
-    if (myDefects.length === 0) {
-      html += `<p class="empty">No defects reported — all good! ✅</p>`;
-    } else {
-      myDefects.forEach(d => {
-        const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
-        html += `
-          <div class="item-card ${d.severity === 'major' ? 'major' : 'advisory'}">
-            <strong>${d.severity === 'major' ? '🔴' : '⚠️'} ${d.item}</strong>
-            <p style="margin:4px 0; font-size:13px; color:var(--muted);">${date}</p>
-            <p style="font-size:14px; margin-top:8px;">${d.description}</p>
-            ${d.photoURLs?.length > 0 ? `
-              <div class="thumb-grid">
-                ${d.photoURLs.map(url => `<a href="${url}" target="_blank"><img src="${url}" alt="Defect photo" /></a>`).join('')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      });
-    }
+    if (!myDefects.length) html += `<p class="empty">No defects — all good ✅</p>`;
+    else myDefects.forEach(d => {
+      const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
+      html += `<div class="item-card ${d.severity==='major'?'major':'advisory'}">
+        <strong>${d.severity==='major'?'🔴':'⚠️'} ${d.item}</strong>
+        <p style="font-size:13px; color:var(--muted);">${date}</p>
+        <p>${d.description}</p>
+        ${d.photoURLs?.length ? `<div class="thumb-grid">${d.photoURLs.map(u=>`<a href="${u}" target="_blank"><img src="${u}" /></a>`).join('')}</div>` : ''}
+      </div>`;
+    });
     return html;
   }
 
-  // ===== COMPANY: DRIVERS MANAGEMENT =====
   function renderCompanyDrivers() {
     const drivers = usersData.filter(u => u.role === 'driver');
-    
-    return `
-      <h3>👥 Driver Management</h3>
-      <p class="alert alert-info">All registered drivers — view checks, defects & availability</p>
-      
-      ${drivers.length === 0 ? '<p class="empty">No drivers registered yet. When drivers sign up, they will appear here.</p>' : `
-        <table>
-          <thead>
-            <tr>
-              <th>Driver Name</th>
-              <th>Email</th>
-              <th>Checks</th>
-              <th>Defects</th>
-              <th>Status</th>
-              <th class="text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${drivers.map(d => {
-              const driverChecks = checksData.filter(c => c.userId === d.id).length;
-              const driverDefects = defectsData.filter(def => def.userId === d.id).length;
-              return `
-                <tr>
-                  <td><strong>${d.name || 'Unnamed'}</strong></td>
-                  <td style="font-size:13px; color:var(--muted);">${d.email}</td>
-                  <td>${driverChecks}</td>
-                  <td>${driverDefects}</td>
-                  <td><span class="status-badge badge-green">Active</span></td>
-                  <td class="text-right">
-                    <button class="btn-sm btn-outline" onclick="viewDriverDetail('${d.id}')">View Details</button>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      `}
-      
-      <div id="driver-detail-view" class="hidden mt-20">
-        <h3>Driver Details</h3>
-        <div id="driver-detail-content"></div>
-      </div>
-    `;
+    let html = `<h3>👥 Driver Management</h3><p class="alert alert-info">All registered drivers — view checks, defects & availability</p>`;
+    if (!drivers.length) {
+      html += `<p class="empty">No drivers registered yet. They will appear here when they sign up.</p>`;
+    } else {
+      html += `<table><thead><tr><th>Name</th><th>Email</th><th>Checks</th><th>Defects</th><th>Status</th><th class="text-right">View</th></tr></thead><tbody>`;
+      drivers.forEach(d => {
+        const dc = checksData.filter(c => c.userId === d.id).length;
+        const dd = defectsData.filter(def => def.userId === d.id).length;
+        html += `<tr><td><strong>${d.name||'Unnamed'}</strong></td><td style="font-size:13px; color:var(--muted);">${d.email}</td><td>${dc}</td><td>${dd}</td><td><span class="status-badge badge-green">Active</span></td><td class="text-right"><button class="btn-sm btn-outline" onclick="viewDriverDetail('${d.id}')">Details</button></td></tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+    html += `<div id="driver-detail-view" class="hidden mt-20"><h3>Driver Details</h3><div id="driver-detail-content"></div></div>`;
+    return html;
   }
 
-  window.viewDriverDetail = function(driverId) {
+  window.viewDriverDetail = async function(driverId) {
+    await loadAllData();
     const driver = usersData.find(u => u.id === driverId);
-    const driverChecks = checksData.filter(c => c.userId === driverId);
-    const driverDefects = defectsData.filter(d => d.userId === driverId);
-    
-    const container = document.getElementById('driver-detail-view');
+    const dc = checksData.filter(c => c.userId === driverId).slice(0,10);
+    const dd = defectsData.filter(d => d.userId === driverId).slice(0,10);
     const content = document.getElementById('driver-detail-content');
-    
     content.innerHTML = `
-      <div class="card" style="margin-bottom:20px;">
-        <h4>${driver?.name || 'Driver'}</h4>
-        <p style="color:var(--muted);">${driver?.email}</p>
-      </div>
-      
+      <div class="card" style="margin-bottom:20px;"><h4>${driver?.name}</h4><p style="color:var(--muted);">${driver?.email}</p></div>
       <h4>Last 10 Checks</h4>
-      ${driverChecks.length === 0 ? '<p class="empty">No checks submitted</p>' : 
-        driverChecks.slice(0,10).map(check => {
-          const date = check.completedAt?.toDate ? check.completedAt.toDate().toLocaleString() : 'Recently';
-          return `
-            <div class="item-card info">
-              <strong>🚛 ${check.vehicleReg || 'Vehicle'}</strong>
-              <p style="font-size:13px; color:var(--muted);">${date}</p>
-              <p style="font-size:13px;">${check.checkedItems?.length || 0} items checked</p>
-            </div>
-          `;
-        }).join('')
-      }
-      
+      ${!dc.length?'<p class="empty">No checks yet</p>':dc.map(c=>{
+        const date = c.completedAt?.toDate ? c.completedAt.toDate().toLocaleString() : 'Recently';
+        return `<div class="item-card info"><strong>🚛 ${c.vehicleReg||'Vehicle'}</strong><p style="font-size:13px; color:var(--muted);">${date}</p><p>${c.checkedItems?.length||0} items checked</p></div>`;
+      }).join('')}
       <h4 style="margin-top:30px;">Reported Defects</h4>
-      ${driverDefects.length === 0 ? '<p class="empty">No defects reported — all good ✅</p>' : 
-        driverDefects.slice(0,10).map(d => {
-          const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
-          return `
-            <div class="item-card ${d.severity === 'major' ? 'major' : 'advisory'}">
-              <strong>${d.severity === 'major' ? '🔴' : '⚠️'} ${d.item}</strong>
-              <p style="font-size:13px; color:var(--muted);">${date}</p>
-              <p style="font-size:14px;">${d.description}</p>
-              ${d.photoURLs?.length > 0 ? `
-                <div class="thumb-grid">
-                  ${d.photoURLs.map(url => `<a href="${url}" target="_blank"><img src="${url}" alt="Photo" /></a>`).join('')}
-                </div>
-              ` : ''}
-            </div>
-          `;
-        }).join('')
-      }
-      
-      <button class="btn-sm" style="margin-top:20px; background:transparent; color:var(--muted);" 
-        onclick="document.getElementById('driver-detail-view').classList.add('hidden')">Close</button>
+      ${!dd.length?'<p class="empty">No defects ✅</p>':dd.map(d=>{
+        const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
+        return `<div class="item-card ${d.severity==='major'?'major':'advisory'}">
+          <strong>${d.severity==='major'?'🔴':'⚠️'} ${d.item}</strong><p style="font-size:13px; color:var(--muted);">${date}</p><p>${d.description}</p>
+          ${d.photoURLs?.length?`<div class="thumb-grid">${d.photoURLs.map(u=>`<a href="${u}" target="_blank"><img src="${u}" /></a>`).join('')}</div>`:''}
+        </div>`;
+      }).join('')}
+      <button class="btn-sm" style="margin-top:20px; background:transparent; color:var(--muted);" onclick="document.getElementById('driver-detail-view').classList.add('hidden')">Close</button>
     `;
-    
-    container.classList.remove('hidden');
-    container.scrollIntoView({behavior: 'smooth'});
+    document.getElementById('driver-detail-view').classList.remove('hidden');
   };
 
-  // ===== COMPANY: VEHICLE CHECKS OVERVIEW =====
   function renderCompanyVehicles() {
-    const allChecks = checksData;
-    const allDefects = defectsData;
-    
-    // Group checks by vehicle registration
     const vehicleMap = {};
-    allChecks.forEach(check => {
-      const reg = (check.vehicleReg || 'UNKNOWN').toUpperCase();
-      if (!vehicleMap[reg]) {
-        vehicleMap[reg] = { checks: [], defects: [], drivers: new Set() };
-      }
-      vehicleMap[reg].checks.push(check);
-      vehicleMap[reg].drivers.add(check.userName || 'Unknown');
+    checksData.forEach(c => {
+      const reg = (c.vehicleReg || 'UNKNOWN').toUpperCase();
+      if (!vehicleMap[reg]) vehicleMap[reg] = {checks:[], drivers:new Set()};
+      vehicleMap[reg].checks.push(c);
+      vehicleMap[reg].drivers.add(c.userName || 'Unknown');
     });
-    
-    allDefects.forEach(def => {
-      // Try to match defect to vehicle — if no direct link, show separately
-    });
-    
-    return `
-      <h3>🚛 Vehicle Checks Overview</h3>
-      <p class="alert alert-info">All walkaround checks submitted by your drivers</p>
-      
-      <div class="grid" style="margin-bottom:30px;">
-        <div class="card">
-          <h3>${allChecks.length}</h3>
-          <p>Total Checks Submitted</p>
-        </div>
-        <div class="card">
-          <h3>${allDefects.filter(d => d.severity === 'major').length}</h3>
-          <p>🔴 Major Defects</p>
-        </div>
-        <div class="card">
-          <h3>${allDefects.filter(d => d.severity === 'advisory').length}</h3>
-          <p>⚠️ Advisory Items</p>
-        </div>
-        <div class="card">
-          <h3>${Object.keys(vehicleMap).length}</h3>
-          <p>Vehicles Active</p>
-        </div>
+    let html = `<h3>🚛 Vehicle Checks Overview</h3><p class="alert alert-info">All walkaround checks submitted by your drivers</p>
+      <div class="grid">
+        <div class="card"><h3>${checksData.length}</h3><p>Total Checks</p></div>
+        <div class="card"><h3>${defectsData.filter(d=>d.severity==='major').length}</h3><p>🔴 Major Defects</p></div>
+        <div class="card"><h3>${defectsData.filter(d=>d.severity==='advisory').length}</h3><p>⚠️ Advisory Items</p></div>
+        <div class="card"><h3>${Object.keys(vehicleMap).length}</h3><p>Vehicles Active</p></div>
       </div>
-      
       <h3>Checks by Vehicle</h3>
-      ${Object.keys(vehicleMap).length === 0 
-        ? '<p class="empty">No vehicle checks submitted yet. Data will appear here when drivers submit checks.</p>'
-        : `<table>
-          <thead>
-            <tr>
-              <th>Vehicle Reg</th>
-              <th>Total Checks</th>
-              <th>Last Checked</th>
-              <th>Drivers</th>
-              <th class="text-right">View</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${Object.entries(vehicleMap).map(([reg, data]) => {
-              const sorted = data.checks.sort((a,b) => 
-                (b.completedAt?.toDate?.getTime() || 0) - (a.completedAt?.toDate?.getTime() || 0)
-              );
-              const lastCheck = sorted[0];
-              const lastDate = lastCheck?.completedAt?.toDate ? lastCheck.completedAt.toDate().toLocaleString() : 'Recently';
-              return `
-                <tr>
-                  <td><strong>${reg}</strong></td>
-                  <td>${data.checks.length}</td>
-                  <td style="font-size:13px;">${lastDate}</td>
-                  <td style="font-size:13px;">${Array.from(data.drivers).join(', ')}</td>
-                  <td class="text-right">
-                    <button class="btn-sm btn-outline" onclick="viewVehicleChecks('${reg}')">View All</button>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>`
-      }
-      
-      <h3 style="margin-top:40px;">All Reported Defects</h3>
-      ${allDefects.length === 0 
-        ? '<p class="empty">No defects reported — all vehicles in good order ✅</p>'
-        : allDefects.map(d => {
-          const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
-          return `
-            <div class="item-card ${d.severity === 'major' ? 'major' : 'advisory'}">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                  <strong>${d.severity === 'major' ? '🔴' : '⚠️'} ${d.item}</strong>
-                  <p style="font-size:13px; color:var(--muted); margin:4px 0;">Reported by: ${d.userName || 'Unknown'} — ${date}</p>
-                  <p style="margin-top:4px;">${d.description}</p>
-                </div>
-                <span class="status-badge ${d.severity === 'major' ? 'badge-red' : 'badge-yellow'}">
-                  ${d.severity.toUpperCase()}
-                </span>
-              </div>
-              ${d.photoURLs?.length > 0 ? `
-                <div class="thumb-grid" style="margin-top:10px;">
-                  ${d.photoURLs.map(url => `<a href="${url}" target="_blank"><img src="${url}" alt="Defect photo" /></a>`).join('')}
-                </div>
-              ` : ''}
-            </div>
-          `;
-        }).join('')
-      }
-      
-      <div id="vehicle-checks-view" class="hidden mt-20">
-        <h3>Vehicle Check History</h3>
-        <div id="vehicle-checks-content"></div>
-      </div>
     `;
+    if (!Object.keys(vehicleMap).length) {
+      html += `<p class="empty">No checks submitted yet. Data will appear here.</p>`;
+    } else {
+      html += `<table><thead><tr><th>Vehicle Reg</th><th>Total Checks</th><th>Last Checked</th><th>Drivers</th><th class="text-right">View</th></tr></thead><tbody>`;
+      Object.entries(vehicleMap).forEach(([reg, data]) => {
+        const sorted = data.checks.sort((a,b)=> (b.completedAt?.toDate?.getTime()||0) - (a.completedAt?.toDate?.getTime()||0));
+        const lastDate = sorted[0]?.completedAt?.toDate ? sorted[0].completedAt.toDate().toLocaleString() : 'Recently';
+        html += `<tr><td><strong>${reg}</strong></td><td>${data.checks.length}</td><td style="font-size:13px;">${lastDate}</td><td style="font-size:13px;">${Array.from(data.drivers).join(', ')}</td><td class="text-right"><button class="btn-sm btn-outline" onclick="viewVehicleChecks('${reg}')">View All</button></td></tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+    html += `<h3 style="margin-top:40px;">All Reported Defects</h3>`;
+    if (!defectsData.length) html += `<p class="empty">No defects reported ✅</p>`;
+    else defectsData.forEach(d => {
+      const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
+      html += `<div class="item-card ${d.severity==='major'?'major':'advisory'}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div><strong>${d.severity==='major'?'🔴':'⚠️'} ${d.item}</strong><p style="font-size:13px; color:var(--muted); margin:4px 0;">Reported by: ${d.userName||'Unknown'} — ${date}</p><p>${d.description}</p></div>
+          <span class="status-badge ${d.severity==='major'?'badge-red':'badge-yellow'}">${d.severity.toUpperCase()}</span>
+        </div>
+        ${d.photoURLs?.length?`<div class="thumb-grid" style="margin-top:10px;">${d.photoURLs.map(u=>`<a href="${u}" target="_blank"><img src="${u}" /></a>`).join('')}</div>`:''}
+      </div>`;
+    });
+    html += `<div id="vehicle-checks-view" class="hidden mt-20"><h3>Vehicle Check History</h3><div id="vehicle-checks-content"></div></div>`;
+    return html;
   }
 
-  window.viewVehicleChecks = function(reg) {
-    const checks = checksData.filter(c => 
-      (c.vehicleReg || 'UNKNOWN').toUpperCase() === reg
-    ).sort((a,b) => 
-      (b.completedAt?.toDate?.getTime() || 0) - (a.completedAt?.toDate?.getTime() || 0)
-    );
-    
-    const container = document.getElementById('vehicle-checks-view');
+  window.viewVehicleChecks = async function(reg) {
+    await loadAllData();
+    const checks = checksData.filter(c => (c.vehicleReg||'UNKNOWN').toUpperCase() === reg)
+      .sort((a,b)=> (b.completedAt?.toDate?.getTime()||0) - (a.completedAt?.toDate?.getTime()||0));
     const content = document.getElementById('vehicle-checks-content');
-    
-    content.innerHTML = `
-      <h4>Vehicle: ${reg}</h4>
-      <p style="color:var(--muted); margin-bottom:20px;">${checks.length} checks submitted</p>
-      
-      ${checks.map(check => {
-        const date = check.completedAt?.toDate ? check.completedAt.toDate().toLocaleString() : 'Recently';
-        return `
-          <div class="item-card info">
-            <p style="font-size:13px; color:var(--muted); margin-bottom:8px;">
-              <strong>${check.userName || 'Unknown Driver'}</strong> — ${date}
-            </p>
-            <p style="font-size:13px;">${check.checkedItems?.length || 0} items checked</p>
-            <details style="margin-top:8px;">
-              <summary style="cursor:pointer; font-size:13px; color:var(--primary);">View checklist</summary>
-              <ul style="margin-top:8px; padding-left:20px; font-size:13px;">
-                ${(check.checkedItems || []).map(item => `<li>✅ ${item}</li>`).join('')}
-              </ul>
-            </details>
-          </div>
-        `;
-      }).join('')}
-      
-      <button class="btn-sm" style="margin-top:20px; background:transparent; color:var(--muted);" 
-        onclick="document.getElementById('vehicle-checks-view').classList.add('hidden')">Close</button>
-    `;
-    
-    container.classList.remove('hidden');
-    container.scrollIntoView({behavior: 'smooth'});
+    content.innerHTML = `<h4>Vehicle: ${reg}</h4><p style="color:var(--muted); margin-bottom:20px;">${checks.length} checks submitted</p>` +
+      checks.map(c => {
+        const date = c.completedAt?.toDate ? c.completedAt.toDate().toLocaleString() : 'Recently';
+        return `<div class="item-card info">
+          <p style="font-size:13px; color:var(--muted); margin-bottom:8px;"><strong>${c.userName||'Unknown Driver'}</strong> — ${date}</p>
+          <p style="font-size:13px;">${c.checkedItems?.length||0} items checked</p>
+          <details><summary>View checklist</summary><ul style="margin-top:8px; padding-left:20px; font-size:13px;">${(c.checkedItems||[]).map(i=>`<li>✅ ${i}</li>`).join('')}</ul></details>
+        </div>`;
+      }).join('') +
+      `<button class="btn-sm" style="margin-top:20px; background:transparent; color:var(--muted);" onclick="document.getElementById('vehicle-checks-view').classList.add('hidden')">Close</button>`;
+    document.getElementById('vehicle-checks-view').classList.remove('hidden');
   };
 
-  // ===== CALENDAR =====
   function renderCalendar() {
     const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const y = calDate.getFullYear(), m = calDate.getMonth();
     const firstDay = new Date(y,m,1).getDay();
     const daysInMonth = new Date(y,m+1,0).getDate();
-
+    const isDriver = userProfile?.role !== 'company';
     return `
-      <h3>${userProfile?.role==='company' ? 'Company Calendar Overview' : 'My Calendar'}</h3>
+      <h3>${isDriver ? 'My Calendar' : 'Company Calendar Overview'}</h3>
       <div class="key-box">
         <div class="key-item"><span class="key-swatch avail-bg"></span> Available</div>
         <div class="key-item"><span class="key-swatch unavail-bg"></span> Unavailable</div>
         <div class="key-item"><span class="key-swatch booked-bg"></span> Work Booked</div>
       </div>
-      
       <div class="cal-header">
         <button class="btn-sm" onclick="changeCal(-1)">←</button>
         <span style="font-weight:600;">${mNames[m]} ${y}</span>
         <button class="btn-sm" onclick="changeCal(1)">→</button>
       </div>
-      
       <div class="cal-grid">
         ${days.map(d=>`<div style="text-align:center; font-weight:600; padding:8px; font-size:13px;">${d}</div>`).join('')}
         ${Array(firstDay).fill('').map(()=>'<div></div>').join('')}
         ${Array.from({length:daysInMonth}, (_,i) => {
           const d = i+1;
           const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const status = availData[dateStr]?.status || null;
+          const status = availData[dateStr]?.status;
           const isToday = new Date().toDateString() === new Date(y,m,d).toDateString();
-          let bgClass = '';
-          if (status === 'available') bgClass = 'avail-bg';
-          else if (status === 'unavailable') bgClass = 'unavail-bg';
-          else if (status === 'booked') bgClass = 'booked-bg';
-          
-          return `<div class="cal-day ${isToday?'today':''} ${bgClass}" ${userProfile?.role==='driver' ? `onclick="setAvail('${dateStr}')"` : ''}>
-            <strong>${d}</strong>
-            ${status ? `<div style="font-size:10px; margin-top:4px;">${status}</div>` : ''}
+          let bg = '';
+          if (status==='available') bg='avail-bg';
+          else if (status==='unavailable') bg='unavail-bg';
+          else if (status==='booked') bg='booked-bg';
+          return `<div class="cal-day ${isToday?'today':''} ${bg}" ${isDriver?`onclick="setAvail('${dateStr}')"`:""}>
+            <strong>${d}</strong>${status?`<div style="font-size:10px; margin-top:4px;">${status}</div>`:''}
           </div>`;
         }).join('')}
       </div>
-      ${userProfile?.role==='driver' ? 
-        '<p style="margin-top:16px; font-size:13px; color:var(--muted);">Click any day to set your availability status</p>' : 
-        '<p style="margin-top:16px; font-size:13px; color:var(--muted);">Driver availability will appear here</p>'
-      }
+      <p style="margin-top:16px; font-size:13px; color:var(--muted);">
+        ${isDriver?'Click any day to set your availability':'Driver availability will appear here'}
+      </p>
     `;
   }
-  window.changeCal = function(dir) {
-    calDate.setMonth(calDate.getMonth()+dir);
-    renderContent('calendar');
-  };
-  window.setAvail = async function(dateStr) {
-    const choice = prompt(`Set status for ${dateStr}:\n\n- available\n- unavailable\n- booked\n\nType one of the above:`);
-    if (!choice) return;
-    const valid = ['available','unavailable','booked'];
-    if (!valid.includes(choice)) return alert('Please enter: available, unavailable, or booked');
-    
-    await db.collection('availability').doc(`${currentUser.uid}_${dateStr}`).set({
-      userId: currentUser.uid,
-      date: dateStr,
-      status: choice
-    }, {merge:true});
-    
-    await loadAllData();
-    renderContent('calendar');
-    alert(`✅ Status set to: ${choice}`);
+  window.changeCal = dir => { calDate.setMonth(calDate.getMonth()+dir); renderContent('calendar'); };
+  window.setAvail = async dateStr => {
+    const choice = prompt(`Set status for ${dateStr}:\n- available\n- unavailable\n- booked`);
+    if (!['available','unavailable','booked'].includes(choice)) return;
+    await db.collection('availability').doc(`${currentUser.uid}_${dateStr}`).set({userId:currentUser.uid, date:dateStr, status:choice}, {merge:true});
+    await loadAllData(); renderContent('calendar'); alert(`✅ Set to: ${choice}`);
   };
 
-  // ===== AVAILABLE WORK (Driver) =====
   function renderAvailableWork() {
-    const openJobs = jobsData.filter(j => j.status === 'open');
-    if (openJobs.length === 0) {
-      return `<h3>Available Work</h3><p class="alert alert-info">No jobs posted yet. Check back soon!</p>`;
-    }
-    let html = `<h3>Available Work — ${openJobs.length} job${openJobs.length!==1?'s':''} listed</h3>`;
-    openJobs.forEach(job => {
-      html += `
-        <div class="item-card">
-          <strong style="font-size:16px;">${job.title || 'Untitled Job'}</strong>
-          <p style="color:var(--muted); font-size:13px; margin:4px 0;">Posted by: ${job.companyName || 'Company'}</p>
-          <p><strong>Date:</strong> ${job.date || 'Not specified'}</p>
-          <p><strong>Time:</strong> ${job.startTime || ''} — ${job.endTime || ''}</p>
-          <p><strong>Pay:</strong> £${job.pay || 'Negotiable'}</p>
-          ${job.description ? `<p style="margin-top:8px; font-size:14px;">${job.description}</p>` : ''}
-          <button class="btn-accent btn-sm" style="margin-top:12px; width:auto;">Apply / Enquire</button>
-        </div>
-      `;
-    });
-    return html;
+    const open = jobsData.filter(j => j.status === 'open');
+    if (!open.length) return `<h3>Available Work</h3><p class="alert alert-info">No jobs posted yet. Check back soon!</p>`;
+    return `<h3>Available Work — ${open.length} job${open.length!==1?'s':''}</h3>` + open.map(j => `
+      <div class="item-card">
+        <strong style="font-size:16px;">${j.title||'Untitled Job'}</strong>
+        <p style="color:var(--muted); font-size:13px; margin:4px 0;">Posted by: ${j.companyName||'Company'}</p>
+        <p><strong>Date:</strong> ${j.date||'Not specified'}</p>
+        <p><strong>Time:</strong> ${j.startTime||''} — ${j.endTime||''}</p>
+        <p><strong>Pay:</strong> £${j.pay||'Negotiable'}</p>
+        ${j.description?`<p style="margin-top:8px;">${j.description}</p>`:''}
+        <button class="btn-accent btn-sm" style="margin-top:12px; width:auto;">Apply / Enquire</button>
+      </div>
+    `).join('');
   }
 
-  // ===== POST WORK (Company) =====
   function renderCompanyWork() {
     const myJobs = jobsData.filter(j => j.companyId === currentUser?.uid);
     return `
       <h3>Post New Work</h3>
-      <div class="form-group">
-        <label>Job Title / Route</label>
-        <input type="text" id="job-title" placeholder="e.g. Manchester — Southampton" />
-      </div>
-      <div class="form-group">
-        <label>Date</label>
-        <input type="date" id="job-date" />
-      </div>
-      <div class="form-group">
-        <label>Start Time</label>
-        <input type="time" id="job-start" />
-      </div>
-      <div class="form-group">
-        <label>End Time</label>
-        <input type="time" id="job-end" />
-      </div>
-      <div class="form-group">
-        <label>Rate / Pay (£)</label>
-        <input type="text" id="job-pay" placeholder="e.g. 180" />
-      </div>
-      <div class="form-group">
-        <label>Additional Details</label>
-        <textarea id="job-desc" rows="3" placeholder="Vehicle type, loads, requirements..."></textarea>
-      </div>
+      <div class="form-group"><label>Job Title / Route</label><input type="text" id="job-title" placeholder="e.g. Manchester — Southampton" /></div>
+      <div class="form-group"><label>Date</label><input type="date" id="job-date" /></div>
+      <div class="form-group"><label>Start Time</label><input type="time" id="job-start" /></div>
+      <div class="form-group"><label>End Time</label><input type="time" id="job-end" /></div>
+      <div class="form-group"><label>Rate / Pay (£)</label><input type="text" id="job-pay" placeholder="e.g. 180" /></div>
+      <div class="form-group"><label>Additional Details</label><textarea id="job-desc" rows="3" placeholder="Vehicle type, loads, requirements..."></textarea></div>
       <button class="btn-primary" onclick="postJob()">📤 Publish Job</button>
-      
-      <h3 style="
+      <h3 style="margin-top:40px;">Your Posted Jobs</h3>
+      ${!myJobs.length?'<p class="empty">No jobs posted yet</p>':myJobs.map(j=>`
+        <div class="item-card">
+          <strong>${j.title}</strong>
+          <p>Date: ${j.date} | £${j.pay} | <span class="status-badge ${j.status==='open'?'badge-green':'badge-yellow'}">${j.status}</span></p>
+          ${j.status==='open'?`<button class="btn-sm btn-danger" style="width:auto; margin-top:8px;" onclick="closeJob('${j.id}')">Mark Filled / Close</button>`:''}
+        </div>
+      `).join('')}
+    `;
+  }
+  window.postJob = async () => {
+    const title = document.getElementById('job-title').value.trim();
+    const date = document.getElementById('job-date').value;
+    if (!title || !date) return alert('Please enter title and date');
+    await db.collection('jobs').add({
+      companyId: currentUser.uid, companyName: userProfile.name, title,
+      date, startTime: document.getElementById('job-start').value,
+      endTime: document.getElementById('job-end').value,
+      pay: document.getElementById('job-pay').value.trim(),
+      description: document.getElementById('job-desc').value.trim(),
+      status: 'open', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert('✅ Job posted'); await loadAllData(); renderContent('work');
+  };
+  window.closeJob = async id => {
+    if (!confirm('Mark as filled? It will no longer appear to drivers.')) return;
+    await db.collection('jobs').doc(id).update({status:'closed'});
+    await loadAllData(); renderContent('work'); alert('✅ Job closed');
+  };
+
+  function renderDocuments() {
+    const docs = userProfile?.role==='company'
+      ? ['Insurance Certificate','Operator Licence','Vehicle Discs','Policies & Procedures']
+      : ['Driving Licence','CPC Card','Digital Tacho Card','Tachograph Infringements','Medical Certificate'];
+    return `
+      <h3>${userProfile?.role==='company'?'Company':'My'} Documents</h3>
+      <p class="alert alert-info">Click to upload — stored securely</p>
+      <div class="grid">
+        ${docs.map(d=>`<div class="card" onclick="uploadDocument('${d}')"><h3>📄 ${d}</h3><p>Click to upload / view</p></div>`).join('')}
+      </div>
+    `;
+  }
+  window.uploadDocument = async name => {
+    const input = document.createElement('input'); input.type='file';
+    input.onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      const ref = storage.ref(`users/${currentUser.uid}/documents/${name.replace(/\s+/g,'_')}_${f.name}`);
+      await ref.put(f);
+      const url = await ref.getDownloadURL();
+      await db.collection('documents').add({userId:currentUser.uid, name, fileName:f.name, fileURL:url, uploadedAt:firebase.firestore.FieldValue.serverTimestamp()});
+      alert(`✅ "${name}" uploaded successfully!`);
+    };
+    input.click();
+  };
+
+  function renderProfile() {
+    return `
+      <h3>My Profile</h3>
+      <div class="form-group"><label>Name</label><input type="text" id="p-name" value="${userProfile?.name||''}" /></div>
+      <div class="form-group"><label>Email</label><input type="email" value="${currentUser?.email||''}" readonly style="background:#f3f4f6;" /></div>
+      <div class="form-group"><label>Account Type</label><input value="${userProfile?.role==='company'?'🏢 Company':'🚛 Driver'}" readonly style="background:#f3f4f6;" /></div>
+      <button class="btn-primary" onclick="saveProfile()">💾 Save Changes</button>
+    `;
+  }
+  window.saveProfile = async () => {
+    const name = document.getElementById('p-name').value.trim();
+    if (!name) return alert('Please enter your name');
+    await db.collection('users').doc(currentUser.uid).update({name});
+    userProfile.name = name;
+    document.getElementById('dash-subtitle').textContent = `Welcome, ${name}`;
+    alert('✅ Profile updated');
+  };
+
+  async function loadProfileData(uid) {
+    const snap = await db.collection('users').doc(uid).get();
+    return snap.exists ? snap.data() : {role:'driver', name:'User'};
+  }
+
+  firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { showPage('signin'); return; }
+    showPage('loading'); setStatus('Loading your profile...');
+    currentUser = user;
+    userProfile = await loadProfileData(user.uid);
+    await loadAllData();
+    document.getElementById('dash-title').textContent = userProfile.role==='company'?'🏢 Company Portal':'🚛 Driver Portal';
+    document.getElementById('dash-subtitle').textContent = `Welcome, ${userProfile.name}`;
+    renderNav(userProfile.role);
+    showPage('dashboard');
+    switchTab(getNavItems(userProfile.role)[0].id);
+  });
+
+  window.handleSignIn = async () => {
+    const email = document.getElementById('si-email').value.trim();
+    const pass = document.getElementById('si-password').value;
+    if (!email || !pass) return alert('Please fill in all fields');
+    try { showPage('loading'); setStatus('Signing you in...'); await auth.signInWithEmailAndPassword(email, pass); }
+    catch(e) { alert('Sign in failed: ' + e.message); showPage('signin'); }
+  };
+
+  window.handleCompanyRegister = async () => {
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-password').value;
+    if (!name || !email || !pass) return alert('Please fill in all fields');
+    try {
+      showPage('loading'); setStatus('Creating company account...');
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await db.collection('users').doc(cred.user.uid).set({name, email, role:'company', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    } catch(e) { alert('Registration failed: ' + e.message); showPage('register'); }
+  };
+
+  window.handleDriverRegister = async () => {
+    const name = document.getElementById('dr-name').value.trim();
+    const email = document.getElementById('dr-email').value.trim();
+    const pass = document.getElementById('dr-password').value;
+    if (!name || !email || !pass) return alert('Please fill in all fields');
+    try {
+      showPage('loading'); setStatus('Creating driver account...');
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await db.collection('users').doc(cred.user.uid).set({name, email, role:'driver', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    } catch(e) { alert('Registration failed: ' + e.message); showPage('register
