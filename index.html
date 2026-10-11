@@ -32,7 +32,7 @@
     .dashboard-header h1 { font-size: 26px; color: var(--primary); margin-bottom: 6px; }
     .dashboard-header p { color: var(--muted); }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
-    .card { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: 0 2px 1px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .card { background: var(--card); padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.09); }
     .card h3 { font-size: 18px; color: var(--primary); margin: 0 0 6px; }
     .card p { color: var(--muted); font-size: 14px; }
@@ -41,7 +41,7 @@
 </head>
 <body>
 
-<!-- ========== SIGN IN PAGE ========== -->
+<!-- SIGN IN PAGE -->
 <div id="page-signin" class="page" style="display: block;">
   <div class="container">
     <div class="logo">
@@ -58,7 +58,7 @@
   </div>
 </div>
 
-<!-- ========== REGISTER PAGE ========== -->
+<!-- REGISTER PAGE -->
 <div id="page-register" class="page">
   <div class="container">
     <div class="logo">
@@ -84,7 +84,7 @@
   </div>
 </div>
 
-<!-- ========== LOADING PAGE ========== -->
+<!-- LOADING PAGE -->
 <div id="page-loading" class="page">
   <div class="container" style="text-align: center; padding-top: 80px;">
     <h2>Loading...</h2>
@@ -92,18 +92,17 @@
   </div>
 </div>
 
-<!-- ========== DASHBOARD PAGE ========== -->
+<!-- DASHBOARD PAGE -->
 <div id="page-dashboard" class="page">
   <div id="dashboard-content"></div>
 </div>
 
-<!-- ========== FIREBASE & SCRIPT ========== -->
+<!-- FIREBASE SCRIPTS -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // ========== FIREBASE CONFIG ==========
   const firebaseConfig = {
     apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
     authDomain: "lsd-solutions.firebaseapp.com",
@@ -113,16 +112,13 @@
     appId: "1:833767217116:web:b8c5d6e7f8a9b0c1d2e3f4"
   };
 
-  // ========== INITIALIZE ==========
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  // ========== STATE ==========
   let currentUser = null;
-  let userProfile = null;
+  let profileLoaded = false;
 
-  // ========== PAGE HELPERS ==========
   const pageSignIn = document.getElementById('page-signin');
   const pageRegister = document.getElementById('page-register');
   const pageLoading = document.getElementById('page-loading');
@@ -142,7 +138,6 @@
     if (statusText) statusText.textContent = msg;
   }
 
-  // ========== DASHBOARD TEMPLATES ==========
   function getDashboardHTML(role) {
     if (role === 'company') {
       return `
@@ -219,65 +214,58 @@
     }
   }
 
-  // ========== LOAD PROFILE & SHOW DASHBOARD ==========
-  async function goToDashboard(user) {
-    try {
-      setStatus('Loading your profile...');
-      const profileRef = db.collection('users').doc(user.uid);
-      const snap = await profileRef.get();
-
-      if (snap.exists) {
-        userProfile = snap.data();
-        console.log('✅ Profile loaded:', userProfile);
-      } else {
-        console.log('⚠️ No profile doc — defaulting to driver');
-        userProfile = { role: 'driver' };
-      }
-    } catch (err) {
-      console.warn('⚠️ Profile load skipped — showing dashboard anyway:', err.code);
-      userProfile = { role: 'driver' };
-    }
-
-    // Show dashboard — ALWAYS runs regardless of Firestore result
-    const role = userProfile?.role || 'driver';
-    setStatus(`Opening ${role} dashboard...`);
+  function showDashboard(role) {
+    console.log('🖥️ Showing dashboard for role:', role);
     dashboardContent.innerHTML = getDashboardHTML(role);
     showPage(pageDashboard);
   }
 
-  // ========== AUTH STATE ==========
+  async function loadProfile(user) {
+    profileLoaded = false;
+    setStatus('Loading your profile...');
+
+    try {
+      const profileRef = db.collection('users').doc(user.uid);
+      const snap = await profileRef.get();
+
+      if (snap.exists) {
+        const data = snap.data();
+        console.log('✅ Profile loaded:', data);
+        profileLoaded = true;
+        showDashboard(data.role || 'driver');
+      } else {
+        console.log('⚠️ No profile found — defaulting to driver');
+        profileLoaded = true;
+        showDashboard('driver');
+      }
+    } catch (err) {
+      console.warn('⚠️ Profile load error:', err.code);
+      setStatus('Still loading...');
+      // Only fall back after a real error AND delay
+      setTimeout(() => {
+        if (!profileLoaded) {
+          console.log('⏰ Fallback — showing driver portal');
+          showDashboard('driver');
+        }
+      }, 5000);
+    }
+  }
+
   firebase.auth().onAuthStateChanged(async (user) => {
     console.log('🔐 Auth state:', user ? 'Signed in' : 'Signed out');
     
     if (user) {
       currentUser = user;
       showPage(pageLoading);
-      setStatus('✅ Signed in — loading dashboard...');
-
-      // Force-fallback timeout — show dashboard after max 7 seconds
-      const forceTimer = setTimeout(() => {
-        if (pageDashboard.style.display !== 'block') {
-          console.log('⏰ Safety timeout — showing dashboard');
-          dashboardContent.innerHTML = getDashboardHTML('driver');
-          showPage(pageDashboard);
-        }
-      }, 7000);
-
-      try {
-        await goToDashboard(user);
-        clearTimeout(forceTimer);
-      } catch (e) {
-        clearTimeout(forceTimer);
-        dashboardContent.innerHTML = getDashboardHTML('driver');
-        showPage(pageDashboard);
-      }
+      setStatus('✅ Signed in — loading profile...');
+      await loadProfile(user);
     } else {
       currentUser = null;
+      profileLoaded = false;
       showPage(pageSignIn);
     }
   });
 
-  // ========== SIGN IN ==========
   window.handleSignIn = async function () {
     const email = document.getElementById('si-email').value.trim();
     const pass = document.getElementById('si-password').value;
@@ -287,7 +275,6 @@
       showPage(pageLoading);
       setStatus('Signing you in...');
       await auth.signInWithEmailAndPassword(email, pass);
-      // onAuthStateChanged handles rest
     } catch (err) {
       console.error('❌ Sign in error:', err);
       alert('Sign in failed: ' + err.message);
@@ -295,7 +282,6 @@
     }
   };
 
-  // ========== REGISTER COMPANY ==========
   window.handleCompanyRegister = async function () {
     const name = document.getElementById('reg-name').value.trim();
     const email = document.getElementById('reg-email').value.trim();
@@ -320,7 +306,6 @@
     }
   };
 
-  // ========== REGISTER DRIVER ==========
   window.handleDriverRegister = async function () {
     const name = document.getElementById('dr-name').value.trim();
     const email = document.getElementById('dr-email').value.trim();
@@ -345,14 +330,12 @@
     }
   };
 
-  // ========== SIGN OUT ==========
   window.handleSignOut = async function () {
     await auth.signOut();
     currentUser = null;
-    userProfile = null;
+    profileLoaded = false;
   };
 
-  // ========== PAGE SWITCH ==========
   window.showRegister = () => showPage(pageRegister);
   window.showSignIn = () => showPage(pageSignIn);
 </script>
