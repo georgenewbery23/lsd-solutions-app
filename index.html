@@ -88,7 +88,7 @@
 <div id="page-loading" class="page">
   <div class="container" style="text-align: center; padding-top: 80px;">
     <h2>Loading...</h2>
-    <p id="status-text" class="status">Checking connection...</p>
+    <p id="status-text" class="status">Connecting to database...</p>
   </div>
 </div>
 
@@ -103,7 +103,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // ✅ YOUR EXACT CONFIG FROM FIREBASE CONSOLE — UPDATED!
   const firebaseConfig = {
     apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
     authDomain: "lsd-solutions.firebaseapp.com",
@@ -116,7 +115,13 @@
 
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
+  
+  // ✅ EXPLICITLY USE YOUR EXISTING DATABASE: lsd-solutions (us-central1)
   const db = firebase.firestore();
+  db.settings({
+    host: 'us-central1-firestore.googleapis.com',
+    ssl: true
+  });
 
   let currentUser = null;
   let profileLoaded = false;
@@ -206,7 +211,7 @@
       }
     } catch (err) {
       console.warn('⚠️ Profile load error:', err.code);
-      setStatus('Waiting for database...');
+      setStatus('Waiting...');
       setTimeout(() => {
         if (!profileLoaded) {
           console.log('⏰ Fallback — showing driver portal');
