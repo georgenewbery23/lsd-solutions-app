@@ -70,7 +70,7 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
     .card {
       background: white; padding: 24px; border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       transition: transform 0.2s;
     }
     .card:hover { transform: translateY(-2px); }
@@ -90,6 +90,12 @@
       width: 80px; height: 80px; object-fit: cover; border-radius: 6px;
       margin: 4px; border: 1px solid var(--border);
     }
+    .item-card {
+      background: white; padding: 16px; border-radius: 10px; margin-bottom: 12px;
+      border-left: 4px solid var(--accent);
+    }
+    .item-card.major { border-left-color: var(--danger); }
+    .item-card.advisory { border-left-color: var(--warning); }
 
     /* Calendar */
     .cal-header {
@@ -110,13 +116,9 @@
     .key-box { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
     .key-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
     .key-swatch { width: 14px; height: 14px; border-radius: 3px; }
-    .avail { background: #d1fae5; }
-    .unavail { background: #fee2e2; }
-    .booked { background: #dbeafe; }
-
-    /* Work Cards */
-    .work-card { border-left: 4px solid var(--accent); }
-    .work-card.closed { opacity: 0.6; }
+    .avail-bg { background: #d1fae5; }
+    .unavail-bg { background: #fee2e2; }
+    .booked-bg { background: #dbeafe; }
 
     /* Utilities */
     .hidden { display: none !important; }
@@ -127,6 +129,8 @@
     .alert-info { background: #e0f2fe; color: #075985; }
     .alert-success { background: #dcfce7; color: #166534; }
     .alert-warning { background: #fef3c7; color: #92400e; }
+    .alert-danger { background: #fee2e2; color: #991b1b; }
+    .empty { color: var(--muted); text-align: center; padding: 30px; }
   </style>
 </head>
 <body>
@@ -225,11 +229,15 @@
 
   let currentUser = null;
   let userProfile = null;
-  let authChecked = false; // Prevents auto-redirect before user chooses
+  let authChecked = false;
 
   // Calendar state
   let calDate = new Date();
   let calView = 'month';
+  let availData = {};
+  let jobsData = [];
+  let checksData = [];
+  let defectsData = [];
 
   // ===== PAGE ROUTING =====
   const pages = {
@@ -285,20 +293,56 @@
     renderContent(tabId);
   }
 
+  // ===== LOAD ALL DATA FROM FIRESTORE =====
+  async function loadAllData() {
+    if (!currentUser) return;
+
+    // Load availability
+    const availSnap = await db.collection('availability')
+      .where('userId', '==', currentUser.uid)
+      .get();
+    availData = {};
+    availSnap.forEach(doc => {
+      availData[doc.data().date] = doc.data().status;
+    });
+
+    // Load checks
+    const checksSnap = await db.collection('checks')
+      .where('userId', '==', currentUser.uid)
+      .orderBy('completedAt', 'desc')
+      .limit(20)
+      .get();
+    checksData = checksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Load defects
+    const defectsSnap = await db.collection('defects')
+      .where('userId', '==', currentUser.uid)
+      .orderBy('timestamp', 'desc')
+      .limit(20)
+      .get();
+    defectsData = defectsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Load jobs (all open jobs for everyone)
+    const jobsSnap = await db.collection('jobs')
+      .where('status', '==', 'open')
+      .orderBy('createdAt', 'desc')
+      .limit(30)
+      .get();
+    jobsData = jobsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
   // ===== CONTENT RENDERERS =====
   function renderContent(tab) {
     const role = userProfile?.role || 'driver';
     const content = document.getElementById('dash-content');
 
     switch(tab) {
-      // --- DRIVER TABS ---
       case 'check': content.innerHTML = renderVehicleCheck(); break;
       case 'mychecks': content.innerHTML = renderMyChecks(); break;
       case 'work': content.innerHTML = role==='company' ? renderCompanyWork() : renderAvailableWork(); break;
       case 'calendar': content.innerHTML = renderCalendar(); break;
       case 'docs': content.innerHTML = renderDocuments(); break;
       case 'profile': content.innerHTML = renderProfile(); break;
-      // --- COMPANY TABS ---
       case 'drivers': content.innerHTML = renderCompanyDrivers(); break;
       case 'vehicles': content.innerHTML = renderCompanyVehicles(); break;
     }
@@ -332,7 +376,7 @@
       <div id="defect-form" class="hidden mt-20">
         <div class="defect-box">
           <h4>Report Defect</h4>
-          <input type="text" id="defect-item" placeholder="Defect item" readonly style="background:#f3f4f6;" />
+          <input type="text" id="defect-item" placeholder="Defect / Component" />
           <textarea id="defect-desc" rows="3" placeholder="Describe the issue in detail..." style="resize:none;"></textarea>
           
           <label>Severity</label>
@@ -341,9 +385,8 @@
             <option value="major">🔴 Major — Needs immediate attention</option>
           </select>
           
-          <label>Add Photos</label>
-          <input type="file" id="defect-photos" accept="image/*" multiple onchange="previewPhotos(this)" />
-          <div id="photo-previews"></div>
+          <label>Add Photos (filenames recorded — full upload coming soon)</label>
+          <input type="file" id="defect-photos" accept="image/*" multiple />
           
           <button class="btn-primary mt-20" onclick="saveDefect()">Save Defect</button>
           <button class="btn-sm" style="background:transparent; color:var(--muted);" onclick="hideDefect()">Cancel</button>
@@ -367,63 +410,104 @@
   function showOtherDefect() {
     currentDefectItem = 'Other Defect';
     document.getElementById('defect-item').value = '';
-    document.getElementById('defect-form').classList.remove('hidden');
     document.getElementById('defect-item').placeholder = 'Enter defect name';
+    document.getElementById('defect-form').classList.remove('hidden');
+    document.getElementById('defect-desc').focus();
   }
   function hideDefect() {
     document.getElementById('defect-form').classList.add('hidden');
-    document.getElementById('photo-previews').innerHTML = '';
     currentDefectItem = null;
   }
-  function previewPhotos(input) {
-    const container = document.getElementById('photo-previews');
-    container.innerHTML = '';
-    Array.from(input.files).forEach(f => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        container.innerHTML += `<img src="${e.target.result}" class="photo-preview" />`;
-      };
-      reader.readAsDataURL(f);
-    });
-  }
   async function saveDefect() {
-    const item = document.getElementById('defect-item').value || 'Other';
+    const item = document.getElementById('defect-item').value.trim() || 'Unspecified';
     const desc = document.getElementById('defect-desc').value.trim();
     const severity = document.getElementById('defect-severity').value;
+    const photoInput = document.getElementById('defect-photos');
+    const photoNames = photoInput.files.length > 0 
+      ? Array.from(photoInput.files).map(f => f.name) 
+      : [];
     
     if (!desc) return alert('Please describe the defect');
     
     await db.collection('defects').add({
       userId: currentUser.uid,
-      item, description: desc, severity,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      photos: []
+      item,
+      description: desc,
+      severity,
+      photoNames,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert(`✅ Defect saved as ${severity.toUpperCase()}`);
+    alert(`✅ Defect saved — ${severity.toUpperCase()}`);
     hideDefect();
+    loadAllData();
   }
   async function submitCheck() {
     const reg = document.getElementById('vreg').value.trim() || 'Not Recorded';
+    
+    // Collect checked items
+    const checkedItems = [];
+    const defectsReported = [];
+    document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(cb => {
+      if (cb.checked) checkedItems.push(cb.id.replace('check-', '').replace(/-/g, ' '));
+    });
+    
     await db.collection('checks').add({
       userId: currentUser.uid,
       vehicleReg: reg,
+      checkedItems,
       completedAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'submitted'
     });
+    
     alert('✅ Walkaround check submitted — Thank you');
     renderContent('check');
   }
 
   // ===== MY CHECKS HISTORY =====
   function renderMyChecks() {
-    return `
-      <h3>My Recent Checks</h3>
-      <p class="alert alert-info">Your submitted checks and defects will appear here</p>
-      <div id="checks-list">
-        <p class="text-center" style="color:var(--muted); padding:20px;">Loading history...</p>
-      </div>
-    `;
+    if (checksData.length === 0 && defectsData.length === 0) {
+      return `
+        <h3>My Checks & Defects</h3>
+        <p class="empty">No checks submitted yet. Complete your first vehicle check above.</p>
+      `;
+    }
+
+    let html = `<h3>My Checks (Last 20)</h3>`;
+    
+    if (checksData.length === 0) {
+      html += `<p class="empty">No checks submitted yet.</p>`;
+    } else {
+      checksData.forEach(check => {
+        const date = check.completedAt?.toDate ? check.completedAt.toDate().toLocaleString() : 'Recently';
+        html += `
+          <div class="item-card">
+            <strong>🚛 ${check.vehicleReg || 'Vehicle'}</strong>
+            <p style="margin:4px 0; font-size:13px; color:var(--muted);">${date}</p>
+            <p style="font-size:13px;">${check.checkedItems?.length || 0} items checked</p>
+          </div>
+        `;
+      });
+    }
+
+    html += `<h3 style="margin-top:30px;">Reported Defects</h3>`;
+    if (defectsData.length === 0) {
+      html += `<p class="empty">No defects reported — all good! ✅</p>`;
+    } else {
+      defectsData.forEach(d => {
+        const date = d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString() : 'Recently';
+        html += `
+          <div class="item-card ${d.severity === 'major' ? 'major' : 'advisory'}">
+            <strong>${d.severity === 'major' ? '🔴' : '⚠️'} ${d.item}</strong>
+            <p style="margin:4px 0; font-size:13px; color:var(--muted);">${date}</p>
+            <p style="font-size:14px; margin-top:8px;">${d.description}</p>
+            ${d.photoNames?.length > 0 ? `<p style="font-size:12px; color:var(--muted);">📎 Photos: ${d.photoNames.join(', ')}</p>` : ''}
+          </div>
+        `;
+      });
+    }
+
+    return html;
   }
 
   // ===== CALENDAR =====
@@ -437,20 +521,15 @@
     return `
       <h3>My Calendar</h3>
       <div class="key-box">
-        <div class="key-item"><span class="key-swatch avail"></span> Available</div>
-        <div class="key-item"><span class="key-swatch unavail"></span> Unavailable</div>
-        <div class="key-item"><span class="key-swatch booked"></span> Work Booked</div>
+        <div class="key-item"><span class="key-swatch avail-bg"></span> Available</div>
+        <div class="key-item"><span class="key-swatch unavail-bg"></span> Unavailable</div>
+        <div class="key-item"><span class="key-swatch booked-bg"></span> Work Booked</div>
       </div>
       
       <div class="cal-header">
         <button class="btn-sm" onclick="changeCal(-1)">←</button>
         <span style="font-weight:600;">${mNames[m]} ${y}</span>
         <button class="btn-sm" onclick="changeCal(1)">→</button>
-        <div style="margin-left:auto; display:flex; gap:4px;">
-          <button class="btn-sm" onclick="calView='day'; renderContent('calendar')">Day</button>
-          <button class="btn-sm" onclick="calView='week'; renderContent('calendar')">Week</button>
-          <button class="btn-sm" onclick="calView='month'; renderContent('calendar')">Month</button>
-        </div>
       </div>
       
       <div class="cal-grid">
@@ -458,39 +537,68 @@
         ${Array(firstDay).fill('').map(()=>'<div></div>').join('')}
         ${Array.from({length:daysInMonth}, (_,i) => {
           const d = i+1;
+          const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const status = availData[dateStr] || null;
           const isToday = new Date().toDateString() === new Date(y,m,d).toDateString();
-          return `<div class="cal-day ${isToday?'today':''}" onclick="setAvail('${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')">
+          let bgClass = '';
+          if (status === 'available') bgClass = 'avail-bg';
+          else if (status === 'unavailable') bgClass = 'unavail-bg';
+          else if (status === 'booked') bgClass = 'booked-bg';
+          
+          return `<div class="cal-day ${isToday?'today':''} ${bgClass}" onclick="setAvail('${dateStr}')">
             <strong>${d}</strong>
-            <div class="cal-label avail">Avail</div>
+            ${status ? `<div style="font-size:10px; margin-top:4px;">${status}</div>` : ''}
           </div>`;
         }).join('')}
       </div>
+      <p style="margin-top:16px; font-size:13px; color:var(--muted);">Click any day to set your availability status</p>
     `;
   }
   function changeCal(dir) {
     calDate.setMonth(calDate.getMonth()+dir);
     renderContent('calendar');
   }
-  function setAvail(dateStr) {
-    const choice = prompt(`Set status for ${dateStr}:\n- available\n- unavailable\n- booked`);
+  async function setAvail(dateStr) {
+    const choice = prompt(`Set status for ${dateStr}:\n\n- available\n- unavailable\n- booked\n\nType one of the above:`);
     if (!choice) return;
-    db.collection('availability').doc(`${currentUser.uid}_${dateStr}`).set({
-      userId: currentUser.uid, date: dateStr, status: choice
-    }, {merge:true}).then(() => {
-      alert('✅ Updated');
-      renderContent('calendar');
-    });
+    const valid = ['available','unavailable','booked'];
+    if (!valid.includes(choice)) return alert('Please enter: available, unavailable, or booked');
+    
+    await db.collection('availability').doc(`${currentUser.uid}_${dateStr}`).set({
+      userId: currentUser.uid,
+      date: dateStr,
+      status: choice
+    }, {merge:true});
+    
+    await loadAllData();
+    renderContent('calendar');
+    alert(`✅ Status set to: ${choice}`);
   }
 
   // ===== AVAILABLE WORK (Driver) =====
   function renderAvailableWork() {
-    return `
-      <h3>Available Work</h3>
-      <p class="alert alert-info">Jobs posted by companies looking for drivers</p>
-      <div id="work-list">
-        <p class="text-center" style="color:var(--muted); padding:20px;">Loading jobs...</p>
-      </div>
-    `;
+    if (jobsData.length === 0) {
+      return `
+        <h3>Available Work</h3>
+        <p class="alert alert-info">No jobs posted yet. Check back soon!</p>
+      `;
+    }
+
+    let html = `<h3>Available Work — ${jobsData.length} job${jobsData.length!==1?'s':''} listed</h3>`;
+    jobsData.forEach(job => {
+      html += `
+        <div class="item-card">
+          <strong style="font-size:16px;">${job.title || 'Untitled Job'}</strong>
+          <p style="color:var(--muted); font-size:13px; margin:4px 0;">Posted by: ${job.companyName || 'Company'}</p>
+          <p><strong>Date:</strong> ${job.date || 'Not specified'}</p>
+          <p><strong>Time:</strong> ${job.startTime || ''} — ${job.endTime || ''}</p>
+          <p><strong>Pay:</strong> £${job.pay || 'Negotiable'}</p>
+          ${job.description ? `<p style="margin-top:8px; font-size:14px;">${job.description}</p>` : ''}
+          <button class="btn-accent btn-sm" style="margin-top:12px; width:auto;">Apply / Enquire</button>
+        </div>
+      `;
+    });
+    return html;
   }
 
   // ===== POST WORK (Company) =====
@@ -522,25 +630,51 @@
         <textarea id="job-desc" rows="3" placeholder="Vehicle type, loads, requirements..."></textarea>
       </div>
       <button class="btn-primary" onclick="postJob()">📤 Publish Job</button>
-      <h3 style="margin-top:30px;">Your Posted Jobs</h3>
-      <div id="posted-list"></div>
+      
+      <h3 style="margin-top:40px;">Your Posted Jobs</h3>
+      <div id="your-jobs-list">
+        ${jobsData.filter(j => j.companyId === currentUser?.uid).length === 0 
+          ? '<p class="empty">No jobs posted yet</p>'
+          : jobsData.filter(j => j.companyId === currentUser?.uid).map(job => `
+            <div class="item-card">
+              <strong>${job.title}</strong>
+              <p>Date: ${job.date} | £${job.pay}</p>
+              <button class="btn-sm btn-danger" style="width:auto;" onclick="closeJob('${job.id}')">Mark Filled / Close</button>
+            </div>
+          `).join('')
+        }
+      </div>
     `;
   }
   async function postJob() {
+    const title = document.getElementById('job-title').value.trim();
+    const date = document.getElementById('job-date').value;
+    const start = document.getElementById('job-start').value;
+    const end = document.getElementById('job-end').value;
+    const pay = document.getElementById('job-pay').value.trim();
+    const desc = document.getElementById('job-desc').value.trim();
+    
+    if (!title || !date) return alert('Please enter at least a title and date');
+    
     await db.collection('jobs').add({
       companyId: currentUser.uid,
       companyName: userProfile.name,
-      title: document.getElementById('job-title').value,
-      date: document.getElementById('job-date').value,
-      startTime: document.getElementById('job-start').value,
-      endTime: document.getElementById('job-end').value,
-      pay: document.getElementById('job-pay').value,
-      description: document.getElementById('job-desc').value,
+      title, date, startTime: start, endTime: end, pay,
+      description: desc,
       status: 'open',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    alert('✅ Job posted — visible to drivers');
+    
+    alert('✅ Job posted — visible to all drivers');
+    await loadAllData();
     renderContent('work');
+  }
+  async function closeJob(jobId) {
+    if (!confirm('Mark this job as filled/closed? It will no longer appear to drivers.')) return;
+    await db.collection('jobs').doc(jobId).update({ status: 'closed' });
+    await loadAllData();
+    renderContent('work');
+    alert('✅ Job closed');
   }
 
   // ===== DOCUMENTS =====
@@ -548,21 +682,19 @@
     const docs = userProfile?.role==='company' 
       ? ['Insurance Certificate', 'Operator Licence', 'Vehicle Discs', 'Policies & Procedures']
       : ['Driving Licence', 'CPC Card', 'Digital Tacho Card', 'Tachograph Infringements', 'Medical Certificate'];
+    
     return `
       <h3>${userProfile?.role==='company'?'Company':'My'} Documents</h3>
-      <p class="alert alert-info">Upload and store all your legal documentation</p>
+      <p class="alert alert-info">Store and manage your required documentation — upload storage coming next</p>
       <div class="grid">
         ${docs.map(d => `
-          <div class="card" onclick="uploadDoc('${d}')">
+          <div class="card" onclick="alert('Upload interface for: ${d}\\n\\nReady to connect to Firebase Storage — next step!')">
             <h3>📄 ${d}</h3>
             <p>Click to upload / view</p>
           </div>
         `).join('')}
       </div>
     `;
-  }
-  function uploadDoc(name) {
-    alert(`Upload interface for: ${name}\n\nReady to connect to storage — working on it!`);
   }
 
   // ===== PROFILE =====
@@ -585,19 +717,27 @@
     `;
   }
   async function saveProfile() {
-    await db.collection('users').doc(currentUser.uid).update({
-      name: document.getElementById('p-name').value
-    });
-    userProfile.name = document.getElementById('p-name').value;
+    const newName = document.getElementById('p-name').value.trim();
+    if (!newName) return alert('Please enter your name');
+    
+    await db.collection('users').doc(currentUser.uid).update({ name: newName });
+    userProfile.name = newName;
+    document.getElementById('dash-subtitle').textContent = `Welcome, ${newName}`;
     alert('✅ Profile updated');
   }
 
   // ===== COMPANY ONLY =====
   function renderCompanyDrivers() {
-    return `<h3>Driver Management</h3><p class="alert alert-info">View and manage your approved drivers</p>`;
+    return `
+      <h3>Driver Management</h3>
+      <p class="alert alert-info">View and manage your approved drivers — coming soon</p>
+    `;
   }
   function renderCompanyVehicles() {
-    return `<h3>Fleet & Checks</h3><p class="alert alert-info">Vehicle list and completed walkarounds</p>`;
+    return `
+      <h3>Fleet & Checks</h3>
+      <p class="alert alert-info">Vehicle list and completed walkaround reports — coming soon</p>
+    `;
   }
 
   // ===== AUTH HANDLERS =====
@@ -610,18 +750,20 @@
   firebase.auth().onAuthStateChanged(async (user) => {
     authChecked = true;
     
-    // ⭐ KEY FIX: Always show sign-in page first
+    // Always start at sign-in page
     if (!user) {
       showPage('signin');
       return;
     }
 
-    // Only proceed if actually signed in
     showPage('loading');
     setStatus('Loading your profile...');
     
     currentUser = user;
     userProfile = await loadProfileData(user.uid);
+    
+    // Load all Firestore data
+    await loadAllData();
     
     // Update dashboard
     document.getElementById('dash-title').textContent = 
@@ -692,6 +834,10 @@
     await auth.signOut();
     currentUser = null;
     userProfile = null;
+    availData = {};
+    jobsData = [];
+    checksData = [];
+    defectsData = [];
     showPage('signin');
   };
 
@@ -703,11 +849,10 @@
   window.showDefect = showDefect;
   window.showOtherDefect = showOtherDefect;
   window.hideDefect = hideDefect;
-  window.previewPhotos = previewPhotos;
   window.saveDefect = saveDefect;
   window.submitCheck = submitCheck;
   window.postJob = postJob;
-  window.uploadDoc = uploadDoc;
+  window.closeJob = closeJob;
   window.saveProfile = saveProfile;
 </script>
 </body>
