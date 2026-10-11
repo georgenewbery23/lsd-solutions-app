@@ -201,6 +201,66 @@
     <div class="dash-content" id="dash-content"></div>
   </div>
 </div>
+<!-- ==============================================
+   COMPANY MANAGEMENT — DRIVERS & VEHICLES
+   ============================================== -->
+
+<!-- Company Drivers Management -->
+<div id="company-drivers" class="page">
+  <div class="dash-container">
+    <h2>👥 Company Drivers</h2>
+    <p class="alert alert-info">Manage your drivers — full-time and temporary access</p>
+
+    <!-- Add Driver Form -->
+    <div style="background:#f8fafc; padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid #e2e8f0;">
+      <h3 style="margin-top:0;">➕ Add Driver to Company</h3>
+      <input type="email" id="new-driver-email" placeholder="Driver email address" style="margin-bottom:8px;" />
+      <select id="driver-access-type" style="margin-bottom:8px;">
+        <option value="fulltime">Full-time Driver — Permanent Access</option>
+        <option value="temporary">Temporary — Job Only</option>
+      </select>
+      <button onclick="addCompanyDriver()" class="btn-primary" style="width:auto;">Add Driver</button>
+    </div>
+
+    <!-- Drivers List -->
+    <h3>Your Drivers</h3>
+    <div id="company-drivers-list"></div>
+  </div>
+</div>
+
+<!-- Company Vehicles Management -->
+<div id="company-vehicles" class="page">
+  <div class="dash-container">
+    <h2>🚛 Company Vehicles & Trailers</h2>
+    <p class="alert alert-info">Only these vehicles will appear in your drivers' checklists</p>
+
+    <!-- Add Vehicle Form -->
+    <div style="background:#f8fafc; padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid #e2e8f0;">
+      <h3 style="margin-top:0;">➕ Add Vehicle / Trailer</h3>
+      <input type="text" id="veh-reg" placeholder="Vehicle Registration" style="margin-bottom:8px;" />
+      <input type="text" id="trailer-num" placeholder="Trailer Number (optional)" style="margin-bottom:8px;" />
+      <select id="veh-type" style="margin-bottom:8px;">
+        <option value="vehicle">🚛 Vehicle Only</option>
+        <option value="trailer">📦 Trailer Only</option>
+        <option value="both">🚛 + 📦 Vehicle + Trailer</option>
+      </select>
+      <button onclick="addCompanyVehicle()" class="btn-primary" style="width:auto;">Add to Fleet</button>
+    </div>
+
+    <!-- Vehicles List -->
+    <h3>Your Fleet</h3>
+    <div id="company-vehicles-list"></div>
+  </div>
+</div>
+
+<!-- Driver: Switch Company / Select Company -->
+<div id="select-company" class="page">
+  <div class="container" style="max-width:500px; padding-top:60px;">
+    <h2>🏢 Select Company</h2>
+    <p style="text-align:center; color:var(--muted); margin-bottom:30px;">You have access to multiple companies — please select who you're working for today</p>
+    <div id="available-companies-list"></div>
+  </div>
+</div>
 
 <!-- ==============================================
    VEHICLE CHECK LIST — COMPANY EDITOR
@@ -384,10 +444,26 @@ loadCheckList();
   function setStatus(msg) { console.log('📢', msg); document.getElementById('status-text').textContent = msg; }
 
   function getNavItems(role) {
-    return role === 'company'
-      ? [ {id:'drivers',label:'👥 Drivers'}, {id:'vehicles',label:'🚛 Vehicle Checks'}, {id:'work',label:'📤 Post Work'}, {id:'calendar',label:'📅 Calendar'}, {id:'docs',label:'📄 Documents'}, {id:'profile',label:'👤 Profile'} ]
-      : [ {id:'check',label:'✅ Vehicle Check'}, {id:'mychecks',label:'📋 My Checks'}, {id:'calendar',label:'📅 My Calendar'}, {id:'work',label:'🔍 Available Work'}, {id:'docs',label:'📄 My Documents'}, {id:'profile',label:'👤 My Profile'} ];
-  }
+  return role === 'company'
+    ? [ 
+        {id:'company-drivers',label:'👥 My Drivers'}, 
+        {id:'vehicle-checks',label:'✅ Check List Editor'}, 
+        {id:'company-vehicles',label:'🚛 My Fleet'}, 
+        {id:'work',label:'📤 Post Work'}, 
+        {id:'calendar',label:'📅 Calendar'}, 
+        {id:'docs',label:'📄 Documents'}, 
+        {id:'profile',label:'👤 Profile'} 
+      ]
+    : [ 
+        {id:'current-company',label:'🏢 Current Company'},
+        {id:'check',label:'✅ Vehicle Check'}, 
+        {id:'mychecks',label:'📋 My Checks'}, 
+        {id:'calendar',label:'📅 My Calendar'}, 
+        {id:'work',label:'🔍 Available Work'}, 
+        {id:'docs',label:'📄 My Documents'}, 
+        {id:'profile',label:'👤 My Profile'} 
+      ];
+}
 
   function renderNav(role) {
     document.getElementById('dash-nav').innerHTML = getNavItems(role).map(i =>
@@ -958,6 +1034,293 @@ const companyMenu = `
   window.handleSignIn = handleSignIn;
   window.handleCreateAccount = handleCreateAccount;
   window.switchAuthMode = switchAuthMode;
+  
+  // ─── MULTI-COMPANY VARIABLES ──────────────────────────────────────────
+let currentSelectedCompany = null;
+let userCompanies = [];
+let companyVehicles = [];
+
+// ─── SWITCH ACTIVE COMPANY (DRIVER) ────────────────────────────────────
+async function loadUserCompanies() {
+  if (!currentUser || !userProfile) return [];
+  
+  const snap = await db.collection('company_drivers')
+    .where('driverId', '==', currentUser.uid)
+    .where('active', '==', true)
+    .get();
+  
+  userCompanies = [];
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    const companySnap = await db.collection('users').doc(data.companyId).get();
+    if (companySnap.exists) {
+      userCompanies.push({
+        id: data.companyId,
+        name: companySnap.data().companyName || companySnap.data().name,
+        accessType: data.accessType, // 'fulltime' or 'temporary'
+        jobId: data.jobId || null,
+        addedAt: data.addedAt
+      });
+    }
+  }
+  
+  // Auto-select if only one company
+  if (userCompanies.length === 1 && !currentSelectedCompany) {
+    setCurrentCompany(userCompanies[0]);
+  }
+  
+  return userCompanies;
+}
+
+function setCurrentCompany(company) {
+  currentSelectedCompany = company;
+  localStorage.setItem('currentCompanyId', company.id);
+  // Reload vehicles for this company
+  loadCompanyVehicles(company.id);
+}
+
+async function loadCompanyVehicles(companyId) {
+  const snap = await db.collection('company_vehicles')
+    .where('companyId', '==', companyId)
+    .get();
+  
+  companyVehicles = snap.docs.map(d => ({id:d.id, ...d.data()}));
+}
+
+// ─── COMPANY: ADD DRIVER ──────────────────────────────────────────────
+window.addCompanyDriver = async function() {
+  const email = document.getElementById('new-driver-email').value.trim();
+  const accessType = document.getElementById('driver-access-type').value;
+  
+  if (!email) return alert('Enter driver email');
+  
+  // Find driver by email
+  const driverSnap = await db.collection('users')
+    .where('email', '==', email)
+    .where('role', '==', 'driver')
+    .limit(1)
+    .get();
+  
+  if (driverSnap.empty) return alert('No driver found with that email — ask them to register first');
+  
+  const driver = driverSnap.docs[0];
+  const driverId = driver.id;
+  
+  // Check if already added
+  const existing = await db.collection('company_drivers')
+    .where('companyId', '==', currentUser.uid)
+    .where('driverId', '==', driverId)
+    .get();
+  
+  if (!existing.empty) return alert('This driver is already in your list');
+  
+  // Add connection
+  await db.collection('company_drivers').add({
+    companyId: currentUser.uid,
+    driverId: driverId,
+    accessType: accessType,
+    active: true,
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  
+  alert('✅ Driver added! They will see your vehicles and checklists');
+  document.getElementById('new-driver-email').value = '';
+  renderCompanyDriversList();
+};
+
+// ─── COMPANY: REMOVE DRIVER ───────────────────────────────────────────
+window.removeCompanyDriver = async function(docId) {
+  if (!confirm('Remove this driver? They will no longer see your vehicles.')) return;
+  await db.collection('company_drivers').doc(docId).update({active: false});
+  renderCompanyDriversList();
+};
+
+// ─── COMPANY: ADD VEHICLE/TRAILER ─────────────────────────────────────
+window.addCompanyVehicle = async function() {
+  const reg = document.getElementById('veh-reg').value.trim().toUpperCase();
+  const trailer = document.getElementById('trailer-num').value.trim().toUpperCase();
+  const type = document.getElementById('veh-type').value;
+  
+  if (!reg && type !== 'trailer') return alert('Enter registration number');
+  
+  await db.collection('company_vehicles').add({
+    companyId: currentUser.uid,
+    registration: reg,
+    trailerNumber: trailer || null,
+    type: type,
+    active: true,
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  
+  alert('✅ Added to fleet');
+  document.getElementById('veh-reg').value = '';
+  document.getElementById('trailer-num').value = '';
+  renderCompanyVehiclesList();
+};
+
+// ─── COMPANY: REMOVE VEHICLE ──────────────────────────────────────────
+window.removeCompanyVehicle = async function(docId) {
+  if (!confirm('Remove this vehicle? Drivers will no longer see it.')) return;
+  await db.collection('company_vehicles').doc(docId).update({active: false});
+  renderCompanyVehiclesList();
+};
+
+// ─── RENDER: COMPANY DRIVERS LIST ─────────────────────────────────────
+async function renderCompanyDriversList() {
+  const snap = await db.collection('company_drivers')
+    .where('companyId', '==', currentUser.uid)
+    .where('active', '==', true)
+    .get();
+  
+  const list = document.getElementById('company-drivers-list');
+  
+  if (snap.empty) {
+    list.innerHTML = '<p class="empty">No drivers added yet. Enter a driver\'s email above.</p>';
+    return;
+  }
+  
+  list.innerHTML = '';
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    const driverSnap = await db.collection('users').doc(data.driverId).get();
+    const driverName = driverSnap.exists ? (driverSnap.data().name || 'Unknown') : 'Unknown';
+    const driverEmail = driverSnap.exists ? (driverSnap.data().email || '') : '';
+    
+    list.innerHTML += `
+      <div class="item-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>${driverName}</strong>
+            <p style="font-size:13px; color:var(--muted); margin:2px 0;">${driverEmail}</p>
+            <span class="status-badge ${data.accessType==='fulltime'?'badge-green':'badge-blue'}">
+              ${data.accessType==='fulltime'?'🔒 Full-time':'⏱️ Temporary'}
+            </span>
+          </div>
+          <button class="btn-sm btn-danger" onclick="removeCompanyDriver('${doc.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ─── RENDER: COMPANY VEHICLES LIST ────────────────────────────────────
+async function renderCompanyVehiclesList() {
+  const snap = await db.collection('company_vehicles')
+    .where('companyId', '==', currentUser.uid)
+    .where('active', '==', true)
+    .get();
+  
+  const list = document.getElementById('company-vehicles-list');
+  
+  if (snap.empty) {
+    list.innerHTML = '<p class="empty">No vehicles added yet. Add your fleet above.</p>';
+    return;
+  }
+  
+  list.innerHTML = snap.docs.map(doc => {
+    const v = doc.data();
+    return `
+      <div class="item-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>${v.type==='trailer'?'📦':'🚛'} ${v.registration || 'NO REG'}</strong>
+            ${v.trailerNumber ? `<p style="font-size:13px; color:var(--muted);">Trailer: ${v.trailerNumber}</p>` : ''}
+          </div>
+          <button class="btn-sm btn-danger" onclick="removeCompanyVehicle('${doc.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── RENDER: DRIVER — SELECT COMPANY LIST ──────────────────────────────
+async function renderSelectCompanyPage() {
+  const companies = await loadUserCompanies();
+  const list = document.getElementById('available-companies-list');
+  
+  if (companies.length === 0) {
+    list.innerHTML = `
+      <div class="alert alert-info">
+        You don't have access to any companies yet. When a company adds you 
+        or confirms you for a job, they will appear here.
+      </div>
+    `;
+    return;
+  }
+  
+  if (companies.length === 1) {
+    list.innerHTML = `
+      <div class="alert alert-success">
+        Working for: <strong>${companies[0].name}</strong>
+      </div>
+    `;
+    return;
+  }
+  
+  list.innerHTML = companies.map(c => `
+    <div class="item-card" style="cursor:pointer;" onclick="setCurrentCompanyAndReload('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong>${c.name}</strong>
+          <p style="font-size:13px; color:var(--muted);">
+            ${c.accessType==='fulltime'?'🔒 Full-time access':'⏱️ Job-based access'}
+          </p>
+        </div>
+        <span class="status-badge badge-green">Select →</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.setCurrentCompanyAndReload = function(id, name) {
+  setCurrentCompany({id, name});
+  alert(`✅ Now working for: ${name}`);
+  // Refresh checklist vehicle dropdown if open
+  const vregInput = document.getElementById('vreg');
+  if (vregInput) populateVehicleDropdown();
+};
+
+// ─── REPLACE VEHICLE INPUT WITH DROPDOWN ──────────────────────────────
+function populateVehicleDropdown() {
+  const container = document.getElementById('vreg').parentNode;
+  const selectId = 'vreg-select';
+  
+  // Replace input with dropdown
+  container.innerHTML = `
+    <label>Vehicle Registration</label>
+    <select id="${selectId}" style="margin-bottom:8px;">
+      <option value="">— Select your vehicle —</option>
+      ${companyVehicles.map(v => `
+        <option value="${v.registration}${v.trailerNumber ? ' / ' + v.trailerNumber : ''}">
+          ${v.type==='trailer'?'📦':'🚛'} ${v.registration}
+          ${v.trailerNumber ? '+ 📦 ' + v.trailerNumber : ''}
+        </option>
+      `).join('')}
+    </select>
+    ${companyVehicles.length === 0 
+      ? '<p style="font-size:12px; color:var(--warning);">⚠️ No vehicles listed for this company yet</p>' 
+      : ''}
+  `;
+}
+
+// ─── UPDATE renderContent TO HANDLE NEW PAGES ─────────────────────────
+// Add these cases to your renderContent switch statement:
+// case 'company-drivers': dashContent.innerHTML = ''; renderCompanyDriversList(); break;
+// case 'company-vehicles': dashContent.innerHTML = ''; renderCompanyVehiclesList(); break;
+// case 'current-company': dashContent.innerHTML = ''; renderSelectCompanyPage(); break;
+
+// ─── WHEN JOB IS CONFIRMED → GRANT TEMPORARY ACCESS ───────────────────
+// Call this from your job acceptance logic:
+async function grantTemporaryJobAccess(jobId, companyId, driverId) {
+  await db.collection('company_drivers').add({
+    companyId: companyId,
+    driverId: driverId,
+    jobId: jobId,
+    accessType: 'temporary',
+    active: true,
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
 
 // ─── END OF SCRIPT ─────────────────────────────────────────────────────────
 </script>
