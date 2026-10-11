@@ -208,9 +208,9 @@
   </div>
 
     <script type="module">
-    import { auth, db } from './firebase.js';
+    import { auth } from './firebase.js';
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-    import { doc, setDoc, getDoc } from 'firebase/firestore';
+    import { db, doc, setDoc, getDoc } from './firebase.js';
 
     let userProfile = null;
     let hasNavigated = false;
@@ -233,56 +233,75 @@
     }
 
     function navigateAfterLogin() {
-      if (hasNavigated || !userProfile || !userProfile.role) return;
-      hasNavigated = true;
+      if (hasNavigated) return;
       
-      const companyNameEl = document.getElementById('company-name-display');
-      const driverNameEl = document.getElementById('driver-name-display');
-      
-      if (userProfile.role === 'company' && companyNameEl) {
-        companyNameEl.textContent = userProfile.companyName || 'Company';
-        showPage('company-dashboard');
-      } else if (userProfile.role === 'driver' && driverNameEl) {
-        driverNameEl.textContent = userProfile.name || 'Driver';
-        showPage('driver-dashboard');
+      // If we have the role → go straight to dashboard
+      if (userProfile && userProfile.role) {
+        hasNavigated = true;
+        const companyNameEl = document.getElementById('company-name-display');
+        const driverNameEl = document.getElementById('driver-name-display');
+        
+        if (userProfile.role === 'company' && companyNameEl) {
+          companyNameEl.textContent = userProfile.companyName || 'Company';
+          showPage('company-dashboard');
+        } else if (userProfile.role === 'driver' && driverNameEl) {
+          driverNameEl.textContent = userProfile.name || 'Driver';
+          showPage('driver-dashboard');
+        }
       }
     }
 
-    // ===== LOAD PROFILE WITH EXTENDED RETRIES =====
-    async function loadProfileData(uid, attempt = 1) {
-      const MAX_ATTEMPTS = 5;
-      const DELAY = 1500; // 1.5 seconds between tries
-      
+    // ===== LOAD PROFILE IN BACKGROUND =====
+    async function loadProfileBackground(uid) {
       try {
         const snap = await getDoc(doc(db, 'users', uid));
         if (snap.exists()) {
           userProfile = snap.data();
-          console.log(`✅ Profile loaded (attempt ${attempt})`);
           navigateAfterLogin();
-          return true;
-        } else {
-          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account.');
-          showPage('home');
-          return false;
         }
       } catch (e) {
-        console.log(`⚠️ Attempt ${attempt}/${MAX_ATTEMPTS}: still connecting...`);
-        if (attempt < MAX_ATTEMPTS) {
-          await new Promise(res => setTimeout(res, DELAY * attempt));
-          return loadProfileData(uid, attempt + 1);
-        } else {
-          console.error('❌ All attempts failed');
-          alert('⏳ Database is warming up.\n\nPlease wait 30 seconds, refresh the page, and sign in again.\n\nThis only happens the very first time after deployment.');
-          return false;
-        }
+        console.log('Background profile load delayed:', e.code);
       }
     }
 
-    // ===== FIREBASE AUTH STATE =====
+    // ===== FIREBASE AUTH STATE — IMMEDIATE NAVIGATION =====
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
-      console.log('✅ Signed in — connecting to database...');
-      await loadProfileData(user.uid);
+      
+      console.log('✅ Signed in — checking profile...');
+      
+      // First: Try to load with timeout — don't wait forever
+      let loaded = false;
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('slow')), 10000)
+      );
+      
+      try {
+        const snap = await Promise.race([
+          getDoc(doc(db, 'users', user.uid)),
+          timeout
+        ]);
+        
+        if (snap.exists()) {
+          userProfile = snap.data();
+          navigateAfterLogin();
+          loaded = true;
+        } else {
+          // No profile = old account → tell user to create new
+          alert('✅ Signed in! ⚠️ This account was created before the database was ready.\n\nPlease create a NEW account with a fresh email.');
+          showPage('home');
+        }
+      } catch (e) {
+        if (e.message === 'slow' || e.code === 'unavailable') {
+          console.log('Database slow — will retry in background');
+          // Show a helpful message but DON'T block — let them refresh
+          if (!hasNavigated) {
+            alert('✅ Signed in! ⏳ Database connecting slowly...\n\nPlease refresh the page once and it will load.');
+          }
+          // Keep trying in background
+          loadProfileBackground(user.uid);
+        }
+      }
     });
 
     // ===== SIGN IN =====
@@ -298,15 +317,17 @@
       try {
         showError('login-error', '⏳ Signing in...');
         await signInWithEmailAndPassword(auth, email, pass);
+        // onAuthStateChanged handles everything
       } catch (e) {
         let friendly = '❌ Sign in failed — check details';
         if (e.code === 'auth/user-not-found') friendly = '❌ No account found — create one first';
         if (e.code === 'auth/wrong-password') friendly = '❌ Incorrect password';
+        if (e.code === 'auth/invalid-email') friendly = '❌ Enter a valid email address';
         showError('login-error', friendly);
       }
     };
 
-    // ===== COMPANY REGISTER =====
+    // ===== COMPANY REGISTER — Saves profile FIRST =====
     window.handleCompanyRegister = async function() {
       const email = document.getElementById('comp-email').value;
       const password = document.getElementById('comp-password').value;
@@ -321,6 +342,7 @@
         showError('company-error', '⏳ Creating account...');
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
+        // Build profile object FIRST
         userProfile = {
           uid: cred.user.uid,
           companyName: companyName,
@@ -332,16 +354,18 @@
           createdAt: new Date().toISOString()
         };
         
+        // Save to Firestore
         await setDoc(doc(db, 'users', cred.user.uid), userProfile);
+        
         document.getElementById('company-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
-        navigateAfterLogin();
+        navigateAfterLogin(); // Navigate immediately — don't wait for reload
       } catch (e) {
         showError('company-error', '❌ ' + e.message);
       }
     };
 
-    // ===== DRIVER REGISTER =====
+    // ===== DRIVER REGISTER — Saves profile FIRST =====
     window.handleDriverRegister = async function() {
       const name = document.getElementById('driver-name').value;
       const email = document.getElementById('driver-email').value;
@@ -365,9 +389,10 @@
         };
         
         await setDoc(doc(db, 'users', cred.user.uid), userProfile);
+        
         document.getElementById('driver-success').style.display = 'block';
         alert('✅ Welcome! Your account is ready.');
-        navigateAfterLogin();
+        navigateAfterLogin(); // Navigate immediately
       } catch (e) {
         showError('driver-error', '❌ ' + e.message);
       }
