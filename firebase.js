@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export { doc, setDoc, getDoc };
+export { doc, setDoc, getDoc }; // ← MUST BE HERE
 
 // Keep connection warm — reduces delay on return visits
 if (typeof window !== 'undefined') {
