@@ -202,6 +202,147 @@
   </div>
 </div>
 
+<!-- ==============================================
+   VEHICLE CHECK LIST — COMPANY EDITOR
+   ============================================== -->
+<div id="vehicle-checks" class="app-section" style="display:none; padding:20px;">
+  <h2 style="font-size:22px; color:#1a365d; margin-bottom:8px;">🚛 Vehicle Check List Editor</h2>
+  <p style="color:#64748b; margin-bottom:20px;">Customise your walkaround check items. Changes apply to all drivers.</p>
+
+  <!-- Add New Check Item -->
+  <div style="background:#f8fafc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #e2e8f0;">
+    <h3 style="margin-top:0; font-size:16px; color:#334155;">➕ Add New Check Item</h3>
+    <input type="text" id="newCheckName" placeholder="e.g. Tyres & Pressure" 
+      style="width:100%; padding:10px; margin:8px 0; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
+    <button onclick="addNewCheckItem()" style="padding:8px 20px; background:#16a34a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;">Add Item</button>
+  </div>
+
+  <!-- Check Items List -->
+  <div id="checkListContainer"></div>
+
+  <!-- Save Button -->
+  <div style="margin-top:24px; padding-top:16px; border-top:1px solid #e2e8f0;">
+    <button onclick="saveCheckList()" style="padding:10px 24px; background:#1a365d; color:white; border:none; border-radius:6px; cursor:pointer; font-size:15px;">💾 Save Changes</button>
+    <span id="saveStatus" style="margin-left:12px; color:#16a34a; font-size:14px;"></span>
+  </div>
+</div>
+
+<style>
+.check-item {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.check-item input {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.btn-sm {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.btn-move { background: #e2e8f0; color: #334155; }
+.btn-del { background: #ef4444; color: white; }
+</style>
+
+<script>
+let checkItems = [
+  "Tyres & Pressure",
+  "Lights & Indicators",
+  "Brakes & Brake Fluid",
+  "Engine Oil & Coolant",
+  "Windscreen & Wipers",
+  "Mirrors",
+  "Body & Panels",
+  "Coupling & Trailer",
+  "Fire Extinguisher",
+  "First Aid Kit",
+  "Number Plates",
+  "Warning Markers"
+];
+
+function loadCheckList() {
+  const saved = localStorage.getItem('companyCheckList');
+  if (saved) checkItems = JSON.parse(saved);
+  renderCheckList();
+}
+
+function renderCheckList() {
+  const container = document.getElementById('checkListContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  checkItems.forEach((name, index) => {
+    container.innerHTML += `
+      <div class="check-item" data-index="${index}">
+        <strong style="color:#64748b; font-size:13px; min-width:24px;">${index + 1}.</strong>
+        <input type="text" value="${escapeHtml(name)}" 
+          onchange="updateItemName(${index}, this.value)">
+        <button class="btn-sm btn-move" onclick="moveItem(${index}, -1)" title="Move Up">⬆</button>
+        <button class="btn-sm btn-move" onclick="moveItem(${index}, 1)" title="Move Down">⬇</button>
+        <button class="btn-sm btn-del" onclick="deleteItem(${index})" title="Delete">✕</button>
+      </div>
+    `;
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function updateItemName(index, newName) {
+  if (newName.trim()) checkItems[index] = newName.trim();
+}
+
+function addNewCheckItem() {
+  const input = document.getElementById('newCheckName');
+  const name = input.value.trim();
+  if (!name) { alert('Please enter a name'); return; }
+  checkItems.push(name);
+  input.value = '';
+  renderCheckList();
+}
+
+function deleteItem(index) {
+  if (confirm('Remove this check item?')) {
+    checkItems.splice(index, 1);
+    renderCheckList();
+  }
+}
+
+function moveItem(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= checkItems.length) return;
+  [checkItems[index], checkItems[newIndex]] = [checkItems[newIndex], checkItems[index]];
+  renderCheckList();
+}
+
+function saveCheckList() {
+  localStorage.setItem('companyCheckList', JSON.stringify(checkItems));
+  document.getElementById('saveStatus').textContent = '✅ Saved!';
+  setTimeout(() => {
+    document.getElementById('saveStatus').textContent = '';
+  }, 2500);
+}
+
+loadCheckList();
+</script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
