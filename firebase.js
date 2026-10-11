@@ -5,7 +5,7 @@ import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
   authDomain: "lsd-solutions.firebaseapp.com",
-  projectId: "lsd-solutions",
+  projectId: "lsd-solutions",  // ← MUST match exactly
   storageBucket: "lsd-solutions.firebasestorage.app",
   messagingSenderId: "833767217116",
   appId: "1:833767217116:web:b8c5d6e7f8a9b0c1d2e3f4"
