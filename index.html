@@ -212,8 +212,8 @@
     import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
     import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-    let currentUser = null;
     let userProfile = null;
+    let hasNavigated = false; // Prevent double navigation
 
     // ===== PAGE NAVIGATION =====
     window.showPage = function(id) {
@@ -233,7 +233,8 @@
     }
 
     function navigateAfterLogin() {
-      if (!userProfile || !userProfile.role) return;
+      if (hasNavigated || !userProfile || !userProfile.role) return;
+      hasNavigated = true;
       
       const companyNameEl = document.getElementById('company-name-display');
       const driverNameEl = document.getElementById('driver-name-display');
@@ -247,38 +248,48 @@
       }
     }
 
-    // ===== FIREBASE AUTH & PROFILE LOAD =====
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      
-      console.log('✅ Signed in — loading profile...');
-      
+    // ===== LOAD PROFILE WITH SINGLE RETRY =====
+    async function loadProfileData(uid) {
+      // First attempt — may be slow on cold start
       try {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        
+        const snap = await getDoc(doc(db, 'users', uid));
         if (snap.exists()) {
           userProfile = snap.data();
-          console.log('✅ Profile loaded — welcome!');
+          console.log('✅ Profile loaded');
           navigateAfterLogin();
+          return;
         } else {
-          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account with a fresh email.');
+          alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account.');
           showPage('home');
+          return;
         }
       } catch (e) {
-        console.warn('⚠️ First attempt slow — retrying once...', e.code);
-        // ONE retry only — enough time for connection to warm up
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (snap.exists()) {
-            userProfile = snap.data();
-            console.log('✅ Profile loaded on retry!');
-            navigateAfterLogin();
-          }
-        } catch (e2) {
-          console.error('❌ Failed:', e2);
-          alert('⚠️ Connection slow — please refresh and try again.');
-        }
+        console.log('⚠️ First connection slow — retrying...');
       }
+      
+      // ONE retry — connection usually warms up by then
+      try {
+        await new Promise(res => setTimeout(res, 1000)); // Brief pause
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+          userProfile = snap.data();
+          console.log('✅ Profile loaded on retry!');
+          navigateAfterLogin();
+        } else {
+          alert('✅ Signed in! ⚠️ No profile found. Please create a NEW account.');
+          showPage('home');
+        }
+      } catch (e2) {
+        console.error('❌ Failed after retry:', e2);
+        alert('⚠️ Database connection slow.\n\nPlease refresh the page — it will work on retry.');
+      }
+    }
+
+    // ===== FIREBASE AUTH STATE =====
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      console.log('✅ Signed in — loading profile...');
+      await loadProfileData(user.uid);
     });
 
     // ===== SIGN IN =====
@@ -371,9 +382,9 @@
 
     // ===== SIGN OUT & SUBPAGES =====
     window.handleSignOut = async function() {
-      await signOut(auth);
+      hasNavigated = false;
       userProfile = null;
-      currentUser = null;
+      await signOut(auth);
       showPage('home');
     };
 
