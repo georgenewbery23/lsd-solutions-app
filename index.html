@@ -284,6 +284,7 @@
 
   function renderContent(tab) {
     const role = userProfile?.role || 'driver';
+    const dashContent = document.getElementById('dash-content');
     switch(tab) {
       case 'check': return dashContent.innerHTML = renderVehicleCheck();
       case 'mychecks': return dashContent.innerHTML = renderMyChecks();
@@ -706,4 +707,4 @@
       showPage('loading'); setStatus('Creating driver account...');
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
       await db.collection('users').doc(cred.user.uid).set({name, email, role:'driver', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    } catch(e) { alert('Registration failed: ' + e.message); showPage('register
+    } catch(e) { alert('Registration failed: ' + e.message);
