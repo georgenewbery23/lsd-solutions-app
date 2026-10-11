@@ -15,3 +15,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export { doc, setDoc, getDoc };
+
+// Keep connection warm — reduces delay on return visits
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    if (db?._?.initialized) {
+      // Lightweight ping to keep connection alive
+      getDoc(doc(db, '_system', 'ping')).catch(() => {});
+    }
+  }, 240000); // every 4 minutes
+}
