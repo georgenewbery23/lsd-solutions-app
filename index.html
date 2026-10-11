@@ -213,7 +213,7 @@
     import { doc, setDoc, getDoc } from 'firebase/firestore';
 
     let userProfile = null;
-    let hasNavigated = false; // Prevent double navigation
+    let hasNavigated = false;
 
     // ===== PAGE NAVIGATION =====
     window.showPage = function(id) {
@@ -248,47 +248,40 @@
       }
     }
 
-    // ===== LOAD PROFILE WITH SINGLE RETRY =====
-    async function loadProfileData(uid) {
-      // First attempt — may be slow on cold start
+    // ===== LOAD PROFILE WITH EXTENDED RETRIES =====
+    async function loadProfileData(uid, attempt = 1) {
+      const MAX_ATTEMPTS = 5;
+      const DELAY = 1500; // 1.5 seconds between tries
+      
       try {
         const snap = await getDoc(doc(db, 'users', uid));
         if (snap.exists()) {
           userProfile = snap.data();
-          console.log('✅ Profile loaded');
+          console.log(`✅ Profile loaded (attempt ${attempt})`);
           navigateAfterLogin();
-          return;
+          return true;
         } else {
           alert('✅ Signed in! ⚠️ No profile found.\n\nPlease create a NEW account.');
           showPage('home');
-          return;
+          return false;
         }
       } catch (e) {
-        console.log('⚠️ First connection slow — retrying...');
-      }
-      
-      // ONE retry — connection usually warms up by then
-      try {
-        await new Promise(res => setTimeout(res, 1000)); // Brief pause
-        const snap = await getDoc(doc(db, 'users', uid));
-        if (snap.exists()) {
-          userProfile = snap.data();
-          console.log('✅ Profile loaded on retry!');
-          navigateAfterLogin();
+        console.log(`⚠️ Attempt ${attempt}/${MAX_ATTEMPTS}: still connecting...`);
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise(res => setTimeout(res, DELAY * attempt));
+          return loadProfileData(uid, attempt + 1);
         } else {
-          alert('✅ Signed in! ⚠️ No profile found. Please create a NEW account.');
-          showPage('home');
+          console.error('❌ All attempts failed');
+          alert('⏳ Database is warming up.\n\nPlease wait 30 seconds, refresh the page, and sign in again.\n\nThis only happens the very first time after deployment.');
+          return false;
         }
-      } catch (e2) {
-        console.error('❌ Failed after retry:', e2);
-        alert('⚠️ Database connection slow.\n\nPlease refresh the page — it will work on retry.');
       }
     }
 
     // ===== FIREBASE AUTH STATE =====
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
-      console.log('✅ Signed in — loading profile...');
+      console.log('✅ Signed in — connecting to database...');
       await loadProfileData(user.uid);
     });
 
