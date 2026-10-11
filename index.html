@@ -618,352 +618,206 @@
   };
 
   function renderDocuments() {
-  const docs = userProfile?.role==='company'
-    ? [
-        {id:'insurance', name:'Insurance Certificate', icon:'📄'},
-        {id:'operator', name:'Operator Licence', icon:'🏛️'},
-        {id:'vehiclediscs', name:'Vehicle Discs', icon:'🚛'},
-        {id:'policies', name:'Policies & Procedures', icon:'📋'}
-      ]
-    : [
-        {id:'drivinglicence', name:'Driving Licence', icon:'🚗'},
-        {id:'cpccard', name:'CPC Card', icon:'🎓'},
-        {id:'tachocard', name:'Digital Tacho Card', icon:'⏱️'},
-        {id:'tachoinfringe', name:'Tachograph Infringements', icon:'⚠️'},
-        {id:'medicalcert', name:'Medical Certificate', icon:'🏥'}
-      ];
-  return `
-    <h3>My Documents</h3>
-    <p class="alert alert-info">Select a document to view or update details</p>
-    <div class="grid">
-      ${docs.map(d=>`<div class="card" onclick="switchDocPage('${d.id}')" style="cursor:pointer;"><h3>${d.icon}</h3><p style="font-weight:500;">${d.name}</p><p style="font-size:12px; color:var(--muted);">Tap to open →</p></div>`).join('')}
-    </div>
-    <div id="doc-detail-area" class="hidden mt-20"></div>
-  `;
-}
-
-window.switchDocPage = function(docId) {
-  const area = document.getElementById('doc-detail-area');
-  area.classList.remove('hidden');
-  area.innerHTML = getDocumentPageHTML(docId);
-};
-
-function getDocumentPageHTML(docId) {
-  const backBtn = `<button class="btn-sm btn-outline" style="margin-bottom:20px;" onclick="document.getElementById('doc-detail-area').classList.add('hidden')">← Back to Documents</button>`;
-  
-  switch(docId) {
-    case 'drivinglicence':
-      return backBtn + `
-        <h3>🚗 Driving Licence</h3>
-        <div class="form-group"><label>Document Number / Licence Number</label><input type="text" id="dl-number" placeholder="e.g. SMITH12345AB9C" /></div>
-        <div class="form-group"><label>Issue Date (Valid From)</label><input type="date" id="dl-issued" /></div>
-        <div class="form-group"><label>Expiry Date</label><input type="date" id="dl-expiry" /></div>
-        
-        <h4 style="margin:24px 0 12px;">Vehicle Categories</h4>
-        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Tick all categories shown on your licence</p>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:20px;">
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="AM" /> AM — Mopeds</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="A1" /> A1 — Light Motorcycles</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="A2" /> A2 — Standard Motorcycles</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="A" /> A — Unrestricted Motorcycles</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="B" /> B — Cars</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="B1" /> B1 — Light Quadricycles</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="BE" /> BE — Car + Trailer</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="C1" /> C1 — 3.5t–7.5t</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="C1E" /> C1E — C1 + Trailer</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="C" /> C — >7.5t</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="CE" /> CE — C + Trailer</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="D1" /> D1 — Minibuses</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="D1E" /> D1E — D1 + Trailer</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="D" /> D — Buses</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="DE" /> DE — D + Trailer</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="F" /> F — Agricultural Tractors</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="G" /> G — Road Rollers</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="H" /> H — Tracked Vehicles</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="K" /> K — Mowing Machines</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="L" /> L — Pedestrian Controlled Vehicles</label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="M" /> M — Wheelchairs/Mobility</label>
-        </div>
-        
-        <h4 style="margin:24px 0 12px;">Upload Photos</h4>
-        <div class="form-group">
-          <label>Front of Licence</label>
-          <input type="file" accept="image/*" onchange="previewDocPhoto(this, 'dl-front-preview')" />
-          <div id="dl-front-preview" class="thumb-grid"></div>
-        </div>
-        <div class="form-group">
-          <label>Back of Licence</label>
-          <input type="file" accept="image/*" onchange="previewDocPhoto(this, 'dl-back-preview')" />
-          <div id="dl-back-preview" class="thumb-grid"></div>
-        </div>
-        
-        <button class="btn-primary mt-20" onclick="saveDoc('drivinglicence')">💾 Save Driving Licence</button>
-      `;
-      
-    case 'cpccard':
-      return backBtn + `
-        <h3>🎓 CPC Card</h3>
-        <div class="form-group"><label>Card Number</label><input type="text" id="cpc-number" placeholder="Enter CPC card number" /></div>
-        <div class="form-group"><label>Valid From</label><input type="date" id="cpc-issued" /></div>
-        <div class="form-group"><label>Expiry Date</label><input type="date" id="cpc-expiry" /></div>
-        <div class="form-group"><label>Issuing Authority</label><input type="text" id="cpc-authority" placeholder="e.g. DVSA" /></div>
-        
-        <h4 style="margin:24px 0 12px;">Upload Photos</h4>
-        <div class="form-group">
-          <label>Front of Card</label>
-          <input type="file" accept="image/*" onchange="previewDocPhoto(this, 'cpc-front-preview')" />
-          <div id="cpc-front-preview" class="thumb-grid"></div>
-        </div>
-        <div class="form-group">
-          <label>Back of Card</label>
-          <input type="file" accept="image/*" onchange="previewDocPhoto(this, 'cpc-back-preview')" />
-          <div id="cpc-back-preview" class="thumb-grid"></div>
-        </div>
-        
-        <button class="btn-primary mt-20" onclick="saveDoc('cpccard')">💾 Save CPC Card</button>
-      `;
-      
-    case 'tachocard':
-      return backBtn + `
-        <h3>⏱️ Digital Tacho Card</h3>
-        <div class="form-group"><label>Card Number</label><input type="text" id="tacho-number" placeholder="16-digit card number" /></div>
-        <div class="form-group"><label>Valid From</label><input type="date" id="tacho-issued" /></div>
-        <div class="form-group"><label>Expiry Date</label><input type="date" id="tacho-expiry" /></div>
-        <div class="form-group"><label>Card Issuer</label><input type="text" id="tacho-issuer" placeholder="e.g. VDO / Stoneridge" /></div>
-        
-        <h4 style="margin:24px 0 12px;">Upload Photos</h4>
-        <div class="form-group">
-          <label>Front of Card</label>
-          <input type="file" accept="image/*" onchange="previewDocPhoto(this, 'tacho-front-preview')" />
-          <div id="tacho-front-preview" class="thumb-grid"></div>
-        </div>
-        <div class="form-group">
-          <label>Back of Card</label>
-          <input type="file" accept="image/*" onchange="previewDocPhoto(this, 'tacho-back-preview')" />
-          <div id="tacho-back-preview" class="thumb-grid"></div>
-        </div>
-        
-        <button class="btn-primary mt-20" onclick="saveDoc('tachocard')">💾 Save Tacho Card</button>
-      `;
-      
-    case 'tachoinfringe':
-      return backBtn + `
-        <h3>⚠️ Tachograph Infringements</h3>
-        <p class="alert alert-info">Record and review any tachograph infringements</p>
-        <button class="btn-accent" onclick="addInfringement()">➕ Add New Infringement</button>
-        <div id="infringement-list" style="margin-top:20px;"></div>
-        <div id="infringement-form" class="hidden mt-20">
-          <div class="defect-box">
-            <h4>Record Infringement</h4>
-            <div class="form-group"><label>Date of Offence</label><input type="date" id="inf-date" /></div>
-            <div class="form-group"><label>Type of Infringement</label>
-              <select id="inf-type">
-                <option value="">Select type...</option>
-                <option>Breach of daily driving limit</option>
-                <option>Breach of weekly driving limit</option>
-                <option>Insufficient rest break</option>
-                <option>Failure to take weekly rest</option>
-                <option>Manual entry not recorded</option>
-                <option>Card not inserted / removed</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Description / Details</label><textarea id="inf-desc" rows="3" placeholder="Enter full details..."></textarea></div>
-            <div class="form-group"><label>Issued By</label><input type="text" id="inf-issuedby" placeholder="e.g. DVSA Examiner / Police" /></div>
-            <div class="form-group"><label>Reference / Notice Number</label><input type="text" id="inf-ref" /></div>
-            <div class="form-group"><label>Status</label>
-              <select id="inf-status">
-                <option value="pending">⏳ Pending Review</option>
-                <option value="acknowledged">✅ Acknowledged & Signed</option>
-                <option value="appealing">⚖️ Under Appeal</option>
-                <option value="closed">✅ Resolved / Closed</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Upload Notice / Document</label>
-              <input type="file" accept="image/*,.pdf" onchange="previewDocPhoto(this, 'inf-doc-preview')" />
-              <div id="inf-doc-preview" class="thumb-grid"></div>
-            </div>
-            <button class="btn-primary mt-10" onclick="saveInfringement()">💾 Save Infringement</button>
-            <button class="btn-sm" style="background:transparent; color:var(--muted);" onclick="document.getElementById('infringement-form').classList.add('hidden')">Cancel</button>
-          </div>
-        </div>
-      `;
-      
-    case 'medicalcert':
-      return backBtn + `
-        <h3>🏥 Medical Certificate</h3>
-        <div class="form-group"><label>Certificate Number</label><input type="text" id="med-number" placeholder="Certificate reference" /></div>
-        <div class="form-group"><label>Issued By (Doctor / Clinic)</label><input type="text" id="med-issuedby" placeholder="Name of practice or doctor" /></div>
-        <div class="form-group"><label>Valid From</label><input type="date" id="med-issued" /></div>
-        <div class="form-group"><label>Expiry Date</label><input type="date" id="med-expiry" /></div>
-        <div class="form-group"><label>Conditions / Restrictions</label><textarea id="med-notes" rows="2" placeholder="Any conditions noted on certificate..."></textarea></div>
-        
-        <h4 style="margin:24px 0 12px;">Upload Document</h4>
-        <div class="form-group">
-          <label>Certificate Scan / Photo</label>
-          <input type="file" accept="image/*,.pdf" onchange="previewDocPhoto(this, 'med-doc-preview')" />
-          <div id="med-doc-preview" class="thumb-grid"></div>
-        </div>
-        
-        <button class="btn-primary mt-20" onclick="saveDoc('medicalcert')">💾 Save Medical Certificate</button>
-      `;
-      
-    default:
-      return backBtn + `<p>Document page not found</p>`;
-  }
-}
-
-let docPhotoURLs = {};
-function previewDocPhoto(input, previewId) {
-  const previewArea = document.getElementById(previewId);
-  previewArea.innerHTML = '';
-  docPhotoURLs[previewId] = [];
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      previewArea.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100px; height:100px; object-fit:cover; border-radius:4px; border:1px solid var(--border);" />`;
-      docPhotoURLs[previewId].push(e.target.result);
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
-}
-
-window.saveDoc = async function(docType) {
-  alert('✅ Document details saved! Photo upload will be linked to your Firebase storage when connected.');
-  // Full Firebase upload logic available — just ask!
-};
-
-window.addInfringement = function() {
-  document.getElementById('infringement-form').classList.remove('hidden');
-};
-
-window.saveInfringement = async function() {
-  alert('✅ Infringement saved! Stored in your documents portal.');
-  document.getElementById('infringement-form').classList.add('hidden');
-};
-
-  function renderProfile() {
+    const docs = userProfile?.role==='company'
+      ? [
+          {id:'insurance', name:'Insurance Certificate', icon:'📄'},
+          {id:'operator', name:'Operator Licence', icon:'🏛️'},
+          {id:'vehiclediscs', name:'Vehicle Discs', icon:'🚛'},
+          {id:'policies', name:'Policies & Procedures', icon:'📋'}
+        ]
+      : [
+          {id:'drivinglicence', name:'Driving Licence', icon:'🚗'},
+          {id:'cpccard', name:'CPC Card', icon:'🎓'},
+          {id:'tachocard', name:'Digital Tacho Card', icon:'⏱️'},
+          {id:'tachoinfringe', name:'Tachograph Infringements', icon:'⚠️'},
+          {id:'medicalcert', name:'Medical Certificate', icon:'🏥'}
+        ];
     return `
-      <h3>My Profile</h3>
-      <div class="form-group"><label>Name</label><input type="text" id="p-name" value="${userProfile?.name||''}" /></div>
-      <div class="form-group"><label>Email</label><input type="email" value="${currentUser?.email||''}" readonly style="background:#f3f4f6;" /></div>
-      <div class="form-group"><label>Account Type</label><input value="${userProfile?.role==='company'?'🏢 Company':'🚛 Driver'}" readonly style="background:#f3f4f6;" /></div>
-      <button class="btn-primary" onclick="saveProfile()">💾 Save Changes</button>
+      <h3>My Documents</h3>
+      <p class="alert alert-info">Select a document to view or update details</p>
+      <div class="grid">
+        ${docs.map(d=>`<div class="card" onclick="switchDocPage('${d.id}')" style="cursor:pointer;"><h3>${d.icon}</h3><p style="font-weight:500;">${d.name}</p><p style="font-size:12px; color:var(--muted);">Tap to open →</p></div>`).join('')}
+      </div>
+      <div id="doc-detail-area" class="hidden mt-20"></div>
     `;
   }
-  window.saveProfile = async () => {
-    const name = document.getElementById('p-name').value.trim();
-    if (!name) return alert('Please enter your name');
-    await db.collection('users').doc(currentUser.uid).update({name});
-    userProfile.name = name;
-    document.getElementById('dash-subtitle').textContent = `Welcome, ${name}`;
-    alert('✅ Profile updated');
+
+  window.switchDocPage = function(docId) {
+    const area = document.getElementById('doc-detail-area');
+    area.classList.remove('hidden');
+    area.innerHTML = getDocumentPageHTML(docId);
   };
 
-  async function loadProfileData(uid) {
-    const snap = await db.collection('users').doc(uid).get();
-    return snap.exists ? snap.data() : {role:'driver', name:'User'};
-  }
+  function getDocumentPageHTML(docId) {
+    const backBtn = `<button class="btn-sm btn-outline" style="margin-bottom:20px;" onclick="document.getElementById('doc-detail-area').classList.add('hidden')">← Back to Documents</button>`;
+    
+    switch(docId) {
+      case 'drivinglicence':
+        return backBtn + `
+          <h3>🚗 Driving Licence</h3>
+          <div class="form-group"><label>Document Number / Licence Number</label><input type="text" id="dl-number" placeholder="e.g. SMITH12345AB9C" /></div>
+          <div class="form-group"><label>Issue Date (Valid From)</label><input type="date" id="dl-issued" /></div>
+          <div class="form-group"><label>Expiry Date</label><input type="date" id="dl-expiry" /></div>
+          
+          <h4 style="margin:24px 0 12px;">Vehicle Categories</h4>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Tick all categories shown on your licence</p>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:20px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="AM" /> AM — Mopeds</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="A1" /> A1 — Light Motorcycles</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="A2" /> A2 — Standard Motorcycles</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="A" /> A — Unrestricted Motorcycles</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="B" /> B — Cars</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="B1" /> B1 — Light Quadricycles</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="BE" /> BE — Car + Trailer</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="C1" /> C1 — 3.5t–7.5t</label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:14px;"><input type="checkbox" class="cat-check" value="C1E" /> C1E — C1 + Trailer</label>
+            <label style="display:flex; align-items:center; gap:6px
+            // ─── LINE 675 ONWARDS ──────────────────────────────────────────────────────
 
-  firebase.auth().onAuthStateChanged(async user => {
-    if (!user) { showPage('signin'); return; }
-    showPage('loading'); setStatus('Loading your profile...');
-    currentUser = user;
-    userProfile = await loadProfileData(user.uid);
-    await loadAllData();
-    document.getElementById('dash-title').textContent = userProfile.role==='company'?'🏢 Company Portal':'🚛 Driver Portal';
-    document.getElementById('dash-subtitle').textContent = `Welcome, ${userProfile.name}`;
-    renderNav(userProfile.role);
-    showPage('dashboard');
-    switchTab(getNavItems(userProfile.role)[0].id);
-  });
-
-  window.handleSignIn = async function () {
-  console.log('👉 Sign in button clicked');
-  const email = document.getElementById('si-email').value.trim();
-  const pass = document.getElementById('si-password').value;
-  
-  console.log('📧 Email:', email ? 'entered' : 'empty');
-  console.log('🔑 Password:', pass ? 'entered' : 'empty');
-  
-  if (!email || !pass) {
-    alert('⚠️ Please fill in both email and password');
-    return;
-  }
-  
-  try {
-    showPage('loading');
-    setStatus('Signing you in...');
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch (e) {
-    console.error('❌ Sign in error:', e);
-    alert('Sign in failed: ' + e.message);
-    showPage('signin');
-  }
-};
-
-  window.handleCompanyRegister = async () => {
-    const name = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const pass = document.getElementById('reg-password').value;
-    if (!name || !email || !pass) return alert('Please fill in all fields');
+  // ─── LOAD PROFILE ─────────────────────────────────────────────────────
+  async function loadProfile(uid, roleFromAuth = null) {
     try {
-      showPage('loading'); setStatus('Creating company account...');
-      const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      await db.collection('users').doc(cred.user.uid).set({name, email, role:'company', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    } catch(e) { alert('Registration failed: ' + e.message); showPage('register'); }
+      showStatus("Loading your profile...");
+      
+      const userRef = doc(db, "users", uid);
+      const snap = await getDoc(userRef);
+      
+      if (snap.exists()) {
+        userProfile = snap.data();
+        userProfile.id = uid;
+      } else {
+        // No profile yet — create one from registration data
+        userProfile = {
+          id: uid,
+          email: auth.currentUser?.email || "",
+          role: roleFromAuth || currentUserType,
+          companyName: companyNameInput?.value?.trim() || "",
+          fullName: nameInput?.value?.trim() || "",
+          phone: phoneInput?.value?.trim() || "",
+          createdAt: new Date()
+        };
+        
+        await setDoc(userRef, userProfile);
+        showStatus("✅ Profile created");
+      }
+      
+      currentUserRole = userProfile.role;
+      showStatus("✅ Profile loaded");
+      
+      setTimeout(() => {
+        statusMessage.textContent = "";
+        showMainApp();
+      }, 600);
+      
+    } catch (err) {
+      console.warn("Profile load error — will retry:", err);
+      showStatus("⚠️ Database slow — retrying...");
+      
+      setTimeout(async () => {
+        try {
+          const retrySnap = await getDoc(doc(db, "users", uid));
+          if (retrySnap.exists()) {
+            userProfile = retrySnap.data();
+            userProfile.id = uid;
+            currentUserRole = userProfile.role;
+            showStatus("✅ Connected");
+            setTimeout(() => {
+              statusMessage.textContent = "";
+              showMainApp();
+            }, 600);
+          }
+        } catch (retryErr) {
+          showStatus("✅ Signed in — offline mode");
+          setTimeout(() => {
+            statusMessage.textContent = "";
+            showMainApp();
+          }, 600);
+        }
+      }, 2000);
+    }
+  }
+
+  // ─── SHOW MAIN APP ─────────────────────────────────────────────────────
+  function showMainApp() {
+    authSection.style.display = "none";
+    appSection.style.display = "block";
+    
+    const header = document.getElementById("user-header");
+    if (header) {
+      header.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; background:#fff; border-bottom:1px solid #e2e8f0;">
+          <div>
+            <h2 style="margin:0; font-size:18px; color:#1a365d;">LSD Solutions</h2>
+            <p style="margin:4px 0 0 0; font-size:13px; color:#64748b;">
+              ${userProfile.fullName || userProfile.email} — 
+              ${currentUserRole === 'driver' ? 'Driver Portal' : 'Company Portal'}
+            </p>
+          </div>
+          <button onclick="handleSignOut()" style="
+            padding:8px 16px; background:#ef4444; color:white; border:none; 
+            border-radius:6px; cursor:pointer; font-size:14px;
+          ">Sign Out</button>
+        </div>
+      `;
+    }
+    
+    renderMenu();
+  }
+
+  // ─── RENDER MENU ──────────────────────────────────────────────────────
+  function renderMenu() {
+    const menu = document.getElementById("main-menu");
+    if (!menu) return;
+    
+    const driverMenu = `
+      <button onclick="showSection('walkaround')" class="menu-btn">🚛 Vehicle Walkaround Check</button>
+      <button onclick="showSection('defects')" class="menu-btn">🔧 Reported Defects</button>
+      <button onclick="showSection('available-work')" class="menu-btn">📋 Available Work</button>
+      <button onclick="showSection('calendar')" class="menu-btn">📅 My Calendar</button>
+      <button onclick="showSection('documents')" class="menu-btn">📁 My Documents</button>
+      <button onclick="showSection('profile')" class="menu-btn">👤 My Profile</button>
+    `;
+    
+    const companyMenu = `
+      <button onclick="showSection('post-work')" class="menu-btn">➕ Post Available Work</button>
+      <button onclick="showSection('my-listings')" class="menu-btn">📋 My Job Listings</button>
+      <button onclick="showSection('drivers')" class="menu-btn">👥 My Drivers</button>
+      <button onclick="showSection('company-docs')" class="menu-btn">📁 Company Documents</button>
+      <button onclick="showSection('profile')" class="menu-btn">🏢 Company Profile</button>
+    `;
+    
+    menu.innerHTML = currentUserRole === 'driver' ? driverMenu : companyMenu;
+  }
+
+  // ─── SHOW SECTION ─────────────────────────────────────────────────────
+  window.showSection = function(sectionId) {
+    document.querySelectorAll(".app-section").forEach(s => s.style.display = "none");
+    const section = document.getElementById(sectionId);
+    if (section) section.style.display = "block";
   };
 
-  window.handleDriverRegister = async () => {
-    const name = document.getElementById('dr-name').value.trim();
-    const email = document.getElementById('dr-email').value.trim();
-    const pass = document.getElementById('dr-password').value;
-    if (!name || !email || !pass) return alert('Please fill in all fields');
+  // ─── SIGN OUT ─────────────────────────────────────────────────────────
+  window.handleSignOut = async function() {
     try {
-      showPage('loading'); setStatus('Creating driver account...');
-      const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      await db.collection('users').doc(cred.user.uid).set({name, email, role:'driver', createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    } catch(e) { alert('Registration failed: ' + e.message);
-    (e) { alert('Registration failed: ' + e.message); showPage('register'); }
+      await signOut(auth);
+      userProfile = null;
+      currentUserRole = null;
+      authSection.style.display = "block";
+      appSection.style.display = "none";
+      showStatus("✅ Signed out");
+      setTimeout(() => statusMessage.textContent = "", 1500);
+    } catch (err) {
+      console.error("Sign out error:", err);
+      showStatus("⚠️ Error signing out");
+    }
   };
 
-  window.handleSignOut = async () => {
-    await auth.signOut();
-    currentUser = null;
-    userProfile = null;
-    showPage('signin');
-  };
+  // ─── EXPOSE TO GLOBAL ──────────────────────────────────────────────────
+  window.handleSignIn = handleSignIn;
+  window.handleCreateAccount = handleCreateAccount;
+  window.switchAuthMode = switchAuthMode;
 
-  document.getElementById('si-email').value = '';
-  document.getElementById('si-password').value = '';
-// Make all functions globally accessible
-window.showPage = showPage;
-window.switchTab = switchTab;
-window.handleSignIn = handleSignIn;
-window.handleCompanyRegister = handleCompanyRegister;
-window.handleDriverRegister = handleDriverRegister;
-window.handleSignOut = handleSignOut;
-window.switchDocPage = switchDocPage;
-window.previewDocPhoto = previewDocPhoto;
-window.saveDoc = saveDoc;
-window.addInfringement = addInfringement;
-window.saveInfringement = saveInfringement;
-window.changeCal = changeCal;
-window.setAvail = setAvail;
-window.postJob = postJob;
-window.closeJob = closeJob;
-window.uploadDocument = uploadDocument;
-window.saveProfile = saveProfile;
-window.viewDriverDetail = viewDriverDetail;
-window.viewVehicleChecks = viewVehicleChecks;
-window.showDefect = showDefect;
-window.showOtherDefect = showOtherDefect;
-window.hideDefect = hideDefect;
-window.saveDefect = saveDefect;
-window.submitCheck = submitCheck;
-window.showPhotoPreviews = showPhotoPreviews;
+// ─── END OF SCRIPT ─────────────────────────────────────────────────────────
 </script>
-
 </body>
 </html>
