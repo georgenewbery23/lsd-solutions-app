@@ -770,21 +770,22 @@
     if (!menu) return;
     
     const driverMenu = `
-      <button onclick="showSection('walkaround')" class="menu-btn">🚛 Vehicle Walkaround Check</button>
-      <button onclick="showSection('defects')" class="menu-btn">🔧 Reported Defects</button>
-      <button onclick="showSection('available-work')" class="menu-btn">📋 Available Work</button>
-      <button onclick="showSection('calendar')" class="menu-btn">📅 My Calendar</button>
-      <button onclick="showSection('documents')" class="menu-btn">📁 My Documents</button>
-      <button onclick="showSection('profile')" class="menu-btn">👤 My Profile</button>
-    `;
-    
-    const companyMenu = `
-      <button onclick="showSection('post-work')" class="menu-btn">➕ Post Available Work</button>
-      <button onclick="showSection('my-listings')" class="menu-btn">📋 My Job Listings</button>
-      <button onclick="showSection('drivers')" class="menu-btn">👥 My Drivers</button>
-      <button onclick="showSection('company-docs')" class="menu-btn">📁 Company Documents</button>
-      <button onclick="showSection('profile')" class="menu-btn">🏢 Company Profile</button>
-    `;
+  <button onclick="showSection('walkaround')" class="menu-btn">🚛 Vehicle Walkaround Check</button>
+  <button onclick="showSection('defects')" class="menu-btn">🔧 Reported Defects</button>
+  <button onclick="showSection('available-work')" class="menu-btn">📋 Available Work</button>
+  <button onclick="showSection('calendar')" class="menu-btn">📅 My Calendar</button>
+  <button onclick="showSection('documents')" class="menu-btn">📁 My Documents</button>
+  <button onclick="showSection('profile')" class="menu-btn">👤 My Profile</button>
+`;
+
+const companyMenu = `
+  <button onclick="showSection('vehicle-checks')" class="menu-btn">🚛 Vehicle Check List</button>
+  <button onclick="showSection('post-work')" class="menu-btn">➕ Post Available Work</button>
+  <button onclick="showSection('my-listings')" class="menu-btn">📋 My Job Listings</button>
+  <button onclick="showSection('drivers')" class="menu-btn">👥 My Drivers</button>
+  <button onclick="showSection('company-docs')" class="menu-btn">📁 Company Documents</button>
+  <button onclick="showSection('profile')" class="menu-btn">🏢 Company Profile</button>
+`;
     
     menu.innerHTML = currentUserRole === 'driver' ? driverMenu : companyMenu;
   }
