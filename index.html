@@ -201,8 +201,8 @@
 
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification, EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, Timestamp, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const firebaseConfig = {
@@ -228,6 +228,13 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     let selectedRole = 'driver';
     let emailVerified = false;
     let theme = localStorage.getItem('theme') || 'light';
+    let calendarEvents = [];
+    let userExpenses = [];
+    let userChecks = [];
+    let userJobs = [];
+    let allDrivers = [];
+    let favouriteDrivers = [];
+    let userReviews = [];
 
     // ==============================================
     // THEME MANAGEMENT
@@ -660,286 +667,285 @@ function renderCompanyPicker(companies) {
       }
       
       nav.innerHTML = links;
-    }
-        function renderHolidaysPage() {
-      const myHolidays = calendarEvents.filter(e => e.type === 'holiday' || e.status === 'holiday');
-      const pendingRequests = myHolidays.filter(e => e.holidayStatus === 'pending');
-      const approvedHolidays = myHolidays.filter(e => e.holidayStatus === 'approved' || !e.holidayStatus);
-      
-      return `
-        <h2>🏖️ My Holidays</h2>
-        
-        <div class="card">
-          <h3>Request Holiday / Time Off</h3>
-          <div class="form-group">
-            <label>Start Date</label>
-            <input type="date" id="holiday-start">
-          </div>
-          <div class="form-group">
-            <label>End Date</label>
-            <input type="date" id="holiday-end">
-          </div>
-          <div class="form-group">
-            <label>Notes (optional)</label>
-            <textarea id="holiday-notes" rows="2" placeholder="Any special requests..."></textarea>
-          </div>
-          <button class="btn-primary" onclick="submitHolidayRequest()">Submit Request</button>
-        </div>
-        
-        <h3 class="mt-4">⏳ Pending Requests (${pendingRequests.length})</h3>
-        ${pendingRequests.length === 0 ? '<p class="text-muted">No pending requests.</p>' :
-          pendingRequests.map(h => `
-            <div class="card" style="border-left:4px solid #f59e0b;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                  <strong>${h.date}${h.endDate ? ` — ${h.endDate}` : ''}</strong>
-                  <p class="small text-muted" style="margin:4px 0 0;">${h.notes || 'Awaiting approval'}</p>
-                </div>
-                <span class="badge badge-warning">⏳ Pending</span>
-              </div>
-              <button class="btn-sm btn-secondary mt-2" onclick="cancelHolidayRequest('${h.id}')">Cancel Request</button>
-            </div>
-          `).join('')
-        }
-        
-        <h3 class="mt-4">✅ Approved Holidays (${approvedHolidays.length})</h3>
-        ${approvedHolidays.length === 0 ? '<p class="text-muted">No approved holidays yet.</p>' :
-          approvedHolidays.map(h => `
-            <div class="card" style="border-left:4px solid #10b981; opacity:0.85;">
+    }function renderHolidaysPage() {
+  const myHolidays = calendarEvents.filter(e => e.type === 'holiday' || e.status === 'holiday');
+  const pendingRequests = myHolidays.filter(e => e.holidayStatus === 'pending');
+  const approvedHolidays = myHolidays.filter(e => e.holidayStatus === 'approved' || !e.holidayStatus);
+  
+  return `
+    <h2>🏖️ My Holidays</h2>
+    
+    <div class="card">
+      <h3>Request Holiday / Time Off</h3>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="holiday-start">
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="holiday-end">
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <textarea id="holiday-notes" rows="2" placeholder="Any special requests..."></textarea>
+      </div>
+      <button class="btn-primary" onclick="submitHolidayRequest()">Submit Request</button>
+    </div>
+    
+    <h3 class="mt-4">⏳ Pending Requests (${pendingRequests.length})</h3>
+    ${pendingRequests.length === 0 ? '<p class="text-muted">No pending requests.</p>' :
+      pendingRequests.map(h => `
+        <div class="card" style="border-left:4px solid #f59e0b;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
               <strong>${h.date}${h.endDate ? ` — ${h.endDate}` : ''}</strong>
-              <p class="small text-muted" style="margin:4px 0 0;">${h.notes || 'Approved'}</p>
+              <p class="small text-muted" style="margin:4px 0 0;">${h.notes || 'Awaiting approval'}</p>
             </div>
-          `).join('')
-        }
-        
-        <h3 class="mt-4">🏴󠁧󠁢󠁥󠁮󠁧󠁿 UK Bank Holidays — England</h3>
-        <div class="card" style="background:var(--bg);">
-          <p class="small text-muted">These dates are automatically marked as public holidays.</p>
-          ${getUkBankHolidays().map(bh => `
-            <div style="padding:4px 0; border-bottom:1px solid var(--border);">
-              <strong>${bh.date}</strong> — ${bh.name}
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    
-    function getUkBankHolidays() {
-      const year = new Date().getFullYear();
-      return [
-        { date: `${year}-01-01`, name: "New Year's Day" },
-        ...(new Date(year, 2, 1).getDay() === 5 ? 
-          [{ date: `${year}-01-02`, name: "New Year's Holiday" }] : []),
-        { date: calculateEasterMonday(year), name: "Easter Monday" },
-        { date: calculateGoodFriday(year), name: "Good Friday" },
-        { date: `${year}-05-05`, name: "Early May Bank Holiday" },
-        { date: `${year}-05-26`, name: "Spring Bank Holiday" },
-        { date: `${year}-08-25`, name: "Summer Bank Holiday" },
-        { date: `${year}-12-25`, name: "Christmas Day" },
-        { date: `${year}-12-26`, name: "Boxing Day" }
-      ];
-    }
-    
-    function calculateEasterMonday(year) {
-      const f = Math.floor, G = year % 19, C = f(year/100), H = (C - f(C/4) - f((8*C+13)/25) + 19*G + 15) % 30;
-      const L = H - f(H/28), p = f((year + f(year/4) + L - 1900)/400);
-      const easter = new Date(year, 3, 1 + L - p);
-      easter.setDate(easter.getDate() + 1);
-      return easter.toISOString().slice(0,10);
-    }
-    
-    function calculateGoodFriday(year) {
-      const f = Math.floor, G = year % 19, C = f(year/100), H = (C - f(C/4) - f((8*C+13)/25) + 19*G + 15) % 30;
-      const L = H - f(H/28), p = f((year + f(year/4) + L - 1900)/400);
-      const goodFriday = new Date(year, 3, 1 + L - p - 2);
-      return goodFriday.toISOString().slice(0,10);
-    }
-    
-    window.submitHolidayRequest = async function() {
-      const startDate = document.getElementById('holiday-start').value;
-      const endDate = document.getElementById('holiday-end').value;
-      const notes = document.getElementById('holiday-notes').value.trim();
-      
-      if (!startDate) return showNotification('⚠️ Select a start date', 'warning');
-      
-      const holidayData = {
-        driverId: currentUser.uid,
-        driverName: userProfile.name,
-        type: 'holiday',
-        title: 'Holiday — ' + userProfile.name,
-        date: startDate,
-        endDate: endDate || startDate,
-        notes: notes,
-        holidayStatus: 'pending',
-        status: 'unavailable',
-        createdAt: new Date().toISOString()
-      };
-      
-      await addDoc(collection(db, 'calendarEvents'), holidayData);
-      calendarEvents.push(holidayData);
-      showNotification('✅ Holiday request submitted — awaiting approval', 'success');
-      renderPage('holidays');
-    };
-    
-    window.cancelHolidayRequest = async function(eventId) {
-      if (!confirm('Cancel this holiday request?')) return;
-      await deleteDoc(doc(db, 'calendarEvents', eventId));
-      calendarEvents = calendarEvents.filter(e => e.id !== eventId);
-      showNotification('✅ Request cancelled', 'success');
-      renderPage('holidays');
-    };
-    
-        function renderCompanyHolidayCalendarPage() {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      
-      const allHolidays = calendarEvents.filter(e => e.type === 'holiday');
-      const pendingCount = allHolidays.filter(e => e.holidayStatus === 'pending').length;
-      const approvedCount = allHolidays.filter(e => e.holidayStatus === 'approved').length;
-      
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      let daysHtml = '';
-      for (let i = 0; i < firstDay; i++) {
-        daysHtml += `<div class="calendar-day other-month"></div>`;
-      }
-      
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const dayHolidays = allHolidays.filter(h => (h.date === dateStr || h.endDate >= dateStr && h.date <= dateStr));
-        const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-        
-        daysHtml += `
-          <div class="calendar-day ${isToday ? 'today' : ''}">
-            <strong>${d}</strong>
-            ${dayHolidays.length > 0 ? dayHolidays.map(h => `
-              <div style="font-size:10px; margin-top:2px; padding:1px 3px; background:${h.holidayStatus === 'approved' ? '#d1fae5' : '#fef3c7'}; border-radius:2px; color:${h.holidayStatus === 'approved' ? '#065f46' : '#92400e'};" title="${h.driverName}: ${h.holidayStatus}">
-                ${h.driverName.split(' ')[0]}
-              </div>
-            `).join('') : ''}
+            <span class="badge badge-warning">⏳ Pending</span>
           </div>
-        `;
-      }
-      
-      return `
-        <h2>🏖️ Company Holiday Calendar — ${monthNames[month]} ${year}</h2>
-        
-        <div class="card" style="margin-bottom:20px;">
-          <div style="display:flex; gap:24px; flex-wrap:wrap;">
-            <div><span style="display:inline-block; width:16px; height:16px; background:#fef3c7; border-radius:3px; vertical-align:middle;"></span> Pending Approval</div>
-            <div><span style="display:inline-block; width:16px; height:16px; background:#d1fae5; border-radius:3px; vertical-align:middle;"></span> Approved</div>
-            <div><span style="display:inline-block; width:16px; height:16px; background:#e0e7ff; border-radius:3px; vertical-align:middle;"></span> Bank Holiday</div>
-          </div>
+          <button class="btn-sm btn-secondary mt-2" onclick="cancelHolidayRequest('${h.id}')">Cancel Request</button>
         </div>
-        
-        <div class="calendar-header">
-          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-        </div>
-        <div class="calendar-grid">${daysHtml}</div>
-        
-        <div class="grid grid-2 mt-4">
-          <div class="stat-card">
-            <div class="stat-value">${pendingCount}</div>
-            <div class="stat-label">Pending Requests</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${approvedCount}</div>
-            <div class="stat-label">Approved This Month</div>
-          </div>
-        </div>
-        
-        <p class="text-muted mt-3">Go to <strong>Holiday Requests</strong> to approve or decline requests from your drivers.</p>
-      `;
+      `).join('')
     }
     
-    function renderDriverHolidayRequestsPage() {
-      const allHolidays = calendarEvents.filter(e => e.type === 'holiday');
-      const pending = allHolidays.filter(e => e.holidayStatus === 'pending');
-      const approved = allHolidays.filter(e => e.holidayStatus === 'approved');
-      const declined = allHolidays.filter(e => e.holidayStatus === 'declined');
-      
-      return `
-        <h2>📋 Holiday Requests</h2>
-        
-        <h3>⏳ Pending Approval (${pending.length})</h3>
-        ${pending.length === 0 ? '<p class="text-muted">No pending requests. All up to date!</p>' :
-          pending.map(h => `
-            <div class="card" style="border-left:4px solid #f59e0b;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-                <div>
-                  <strong>${h.driverName}</strong>
-                  <p style="margin:4px 0;"><strong>${h.date}</strong>${h.endDate !== h.date ? ` — ${h.endDate}` : ''}</p>
-                  ${h.notes ? `<p class="small text-muted">"${h.notes}"</p>` : ''}
-                </div>
-                <span class="badge badge-warning">⏳ Pending</span>
-              </div>
-              <div class="mt-3">
-                <button class="btn-primary btn-sm" onclick="approveHoliday('${h.id}')">✅ Approve</button>
-                <button class="btn-secondary btn-sm" style="color:var(--error); margin-left:8px;" onclick="declineHoliday('${h.id}')">❌ Decline</button>
-              </div>
-            </div>
-          `).join('')
-        }
-        
-        <h3 class="mt-4">✅ Approved (${approved.length})</h3>
-        ${approved.length === 0 ? '<p class="text-muted">No approved holidays yet.</p>' :
-          approved.map(h => `
-            <div class="card" style="border-left:4px solid #10b981; opacity:0.85;">
-              <div style="display:flex; justify-content:space-between;">
-                <div>
-                  <strong>${h.driverName}</strong>
-                  <p class="small">${h.date}${h.endDate !== h.date ? ` — ${h.endDate}` : ''}</p>
-                </div>
-                <span class="badge badge-success">✅ Approved</span>
-              </div>
-            </div>
-          `).join('')
-        }
-        
-        <h3 class="mt-4">❌ Declined (${declined.length})</h3>
-        ${declined.length === 0 ? '<p class="text-muted">No declined requests.</p>' :
-          declined.map(h => `
-            <div class="card" style="border-left:4px solid #ef4444; opacity:0.7;">
-              <div style="display:flex; justify-content:space-between;">
-                <div>
-                  <strong>${h.driverName}</strong>
-                  <p class="small">${h.date}${h.endDate !== h.date ? ` — ${h.endDate}` : ''}</p>
-                </div>
-                <span class="badge badge-error">❌ Declined</span>
-              </div>
-            </div>
-          `).join('')
-        }
-      `;
+    <h3 class="mt-4">✅ Approved Holidays (${approvedHolidays.length})</h3>
+    ${approvedHolidays.length === 0 ? '<p class="text-muted">No approved holidays yet.</p>' :
+      approvedHolidays.map(h => `
+        <div class="card" style="border-left:4px solid #10b981; opacity:0.85;">
+          <strong>${h.date}${h.endDate ? ` — ${h.endDate}` : ''}</strong>
+          <p class="small text-muted" style="margin:4px 0 0;">${h.notes || 'Approved'}</p>
+        </div>
+      `).join('')
     }
     
-    window.approveHoliday = async function(eventId) {
-      await updateDoc(doc(db, 'calendarEvents', eventId), {
-        holidayStatus: 'approved',
-        reviewedAt: new Date().toISOString(),
-        reviewedBy: userProfile.name
-      });
-      const idx = calendarEvents.findIndex(e => e.id === eventId);
-      if (idx > -1) calendarEvents[idx].holidayStatus = 'approved';
-      showNotification('✅ Holiday approved — driver notified', 'success');
-      renderPage('driver-holidays');
-    };
+    <h3 class="mt-4">🏴 UK Bank Holidays — England</h3>
+    <div class="card" style="background:var(--bg);">
+      <p class="small text-muted">These dates are automatically marked as public holidays.</p>
+      ${getUkBankHolidays().map(bh => `
+        <div style="padding:4px 0; border-bottom:1px solid var(--border);">
+          <strong>${bh.date}</strong> — ${bh.name}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function getUkBankHolidays() {
+  const year = new Date().getFullYear();
+  return [
+    { date: `${year}-01-01`, name: "New Year's Day" },
+    ...(new Date(year, 2, 1).getDay() === 5 ? 
+      [{ date: `${year}-01-02`, name: "New Year's Holiday" }] : []),
+    { date: calculateEasterMonday(year), name: "Easter Monday" },
+    { date: calculateGoodFriday(year), name: "Good Friday" },
+    { date: `${year}-05-05`, name: "Early May Bank Holiday" },
+    { date: `${year}-05-26`, name: "Spring Bank Holiday" },
+    { date: `${year}-08-25`, name: "Summer Bank Holiday" },
+    { date: `${year}-12-25`, name: "Christmas Day" },
+    { date: `${year}-12-26`, name: "Boxing Day" }
+  ];
+}
+
+function calculateEasterMonday(year) {
+  const f = Math.floor, G = year % 19, C = f(year/100), H = (C - f(C/4) - f((8*C+13)/25) + 19*G + 15) % 30;
+  const L = H - f(H/28), p = f((year + f(year/4) + L - 1900)/400);
+  const easter = new Date(year, 3, 1 + L - p);
+  easter.setDate(easter.getDate() + 1);
+  return easter.toISOString().slice(0,10);
+}
+
+function calculateGoodFriday(year) {
+  const f = Math.floor, G = year % 19, C = f(year/100), H = (C - f(C/4) - f((8*C+13)/25) + 19*G + 15) % 30;
+  const L = H - f(H/28), p = f((year + f(year/4) + L - 1900)/400);
+  const goodFriday = new Date(year, 3, 1 + L - p - 2);
+  return goodFriday.toISOString().slice(0,10);
+}
+
+window.submitHolidayRequest = async function() {
+  const startDate = document.getElementById('holiday-start').value;
+  const endDate = document.getElementById('holiday-end').value;
+  const notes = document.getElementById('holiday-notes').value.trim();
+  
+  if (!startDate) return showNotification('⚠️ Select a start date', 'warning');
+  
+  const holidayData = {
+    driverId: currentUser.uid,
+    driverName: userProfile.name,
+    type: 'holiday',
+    title: 'Holiday — ' + userProfile.name,
+    date: startDate,
+    endDate: endDate || startDate,
+    notes: notes,
+    holidayStatus: 'pending',
+    status: 'unavailable',
+    createdAt: new Date().toISOString()
+  };
+  
+  await addDoc(collection(db, 'calendarEvents'), holidayData);
+  calendarEvents.push(holidayData);
+  showNotification('✅ Holiday request submitted — awaiting approval', 'success');
+  renderPage('holidays');
+};
+
+window.cancelHolidayRequest = async function(eventId) {
+  if (!confirm('Cancel this holiday request?')) return;
+  await deleteDoc(doc(db, 'calendarEvents', eventId));
+  calendarEvents = calendarEvents.filter(e => e.id !== eventId);
+  showNotification('✅ Request cancelled', 'success');
+  renderPage('holidays');
+};
+
+function renderCompanyHolidayCalendarPage() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  
+  const allHolidays = calendarEvents.filter(e => e.type === 'holiday');
+  const pendingCount = allHolidays.filter(e => e.holidayStatus === 'pending').length;
+  const approvedCount = allHolidays.filter(e => e.holidayStatus === 'approved').length;
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  let daysHtml = '';
+  for (let i = 0; i < firstDay; i++) {
+    daysHtml += `<div class="calendar-day other-month"></div>`;
+  }
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayHolidays = allHolidays.filter(h => (h.date === dateStr || h.endDate >= dateStr && h.date <= dateStr));
+    const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
     
-    window.declineHoliday = async function(eventId) {
-      if (!confirm('Decline this holiday request? The driver will be notified.')) return;
-      await updateDoc(doc(db, 'calendarEvents', eventId), {
-        holidayStatus: 'declined',
-        reviewedAt: new Date().toISOString(),
-        reviewedBy: userProfile.name
-      });
-      const idx = calendarEvents.findIndex(e => e.id === eventId);
-      if (idx > -1) calendarEvents[idx].holidayStatus = 'declined';
-      showNotification('❌ Holiday declined — driver notified', 'success');
-      renderPage('driver-holidays');
-    };
+    daysHtml += `
+      <div class="calendar-day ${isToday ? 'today' : ''}">
+        <strong>${d}</strong>
+        ${dayHolidays.length > 0 ? dayHolidays.map(h => `
+          <div style="font-size:10px; margin-top:2px; padding:1px 3px; background:${h.holidayStatus === 'approved' ? '#d1fae5' : '#fef3c7'}; border-radius:2px; color:${h.holidayStatus === 'approved' ? '#065f46' : '#92400e'};" title="${h.driverName}: ${h.holidayStatus}">
+            ${h.driverName.split(' ')[0]}
+          </div>
+        `).join('') : ''}
+      </div>
+    `;
+  }
+  
+  return `
+    <h2>🏖️ Company Holiday Calendar — ${monthNames[month]} ${year}</h2>
+    
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex; gap:24px; flex-wrap:wrap;">
+        <div><span style="display:inline-block; width:16px; height:16px; background:#fef3c7; border-radius:3px; vertical-align:middle;"></span> Pending Approval</div>
+        <div><span style="display:inline-block; width:16px; height:16px; background:#d1fae5; border-radius:3px; vertical-align:middle;"></span> Approved</div>
+        <div><span style="display:inline-block; width:16px; height:16px; background:#e0e7ff; border-radius:3px; vertical-align:middle;"></span> Bank Holiday</div>
+      </div>
+    </div>
+    
+    <div class="calendar-header">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="calendar-grid">${daysHtml}</div>
+    
+    <div class="grid grid-2 mt-4">
+      <div class="stat-card">
+        <div class="stat-value">${pendingCount}</div>
+        <div class="stat-label">Pending Requests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${approvedCount}</div>
+        <div class="stat-label">Approved This Month</div>
+      </div>
+    </div>
+    
+    <p class="text-muted mt-3">Go to <strong>Holiday Requests</strong> to approve or decline requests from your drivers.</p>
+  `;
+}
+
+function renderDriverHolidayRequestsPage() {
+  const allHolidays = calendarEvents.filter(e => e.type === 'holiday');
+  const pending = allHolidays.filter(e => e.holidayStatus === 'pending');
+  const approved = allHolidays.filter(e => e.holidayStatus === 'approved');
+  const declined = allHolidays.filter(e => e.holidayStatus === 'declined');
+  
+  return `
+    <h2>📋 Holiday Requests</h2>
+    
+    <h3>⏳ Pending Approval (${pending.length})</h3>
+    ${pending.length === 0 ? '<p class="text-muted">No pending requests. All up to date!</p>' :
+      pending.map(h => `
+        <div class="card" style="border-left:4px solid #f59e0b;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div>
+              <strong>${h.driverName}</strong>
+              <p style="margin:4px 0;"><strong>${h.date}</strong>${h.endDate !== h.date ? ` — ${h.endDate}` : ''}</p>
+              ${h.notes ? `<p class="small text-muted">"${h.notes}"</p>` : ''}
+            </div>
+            <span class="badge badge-warning">⏳ Pending</span>
+          </div>
+          <div class="mt-3">
+            <button class="btn-primary btn-sm" onclick="approveHoliday('${h.id}')">✅ Approve</button>
+            <button class="btn-secondary btn-sm" style="color:var(--error); margin-left:8px;" onclick="declineHoliday('${h.id}')">❌ Decline</button>
+          </div>
+        </div>
+      `).join('')
+    }
+    
+    <h3 class="mt-4">✅ Approved (${approved.length})</h3>
+    ${approved.length === 0 ? '<p class="text-muted">No approved holidays yet.</p>' :
+      approved.map(h => `
+        <div class="card" style="border-left:4px solid #10b981; opacity:0.85;">
+          <div style="display:flex; justify-content:space-between;">
+            <div>
+              <strong>${h.driverName}</strong>
+              <p class="small">${h.date}${h.endDate !== h.date ? ` — ${h.endDate}` : ''}</p>
+            </div>
+            <span class="badge badge-success">✅ Approved</span>
+          </div>
+        </div>
+      `).join('')
+    }
+    
+    <h3 class="mt-4">❌ Declined (${declined.length})</h3>
+    ${declined.length === 0 ? '<p class="text-muted">No declined requests.</p>' :
+      declined.map(h => `
+        <div class="card" style="border-left:4px solid #ef4444; opacity:0.7;">
+          <div style="display:flex; justify-content:space-between;">
+            <div>
+              <strong>${h.driverName}</strong>
+              <p class="small">${h.date}${h.endDate !== h.date ? ` — ${h.endDate}` : ''}</p>
+            </div>
+            <span class="badge badge-error">❌ Declined</span>
+          </div>
+        </div>
+      `).join('')
+    }
+  `;
+}
+
+window.approveHoliday = async function(eventId) {
+  await updateDoc(doc(db, 'calendarEvents', eventId), {
+    holidayStatus: 'approved',
+    reviewedAt: new Date().toISOString(),
+    reviewedBy: userProfile.name
+  });
+  const idx = calendarEvents.findIndex(e => e.id === eventId);
+  if (idx > -1) calendarEvents[idx].holidayStatus = 'approved';
+  showNotification('✅ Holiday approved — driver notified', 'success');
+  renderPage('driver-holidays');
+};
+
+window.declineHoliday = async function(eventId) {
+  if (!confirm('Decline this holiday request? The driver will be notified.')) return;
+  await updateDoc(doc(db, 'calendarEvents', eventId), {
+    holidayStatus: 'declined',
+    reviewedAt: new Date().toISOString(),
+    reviewedBy: userProfile.name
+  });
+  const idx = calendarEvents.findIndex(e => e.id === eventId);
+  if (idx > -1) calendarEvents[idx].holidayStatus = 'declined';
+  showNotification('❌ Holiday declined — driver notified', 'success');
+  renderPage('driver-holidays');
+};
 
     window.navigateTo = function(page) {
       currentPage = page;
@@ -3222,6 +3228,21 @@ function renderPage(pageId) {
     // ==============================================
     // AUTH STATE LISTENER
     // ==============================================
+    function formatDate(dateInput) {
+  if (!dateInput) return 'Unknown';
+  let date;
+  if (dateInput.toDate && typeof dateInput.toDate === 'function') date = dateInput.toDate();
+  else if (typeof dateInput === 'string') date = new Date(dateInput);
+  else date = new Date(dateInput);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+window.formatDate = formatDate;
+
+function renderQuickActions() { return ''; }
+function renderSearchBar() { return ''; }
+function renderFavouritesSection() { return ''; }
+function isFavouriteDriver() { return false; }
+window.toggleFavouriteDriver = function() {};
    onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
