@@ -3397,20 +3397,24 @@ function renderPage(pageId) {
     // ==============================================
     // AUTH STATE LISTENER
     // ==============================================
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        document.getElementById('auth-section').classList.add('hidden');
-        document.getElementById('dashboard-section').classList.remove('hidden');
-        await loadUserProfile(user.uid);
-        listenForNotifications();
-      } else {
-        currentUser = null;
-        userProfile = null;
-        document.getElementById('auth-section').classList.remove('hidden');
-        document.getElementById('dashboard-section').classList.add('hidden');
-      }
-    });
+   onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      userProfile = snap.exists() 
+        ? snap.data() 
+        : { role: 'driver', name: 'User', companies: [], vehicles: [] };
+    } catch {
+      userProfile = { role: 'driver', name: 'User', companies: [], vehicles: [] };
+    }
+    showPortal();  // ← Only render AFTER profile is set
+  } else {
+    currentUser = null;
+    userProfile = null;
+    showAuth();
+  }
+});
 
   </script>
 </body>
