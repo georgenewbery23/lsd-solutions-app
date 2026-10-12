@@ -389,6 +389,78 @@
     <h2>🏢 Company Profile</h2>
     <p style="color:#666; margin-bottom:1.5rem;">Your details for DVSA & Traffic Commissioner compliance</p>
 
+    // ==================================================
+    // COMPANY PROFILE
+    // ==================================================
+    async function loadCompanyProfile() {
+      if (!currentUser || userProfile?.role !== 'company') return;
+      
+      const snap = await getDoc(doc(db, 'companyProfiles', currentUser.uid));
+      if (snap.exists()) {
+        const p = snap.data();
+        document.getElementById('comp-registered-name').value = p.registeredName || '';
+        document.getElementById('comp-hmrc-number').value = p.hmrcNumber || '';
+        document.getElementById('comp-trading-name').value = p.tradingName || '';
+        document.getElementById('comp-registered-address').value = p.registeredAddress || '';
+        document.getElementById('comp-licence-number').value = p.operatorLicenceNumber || '';
+        document.getElementById('comp-contact-name').value = p.mainContactName || '';
+        document.getElementById('comp-phone-main').value = p.mainPhone || '';
+        document.getElementById('comp-accounts-name').value = p.accountsContactName || '';
+        document.getElementById('comp-accounts-phone').value = p.accountsPhone || '';
+        document.getElementById('comp-email-main').value = p.mainEmail || '';
+        document.getElementById('comp-email-accounts').value = p.accountsEmail || '';
+        document.getElementById('comp-email-compliance').value = p.complianceEmail || '';
+        document.getElementById('comp-tc-area').value = p.trafficCommissionerArea || '';
+        document.getElementById('comp-licence-type').value = p.licenceType || '';
+        document.getElementById('comp-authorised-vehicles').value = p.authorisedVehicles || '';
+        document.getElementById('comp-authorised-trailers').value = p.authorisedTrailers || '';
+        document.getElementById('comp-transport-managers').value = p.transportManagers || '';
+        document.getElementById('comp-notes').value = p.notes || '';
+      }
+    }
+
+    window.saveCompanyProfile = async function() {
+      if (!currentUser || userProfile?.role !== 'company') {
+        alert('⚠️ Company account required');
+        return;
+      }
+
+      const saveStatus = document.getElementById('profile-save-status');
+      saveStatus.style.display = 'block';
+      saveStatus.textContent = '⏳ Saving...';
+      saveStatus.style.color = '#666';
+
+      const profileData = {
+        companyId: currentUser.uid,
+        registeredName: document.getElementById('comp-registered-name').value.trim(),
+        hmrcNumber: document.getElementById('comp-hmrc-number').value.trim(),
+        tradingName: document.getElementById('comp-trading-name').value.trim(),
+        registeredAddress: document.getElementById('comp-registered-address').value.trim(),
+        operatorLicenceNumber: document.getElementById('comp-licence-number').value.trim(),
+        mainContactName: document.getElementById('comp-contact-name').value.trim(),
+        mainPhone: document.getElementById('comp-phone-main').value.trim(),
+        accountsContactName: document.getElementById('comp-accounts-name').value.trim(),
+        accountsPhone: document.getElementById('comp-accounts-phone').value.trim(),
+        mainEmail: document.getElementById('comp-email-main').value.trim(),
+        accountsEmail: document.getElementById('comp-email-accounts').value.trim(),
+        complianceEmail: document.getElementById('comp-email-compliance').value.trim(),
+        trafficCommissionerArea: document.getElementById('comp-tc-area').value.trim(),
+        licenceType: document.getElementById('comp-licence-type').value,
+        authorisedVehicles: parseInt(document.getElementById('comp-authorised-vehicles').value) || null,
+        authorisedTrailers: parseInt(document.getElementById('comp-authorised-trailers').value) || null,
+        transportManagers: document.getElementById('comp-transport-managers').value.trim(),
+        notes: document.getElementById('comp-notes').value.trim(),
+        updatedAt: new Date()
+      };
+
+      await setDoc(doc(db, 'companyProfiles', currentUser.uid), profileData);
+      
+      saveStatus.textContent = '✅ Profile saved — DVSA compliant';
+      saveStatus.style.color = 'green';
+      
+      setTimeout(() => { saveStatus.style.display = 'none'; }, 3000);
+    };
+
     <div class="card" style="max-width:700px; margin:0 auto;">
       <h3 style="margin-bottom:1rem; color:#1a365d;">Business Details</h3>
       
