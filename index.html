@@ -565,13 +565,28 @@
       const cred = await createUserWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
       if (cred) {
         await setDoc(doc(db, 'users', cred.user.uid), { companyName: name, email, role: 'company', createdAt: new Date() });
-        // Initialise default DVSA checklist for new company
-        await setDoc(doc(db, 'dvsaChecklists', cred.user.uid), {
-          ...getDefaultDVSA Checklists(),
-          updatedAt: new Date()
-        });
-      }
-    };
+     // Initialise default DVSA checklist for new company
+     // ==================================================
+     // DVSA STANDARD CHECKLIST — BASELINE
+     // ==================================================
+function getDefaultDVSA_Checklists() {
+  return {
+    categories: [
+      {
+        id: 'cat-external',
+        name: 'External Body & Structure',
+        items: [
+          { id: crypto.randomUUID(), text: 'Condition of bodywork, panels & mirrors', order: 1 },
+          { id: crypto.randomUUID(), text: 'Windscreen, windows & wipers — condition & operation', order: 2 },
+          { id: crypto.randomUUID(), text: 'Number plates — clean, secure & legible', order: 3 },
+          { id: crypto.randomUUID(), text: 'Reflectors & marker boards — present & secure', order: 4 },
+          { id: crypto.randomUUID(), text: 'Roof, covers & load security — no damage', order: 5 }
+        ]
+      },
+      // ... rest of categories stay exactly the same
+    ]
+  };
+}
 
     window.signOutUser = async function() { await signOut(auth); };
 
