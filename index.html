@@ -12,6 +12,8 @@
       --accent: #d4af37;
       --light: #f5f7fa;
       --text: #333;
+      --success: #28a745;
+      --danger: #dc3545;
     }
     body { background: var(--light); min-height: 100vh; color: var(--text); }
     .container { max-width: 420px; margin: 0 auto; padding: 20px; }
@@ -42,13 +44,16 @@
       font-style: italic;
     }
     
-    input { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+    input, select, textarea { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
     button { width: 100%; padding: 0.8rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1rem; margin-top: 1rem; cursor: pointer; transition: background 0.2s; }
     button:hover { background: #2a4a7d; }
+    button.small { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; margin: 0; }
     .btn-secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
-    .btn-secondary:hover { background: rgba(26, 54, 93, 0.08); }
-    .btn-danger { background: #dc3545; }
+    .btn-secondary:hover { background: rgba(26,54,93,0.08); }
+    .btn-danger { background: var(--danger); }
     .btn-danger:hover { background: #c82333; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #218838; }
     .page { display: none; }
     a { color: var(--primary); text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -68,6 +73,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
     .dashboard-grid {
       display: grid;
@@ -85,13 +92,37 @@
     }
     .dashboard-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .hidden { display: none !important; }
+    
+    /* ===== VEHICLE CHECKS STYLES ===== */
+    .checklist-container { max-width: 700px; margin: 0 auto; padding: 2rem; }
+    .checklist-item {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.8rem 0;
+    }
+    .checklist-item.completed { border-left: 4px solid var(--success); }
+    .checklist-item .actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .checklist-item button { width: auto; margin: 0; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+    .check-status { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+    .check-status label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; }
+    .section-title { margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eee; }
+    .vehicle-selector { margin: 1rem 0; }
+    .edit-mode-banner {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
-
-  <!-- ==============================================
-  ALL PAGES — only one branding section below
-  ============================================== -->
 
   <!-- SIGN IN PAGE -->
   <div id="signin-page" class="page">
@@ -102,14 +133,10 @@
         <p class="subtitle">HGV And Logistics Services</p>
         <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
       </div>
-      
       <h2 style="text-align:center;margin-bottom:1.5rem;">Sign In</h2>
-      
       <input type="email" id="email" placeholder="Email Address" />
       <input type="password" id="password" placeholder="Password" />
-      
       <button onclick="doSignIn()">Sign In</button>
-      
       <p style="text-align:center;margin-top:1rem;">
         <a href="#" onclick="showPage('reset-page'); return false;">Reset Your Password</a>
       </p>
@@ -129,13 +156,9 @@
         <p class="subtitle">HGV And Logistics Services</p>
         <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
       </div>
-      
       <h2 style="text-align:center;margin-bottom:1.5rem;">Reset Your Password</h2>
-      
       <input type="email" id="reset-email" placeholder="Email Address" />
-      
       <button onclick="sendResetLink()">Send Reset Link</button>
-      
       <p style="text-align:center;margin-top:1.5rem;">
         <a href="#" onclick="showPage('signin-page'); return false;">← Back to Sign In</a>
       </p>
@@ -151,7 +174,6 @@
         <p class="subtitle">HGV And Logistics Services</p>
         <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
       </div>
-      
       <div style="text-align:center; padding: 2rem 0;">
         <div style="font-size:3rem; margin-bottom:1rem;">📧</div>
         <h2>Check Your Email</h2>
@@ -172,19 +194,15 @@
         <p class="subtitle">HGV And Logistics Services</p>
         <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
       </div>
-      
       <h2 style="text-align:center;margin-bottom:1.5rem;">Register As</h2>
-      
       <div class="role-option" onclick="showPage('register-driver-page')">
         <h3>👤 Driver</h3>
         <p style="color:#666; font-size:0.9rem; margin-top:0.3rem;">Find work & manage documents</p>
       </div>
-      
       <div class="role-option" onclick="showPage('register-company-page')">
         <h3>🏢 Company</h3>
         <p style="color:#666; font-size:0.9rem; margin-top:0.3rem;">Post work & manage fleet</p>
       </div>
-      
       <p style="text-align:center;margin-top:1.5rem;">
         <a href="#" onclick="showPage('signin-page'); return false;">← Back to Sign In</a>
       </p>
@@ -200,15 +218,11 @@
         <p class="subtitle">HGV And Logistics Services</p>
         <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
       </div>
-      
       <h2 style="text-align:center;margin-bottom:1.5rem;">Register as Driver</h2>
-      
       <input type="text" id="driver-name" placeholder="Full Name" />
       <input type="email" id="driver-email" placeholder="Email Address" />
       <input type="password" id="driver-pass" placeholder="Password" />
-      
       <button onclick="registerDriver()">Create Account</button>
-      
       <p style="text-align:center;margin-top:1.5rem;">
         <a href="#" onclick="showPage('register-choice-page'); return false;">← Back</a>
       </p>
@@ -224,15 +238,11 @@
         <p class="subtitle">HGV And Logistics Services</p>
         <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
       </div>
-      
       <h2 style="text-align:center;margin-bottom:1.5rem;">Register as Company</h2>
-      
       <input type="text" id="company-name" placeholder="Company Name" />
       <input type="email" id="company-email" placeholder="Email Address" />
       <input type="password" id="company-pass" placeholder="Password" />
-      
       <button onclick="registerCompany()">Create Account</button>
-      
       <p style="text-align:center;margin-top:1.5rem;">
         <a href="#" onclick="showPage('register-choice-page'); return false;">← Back</a>
       </p>
@@ -245,19 +255,20 @@
       <h2>🚛 LSD Solutions</h2>
       <div>
         <span id="driver-greeting">Signed in</span>
-        <button class="btn-danger" style="width:auto; padding:0.5rem 1rem; margin:0 0 0 1rem;" onclick="signOutUser()">Sign Out</button>
+        <button class="btn-danger small" onclick="signOutUser()">Sign Out</button>
       </div>
     </div>
     <div style="padding:2rem;">
       <h3>Welcome, <span id="driver-name-display">Driver</span></h3>
       <p style="margin:1rem 0; color:#666;">Your dashboard is ready.</p>
-      
       <div class="dashboard-grid">
-        <div class="dashboard-card" onclick="alert('Vehicle Walk Around — coming soon')">
+        <div class="dashboard-card" onclick="showPage('driver-checks-page')">
           <strong>📋 Vehicle Walk Around</strong>
+          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Complete daily checks</p>
         </div>
         <div class="dashboard-card" onclick="alert('My Checks — coming soon')">
           <strong>✅ My Checks</strong>
+          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">View history</p>
         </div>
         <div class="dashboard-card" onclick="alert('Available Work — coming soon')">
           <strong>📋 Available Work</strong>
@@ -275,19 +286,37 @@
     </div>
   </div>
 
+  <!-- DRIVER — VEHICLE CHECKS PAGE -->
+  <div id="driver-checks-page" class="page" style="display:none;">
+    <div class="top-nav">
+      <h2>📋 Vehicle Walk Around</h2>
+      <button class="btn-secondary small" onclick="showPage('driver-portal')">← Back</button>
+    </div>
+    <div class="checklist-container">
+      <div class="vehicle-selector">
+        <label><strong>Select Vehicle:</strong></label>
+        <select id="check-vehicle-select">
+          <option value="">-- Select vehicle --</option>
+        </select>
+      </div>
+      <p style="color:#666; margin:1rem 0;">Select a vehicle above to see the checks set by your company.</p>
+      <div id="driver-checklist-container"></div>
+      <button id="submit-checks-btn" class="btn-success" style="display:none;" onclick="submitDriverChecks()">Submit Checks</button>
+    </div>
+  </div>
+
   <!-- COMPANY PORTAL -->
   <div id="company-portal" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🏢 LSD Solutions</h2>
       <div>
         <span id="company-greeting">Signed in</span>
-        <button class="btn-danger" style="width:auto; padding:0.5rem 1rem; margin:0 0 0 1rem;" onclick="signOutUser()">Sign Out</button>
+        <button class="btn-danger small" onclick="signOutUser()">Sign Out</button>
       </div>
     </div>
     <div style="padding:2rem;">
       <h3>Welcome, <span id="company-name-display">Company</span></h3>
       <p style="margin:1rem 0; color:#666;">Your management dashboard.</p>
-      
       <div class="dashboard-grid">
         <div class="dashboard-card" onclick="alert('Manage Drivers — coming soon')">
           <strong>👥 Drivers</strong>
@@ -295,8 +324,9 @@
         <div class="dashboard-card" onclick="alert('Manage Vehicles — coming soon')">
           <strong>🚚 Vehicles</strong>
         </div>
-        <div class="dashboard-card" onclick="alert('Checklist Builder — coming soon')">
+        <div class="dashboard-card" onclick="showPage('company-checklist-builder-page')">
           <strong>✅ Vehicle Checks</strong>
+          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Customise checklists</p>
         </div>
         <div class="dashboard-card" onclick="alert('Post Work — coming soon')">
           <strong>📋 Post Available Work</strong>
@@ -311,15 +341,37 @@
     </div>
   </div>
 
-<script type="module">
+  <!-- COMPANY — CHECKLIST BUILDER PAGE -->
+  <div id="company-checklist-builder-page" class="page" style="display:none;">
+    <div class="top-nav">
+      <h2>✅ Vehicle Check Setup</h2>
+      <button class="btn-secondary small" onclick="showPage('company-portal')">← Back</button>
+    </div>
+    <div class="checklist-container">
+      <p style="color:#666; margin-bottom:1.5rem;">Add, rename, reorder or remove check items. Drivers will see these exactly as you set them.</p>
+      
+      <div class="edit-mode-banner">
+        <span>✏️ Edit Mode — Changes apply to all drivers immediately</span>
+        <button class="small" onclick="saveCompanyChecklist()">💾 Save All Changes</button>
+      </div>
+      
+      <input type="text" id="new-check-item" placeholder="Add new check item (e.g. Tyres & Pressure)" style="margin-bottom:0;" />
+      <button class="btn-secondary" style="margin-top:0.5rem; margin-bottom:1.5rem;" onclick="addNewCheckItem()">+ Add Check Item</button>
+      
+      <h4 class="section-title">Checklist Items</h4>
+      <div id="company-checklist-container"></div>
+    </div>
+  </div>
+
+  <script type="module">
     // ==================================================
-    // LSD SOLUTIONS — FINAL CONSOLIDATED SCRIPT
+    // LSD SOLUTIONS — FULL APP WITH VEHICLE CHECKS
     // ==================================================
 
     // --- FIREBASE IMPORTS & CONFIG ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
@@ -336,18 +388,23 @@
 
     let currentUser = null;
     let userProfile = null;
+    let localChecklist = []; // Used by company builder
+    let driverCheckResponses = {}; // Used by driver
 
     // --- UTILITY FUNCTIONS ---
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
       const page = document.getElementById(pageId);
       if (page) page.style.display = 'block';
+      
+      // Load data when page becomes visible
+      if (pageId === 'company-checklist-builder-page') loadCompanyChecklist();
+      if (pageId === 'driver-checks-page') loadDriverChecklist();
     }
 
     // --- AUTH STATE ---
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
-      
       if (user) {
         console.log('🔐 Signed in:', user.email);
         await loadUserProfile(user.uid);
@@ -458,6 +515,25 @@
           role: 'company',
           createdAt: new Date()
         });
+        
+        // Create default checklist for new company
+        const defaultChecklist = [
+          { id: crypto.randomUUID(), label: 'Tyres & Pressure', order: 1 },
+          { id: crypto.randomUUID(), label: 'Lights & Indicators', order: 2 },
+          { id: crypto.randomUUID(), label: 'Brakes', order: 3 },
+          { id: crypto.randomUUID(), label: 'Windscreen & Wipers', order: 4 },
+          { id: crypto.randomUUID(), label: 'Mirrors', order: 5 },
+          { id: crypto.randomUUID(), label: 'Fluid Levels', order: 6 },
+          { id: crypto.randomUUID(), label: 'Exhaust & Emissions', order: 7 },
+          { id: crypto.randomUUID(), label: 'Coupling & Trailer Securement', order: 8 },
+          { id: crypto.randomUUID(), label: 'Number Plates', order: 9 },
+          { id: crypto.randomUUID(), label: 'Body & Condition', order: 10 }
+        ];
+        await setDoc(doc(db, 'companyChecklists', cred.user.uid), {
+          items: defaultChecklist,
+          updatedAt: new Date()
+        });
+        
       } catch (err) {
         alert('Registration failed: ' + err.message);
       }
@@ -468,19 +544,253 @@
       await signOut(auth);
     };
 
+    // ==================================================
+    // VEHICLE CHECKS — COMPANY SIDE (EDITOR)
+    // ==================================================
+    async function loadCompanyChecklist() {
+      if (!currentUser || userProfile?.role !== 'company') return;
+      
+      const ref = doc(db, 'companyChecklists', currentUser.uid);
+      const snap = await getDoc(ref);
+      
+      if (snap.exists()) {
+        localChecklist = snap.data().items || [];
+      } else {
+        // Fallback default
+        localChecklist = [
+          { id: crypto.randomUUID(), label: 'Tyres & Pressure', order: 1 },
+          { id: crypto.randomUUID(), label: 'Lights & Indicators', order: 2 },
+          { id: crypto.randomUUID(), label: 'Brakes', order: 3 }
+        ];
+      }
+      
+      renderCompanyChecklist();
+    }
+
+    function renderCompanyChecklist() {
+      const container = document.getElementById('company-checklist-container');
+      container.innerHTML = '';
+      
+      localChecklist.sort((a, b) => a.order - b.order);
+      
+      localChecklist.forEach((item, index) => {
+        const el = document.createElement('div');
+        el.className = 'checklist-item';
+        el.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <input type="text" value="${item.label}" 
+                   onchange="updateCheckLabel('${item.id}', this.value)"
+                   style="margin:0; border:none; background:transparent; font-weight:500; font-size:1rem;" />
+            <div class="actions">
+              <button class="btn-secondary small" onclick="moveCheckUp(${index})">↑</button>
+              <button class="btn-secondary small" onclick="moveCheckDown(${index})">↓</button>
+              <button class="btn-danger small" onclick="deleteCheckItem('${item.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    window.updateCheckLabel = function(id, newLabel) {
+      const item = localChecklist.find(i => i.id === id);
+      if (item) item.label = newLabel;
+    };
+
+    window.moveCheckUp = function(index) {
+      if (index === 0) return;
+      [localChecklist[index], localChecklist[index - 1]] = [localChecklist[index - 1], localChecklist[index]];
+      localChecklist.forEach((it, idx) => it.order = idx + 1);
+      renderCompanyChecklist();
+    };
+
+    window.moveCheckDown = function(index) {
+      if (index === localChecklist.length - 1) return;
+      [localChecklist[index], localChecklist[index + 1]] = [localChecklist[index + 1], localChecklist[index]];
+      localChecklist.forEach((it, idx) => it.order = idx + 1);
+      renderCompanyChecklist();
+    };
+
+    window.deleteCheckItem = function(id) {
+      if (!confirm('Delete this check item?')) return;
+      localChecklist = localChecklist.filter(i => i.id !== id);
+      localChecklist.forEach((it, idx) => it.order = idx + 1);
+      renderCompanyChecklist();
+    };
+
+    window.addNewCheckItem = function() {
+      const input = document.getElementById('new-check-item');
+      const label = input.value.trim();
+      if (!label) return;
+      
+      localChecklist.push({
+        id: crypto.randomUUID(),
+        label: label,
+        order: localChecklist.length + 1
+      });
+      input.value = '';
+      renderCompanyChecklist();
+    };
+
+    window.saveCompanyChecklist = async function() {
+      if (!currentUser) return;
+      
+      localChecklist.forEach((it, idx) => it.order = idx + 1);
+      
+      await setDoc(doc(db, 'companyChecklists', currentUser.uid), {
+        items: localChecklist,
+        updatedAt: new Date()
+      });
+      
+      alert('✅ Checklist saved! Drivers will see these checks immediately.');
+    };
+
+    // ==================================================
+    // VEHICLE CHECKS — DRIVER SIDE (COMPLETION)
+    // ==================================================
+    async function loadDriverChecklist() {
+      if (!currentUser || userProfile?.role !== 'driver') return;
+      
+      // Reset responses
+      driverCheckResponses = {};
+      
+      // Load checklist from the company (placeholder — will link properly when multi-company added)
+      const container = document.getElementById('driver-checklist-container');
+      const submitBtn = document.getElementById('submit-checks-btn');
+      
+      // For now — load default checklist. Will update when company-driver linking is added
+      const q = query(collection(db, 'companyChecklists'), orderBy('updatedAt', 'desc'));
+      const snap = await getDocs(q);
+      
+      let items = [];
+      if (!snap.empty) {
+        // Take most recently updated checklist
+        snap.forEach(doc => {
+          items = doc.data().items || [];
+        });
+      } else {
+        // Fallback defaults
+        items = [
+          { id: 't1', label: 'Tyres & Pressure', order: 1 },
+          { id: 't2', label: 'Lights & Indicators', order: 2 },
+          { id: 't3', label: 'Brakes', order: 3 },
+          { id: 't4', label: 'Windscreen & Wipers', order: 4 },
+          { id: 't5', label: 'Mirrors', order: 5 },
+          { id: 't6', label: 'Fluid Levels', order: 6 },
+          { id: 't7', label: 'Exhaust & Emissions', order: 7 },
+          { id: 't8', label: 'Coupling & Trailer Securement', order: 8 },
+          { id: 't9', label: 'Number Plates', order: 9 },
+          { id: 't10', label: 'Body & Condition', order: 10 }
+        ];
+      }
+      
+      items.sort((a, b) => a.order - b.order);
+      
+      container.innerHTML = '';
+      
+      if (items.length === 0) {
+        container.innerHTML = '<p style="color:#666; text-align:center; padding:2rem;">No checks have been set up by your company yet.</p>';
+        submitBtn.style.display = 'none';
+        return;
+      }
+      
+      items.forEach(item => {
+        driverCheckResponses[item.id] = { passed: null, note: '' };
+        
+        const el = document.createElement('div');
+        el.className = 'checklist-item';
+        el.id = `check-${item.id}`;
+        el.innerHTML = `
+          <h4 style="margin-bottom:0.5rem;">${item.label}</h4>
+          <div class="check-status">
+            <label>
+              <input type="radio" name="check-${item.id}" value="pass" 
+                     onchange="setCheckStatus('${item.id}', true)"> ✅ Pass
+            </label>
+            <label>
+              <input type="radio" name="check-${item.id}" value="fail" 
+                     onchange="setCheckStatus('${item.id}', false)"> ⚠️ Fail / Defect
+            </label>
+          </div>
+          <input type="text" placeholder="Add note (optional)" 
+                 onchange="setCheckNote('${item.id}', this.value)"
+                 style="margin-top:0.5rem;">
+        `;
+        container.appendChild(el);
+      });
+      
+      submitBtn.style.display = 'block';
+    }
+
+    window.setCheckStatus = function(id, passed) {
+      if (driverCheckResponses[id]) {
+        driverCheckResponses[id].passed = passed;
+        const el = document.getElementById(`check-${id}`);
+        if (el) {
+          if (passed === true) {
+            el.classList.add('completed');
+          } else if (passed === false) {
+            el.classList.add('completed');
+          }
+        }
+      }
+    };
+
+    window.setCheckNote = function(id, note) {
+      if (driverCheckResponses[id]) {
+        driverCheckResponses[id].note = note;
+      }
+    };
+
+    window.submitDriverChecks = async function() {
+      if (!currentUser) return;
+      
+      const allSet = Object.values(driverCheckResponses).every(r => r.passed !== null);
+      if (!allSet) {
+        alert('Please complete all items before submitting.');
+        return;
+      }
+      
+      const vehicleSelect = document.getElementById('check-vehicle-select');
+      const vehicle = vehicleSelect.value || 'Not specified';
+      
+      await addDoc(collection(db, 'completedChecks'), {
+        driverId: currentUser.uid,
+        driverName: userProfile?.name || 'Unknown',
+        vehicle: vehicle,
+        responses: driverCheckResponses,
+        completedAt: new Date()
+      });
+      
+      alert('✅ Checks submitted successfully! Thank you.');
+      showPage('driver-portal');
+    };
+
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
       showPage('signin-page');
     });
-  // ==================================================
-// EXPOSE FUNCTIONS FOR HTML ONCLICK HANDLERS
-// ==================================================
-window.showPage = showPage;
-window.doSignIn = doSignIn;
-window.sendResetLink = sendResetLink;
-window.registerDriver = registerDriver;
-window.registerCompany = registerCompany;
-window.signOutUser = signOutUser;
+
+    // ==================================================
+    // EXPOSE FUNCTIONS FOR HTML ONCLICK HANDLERS
+    // ==================================================
+    window.showPage = showPage;
+    window.doSignIn = doSignIn;
+    window.sendResetLink = sendResetLink;
+    window.registerDriver = registerDriver;
+    window.registerCompany = registerCompany;
+    window.signOutUser = signOutUser;
+    
+    // Vehicle checks
+    window.updateCheckLabel = window.updateCheckLabel || updateCheckLabel;
+    window.moveCheckUp = window.moveCheckUp || moveCheckUp;
+    window.moveCheckDown = window.moveCheckDown || moveCheckDown;
+    window.deleteCheckItem = window.deleteCheckItem || deleteCheckItem;
+    window.addNewCheckItem = window.addNewCheckItem || addNewCheckItem;
+    window.saveCompanyChecklist = window.saveCompanyChecklist || saveCompanyChecklist;
+    window.setCheckStatus = window.setCheckStatus || setCheckStatus;
+    window.setCheckNote = window.setCheckNote || setCheckNote;
+    window.submitDriverChecks = window.submitDriverChecks || submitDriverChecks;
   </script>
 </body>
 </html>
