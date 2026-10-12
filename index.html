@@ -1526,6 +1526,234 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
         </div>
       `;
     };
+     // ==============================================
+    // 📥 ADVANCED DATA & DOCUMENT DOWNLOADS
+    // ==============================================
+    let selectedDownloads = new Set();
+    
+    function getAllDownloadableItems() {
+      const items = [];
+      
+      // Documents
+      const docs = [
+        { id: 'doc-licence', type: 'document', category: 'identity', name: 'Driving Licence', 
+          url: userProfile?.licencePhoto || null, date: userProfile?.licenceUploaded || null },
+        { id: 'doc-cpc', type: 'document', category: 'qualification', name: 'CPC Card', 
+          url: userProfile?.cpcPhoto || null, date: userProfile?.cpcUploaded || null },
+        { id: 'doc-tacho', type: 'document', category: 'qualification', name: 'Tachograph Card', 
+          url: userProfile?.tachoPhoto || null, date: userProfile?.tachoUploaded || null }
+      ];
+      items.push(...docs.filter(d => d.url));
+      
+      // Expenses receipts
+      userExpenses.forEach(exp => {
+        if (exp.receiptURL) {
+          items.push({
+            id: `exp-${exp.id}`, type: 'receipt', category: 'expense',
+            name: `Receipt: ${exp.description}`, url: exp.receiptURL, date: exp.date || exp.submittedAt,
+            amount: exp.amount
+          });
+        }
+      });
+      
+      // Checks history
+      userChecks.slice().reverse().slice(0, 50).forEach((chk, idx) => {
+        items.push({
+          id: `check-${chk.id || idx}`, type: 'check', category: 'compliance',
+          name: `Walkaround Check — ${chk.vehicleReg || 'Unknown Vehicle'}`, 
+          url: null, data: chk, date: chk.checkedAt, result: chk.result
+        });
+      });
+      
+      // Jobs history
+      userJobs.filter(j => j.status === 'completed').forEach(job => {
+        items.push({
+          id: `job-${job.id}`, type: 'job', category: 'work',
+          name: `${job.title || 'Work'} — ${job.date}`, data: job, date: job.date
+        });
+      });
+      
+      return items.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    }
+    
+    window.toggleDownloadSelection = function(id) {
+      if (selectedDownloads.has(id)) selectedDownloads.delete(id);
+      else selectedDownloads.add(id);
+      updateDownloadSelectionBar();
+    };
+    
+    window.selectAllDownloads = function() {
+      getAllDownloadableItems().forEach(item => selectedDownloads.add(item.id));
+      updateDownloadSelectionBar();
+      renderDownloadCentre();
+    };
+    
+    window.clearAllDownloads = function() {
+      selectedDownloads.clear();
+      updateDownloadSelectionBar();
+      renderDownloadCentre();
+    };
+    
+    function updateDownloadSelectionBar() {
+      const bar = document.getElementById('download-select-bar');
+      if (!bar) return;
+      
+      const count = selectedDownloads.size;
+      bar.innerHTML = `
+        <span><strong>${count}</strong> item${count !== 1 ? 's' : ''} selected</span>
+        <div class="download-buttons">
+          <button class="btn-secondary btn-sm" onclick="clearAllDownloads()">Clear</button>
+          <button class="btn-primary btn-sm" onclick="downloadSelectedItems()" ${count === 0 ? 'disabled' : ''}>
+            ⬇️ Download Selected
+          </button>
+          <button class="btn-primary btn-sm" onclick="downloadEverything()">📦 Download All</button>
+        </div>
+      `;
+    }
+    
+    async function downloadSelectedItems() {
+      const items = getAllDownloadableItems().filter(i => selectedDownloads.has(i.id));
+      await processDownloads(items);
+    }
+    
+    async function downloadEverything() {
+      if (!confirm('Download ALL your documents and data? This may take a moment.')) return;
+      selectedDownloads.clear();
+      const all = getAllDownloadableItems();
+      all.forEach(i => selectedDownloads.add(i.id));
+      await processDownloads(all);
+    }
+    
+    async function processDownloads(items) {
+      const statusDiv = document.getElementById('download-status');
+      statusDiv.className = 'download-status working';
+      statusDiv.textContent = `Processing ${items.length} item(s)...`;
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const item of items) {
+        try {
+          if (item.url) {
+            // Download actual file
+            const link = document.createElement('a');
+            link.href = item.url;
+            link.target = '_blank';
+            link.download = `${item.name.replace(/[^a-zA-Z0-9._-]/g, '_')}.${getExtension(item.url)}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            successCount++;
+          } else if (item.data) {
+            // Generate PDF/HTML report
+            const html = generateItemReportHTML(item);
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${item.name.replace(/[^a-zA-Z0-9._-]/g, '_')}.html`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            successCount++;
+          }
+          await new Promise(r => setTimeout(r, 400)); // Avoid browser blocking
+        } catch (e) {
+          console.error('Download failed:', item.name, e);
+          errorCount++;
+        }
+      }
+      
+      statusDiv.className = errorCount === 0 ? 'download-status success' : 'download-status error';
+      statusDiv.textContent = `✅ Complete: ${successCount} downloaded${errorCount > 0 ? `, ${errorCount} failed` : ''}`;
+      
+      setTimeout(() => { statusDiv.textContent = ''; selectedDownloads.clear(); renderDownloadCentre(); }, 5000);
+    }
+    
+    function getExtension(url) {
+      try {
+        const path = new URL(url).pathname;
+        const ext = path.split('.').pop().toLowerCase();
+        return ['jpg','jpeg','png','pdf','doc','docx'].includes(ext) ? ext : 'pdf';
+      } catch { return 'pdf'; }
+    }
+    
+    function generateItemReportHTML(item) {
+      const dateStr = item.date ? formatDate(item.date) : new Date().toISOString().slice(0,10);
+      
+      return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${item.name}</title>
+  <style>
+    body { font-family:Arial, sans-serif; padding:30px; max-width:700px; margin:0 auto; }
+    h1 { color:#1a365d; font-size:20px; margin-bottom:4px; }
+    .meta { color:#666; font-size:13px; margin-bottom:24px; border-bottom:1px solid #ddd; padding-bottom:12px; }
+    pre { background:#f5f7fa; padding:16px; border-radius:6px; white-space:pre-wrap; font-size:13px; }
+    .footer { margin-top:30px; padding-top:12px; border-top:1px solid #ddd; font-size:11px; color:#888; text-align:center; }
+  </style>
+</head>
+<body>
+  <h1>${item.name}</h1>
+  <div class="meta">Type: ${item.type} • Generated: ${dateStr}</div>
+  <pre>${JSON.stringify(item.data, null, 2)}</pre>
+  <div class="footer">LSD Solutions — ${item.type.charAt(0).toUpperCase() + item.type.slice(1)} Record</div>
+</body>
+</html>
+      `;
+    }
+    
+    function renderDownloadCentre() {
+      const items = getAllDownloadableItems();
+      
+      return `
+        <div class="download-section">
+          <h3>📥 My Documents & Data</h3>
+          <p style="font-size:14px; color:var(--text-muted); margin-bottom:16px;">Select one or more items to download — or download everything at once.</p>
+          
+          <div class="download-grid">
+            ${items.length === 0 ? '<p style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted);">No documents or data available yet.</p>' : items.map(item => `
+              <label class="download-item">
+                <input type="checkbox" class="download-checkbox" 
+                       ${selectedDownloads.has(item.id) ? 'checked' : ''}
+                       onchange="toggleDownloadSelection('${item.id}')">
+                <div class="download-info">
+                  <div class="download-name">
+                    ${item.type === 'document' ? '📄' : item.type === 'receipt' ? '🧾' : item.type === 'check' ? '✅' : '📋'}
+                    ${item.name}
+                  </div>
+                  <div class="download-meta">
+                    ${item.category} • ${item.date ? formatDate(item.date) : 'Undated'}
+                    ${item.amount ? ` • £${item.amount.toFixed(2)}` : ''}
+                    ${item.result ? ` • ${item.result === 'pass' ? '✅ Pass' : item.result === 'fail' ? '❌ Fail' : '⏳ Pending'}` : ''}
+                  </div>
+                </div>
+              </label>
+            `).join('')}
+          </div>
+          
+          <div id="download-select-bar" class="download-select-bar">
+            <span>Select items above to download</span>
+            <div class="download-buttons">
+              <button class="btn-secondary btn-sm" onclick="selectAllDownloads()">Select All</button>
+              <button class="btn-primary btn-sm" onclick="downloadEverything()">📦 Download All</button>
+            </div>
+          </div>
+          
+          <div id="download-status" class="download-status"></div>
+        </div>
+      `;
+    }
+    
+    window.navigateTo = function(page) {
+      currentPage = page;
+      window.scrollTo({ top:0, behavior:'smooth' });
+      if (userProfile.role === 'driver') renderDriverPage(page);
+      else renderCompanyPage(page);
+    };
     // ==============================================
     // PUSH NOTIFICATIONS
     // ==============================================
