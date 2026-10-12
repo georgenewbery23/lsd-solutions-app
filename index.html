@@ -8,1615 +8,1348 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
-      --primary: #1a365d; --accent: #d4af37; --light: #f5f7fa; --text: #333;
-      --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dvsa-blue: #005ea5;
+      --primary: #1a365d;
+      --accent: #d4af37;
+      --success: #2e7d32;
+      --warning: #f57c00;
+      --danger: #c62828;
+      --light: #f5f7fa;
+      --card: #ffffff;
+      --text: #333333;
+      --muted: #6b7280;
     }
-    body { background: var(--light); min-height: 100vh; color: var(--text); }
-    .container { max-width: 420px; margin: 0 auto; padding: 20px; }
-    
-    .branding { text-align: center; margin: 30px 0 40px; }
-    .branding img { max-width: 140px; width: 100%; height: auto; margin-bottom: 16px; }
-    .branding h1 { font-size: 2.2rem; color: var(--primary); margin-bottom: 4px; font-weight: 700; }
-    .branding .subtitle { font-size: 1.15rem; color: #444; margin-bottom: 6px; font-weight: 500; }
-    .branding .tagline { font-size: 0.95rem; color: #777; font-style: italic; }
-    
-    input, select, textarea { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
-    button { width: 100%; padding: 0.8rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1rem; margin-top: 1rem; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #2a4a7d; }
-    button.small { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; margin: 0; }
-    button.tiny { width: auto; padding: 0.3rem 0.6rem; font-size: 0.8rem; margin: 0; }
-    .btn-secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
-    .btn-secondary:hover { background: rgba(26,54,93,0.08); }
-    .btn-danger { background: var(--danger); }
-    .btn-danger:hover { background: #c82333; }
-    .btn-success { background: var(--success); }
-    .btn-success:hover { background: #218838; }
-    .btn-warning { background: var(--warning); color: #212529; }
-    .page { display: none; }
-    a { color: var(--primary); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .role-option { padding: 1.2rem; border: 1px solid #ddd; border-radius: 8px; margin: 0.8rem 0; cursor: pointer; transition: all 0.2s; }
-    .role-option:hover { border-color: var(--primary); background: rgba(26,54,93,0.03); }
-    .top-nav { padding: 1rem 2rem; background: white; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
-    .dashboard-card { padding: 1.5rem; background: white; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: box-shadow 0.2s; }
-    .dashboard-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    
-    .checklist-container { max-width: 760px; margin: 0 auto; padding: 2rem; }
-    .dvsa-banner { background: var(--dvsa-blue); color: white; padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
-    .dvsa-banner h3 { font-size: 1rem; font-weight: 600; }
-    .category-group { margin-bottom: 2rem; }
-    .category-header { background: #e9ecef; padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 600; color: #495057; display: flex; justify-content: space-between; align-items: center; }
-    .checklist-item { background: white; border: 1px solid #e9ecef; border-radius: 6px; padding: 1rem 1.2rem; margin: 0.6rem 0; transition: all 0.2s; }
-    .checklist-item:hover { border-color: var(--primary); }
-    .checklist-item.completed-pass { border-left: 4px solid var(--success); }
-    .checklist-item.completed-fail { border-left: 4px solid var(--danger); }
-    .checklist-item .item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-    .checklist-item .item-label { flex: 1; min-width: 200px; }
-    .checklist-item .item-actions { display: flex; gap: 0.4rem; align-items: center; }
-    .check-status { display: flex; gap: 1rem; margin-top: 0.6rem; flex-wrap: wrap; }
-    .check-status label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid transparent; }
-    .check-status label.pass:hover, .check-status label.pass.selected { background: rgba(40,167,69,0.1); border-color: var(--success); }
-    .check-status label.fail:hover, .check-status label.fail.selected { background: rgba(220,53,69,0.1); border-color: var(--danger); }
-    .note-input { margin-top: 0.5rem; max-width: 100%; }
+    body { background: var(--light); color: var(--text); min-height: 100vh; }
     .hidden { display: none !important; }
-    .signature-box { border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; margin-top: 2rem; text-align: center; }
-    .defect-log { margin-top: 1.5rem; padding: 1rem; background: #fff1f1; border-radius: 6px; border: 1px solid #ffcccc; }
-    .defect-entry { padding: 0.8rem; border-bottom: 1px solid #ffcccc; }
-    
-    .veh-table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 6px; overflow: hidden; }
-    .veh-table th, .veh-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
-    .veh-table th { background: #f8f9fa; font-weight: 600; }
-    .veh-table .inactive { opacity: 0.5; background: #f8f9fa; }
-    .toggle-active { width: auto; padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem 1rem; }
-    .form-grid input, .form-grid select { margin: 0; }
-    .section-card { background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid #eee; }
-    .check-type-selector { display: flex; gap: 0.8rem; margin: 1rem 0; flex-wrap: wrap; }
-    .check-type-option { flex: 1; min-width: 140px; padding: 1rem; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
-    .check-type-option.selected { border-color: var(--primary); background: rgba(26,54,93,0.05); font-weight: 600; }
-    
-    /* --- DRIVERS PORTAL STYLES --- */
-    .driver-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; transition: all 0.2s; }
-    .driver-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(26,54,93,0.08); }
-    .driver-card.inactive { opacity: 0.6; background: #f8f9fa; }
-    .driver-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 0.8rem; }
-    .driver-name { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-    .driver-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .status-active { background: #d4edda; color: #155724; }
-    .status-inactive { background: #e2e3e5; color: #6c757d; }
-    .driver-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem; margin-top: 0.8rem; }
-    .detail-group { font-size: 0.9rem; }
-    .detail-label { font-weight: 600; color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    .detail-value { color: var(--text); margin-top: 0.1rem; }
-    .lic-cat-tag { display: inline-block; background: #e9ecef; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin: 0.15rem; }
-    .doc-badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin: 0.15rem; }
-    .doc-uploaded { background: #d4edda; color: #155724; }
-    .doc-missing { background: #f8d7da; color: #721c24; }
-    .exp-warning { color: var(--danger); font-weight: 600; }
-    .exp-soon { color: var(--warning); font-weight: 600; }
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: white; border-radius: 10px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
-    .modal-actions { display: flex; gap: 0.8rem; margin-top: 1.5rem; justify-content: flex-end; }
-    .modal-actions button { width: auto; }
-    .search-bar { margin-bottom: 1rem; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .auth-container { max-width: 440px; margin: 60px auto; padding: 30px; background: var(--card); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .logo { text-align: center; margin-bottom: 24px; }
+    .logo h1 { font-size: 1.6rem; color: var(--primary); }
+    .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+    .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; }
+    .tab.active { border-bottom-color: var(--primary); color: var(--primary); }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    input, select, button { padding: 12px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 1rem; }
+    button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+    button:hover { opacity: 0.92; }
+    button.secondary { background: #e5e7eb; color: var(--text); }
+    button.success { background: var(--success); }
+    button.danger { background: var(--danger); }
+    .card { background: var(--card); padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .nav-bar { background: var(--primary); color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .nav-btn { background: rgba(255,255,255,0.15); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.25); }
+    .page { display: none; }
+    .page.active { display: block; }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+    .status-active { background: #e6f4ea; color: var(--success); }
+    .status-pending { background: #fff4e5; color: var(--warning); }
+    .status-inactive { background: #fce8e6; color: var(--danger); }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .company-selector { background: #eef2f7; padding: 14px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--primary); }
+    .doc-card { border: 2px solid #e5e7eb; border-radius: 8px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
+    .doc-card:hover { border-color: var(--primary); }
+    .doc-card.complete { border-color: var(--success); background: #f9fffa; }
+    .check-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+    .check-item:last-child { border-bottom: none; }
+    .check-item .handle { color: #999; cursor: grab; margin-right: 10px; }
+    .hidden-input { display: none; }
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+    .photo-item { position: relative; }
+    .photo-item img { width: 100%; border-radius: 6px; }
+    .photo-item button { position: absolute; top: 4px; right: 4px; padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.6); }
+    .back-link { color: var(--primary); cursor: pointer; display: inline-block; margin-bottom: 15px; }
+    .back-link:hover { text-decoration: underline; }
+    .message { padding: 10px 14px; border-radius: 6px; margin: 10px 0; display: none; }
+    .message.show { display: block; }
+    .message.info { background: #e3f2fd; color: #0d47a1; }
+    .message.success { background: #e8f5e9; color: var(--success); }
+    .message.error { background: #ffebee; color: var(--danger); }
+    .empty-state { text-align: center; padding: 30px; color: var(--muted); }
   </style>
 </head>
 <body>
 
-  <!-- === SIGN IN PAGE === -->
-  <div id="signin-page" class="page">
-    <div class="container">
-      <div class="branding">
-        <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
-        <h1>LSD Solutions</h1>
-        <p class="subtitle">HGV And Logistics Services</p>
-        <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-      </div>
-      <h2 style="text-align:center;margin-bottom:1.5rem;">Sign In</h2>
-      <input type="email" id="email" placeholder="Email Address" />
-      <input type="password" id="password" placeholder="Password" />
-      <button onclick="doSignIn()">Sign In</button>
-      <p style="text-align:center;margin-top:1rem;">
-        <a href="#" onclick="showPage('reset-page'); return false;">Reset Your Password</a>
-      </p>
-      <p style="text-align:center;margin-top:1.5rem;">
-        Don't have an account?<br>
-        <a href="#" onclick="showPage('register-choice-page'); return false;"><strong>Register</strong></a>
-      </p>
+<!-- ===== AUTH PAGE ===== -->
+<div id="authPage" class="page active">
+  <div class="auth-container">
+    <div class="logo">
+      <h1>🚛 LSD Solutions</h1>
+      <p style="color:var(--muted); margin-top:5px;">HGV & Logistics Services</p>
     </div>
-  </div>
 
-  <!-- === RESET PASSWORD PAGE === -->
-  <div id="reset-page" class="page" style="display:none;">
-    <div class="container">
-      <div class="branding">
-        <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
-        <h1>LSD Solutions</h1>
-        <p class="subtitle">HGV And Logistics Services</p>
-        <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-      </div>
-      <h2 style="text-align:center;margin-bottom:1.5rem;">Reset Your Password</h2>
-      <input type="email" id="reset-email" placeholder="Email Address" />
-      <button onclick="sendResetLink()">Send Reset Link</button>
-      <p style="text-align:center;margin-top:1.5rem;">
-        <a href="#" onclick="showPage('signin-page'); return false;">← Back to Sign In</a>
-      </p>
+    <div class="tabs">
+      <div class="tab active" data-tab="signin">Sign In</div>
+      <div class="tab" data-tab="register">Register</div>
     </div>
-  </div>
 
-  <!-- === EMAIL SENT PAGE === -->
-  <div id="email-sent-page" class="page" style="display:none;">
-    <div class="container">
-      <div class="branding">
-        <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
-        <h1>LSD Solutions</h1>
-        <p class="subtitle">HGV And Logistics Services</p>
-        <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-      </div>
-      <div style="text-align:center; padding: 2rem 0;">
-        <div style="font-size:3rem; margin-bottom:1rem;">📧</div>
-        <h2>Check Your Email</h2>
-        <p style="margin:1rem 0; color:#666;">We've sent a password reset link to your email address.</p>
-        <p style="margin-top:2rem;"><a href="#" onclick="showPage('signin-page'); return false;">Back to Sign In</a></p>
-      </div>
-    </div>
-  </div>
+    <!-- SIGN IN FORM -->
+    <form id="signinForm">
+      <h3 style="margin-bottom:10px;">Sign In</h3>
+      <input type="email" id="siEmail" name="email" placeholder="Email Address" required autocomplete="email" />
+      <input type="password" id="siPassword" name="password" placeholder="Password" required autocomplete="current-password" />
+      <button type="submit">Sign In</button>
+      <p id="siMsg" style="margin-top:10px; font-size:0.9rem;"></p>
+    </form>
 
-  <!-- === REGISTER CHOICE === -->
-  <div id="register-choice-page" class="page" style="display:none;">
-    <div class="container">
-      <div class="branding">
-        <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
-        <h1>LSD Solutions</h1>
-        <p class="subtitle">HGV And Logistics Services</p>
-        <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
+    <!-- REGISTER FORM -->
+    <form id="registerForm" class="hidden">
+      <h3 style="margin-bottom:10px;">Register</h3>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button type="button" id="regDriverBtn" class="secondary" style="flex:1;">Register as a Driver</button>
+        <button type="button" id="regCompanyBtn" class="" style="flex:1; background:var(--accent);">Register as a Company</button>
       </div>
-      <h2 style="text-align:center;margin-bottom:1.5rem;">Register As</h2>
-      <div class="role-option" onclick="showPage('register-driver-page')">
-        <h3>👤 Driver</h3>
-        <p style="color:#666; font-size:0.9rem; margin-top:0.3rem;">Find work & manage documents</p>
-      </div>
-      <div class="role-option" onclick="showPage('register-company-page')">
-        <h3>🏢 Company</h3>
-        <p style="color:#666; font-size:0.9rem; margin-top:0.3rem;">Post work & manage fleet</p>
-      </div>
-      <p style="text-align:center;margin-top:1.5rem;">
-        <a href="#" onclick="showPage('signin-page'); return false;">← Back to Sign In</a>
-      </p>
-    </div>
+      <input type="text" id="regName" name="name" placeholder="Full Name / Company Name" required autocomplete="name" />
+      <input type="email" id="regEmail" name="email" placeholder="Email Address" required autocomplete="email" />
+      <input type="password" id="regPassword" name="password" placeholder="Password" required autocomplete="new-password" />
+      <input type="password" id="regPassword2" name="password2" placeholder="Confirm Password" required autocomplete="new-password" />
+      <p id="regRoleDisplay" style="font-weight:600; color:var(--primary);">Selected: Driver</p>
+      <button type="submit">Create Account</button>
+      <p id="regMsg" style="margin-top:10px; font-size:0.9rem;"></p>
+    </form>
   </div>
+</div>
 
-  <!-- === REGISTER DRIVER === -->
-  <div id="register-driver-page" class="page" style="display:none;">
-    <div class="container">
-      <div class="branding">
-        <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
-        <h1>LSD Solutions</h1>
-        <p class="subtitle">HGV And Logistics Services</p>
-        <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-      </div>
-      <h2 style="text-align:center;margin-bottom:1.5rem;">Register as Driver</h2>
-      <input type="text" id="driver-name" placeholder="Full Name" />
-      <input type="email" id="driver-email" placeholder="Email Address" />
-      <input type="password" id="driver-pass" placeholder="Password" />
-      <button onclick="registerDriver()">Create Account</button>
-      <p style="text-align:center;margin-top:1.5rem;">
-        <a href="#" onclick="showPage('register-choice-page'); return false;">← Back</a>
-      </p>
+<!-- ===== DRIVER PORTAL ===== -->
+<div id="driverPage" class="page">
+  <div class="nav-bar">
+    <div>
+      <h2>🚛 Driver Portal</h2>
+      <p style="font-size:0.9rem; opacity:0.8;" id="driverWelcome">Welcome</p>
     </div>
+    <button onclick="signOut()" class="secondary">Sign Out</button>
   </div>
+  <div class="container">
+    <!-- Company Selector -->
+    <div id="companySelectorContainer" class="company-selector">
+      <span>Loading companies...</span>
+    </div>
 
-  <!-- === REGISTER COMPANY === -->
-  <div id="register-company-page" class="page" style="display:none;">
-    <div class="container">
-      <div class="branding">
-        <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
-        <h1>LSD Solutions</h1>
-        <p class="subtitle">HGV And Logistics Services</p>
-        <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-      </div>
-      <h2 style="text-align:center;margin-bottom:1.5rem;">Register as Company</h2>
-      <input type="text" id="company-name" placeholder="Company Name" />
-      <input type="email" id="company-email" placeholder="Email Address" />
-      <input type="password" id="company-pass" placeholder="Password" />
-      <button onclick="registerCompany()">Create Account</button>
-      <p style="text-align:center;margin-top:1.5rem;">
-        <a href="#" onclick="showPage('register-choice-page'); return false;">← Back</a>
-      </p>
+    <!-- Driver Nav -->
+    <div class="nav-links" style="margin-bottom:20px;">
+      <button class="nav-btn active" data-driver-page="walkaround">Vehicle Walkaround</button>
+      <button class="nav-btn" data-driver-page="checks">My Checks</button>
+      <button class="nav-btn" data-driver-page="work">Available Work</button>
+      <button class="nav-btn" data-driver-page="calendar">My Calendar</button>
+      <button class="nav-btn" data-driver-page="documents">My Documents</button>
+      <button class="nav-btn" data-driver-page="profile">My Profile</button>
     </div>
-  </div>
 
-  <!-- === DRIVER PORTAL === -->
-  <div id="driver-portal" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>🚛 LSD Solutions</h2>
-      <div>
-        <span id="driver-greeting">Signed in</span>
-        <button class="btn-danger small" onclick="signOutUser()">Sign Out</button>
-      </div>
-    </div>
-    <div style="padding:2rem;">
-      <h3>Welcome, <span id="driver-name-display">Driver</span></h3>
-      <p style="margin:1rem 0; color:#666;">Your dashboard is ready.</p>
-      <div class="dashboard-grid">
-        <div class="dashboard-card" onclick="showPage('driver-checks-page')">
-          <strong>📋 Daily Walkaround Check</strong>
-          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">DVSA Compliant</p>
-        </div>
-        <div class="dashboard-card" onclick="showPage('driver-docs-page')">
-          <strong>📄 My Documents</strong>
-          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Licence, CPC & more</p>
-        </div>
-        <div class="dashboard-card" onclick="alert('Available Work — coming soon')">
-          <strong>📋 Available Work</strong>
-        </div>
-        <div class="dashboard-card" onclick="alert('My Calendar — coming soon')">
-          <strong>📅 My Calendar</strong>
-        </div>
-        <div class="dashboard-card" onclick="alert('My Profile — coming soon')">
-          <strong>👤 My Profile</strong>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- === DRIVER DOCUMENTS PAGE === -->
-  <div id="driver-docs-page" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>📄 My Documents</h2>
-      <button class="btn-secondary small" onclick="showPage('driver-portal')">← Back</button>
-    </div>
-    <div style="padding:2rem; max-width:800px; margin:0 auto;">
-      <div class="section-card">
-        <h3>🚗 Driving Licence</h3>
-        <div class="form-grid">
-          <input type="text" id="lic-number" placeholder="Licence Number" />
-          <input type="text" id="lic-dvla-code" placeholder="DVLA Check Code" />
-          <input type="text" id="lic-valid-from" placeholder="Valid From (DD/MM/YYYY)" />
-          <input type="text" id="lic-expiry" placeholder="Expiry Date (DD/MM/YYYY)" />
-          <input type="number" id="lic-points" placeholder="Penalty Points" min="0" max="30" />
-        </div>
-        <h4 style="margin:1rem 0 0.5rem;">Licence Categories</h4>
-        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
-          <label><input type="checkbox" id="cat-b" /> B (Car)</label>
-          <label><input type="checkbox" id="cat-c1" /> C1 (7.5t)</label>
-          <label><input type="checkbox" id="cat-c" /> C (Rigid)</label>
-          <label><input type="checkbox" id="cat-ce" /> C+E (Artic)</label>
-          <label><input type="checkbox" id="cat-d1" /> D1</label>
-          <label><input type="checkbox" id="cat-d" /> D</label>
-          <label><input type="checkbox" id="cat-de" /> D+E</label>
-        </div>
-        <input type="file" id="lic-photo-front" accept="image/*" />
-        <input type="file" id="lic-photo-back" accept="image/*" />
-      </div>
-      
-      <div class="section-card">
-        <h3>🏥 Medical Certificate</h3>
-        <div class="form-grid">
-          <input type="text" id="med-issued" placeholder="Issued Date (DD/MM/YYYY)" />
-          <input type="text" id="med-expiry" placeholder="Expiry Date (DD/MM/YYYY)" />
-        </div>
-        <input type="file" id="med-file" accept="image/*,.pdf" />
-      </div>
-      
-      <div class="section-card">
-        <h3>📜 Driver CPC</h3>
-        <div class="form-grid">
-          <input type="text" id="cpc-number" placeholder="CPC Card / Reference Number" />
-          <input type="text" id="cpc-expiry" placeholder="Expiry Date (DD/MM/YYYY)" />
-        </div>
-        <input type="file" id="cpc-file" accept="image/*,.pdf" />
-      </div>
-      
-      <button class="btn-success" onclick="saveDriverDocuments()">💾 Save All Documents</button>
-    </div>
-  </div>
-
-  <!-- === DRIVER CHECKS PAGE === -->
-  <div id="driver-checks-page" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>📋 Daily Walkaround Check</h2>
-      <button class="btn-secondary small" onclick="showPage('driver-portal')">← Back</button>
-    </div>
-    <div class="checklist-container">
-      <div class="dvsa-banner">
-        <div>
-          <h3>✅ DVSA Compliant Daily Check</h3>
-          <p>Vehicle &amp; Trailer Safety Inspection</p>
-        </div>
-        <div style="text-align:right;">
-          <p id="check-date" style="font-weight:600;"></p>
-        </div>
-      </div>
-      
-      <h4 style="margin:1rem 0 0.5rem;">What are you checking today?</h4>
-      <div class="check-type-selector">
-        <div class="check-type-option" id="chk-type-v" onclick="selectCheckType('vehicle')">
-          🚛<br>Vehicle Only
-        </div>
-        <div class="check-type-option" id="chk-type-vt" onclick="selectCheckType('both')">
-          🚛+🔌<br>Vehicle + Trailer
-        </div>
-        <div class="check-type-option" id="chk-type-t" onclick="selectCheckType('trailer')">
-          🔌<br>Trailer Only
-        </div>
-      </div>
-      
-      <div id="selection-fields" class="hidden">
-        <div style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
-          <div id="veh-select-wrap" style="flex:1; min-width:220px;">
-            <label><strong>Select Vehicle:</strong></label>
-            <select id="vehicle-select">
-              <option value="">-- Choose vehicle --</option>
+    <!-- WALKAROUND PAGE -->
+    <div id="drv-walkaround" class="driver-subpage active">
+      <div class="card">
+        <h3>🚛 Vehicle Walkaround Check</h3>
+        <div class="grid-2" style="margin:15px 0;">
+          <div>
+            <label>Vehicle Registration</label>
+            <select id="vehicleReg" required>
+              <option value="">-- Select Vehicle --</option>
             </select>
           </div>
-          <div id="trailer-select-wrap" style="flex:1; min-width:220px;">
-            <label><strong>Select Trailer:</strong></label>
-            <select id="trailer-select">
-              <option value="">-- Choose trailer --</option>
+          <div>
+            <label>Trailer Number</label>
+            <select id="trailerNumber">
+              <option value="">-- No Trailer --</option>
             </select>
           </div>
         </div>
-      </div>
-      
-      <div id="no-items-alert" class="hidden" style="background:#fff3cd; padding:1rem; border-radius:6px; margin:1rem 0;">
-        ⚠️ No active vehicles/trailers found. Ask your company admin to add them first.
-      </div>
-      
-      <div id="driver-checklist-container" class="hidden"></div>
-      
-      <div id="defects-log-section" class="defect-log hidden">
-        <h4 style="color:#a71d2a; margin-bottom:1rem;">⚠️ Reported Defects</h4>
-        <div id="defects-list"></div>
-      </div>
-      
-      <div class="signature-box hidden" id="submit-section">
-        <p><strong>I confirm that I have personally carried out this vehicle safety check and all items marked 'Pass' are in a safe and satisfactory condition.</strong></p>
-        <p style="margin:1rem 0; font-size:0.9rem; color:#666;">Any defects marked 'Fail' have been recorded and reported to the transport manager immediately.</p>
-        <input type="text" id="driver-signature" placeholder="Enter your full name as signature" style="margin-top:1rem;" />
-        <button id="submit-checks-btn" class="btn-success" style="margin-top:1rem;" onclick="submitDriverChecks()">✅ Submit Completed Check</button>
+        <div id="walkaroundChecksList" style="margin-top:20px;">
+          <p>Loading checks...</p>
+        </div>
+        <button onclick="submitWalkaroundCheck()" style="margin-top:20px;">Submit Check</button>
+        <p id="walkMsg" style="margin-top:10px;"></p>
       </div>
     </div>
-  </div>
 
-  <!-- === COMPANY PORTAL === -->
-  <!-- ============================================== -->
-  <!-- COMPANY PROFILE PAGE -->
-  <!-- ============================================== -->
-<div id="company-profile-page" class="page hidden">
-  <div class="portal-container">
-    <h2>🏢 Company Profile</h2>
-    <p style="color:#666; margin-bottom:1.5rem;">Your details for DVSA & Traffic Commissioner compliance</p>
-
-    // ==================================================
-    // COMPANY PROFILE
-    // ==================================================
-    async function loadCompanyProfile() {
-      if (!currentUser || userProfile?.role !== 'company') return;
-      
-      const snap = await getDoc(doc(db, 'companyProfiles', currentUser.uid));
-      if (snap.exists()) {
-        const p = snap.data();
-        document.getElementById('comp-registered-name').value = p.registeredName || '';
-        document.getElementById('comp-hmrc-number').value = p.hmrcNumber || '';
-        document.getElementById('comp-trading-name').value = p.tradingName || '';
-        document.getElementById('comp-registered-address').value = p.registeredAddress || '';
-        document.getElementById('comp-licence-number').value = p.operatorLicenceNumber || '';
-        document.getElementById('comp-contact-name').value = p.mainContactName || '';
-        document.getElementById('comp-phone-main').value = p.mainPhone || '';
-        document.getElementById('comp-accounts-name').value = p.accountsContactName || '';
-        document.getElementById('comp-accounts-phone').value = p.accountsPhone || '';
-        document.getElementById('comp-email-main').value = p.mainEmail || '';
-        document.getElementById('comp-email-accounts').value = p.accountsEmail || '';
-        document.getElementById('comp-email-compliance').value = p.complianceEmail || '';
-        document.getElementById('comp-tc-area').value = p.trafficCommissionerArea || '';
-        document.getElementById('comp-licence-type').value = p.licenceType || '';
-        document.getElementById('comp-authorised-vehicles').value = p.authorisedVehicles || '';
-        document.getElementById('comp-authorised-trailers').value = p.authorisedTrailers || '';
-        document.getElementById('comp-transport-managers').value = p.transportManagers || '';
-        document.getElementById('comp-notes').value = p.notes || '';
-      }
-    }
-
-    window.saveCompanyProfile = async function() {
-      if (!currentUser || userProfile?.role !== 'company') {
-        alert('⚠️ Company account required');
-        return;
-      }
-
-      const saveStatus = document.getElementById('profile-save-status');
-      saveStatus.style.display = 'block';
-      saveStatus.textContent = '⏳ Saving...';
-      saveStatus.style.color = '#666';
-
-      const profileData = {
-        companyId: currentUser.uid,
-        registeredName: document.getElementById('comp-registered-name').value.trim(),
-        hmrcNumber: document.getElementById('comp-hmrc-number').value.trim(),
-        tradingName: document.getElementById('comp-trading-name').value.trim(),
-        registeredAddress: document.getElementById('comp-registered-address').value.trim(),
-        operatorLicenceNumber: document.getElementById('comp-licence-number').value.trim(),
-        mainContactName: document.getElementById('comp-contact-name').value.trim(),
-        mainPhone: document.getElementById('comp-phone-main').value.trim(),
-        accountsContactName: document.getElementById('comp-accounts-name').value.trim(),
-        accountsPhone: document.getElementById('comp-accounts-phone').value.trim(),
-        mainEmail: document.getElementById('comp-email-main').value.trim(),
-        accountsEmail: document.getElementById('comp-email-accounts').value.trim(),
-        complianceEmail: document.getElementById('comp-email-compliance').value.trim(),
-        trafficCommissionerArea: document.getElementById('comp-tc-area').value.trim(),
-        licenceType: document.getElementById('comp-licence-type').value,
-        authorisedVehicles: parseInt(document.getElementById('comp-authorised-vehicles').value) || null,
-        authorisedTrailers: parseInt(document.getElementById('comp-authorised-trailers').value) || null,
-        transportManagers: document.getElementById('comp-transport-managers').value.trim(),
-        notes: document.getElementById('comp-notes').value.trim(),
-        updatedAt: new Date()
-      };
-
-      await setDoc(doc(db, 'companyProfiles', currentUser.uid), profileData);
-      
-      saveStatus.textContent = '✅ Profile saved — DVSA compliant';
-      saveStatus.style.color = 'green';
-      
-      setTimeout(() => { saveStatus.style.display = 'none'; }, 3000);
-    };
-
-    <div class="card" style="max-width:700px; margin:0 auto;">
-      <h3 style="margin-bottom:1rem; color:#1a365d;">Business Details</h3>
-      
-      <div class="form-group">
-        <label>Company Registered Name *</label>
-        <input type="text" id="comp-registered-name" placeholder="e.g. LSD Solutions Limited" />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>HMRC / Company Registration Number *</label>
-          <input type="text" id="comp-hmrc-number" placeholder="e.g. 12345678" />
-        </div>
-        <div class="form-group">
-          <label>Operator's Licence Number *</label>
-          <input type="text" id="comp-licence-number" placeholder="e.g. OB12345678" />
+    <!-- MY CHECKS -->
+    <div id="drv-checks" class="driver-subpage">
+      <div class="card">
+        <h3>✅ My Completed Checks</h3>
+        <div id="myChecksList" style="margin-top:15px;">
+          <p class="empty-state">No completed checks yet.</p>
         </div>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label>Trading Name (if different from Registered Name)</label>
-        <input type="text" id="comp-trading-name" placeholder="e.g. LSD Haulage Services" />
-      </div>
-
-      <div class="form-group">
-        <label>Registered Business Address *</label>
-        <textarea id="comp-registered-address" rows="3" placeholder="Full address including postcode"></textarea>
-      </div>
-
-      <hr style="margin:1.5rem 0; border:none; border-top:1px solid #e0e0e0;" />
-
-      <h3 style="margin-bottom:1rem; color:#1a365d;">Contact Information</h3>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Main Contact Name</label>
-          <input type="text" id="comp-contact-name" placeholder="Primary responsible person" />
-        </div>
-        <div class="form-group">
-          <label>Main Phone Number</label>
-          <input type="tel" id="comp-phone-main" placeholder="e.g. 01234 567 890" />
+    <!-- AVAILABLE WORK -->
+    <div id="drv-work" class="driver-subpage">
+      <div class="card">
+        <h3>📋 Available Work</h3>
+        <div id="availableWorkList" style="margin-top:15px;">
+          <p class="empty-state">Loading work...</p>
         </div>
       </div>
+    </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Accounts / Invoicing Contact Name</label>
-          <input type="text" id="comp-accounts-name" placeholder="Who to contact about invoices" />
-        </div>
-        <div class="form-group">
-          <label>Accounts Phone Number</label>
-          <input type="tel" id="comp-accounts-phone" placeholder="Accounts department" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Main Email Address *</label>
-        <input type="email" id="comp-email-main" placeholder="General enquiries" />
-      </div>
-
-      <div class="form-group">
-        <label>Invoicing / Finance Email Address</label>
-        <input type="email" id="comp-email-accounts" placeholder="Send invoices to..." />
-      </div>
-
-      <div class="form-group">
-        <label>DVSA / Compliance Email Address</label>
-        <input type="email" id="comp-email-compliance" placeholder="Notifications from DVSA & Traffic Commissioner" />
-      </div>
-
-      <hr style="margin:1.5rem 0; border:none; border-top:1px solid #e0e0e0;" />
-
-      <h3 style="margin-bottom:1rem; color:#1a365d;">Compliance & Additional</h3>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Traffic Commissioner Area</label>
-          <input type="text" id="comp-tc-area" placeholder="e.g. South East & London" />
-        </div>
-        <div class="form-group">
-          <label>Standard / Restricted Licence</label>
-          <select id="comp-licence-type">
-            <option value="">— Select —</option>
-            <option value="standard-national">Standard National</option>
-            <option value="standard-international">Standard International</option>
-            <option value="restricted">Restricted</option>
+    <!-- CALENDAR -->
+    <div id="drv-calendar" class="driver-subpage">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h3>📅 My Calendar</h3>
+          <div>
+            <button onclick="changeCalendarPeriod(-1)" class="secondary">&lt;</button>
+            <span id="calendarTitle" style="font-weight:600; margin:0 10px;">October 2026</span>
+            <button onclick="changeCalendarPeriod(1)" class="secondary">&gt;</button>
+          </div>
+          <select id="calendarView" onchange="renderCalendar()">
+            <option value="month">Monthly</option>
+            <option value="week">Weekly</option>
+            <option value="day">Daily</option>
           </select>
         </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Number of Authorised Vehicles</label>
-          <input type="number" id="comp-authorised-vehicles" placeholder="0" min="0" />
+        <div style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px; font-size:0.9rem;">
+          <span style="background:#e8f5e9; padding:4px 8px; border-radius:4px;">✅ Available</span>
+          <span style="background:#fce8e6; padding:4px 8px; border-radius:4px;">❌ Unavailable</span>
+          <span style="background:#e3f2fd; padding:4px 8px; border-radius:4px;">🚛 Work Booked</span>
         </div>
-        <div class="form-group">
-          <label>Number of Authorised Trailers</label>
-          <input type="number" id="comp-authorised-trailers" placeholder="0" min="0" />
+        <div id="calendarGrid"></div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div id="drv-documents" class="driver-subpage">
+      <div class="card">
+        <h3>📄 My Documents</h3>
+        <div class="grid-2" style="margin-top:15px;">
+          <div class="doc-card" onclick="openDocPage('drivingLicence')">
+            <h4>🚗 Driving Licence</h4>
+            <p id="docStatus-licence" style="color:var(--muted); font-size:0.9rem; margin-top:5px;">Not added</p>
+          </div>
+          <div class="doc-card" onclick="openDocPage('cpc')">
+            <h4>📋 CPC Card</h4>
+            <p id="docStatus-cpc" style="color:var(--muted); font-size:0.9rem; margin-top:5px;">Not added</p>
+          </div>
+          <div class="doc-card" onclick="openDocPage('tacho')">
+            <h4>⏱️ Tachograph Card</h4>
+            <p id="docStatus-tacho" style="color:var(--muted); font-size:0.9rem; margin-top:5px;">Not added</p>
+          </div>
+          <div class="doc-card" onclick="openDocPage('other')">
+            <h4>📎 Other Documents</h4>
+            <p id="docStatus-other" style="color:var(--muted); font-size:0.9rem; margin-top:5px;">Not added</p>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label>Transport Manager Name(s)</label>
-        <input type="text" id="comp-transport-managers" placeholder="Name(s) of nominated Transport Manager(s)" />
+    <!-- DOCUMENT DETAIL PAGE -->
+    <div id="docDetailPage" class="driver-subpage hidden">
+      <span class="back-link" onclick="backToDocs()">&larr; Back to Documents</span>
+      <div class="card">
+        <h3 id="docPageTitle">Document</h3>
+        <div class="grid-2" style="margin:15px 0;">
+          <div>
+            <label>Document Number</label>
+            <input type="text" id="docNumber" placeholder="Enter number" />
+          </div>
+          <div>
+            <label>Valid From</label>
+            <input type="date" id="docValidFrom" />
+          </div>
+          <div>
+            <label>Expiry Date</label>
+            <input type="date" id="docExpiry" />
+          </div>
+          <div id="licenceCategoriesBlock" class="hidden">
+            <label>Licence Categories Held</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+              <label><input type="checkbox" class="lic-cat" value="C" /> C</label>
+              <label><input type="checkbox" class="lic-cat" value="C1" /> C1</label>
+              <label><input type="checkbox" class="lic-cat" value="CE" /> CE</label>
+              <label><input type="checkbox" class="lic-cat" value="C1E" /> C1E</label>
+              <label><input type="checkbox" class="lic-cat" value="D" /> D</label>
+              <label><input type="checkbox" class="lic-cat" value="D1" /> D1</label>
+              <label><input type="checkbox" class="lic-cat" value="DE" /> DE</label>
+              <label><input type="checkbox" class="lic-cat" value="D1E" /> D1E</label>
+              <label><input type="checkbox" class="lic-cat" value="B" /> B</label>
+            </div>
+          </div>
+        </div>
+        <h4>Upload Photos</h4>
+        <input type="file" id="docPhotoInput" accept="image/*" multiple class="hidden-input" onchange="handleDocPhotoUpload(event)" />
+        <button onclick="document.getElementById('docPhotoInput').click()" class="secondary">+ Add Photo / Scan</button>
+        <div id="docPhotoPreviews" class="photo-grid"></div>
+        <button onclick="saveDocumentData()" style="margin-top:20px;">Save Document</button>
+        <p id="docSaveMsg" style="margin-top:10px;"></p>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label>Additional Notes / Compliance Reference</label>
-        <textarea id="comp-notes" rows="3" placeholder="Any licence conditions, dates, reference numbers..."></textarea>
+    <!-- PROFILE -->
+    <div id="drv-profile" class="driver-subpage">
+      <div class="card">
+        <h3>👤 My Profile</h3>
+        <div class="grid-2" style="margin-top:15px;">
+          <div>
+            <label>Full Name</label>
+            <input type="text" id="drvName" />
+          </div>
+          <div>
+            <label>Email</label>
+            <input type="email" id="drvEmail" disabled style="background:#eee;" />
+          </div>
+          <div>
+            <label>Phone Number</label>
+            <input type="tel" id="drvPhone" />
+          </div>
+          <div>
+            <label>Address</label>
+            <input type="text" id="drvAddress" />
+          </div>
+        </div>
+        <button onclick="saveDriverProfile()" style="margin-top:20px;">Save Profile</button>
+        <p id="profileMsg" style="margin-top:10px;"></p>
       </div>
-
-      <button class="btn-primary" style="width:100%; margin-top:1rem;" onclick="saveCompanyProfile()">
-        💾 Save Company Profile
-      </button>
-      <p id="profile-save-status" style="margin-top:1rem; text-align:center; display:none;"></p>
     </div>
   </div>
 </div>
-  <div id="company-portal" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>🏢 LSD Solutions</h2>
-      <div>
-        <span id="company-greeting">Signed in</span>
-        <button class="btn-danger small" onclick="signOutUser()">Sign Out</button>
+
+<!-- ===== COMPANY PORTAL ===== -->
+<div id="companyPage" class="page">
+  <div class="nav-bar">
+    <div>
+      <h2>🏢 Company Portal</h2>
+      <p style="font-size:0.9rem; opacity:0.8;" id="companyWelcome">Welcome</p>
+    </div>
+    <button onclick="signOut()" class="secondary">Sign Out</button>
+  </div>
+  <div class="container">
+    <div class="nav-links" style="margin-bottom:20px;">
+      <button class="nav-btn active" data-comp-page="drivers">Drivers</button>
+      <button class="nav-btn" data-comp-page="vehicles">Vehicles</button>
+      <button class="nav-btn" data-comp-page="checks">Check Lists</button>
+      <button class="nav-btn" data-comp-page="work">Post Work</button>
+      <button class="nav-btn" data-comp-page="calendar">Company Calendar</button>
+    </div>
+
+    <!-- DRIVERS -->
+    <div id="comp-drivers" class="company-subpage active">
+      <div class="card">
+        <h3>👤 Add Driver to Your Company</h3>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin:15px 0;">
+          <input type="email" id="newDriverEmail" placeholder="Driver Email Address" style="flex:1; min-width:220px;" />
+          <button onclick="lookupAndAddDriver()">Add Driver</button>
+        </div>
+        <p id="addDriverMsg"></p>
+      </div>
+      <div class="card">
+        <h3>📋 Your Drivers</h3>
+        <div id="companyDriversList" style="margin-top:15px;">
+          <p class="empty-state">No drivers added yet.</p>
+        </div>
       </div>
     </div>
-    <div style="padding:2rem;">
-      <h3>Welcome, <span id="company-name-display">Company</span></h3>
-      <p style="margin:1rem 0; color:#666;">Your management dashboard.</p>
-      <div class="dashboard-grid">
-        <div class="dashboard-card" onclick="showPage('company-drivers-page')">
-          <strong>👥 Drivers</strong>
-          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Manage driver details & licences</p>
+
+    <!-- VEHICLES -->
+    <div id="comp-vehicles" class="company-subpage">
+      <div class="card">
+        <h3>🚛 Add Vehicle</h3>
+        <div class="grid-3" style="margin:15px 0;">
+          <input type="text" id="vehReg" placeholder="Registration Number" />
+          <input type="text" id="vehMake" placeholder="Make" />
+          <input type="text" id="vehModel" placeholder="Model" />
+          <input type="text" id="vehType" placeholder="Type (e.g. HGV, Van)" />
+          <input type="text" id="vehYear" placeholder="Year" />
         </div>
-        <div class="dashboard-card" onclick="showPage('company-vehicles-page')">
-          <strong>🚚 Vehicles &amp; Trailers</strong>
-          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Manage your fleet</p>
+        <button onclick="saveNewVehicle()">Save Vehicle</button>
+        <p id="vehMsg"></p>
+      </div>
+      <div class="card">
+        <h3>📋 Your Vehicles</h3>
+        <div id="companyVehiclesList" style="margin-top:15px;"></div>
+      </div>
+      <div class="card">
+        <h3>📦 Add Trailer</h3>
+        <div class="grid-2" style="margin:15px 0;">
+          <input type="text" id="trailerNum" placeholder="Trailer Number / ID" />
+          <input type="text" id="trailerType" placeholder="Type" />
         </div>
-        <div class="dashboard-card" onclick="showPage('company-checklist-editor-page')">
-          <strong>✅ DVSA Checklist Editor</strong>
-          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Customise your checks</p>
+        <button onclick="saveNewTrailer()">Save Trailer</button>
+      </div>
+      <div class="card">
+        <h3>📋 Your Trailers</h3>
+        <div id="companyTrailersList" style="margin-top:15px;"></div>
+      </div>
+    </div>
+
+    <!-- CHECKLISTS EDITOR -->
+    <div id="comp-checks" class="company-subpage">
+      <div class="card">
+        <h3>✅ Walkaround Check List Editor</h3>
+        <p style="color:var(--muted); margin:5px 0 15px;">Rename, add, delete, and reorder checks — drivers cannot edit these</p>
+        <div id="checkEditorList"></div>
+        <div style="margin-top:15px; display:flex; gap:10px;">
+          <input type="text" id="newCheckName" placeholder="Add new check item..." style="flex:1;" />
+          <button onclick="addNewCheckItem()">+ Add</button>
         </div>
-        <div class="dashboard-card" onclick="alert('View Completed Checks — coming soon')">
-          <strong>📊 Check Results</strong>
+        <button onclick="saveCheckStructure()" style="margin-top:20px;">Save Check Structure</button>
+        <p id="checkSaveMsg"></p>
+      </div>
+    </div>
+
+    <!-- POST WORK -->
+    <div id="comp-work" class="company-subpage">
+      <div class="card">
+        <h3>📋 Post Available Work</h3>
+        <div class="grid-2" style="margin:15px 0;">
+          <input type="text" id="workTitle" placeholder="Job Title / Reference" />
+          <input type="text" id="workLocation" placeholder="Location" />
+          <div>
+            <label>Start Date & Time</label>
+            <input type="datetime-local" id="workStart" />
+          </div>
+          <div>
+            <label>End Date & Time</label>
+            <input type="datetime-local" id="workEnd" />
+          </div>
+          <textarea id="workDesc" placeholder="Description / Requirements" rows="4" style="grid-column:1/-1; padding:10px; border-radius:6px; border:1px solid #ddd;"></textarea>
         </div>
-        <div class="dashboard-card" onclick="alert('Post Work — coming soon')">
-          <strong>📋 Post Available Work</strong>
-        </div>
-        <div class="dashboard-card" onclick="alert('Settings — coming soon')">
-          <strong>⚙️ Settings</strong>
+        <button onclick="postNewWork()">Post Work</button>
+        <p id="workMsg"></p>
+      </div>
+      <div class="card">
+        <h3>📋 Posted Work</h3>
+        <div id="postedWorkList" style="margin-top:15px;"></div>
+      </div>
+    </div>
+
+    <!-- COMPANY CALENDAR -->
+    <div id="comp-calendar" class="company-subpage">
+      <div class="card">
+        <h3>📅 Company Calendar</h3>
+        <p style="color:var(--muted); margin-top:10px;">View all driver bookings and assignments</p>
+        <div id="companyCalendarView" style="margin-top:20px;">
+          <p class="empty-state">Calendar coming soon — bookings will appear here.</p>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- === COMPANY DRIVERS MANAGEMENT PAGE === -->
-  <div id="company-drivers-page" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>👥 Drivers Management</h2>
-      <button class="btn-secondary small" onclick="showPage('company-portal')">← Back</button>
-    </div>
-    <div style="padding:2rem; max-width:900px; margin:0 auto;">
-      
-      <div class="section-card">
-        <h3>➕ Add / Link Driver</h3>
-        <p style="color:#666; font-size:0.9rem; margin-bottom:1rem;">Enter driver details or link an existing registered driver by email.</p>
-        <div class="form-grid">
-          <input type="text" id="add-driver-name" placeholder="Full Name" />
-          <input type="email" id="add-driver-email" placeholder="Email Address" />
-          <input type="text" id="add-driver-lic-num" placeholder="Driving Licence Number" />
-          <input type="text" id="add-driver-dvla-code" placeholder="DVLA Check Code" />
-          <input type="text" id="add-driver-lic-from" placeholder="Licence Valid From (DD/MM/YYYY)" />
-          <input type="text" id="add-driver-lic-exp" placeholder="Licence Expiry (DD/MM/YYYY)" />
-          <input type="number" id="add-driver-points" placeholder="Penalty Points" min="0" />
-          <input type="text" id="add-driver-med-exp" placeholder="Medical Expiry (DD/MM/YYYY)" />
-        </div>
-        <button class="btn-success small" style="margin-top:1rem;" onclick="addCompanyDriver()">✅ Add Driver</button>
-      </div>
-      
-      <div class="search-bar">
-        <input type="text" id="driver-search" placeholder="🔍 Search drivers by name or email..." oninput="filterDriversList()" />
-      </div>
-      
-      <h3>Your Drivers (<span id="driver-count">0</span>)</h3>
-      <div id="company-drivers-list">
-        <p style="color:#999; text-align:center; padding:2rem;">Loading drivers...</p>
-      </div>
-    </div>
-  </div>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
-  <!-- === COMPANY VEHICLES PAGE === -->
-  <div id="company-vehicles-page" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>🚚 Vehicles &amp; Trailers</h2>
-      <button class="btn-secondary small" onclick="showPage('company-portal')">← Back</button>
-    </div>
-    <div style="padding:2rem; max-width:900px; margin:0 auto;">
-      
-      <div class="section-card">
-        <h3>➕ Add New Vehicle</h3>
-        <div class="form-grid">
-          <input type="text" id="veh-make" placeholder="Make (e.g. DAF, Mercedes)" />
-          <input type="text" id="veh-model" placeholder="Model" />
-          <input type="text" id="veh-reg" placeholder="Registration Number" style="text-transform:uppercase;" />
-          <input type="text" id="veh-type" placeholder="Type / Fleet No. (optional)" />
-          <input type="text" id="veh-mot-expiry" placeholder="MOT Expiry (DD/MM/YYYY)" />
-          <input type="text" id="veh-tacho-expiry" placeholder="Tachograph Calibration Expiry" />
-        </div>
-        <button class="btn-success small" style="width:auto; margin-top:1rem;" onclick="addVehicle()">✅ Add Vehicle</button>
-      </div>
-      
-      <div class="section-card">
-        <h3>🔌 Add New Trailer</h3>
-        <div class="form-grid">
-          <input type="text" id="trailer-number" placeholder="Trailer Number / ID" />
-          <input type="text" id="trailer-make" placeholder="Make / Manufacturer" />
-          <input type="text" id="trailer-type" placeholder="Type / Description" />
-          <select id="trailer-owner">
-            <option value="company">Owned by this company</option>
-            <option value="hired">Hired / Leased</option>
-            <option value="subcontractor">Subcontractor / Third Party</option>
-          </select>
-          <input type="text" id="trailer-mot-expiry" placeholder="MOT / Test Expiry (DD/MM/YYYY)" />
-        </div>
-        <button class="btn-success small" style="width:auto; margin-top:1rem;" onclick="addTrailer()">✅ Add Trailer</button>
-      </div>
-      
-      <div class="section-card">
-        <h3>Your Vehicles</h3>
-        <table class="veh-table">
-          <thead>
-            <tr>
-              <th>Reg / Plate</th>
-              <th>Make &amp; Model</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="vehicles-list-body">
-            <tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="section-card">
-        <h3>Your Trailers</h3>
-        <table class="veh-table">
-          <thead>
-            <tr>
-              <th>Trailer No.</th>
-              <th>Make / Owner</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="trailers-list-body">
-            <tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
+    authDomain: "lsd-solutions.firebaseapp.com",
+    projectId: "lsd-solutions",
+    storageBucket: "lsd-solutions.firebasestorage.app",
+    messagingSenderId: "833767217116",
+    appId: "1:833767217116:web:b8c5d6e7f8a9b0c1d2e3f4"
+  };
 
-  <!-- === COMPANY CHECKLIST EDITOR PAGE === -->
-  <div id="company-checklist-editor-page" class="page" style="display:none;">
-    <div class="top-nav">
-      <h2>✅ DVSA Checklist Editor</h2>
-      <button class="btn-secondary small" onclick="showPage('company-portal')">← Back</button>
-    </div>
-    <div class="checklist-container">
-      <div class="edit-banner" style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:0.8rem 1.2rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.8rem;">
-        <span>✏️ <strong>Edit Mode</strong> — Customise your checks below.</span>
-        <button class="btn-success small" onclick="saveFullChecklist()">💾 Save All Changes</button>
-      </div>
-      <p style="color:#666; margin-bottom:1.5rem;">Standard DVSA items pre-loaded — edit, add, remove or reorder as needed.</p>
-      <div class="add-item-row" style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
-        <select id="new-item-category" style="max-width:180px; margin:0;">
-          <option value="External">External</option>
-          <option value="Internal">Internal</option>
-          <option value="Brakes">Brakes</option>
-          <option value="Lights">Lights &amp; Signals</option>
-          <option value="Tyres">Tyres &amp; Wheels</option>
-          <option value="Coupling">Coupling &amp; Trailer</option>
-          <option value="Other">Other</option>
-        </select>
-        <input type="text" id="new-item-text" placeholder="Enter new check item..." style="flex:1; min-width:200px;" />
-        <button class="btn-secondary small" onclick="addNewCheckItem()">+ Add</button>
-      </div>
-      <div id="editor-categories-container"></div>
-    </div>
-  </div>
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs, where, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  window.auth = auth;
+  window.db = db;
+  window.storage = storage;
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
-      authDomain: "lsd-solutions.firebaseapp.com",
-      projectId: "lsd-solutions",
-      storageBucket: "lsd-solutions.firebasestorage.app",
-      messagingSenderId: "833767217116",
-      appId: "1:833767217116:web:b8c5d6e7f8a9b0c1d2e3f4"
-    };
+  let currentUser = null;
+  let userProfile = null;
+  let selectedDocType = null;
+  let docPhotos = [];
+  let calendarDate = new Date();
+  let calendarViewMode = 'month';
+  let checkStructure = [
+    "Vehicle Exterior",
+    "Windscreen & Mirrors",
+    "Lights & Indicators",
+    "Tyres & Wheels",
+    "Brakes",
+    "Fluid Levels",
+    "Coupling / Trailer Securement",
+    "Load Security",
+    "Emergency Equipment",
+    "Cab & Interior"
+  ];
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  let userCompanies = [];
+  let selectedCompanyId = null;
+  let companyVehicles = [];
+  let companyTrailers = [];
 
-    let currentUser = null;
-    let userProfile = null;
-    let checklistData = {};
-    let driverResponses = {};
-    let activeVehicles = [];
-    let activeTrailers = [];
-    let selectedCheckType = null;
-    let allCompanyDrivers = [];
+  // =====================================================
+  // AUTH
+  // =====================================================
+  let selectedRegRole = 'driver';
+  document.getElementById('regDriverBtn').addEventListener('click', () => {
+    selectedRegRole = 'driver';
+    document.getElementById('regRoleDisplay').textContent = 'Selected: Driver';
+    document.getElementById('regDriverBtn').classList.remove('secondary');
+    document.getElementById('regCompanyBtn').classList.add('secondary');
+  });
+  document.getElementById('regCompanyBtn').addEventListener('click', () => {
+    selectedRegRole = 'company';
+    document.getElementById('regRoleDisplay').textContent = 'Selected: Company';
+    document.getElementById('regCompanyBtn').classList.remove('secondary');
+    document.getElementById('regDriverBtn').classList.add('secondary');
+  });
 
-    function getDefaultDVSA_Checklists() {
-      return {
-        categories: [
-          { id: 'cat-external', name: 'External Body & Structure', items: [
-            { id: crypto.randomUUID(), text: 'Condition of bodywork, panels & mirrors', order: 1 },
-            { id: crypto.randomUUID(), text: 'Windscreen, windows & wipers — condition & operation', order: 2 },
-            { id: crypto.randomUUID(), text: 'Number plates — clean, secure & legible', order: 3 },
-            { id: crypto.randomUUID(), text: 'Reflectors & marker boards — present & secure', order: 4 },
-            { id: crypto.randomUUID(), text: 'Roof, covers & load security — no damage', order: 5 }
-          ]},
-          { id: 'cat-lights', name: 'Lights & Signals', items: [
-            { id: crypto.randomUUID(), text: 'Headlights — main beam & dip beam', order: 1 },
-            { id: crypto.randomUUID(), text: 'Rear lights, side lights & number plate lights', order: 2 },
-            { id: crypto.randomUUID(), text: 'Indicators — front, rear & side repeaters', order: 3 },
-            { id: crypto.randomUUID(), text: 'Brake lights — all working', order: 4 },
-            { id: crypto.randomUUID(), text: 'Hazard warning lights', order: 5 },
-            { id: crypto.randomUUID(), text: 'Fog lights — front & rear', order: 6 }
-          ]},
-          { id: 'cat-tyres', name: 'Tyres, Wheels & Wheel Nuts', items: [
-            { id: crypto.randomUUID(), text: 'Tyre condition — adequate tread depth & no cuts/lumps', order: 1 },
-            { id: crypto.randomUUID(), text: 'Tyre pressures — correct for load', order: 2 },
-            { id: crypto.randomUUID(), text: 'Wheel nuts & studs — no missing or loose', order: 3 },
-            { id: crypto.randomUUID(), text: 'Valves & dust caps — secure & in place', order: 4 },
-            { id: crypto.randomUUID(), text: 'Spare wheel — secure & correct type/pressure', order: 5 }
-          ]},
-          { id: 'cat-brakes', name: 'Brakes & Steering', items: [
-            { id: crypto.randomUUID(), text: 'Service brake — operation & effectiveness', order: 1 },
-            { id: crypto.randomUUID(), text: 'Parking brake — holds vehicle on gradient', order: 2 },
-            { id: crypto.randomUUID(), text: 'Brake lines & hoses — no leaks or damage', order: 3 },
-            { id: crypto.randomUUID(), text: 'Brake fluid level — within min/max', order: 4 },
-            { id: crypto.randomUUID(), text: 'Steering — free from play, no noises', order: 5 },
-            { id: crypto.randomUUID(), text: 'Power steering fluid level & operation', order: 6 }
-          ]},
-          { id: 'cat-coupling', name: 'Coupling & Trailer Equipment', items: [
-            { id: crypto.randomUUID(), text: 'Fifth wheel / coupling — secure & properly engaged', order: 1 },
-            { id: crypto.randomUUID(), text: 'Air lines & electrical connections — secure & free from damage', order: 2 },
-            { id: crypto.randomUUID(), text: 'Breakaway cable / secondary coupling — attached correctly', order: 3 },
-            { id: crypto.randomUUID(), text: 'Trailer brakes — operation & responsiveness', order: 4 },
-            { id: crypto.randomUUID(), text: 'Trailer lights — all functioning', order: 5 },
-            { id: crypto.randomUUID(), text: 'Load security — straps, chains & sheets secure', order: 6 }
-          ]},
-          { id: 'cat-underhood', name: 'Under Bonnet & Fluids', items: [
-            { id: crypto.randomUUID(), text: 'Engine oil level — between min & max', order: 1 },
-            { id: crypto.randomUUID(), text: 'Coolant level — correct', order: 2 },
-            { id: crypto.randomUUID(), text: 'Screen wash — topped up', order: 3 },
-            { id: crypto.randomUUID(), text: 'Battery — secure & terminals clean', order: 4 },
-            { id: crypto.randomUUID(), text: 'All fluid levels — no visible leaks', order: 5 }
-          ]},
-          { id: 'cat-other', name: 'General & Safety Equipment', items: [
-            { id: crypto.randomUUID(), text: 'Horn — works correctly', order: 1 },
-            { id: crypto.randomUUID(), text: 'Fire extinguisher — present, in date & secure', order: 2 },
-            { id: crypto.randomUUID(), text: 'Warning triangles / safety vest — carried', order: 3 },
-            { id: crypto.randomUUID(), text: 'Tachograph — calibrated, working & card inserted', order: 4 },
-            { id: crypto.randomUUID(), text: 'All doors, catches & steps — secure & undamaged', order: 5 }
-          ]}
-        ]
-      };
-    }
-
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-      const page = document.getElementById(pageId);
-      if (page) page.style.display = 'block';
-      
-      if (pageId === 'driver-checks-page') {
-        document.getElementById('check-date').textContent = new Date().toLocaleDateString('en-GB', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-        });
-        resetCheckSelection();
-      }
-      if (pageId === 'company-vehicles-page') loadCompanyFleet();
-      if (pageId === 'company-checklist-editor-page') loadEditorChecklist();
-      if (pageId === 'company-drivers-page') loadCompanyDrivers();
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      if (user) {
-        await loadUserProfile(user.uid);
+  // Tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      if (tab.dataset.tab === 'signin') {
+        document.getElementById('signinForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
       } else {
-        userProfile = null;
-        showPage('signin-page');
+        document.getElementById('signinForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
       }
     });
+  });
 
-    async function loadUserProfile(uid) {
-      try {
-        const snap = await getDoc(doc(db, 'users', uid));
-        if (snap.exists()) {
-          userProfile = snap.data();
-          updateDashboardDisplay();
-          routeByRole();
-        } else {
-          userProfile = { role: 'driver', createdAt: new Date() };
-          routeByRole();
-        }
-      } catch {
-        userProfile = { role: 'driver' };
-        routeByRole();
+  // Sign In
+  document.getElementById('signinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = document.getElementById('siEmail').value.trim();
+    const pass = document.getElementById('siPassword').value;
+    const msg = document.getElementById('siMsg');
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      msg.textContent = '✅ Signing in...';
+      msg.style.color = 'green';
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
+    }
+  });
+
+  // Register
+  document.getElementById('registerForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPassword').value;
+    const pass2 = document.getElementById('regPassword2').value;
+    const msg = document.getElementById('regMsg');
+    if (pass !== pass2) {
+      msg.textContent = '❌ Passwords do not match';
+      msg.style.color = 'red';
+      return;
+    }
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        name, email, role: selectedRegRole, createdAt: serverTimestamp()
+      });
+      if (selectedRegRole === 'company') {
+        await setDoc(doc(db, 'companies', cred.user.uid), {
+          name, email, ownerId: cred.user.uid, createdAt: serverTimestamp()
+        });
       }
+      msg.textContent = '✅ Account created! Signing in...';
+      msg.style.color = 'green';
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
     }
+  });
 
-    function routeByRole() {
-      if (!userProfile) return;
-      showPage(userProfile.role === 'company' ? 'company-portal' : 'driver-portal');
+  // Auth State
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      currentUser = null;
+      userProfile = null;
+      showPage('authPage');
+      return;
     }
-
-    function updateDashboardDisplay() {
-      if (!userProfile) return;
+    currentUser = user;
+    try {
+      const profileSnap = await getDoc(doc(db, 'users', user.uid));
+      if (!profileSnap.exists) {
+        showPage('authPage');
+        return;
+      }
+      userProfile = profileSnap.data();
       if (userProfile.role === 'driver') {
-        document.getElementById('driver-name-display').textContent = userProfile.name || 'Driver';
-        document.getElementById('driver-greeting').textContent = 'Signed in as ' + (userProfile.name || 'Driver');
+        showPage('driverPage');
+        document.getElementById('driverWelcome').textContent = `Welcome, ${userProfile.name || 'Driver'}`;
+        await loadUserCompanies();
+        loadWalkaroundChecks();
+        loadMyChecks();
+        loadAvailableWork();
+        renderCalendar();
+        loadDocumentStatuses();
+        loadDriverProfile();
       } else {
-        document.getElementById('company-name-display').textContent = userProfile.companyName || 'Company';
-        document.getElementById('company-greeting').textContent = 'Signed in as ' + (userProfile.companyName || 'Company');
+        showPage('companyPage');
+        document.getElementById('companyWelcome').textContent = `${userProfile.name || 'Company'}`;
+        await loadCompanyDrivers();
+        await loadCompanyVehicles();
+        await loadCompanyCheckEditor();
+        await loadPostedWork();
       }
+    } catch (err) {
+      console.error('Profile load error:', err);
     }
+  });
 
-    window.doSignIn = async function() {
-      const email = document.getElementById('email').value;
-      const pass = document.getElementById('password').value;
-      if (!email || !pass) { alert('Fill in all fields'); return; }
-      await signInWithEmailAndPassword(auth, email, pass).catch(e => alert('Sign in failed: ' + e.message));
-    };
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
 
-    window.sendResetLink = async function() {
-      const email = document.getElementById('reset-email').value;
-      if (!email) { alert('Enter your email'); return; }
-      await sendPasswordResetEmail(auth, email).then(() => showPage('email-sent-page')).catch(e => alert(e.message));
-    };
+  window.signOut = async function () {
+    await signOut(auth);
+    userCompanies = [];
+    selectedCompanyId = null;
+  };
 
-    window.registerDriver = async function() {
-      const name = document.getElementById('driver-name').value;
-      const email = document.getElementById('driver-email').value;
-      const pass = document.getElementById('driver-pass').value;
-      if (!name || !email || !pass) { alert('Fill in all fields'); return; }
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        name, email, role: 'driver', createdAt: new Date()
-      });
-      alert('✅ Driver account created!');
-    };
-
-    window.registerCompany = async function() {
-      const companyName = document.getElementById('company-name').value;
-      const email = document.getElementById('company-email').value;
-      const pass = document.getElementById('company-pass').value;
-      if (!companyName || !email || !pass) { alert('Fill in all fields'); return; }
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        companyName, email, role: 'company', createdAt: new Date()
-      });
-      alert('✅ Company account created!');
-    };
-
-    window.signOutUser = function() {
-      signOut(auth).then(() => {
-        userProfile = null;
-        currentUser = null;
-        showPage('signin-page');
-      });
-    };
-
-    // ==================================================
-    // DRIVER — DOCUMENTS SAVE
-    // ==================================================
-    window.saveDriverDocuments = async function() {
-      if (!currentUser) { alert('Please sign in'); return; }
-      
-      const licenceCategories = {
-        B: document.getElementById('cat-b').checked,
-        C1: document.getElementById('cat-c1').checked,
-        C: document.getElementById('cat-c').checked,
-        CE: document.getElementById('cat-ce').checked,
-        D1: document.getElementById('cat-d1').checked,
-        D: document.getElementById('cat-d').checked,
-        DE: document.getElementById('cat-de').checked
-      };
-      
-      await setDoc(doc(db, 'driverDocuments', currentUser.uid), {
-        licenceNumber: document.getElementById('lic-number').value.trim(),
-        dvlaCheckCode: document.getElementById('lic-dvla-code').value.trim(),
-        licenceValidFrom: document.getElementById('lic-valid-from').value.trim(),
-        licenceExpiry: document.getElementById('lic-expiry').value.trim(),
-        penaltyPoints: parseInt(document.getElementById('lic-points').value) || 0,
-        categories: licenceCategories,
-        medicalIssued: document.getElementById('med-issued').value.trim(),
-        medicalExpiry: document.getElementById('med-expiry').value.trim(),
-        cpcNumber: document.getElementById('cpc-number').value.trim(),
-        cpcExpiry: document.getElementById('cpc-expiry').value.trim(),
-        updatedAt: new Date()
-      }, { merge: true });
-      
-      alert('✅ Documents saved! Your company can now see these details.');
-    };
-
-    // ==================================================
-    // COMPANY — DRIVERS MANAGEMENT
-    // ==================================================
-    async function loadCompanyDrivers() {
-      if (!currentUser || userProfile?.role !== 'company') return;
-      
-      const snap = await getDocs(query(
-        collection(db, 'companyDrivers'),
-        where('companyId', '==', currentUser.uid),
-        orderBy('name')
-      ));
-      allCompanyDrivers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      document.getElementById('driver-count').textContent = allCompanyDrivers.length;
-      renderDriversList(allCompanyDrivers);
-    }
-
-    function renderDriversList(drivers) {
-      const container = document.getElementById('company-drivers-list');
-      if (!drivers.length) {
-        container.innerHTML = '<p style="color:#999; text-align:center; padding:2rem;">No drivers added yet. Add your first driver above.</p>';
-        return;
+  // =====================================================
+  // MULTI-COMPANY ACCESS
+  // =====================================================
+  async function loadUserCompanies() {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      userCompanies = [];
+      const companiesSnap = await getDocs(collection(db, 'companies'));
+      for (const compDoc of companiesSnap.docs) {
+        const driverDoc = await getDoc(doc(db, 'companies', compDoc.id, 'drivers', user.uid));
+        if (driverDoc.exists) {
+          userCompanies.push({
+            id: compDoc.id,
+            name: compDoc.data().name || 'Unnamed Company',
+            status: driverDoc.data().status || 'active'
+          });
+        }
       }
-      
-      container.innerHTML = drivers.map(d => {
-        const isExpiringSoon = d.licenceExpiry && isSoon(d.licenceExpiry);
-        const isMedExpiring = d.medicalExpiry && isSoon(d.medicalExpiry);
-        const catLabels = Object.entries(d.categories || {})
-          .filter(([_, v]) => v)
-          .map(([k]) => k)
-          .join(', ') || 'None recorded';
-        
-        return `
-        <div class="driver-card ${d.active === false ? 'inactive' : ''}">
-          <div class="driver-header">
-            <div>
-              <div class="driver-name">${d.name || 'Unnamed Driver'}</div>
-              <div style="font-size:0.9rem; color:#666;">${d.email || 'No email'}</div>
-            </div>
-            <span class="driver-status ${d.active !== false ? 'status-active' : 'status-inactive'}">
-              ${d.active !== false ? '✅ Active' : '⏸️ Inactive'}
-            </span>
-          </div>
-          
-          <div class="driver-details">
-            <div class="detail-group">
-              <div class="detail-label">Licence No.</div>
-              <div class="detail-value">${d.licenceNumber || '—'}</div>
-            </div>
-            <div class="detail-group">
-              <div class="detail-label">DVLA Code</div>
-              <div class="detail-value">${d.dvlaCheckCode || '—'}</div>
-            </div>
-            <div class="detail-group">
-              <div class="detail-label">Points</div>
-              <div class="detail-value">${d.penaltyPoints || 0}</div>
-            </div>
-            <div class="detail-group">
-              <div class="detail-label">Licence Valid</div>
-              <div class="detail-value ${isExpiringSoon ? (isExpiringSoon === 'expired' ? 'exp-warning' : 'exp-soon') : ''}">
-                ${d.licenceValidFrom || '—'} → ${d.licenceExpiry || '—'}
-                ${isExpiringSoon === 'expired' ? '⚠️ EXPIRED' : isExpiringSoon === 'soon' ? ' ⚠️ Soon' : ''}
-              </div>
-            </div>
-            <div class="detail-group">
-              <div class="detail-label">Medical Expires</div>
-              <div class="detail-value ${isMedExpiring ? (isMedExpiring === 'expired' ? 'exp-warning' : 'exp-soon') : ''}">
-                ${d.medicalExpiry || '—'}
-                ${isMedExpiring === 'expired' ? '⚠️ EXPIRED' : isMedExpiring === 'soon' ? ' ⚠️ Soon' : ''}
-              </div>
-            </div>
-            <div class="detail-group">
-              <div class="detail-label">Categories</div>
-              <div class="detail-value">${catLabels}</div>
-            </div>
-          </div>
-          
-          <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button class="tiny btn-secondary" onclick="viewDriverDocs('${d.id}')">📄 Documents</button>
-            <button class="tiny btn-secondary" onclick="editDriver('${d.id}')">✏️ Edit</button>
-            <button class="tiny ${d.active !== false ? 'btn-warning' : 'btn-success'}" 
-                    onclick="toggleDriverActive('${d.id}', ${d.active !== false})">
-              ${d.active !== false ? 'Deactivate' : 'Reinstate'}
-            </button>
-            <button class="tiny btn-danger" onclick="removeDriver('${d.id}')">Remove</button>
-          </div>
-        </div>
-      `}).join('');
-    }
-
-    function isSoon(dateStr) {
-      if (!dateStr) return false;
-      const parts = dateStr.split('/');
-      if (parts.length !== 3) return false;
-      const date = new Date(parts[2], parts[1] - 1, parts[0]);
-      const today = new Date();
-      const days = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
-      if (days < 0) return 'expired';
-      if (days <= 90) return 'soon';
-      return false;
-    }
-
-    window.filterDriversList = function() {
-      const q = document.getElementById('driver-search').value.toLowerCase().trim();
-      if (!q) { renderDriversList(allCompanyDrivers); return; }
-      const filtered = allCompanyDrivers.filter(d =>
-        (d.name && d.name.toLowerCase().includes(q)) ||
-        (d.email && d.email.toLowerCase().includes(q)) ||
-        (d.licenceNumber && d.licenceNumber.toLowerCase().includes(q))
+      const workSnap = await getDocs(
+        query(collection(db, 'work'),
+          where('driverId', '==', user.uid),
+          where('status', 'in', ['confirmed', 'pending']))
       );
-      renderDriversList(filtered);
-    };
-
-    window.addCompanyDriver = async function() {
-      if (!currentUser) { alert('Please sign in'); return; }
-      
-      const name = document.getElementById('add-driver-name').value.trim();
-      const email = document.getElementById('add-driver-email').value.trim();
-      const licenceNumber = document.getElementById('add-driver-lic-num').value.trim();
-      const dvlaCheckCode = document.getElementById('add-driver-dvla-code').value.trim();
-      const licenceValidFrom = document.getElementById('add-driver-lic-from').value.trim();
-      const licenceExpiry = document.getElementById('add-driver-lic-exp').value.trim();
-      const penaltyPoints = parseInt(document.getElementById('add-driver-points').value) || 0;
-      const medicalExpiry = document.getElementById('add-driver-med-exp').value.trim();
-      
-      if (!name) { alert('Enter at least the driver\'s name'); return; }
-      
-      await addDoc(collection(db, 'companyDrivers'), {
-        companyId: currentUser.uid,
-        name,
-        email,
-        licenceNumber,
-        dvlaCheckCode,
-        licenceValidFrom,
-        licenceExpiry,
-        penaltyPoints,
-        medicalExpiry,
-        categories: {},
-        active: true,
-        addedAt: new Date(),
-        linkedDriverUid: null
+      const existingIds = new Set(userCompanies.map(c => c.id));
+      workSnap.forEach(d => {
+        const w = d.data();
+        if (!existingIds.has(w.companyId)) {
+          userCompanies.push({
+            id: w.companyId,
+            name: w.companyName || 'Assigned Work',
+            fromWork: true
+          });
+          existingIds.add(w.companyId);
+        }
       });
-      
-      // Clear form
-      document.getElementById('add-driver-name').value = '';
-      document.getElementById('add-driver-email').value = '';
-      document.getElementById('add-driver-lic-num').value = '';
-      document.getElementById('add-driver-dvla-code').value = '';
-      document.getElementById('add-driver-lic-from').value = '';
-      document.getElementById('add-driver-lic-exp').value = '';
-      document.getElementById('add-driver-points').value = '';
-      document.getElementById('add-driver-med-exp').value = '';
-      
-      alert('✅ Driver added! If this driver registers through the app using the same email, their details will link automatically.');
-      loadCompanyDrivers();
-    };
-
-    window.toggleDriverActive = async function(id, currentlyActive) {
-      await updateDoc(doc(db, 'companyDrivers', id), { active: !currentlyActive });
-      loadCompanyDrivers();
-    };
-
-    window.removeDriver = async function(id) {
-      if (!confirm('Remove this driver from your company list? Their account will not be deleted.')) return;
-      await updateDoc(doc(db, 'companyDrivers', id), { active: false, removedAt: new Date() });
-      loadCompanyDrivers();
-    };
-
-    window.viewDriverDocs = function(id) {
-      alert('📄 Document viewer — showing uploaded files and details for this driver.\n\nComing soon: Full document preview');
-    };
-
-    window.editDriver = function(id) {
-      alert('✏️ Edit driver — coming soon. For now, add a new entry or update via the driver portal.');
-    };
-
-    window.editDriverDocs = function(id) {
-      alert('📄 Edit documents — driver updates their own details via the Driver Portal → My Documents page.');
-    };
-
-    // Auto-link: When a driver submits their documents, update all company lists where email matches
-    async function syncDriverToCompanies(driverUid, driverEmail, docData) {
-      if (!driverEmail) return;
-      
-      const q = query(
-        collection(db, 'companyDrivers'),
-        where('email', '==', driverEmail)
-      );
-      
-      const snap = await getDocs(q);
-      const updates = [];
-      snap.forEach(d => {
-        updates.push(updateDoc(doc(db, 'companyDrivers', d.id), {
-          linkedDriverUid: driverUid,
-          ...docData,
-          lastSynced: new Date()
-        }));
-      });
-      
-      await Promise.all(updates);
+      populateCompanySelector();
+    } catch (err) {
+      console.error('Load companies error:', err);
     }
+  }
 
-    // ==================================================
-    // REST OF EXISTING FUNCTIONS — Fleet, Checks, Editor
-    // ==================================================
-    
-    async function loadCompanyFleet() {
-      if (!currentUser || userProfile?.role !== 'company') return;
-      
-      const vSnap = await getDocs(query(
-        collection(db, 'companyVehicles'),
-        where('companyId', '==', currentUser.uid),
-        orderBy('registration')
-      ));
-      activeVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      const tSnap = await getDocs(query(
-        collection(db, 'companyTrailers'),
-        where('companyId', '==', currentUser.uid),
-        orderBy('trailerNumber')
-      ));
-      activeTrailers = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      renderVehiclesTable(activeVehicles);
-      renderTrailersTable(activeTrailers);
+  function populateCompanySelector() {
+    const container = document.getElementById('companySelectorContainer');
+    if (!container) return;
+    if (userCompanies.length === 0) {
+      container.innerHTML = `<p style="color:var(--muted);">No companies assigned yet. Ask your employer to add you.</p>`;
+      return;
     }
-
-    function renderVehiclesTable(vehicles) {
-      const tbody = document.getElementById('vehicles-list-body');
-      if (!vehicles.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">No vehicles added yet.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = vehicles.map(v => `
-        <tr class="${v.active === false ? 'inactive' : ''}">
-          <td><strong>${v.registration || '—'}</strong></td>
-          <td>${v.make || ''} ${v.model || ''}</td>
-          <td>${v.active !== false ? '<span style="color:green;">✅ Active</span>' : '<span style="color:#999;">⏸️ Inactive</span>'}</td>
-          <td>
-            <button class="tiny ${v.active !== false ? 'btn-warning' : 'btn-success'}" 
-                    onclick="toggleVehicleActive('${v.id}', ${v.active !== false})">
-              ${v.active !== false ? 'Deactivate' : 'Activate'}
-            </button>
-            <button class="tiny btn-danger" onclick="deleteVehicle('${v.id}')">Delete</button>
-          </td>
-        </tr>
-      `).join('');
+    container.innerHTML = `
+      <label style="font-weight:600; margin-right:8px;">Working For:</label>
+      <select id="companySelectDropdown" onchange="switchCompany(this.value)" style="padding:8px; border-radius:4px; border:1px solid #ccc; min-width:240px;">
+        <option value="">-- Select Company --</option>
+        ${userCompanies.map(c => `
+          <option value="${c.id}" ${selectedCompanyId === c.id ? 'selected' : ''}>
+            ${c.name} ${c.fromWork ? '(Temporary)' : ''}
+          </option>`).join('')}
+      </select>
+    `;
+    if (userCompanies.length === 1 && !selectedCompanyId) {
+      switchCompany(userCompanies[0].id);
+      document.getElementById('companySelectDropdown').value = userCompanies[0].id;
     }
+  }
 
-    function renderTrailersTable(trailers) {
-      const tbody = document.getElementById('trailers-list-body');
-      if (!trailers.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">No trailers added yet.</td></tr>';
-        return;
-      }
-      const ownerLabels = { company: 'Company Owned', hired: 'Hired/Leased', subcontractor: 'Subcontractor' };
-      tbody.innerHTML = trailers.map(t => `
-        <tr class="${t.active === false ? 'inactive' : ''}">
-          <td><strong>${t.trailerNumber || '—'}</strong></td>
-          <td>${t.make || ''}<br><small style="color:#666;">${ownerLabels[t.owner] || t.owner}</small></td>
-          <td>${t.active !== false ? '<span style="color:green;">✅ Active</span>' : '<span style="color:#999;">⏸️ Inactive</span>'}</td>
-          <td>
-            <button class="tiny ${t.active !== false ? 'btn-warning' : 'btn-success'}" 
-                    onclick="toggleTrailerActive('${t.id}', ${t.active !== false})">
-              ${t.active !== false ? 'Deactivate' : 'Activate'}
-            </button>
-            <button class="tiny btn-danger" onclick="deleteTrailer('${t.id}')">Delete</button>
-          </td>
-        </tr>
-      `).join('');
+  window.switchCompany = async function (cid) {
+    selectedCompanyId = cid;
+    if (!cid) {
+      companyVehicles = [];
+      companyTrailers = [];
+      updateVehicleOptions();
+      return;
     }
+    const vSnap = await getDocs(collection(db, 'companies', cid, 'vehicles'));
+    companyVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const tSnap = await getDocs(collection(db, 'companies', cid, 'trailers'));
+    companyTrailers = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateVehicleOptions();
+    loadWalkaroundChecks();
+  };
 
-    window.addVehicle = async function() {
-      if (!currentUser) { alert('Please sign in'); return; }
-      
-      const make = document.getElementById('veh-make').value.trim();
-      const model = document.getElementById('veh-model').value.trim();
-      const reg = document.getElementById('veh-reg').value.trim();
-      const type = document.getElementById('veh-type').value.trim();
-      const motExp = document.getElementById('veh-mot-expiry').value.trim();
-      const tachoExp = document.getElementById('veh-tacho-expiry').value.trim();
-      
-      if (!make || !model || !reg) { alert('Fill in Make, Model & Registration'); return; }
-      
-      await addDoc(collection(db, 'companyVehicles'), {
-        companyId: currentUser.uid,
-        make, model, registration: reg.toUpperCase(),
-        type, motExpiry: motExp, tachoExpiry: tachoExp,
-        active: true, createdAt: new Date()
-      });
-      
-      document.getElementById('veh-make').value = '';
-      document.getElementById('veh-model').value = '';
-      document.getElementById('veh-reg').value = '';
-      document.getElementById('veh-type').value = '';
-      document.getElementById('veh-mot-expiry').value = '';
-      document.getElementById('veh-tacho-expiry').value = '';
-      
-      alert('✅ Vehicle added');
-      loadCompanyFleet();
-    };
-
-    window.addTrailer = async function() {
-      if (!currentUser) { alert('Please sign in'); return; }
-      
-      const number = document.getElementById('trailer-number').value.trim();
-      const make = document.getElementById('trailer-make').value.trim();
-      const type = document.getElementById('trailer-type').value.trim();
-      const owner = document.getElementById('trailer-owner').value;
-      const motExp = document.getElementById('trailer-mot-expiry').value.trim();
-      
-      if (!number || !make) { alert('Fill in Trailer Number & Make'); return; }
-      
-      await addDoc(collection(db, 'companyTrailers'), {
-        companyId: currentUser.uid,
-        trailerNumber: number, make, type, owner, motExpiry: motExp,
-        active: true, createdAt: new Date()
-      });
-      
-      document.getElementById('trailer-number').value = '';
-      document.getElementById('trailer-make').value = '';
-      document.getElementById('trailer-type').value = '';
-      document.getElementById('trailer-mot-expiry').value = '';
-      
-      alert('✅ Trailer added');
-      loadCompanyFleet();
-    };
-
-    window.toggleVehicleActive = async function(id, currentlyActive) {
-      await updateDoc(doc(db, 'companyVehicles', id), { active: !currentlyActive });
-      loadCompanyFleet();
-    };
-
-    window.toggleTrailerActive = async function(id, currentlyActive) {
-      await updateDoc(doc(db, 'companyTrailers', id), { active: !currentlyActive });
-      loadCompanyFleet();
-    };
-
-    window.deleteVehicle = async function(id) {
-      if (!confirm('Permanently delete this vehicle?')) return;
-      await updateDoc(doc(db, 'companyVehicles', id), { active: false, deleted: true });
-      loadCompanyFleet();
-    };
-
-    window.deleteTrailer = async function(id) {
-      if (!confirm('Permanently delete this trailer?')) return;
-      await updateDoc(doc(db, 'companyTrailers', id), { active: false, deleted: true });
-      loadCompanyFleet();
-    };
-
-    // CHECKLIST EDITOR
-    async function loadEditorChecklist() {
-      if (!currentUser || userProfile?.role !== 'company') return;
-      
-      const snap = await getDoc(doc(db, 'dvsaChecklists', currentUser.uid));
-      if (snap.exists() && snap.data()?.categories) {
-        checklistData = snap.data();
-      } else {
-        checklistData = getDefaultDVSA_Checklists();
-      }
-      renderEditor();
+  function updateVehicleOptions() {
+    const vSel = document.getElementById('vehicleReg');
+    const tSel = document.getElementById('trailerNumber');
+    if (vSel) {
+      vSel.innerHTML = `<option value="">-- Select Vehicle --</option>` +
+        companyVehicles.map(v => `<option value="${v.registration || v.id}">${v.registration || 'Unknown'}</option>`).join('');
     }
-
-    function renderEditor() {
-      const container = document.getElementById('editor-categories-container');
-      container.innerHTML = '';
-      
-      checklistData.categories.forEach((cat, catIndex) => {
-        const catEl = document.createElement('div');
-        catEl.className = 'category-group';
-        catEl.innerHTML = `
-          <div class="category-header">
-            <input type="text" value="${cat.name}" 
-                   onchange="renameCategory('${cat.id}', this.value)"
-                   style="margin:0; border:none; background:transparent; font-weight:600; font-size:1rem; padding:0;" />
-            <div>
-              <button class="tiny btn-secondary" onclick="moveCategoryUp(${catIndex})">↑</button>
-              <button class="tiny btn-secondary" onclick="moveCategoryDown(${catIndex})">↓</button>
-              <button class="tiny btn-danger" onclick="deleteCategory('${cat.id}')">Delete Section</button>
-            </div>
-          </div>
-          <div id="cat-items-${cat.id}"></div>
-        `;
-        container.appendChild(catEl);
-        
-        const itemsContainer = document.getElementById(`cat-items-${cat.id}`);
-        cat.items.forEach((item, itemIndex) => {
-          const itemEl = document.createElement('div');
-          itemEl.className = 'checklist-item';
-          itemEl.innerHTML = `
-            <div class="item-row">
-              <input type="text" value="${item.text}" 
-                     onchange="renameItem('${item.id}', this.value)"
-                     style="flex:1; margin:0; border:none; background:transparent; font-size:0.95rem;" />
-              <div class="item-actions">
-                <button class="tiny btn-secondary" onclick="moveItemUp('${cat.id}', ${itemIndex})">↑</button>
-                <button class="tiny btn-secondary" onclick="moveItemDown('${cat.id}', ${itemIndex})">↓</button>
-                <button class="tiny btn-danger" onclick="deleteItem('${item.id}')">✕</button>
-              </div>
-            </div>
-          `;
-          itemsContainer.appendChild(itemEl);
-        });
-      });
+    if (tSel) {
+      tSel.innerHTML = `<option value="">-- No Trailer --</option>` +
+        companyTrailers.map(t => `<option value="${t.number || t.id}">${t.number || 'Unknown'}</option>`).join('');
     }
+  }
 
-    window.renameCategory = function(catId, newName) {
-      const cat = checklistData.categories.find(c => c.id === catId);
-      if (cat) cat.name = newName;
-    };
-
-    window.moveCategoryUp = function(idx) {
-      if (idx === 0) return;
-      [checklistData.categories[idx - 1], checklistData.categories[idx]] = 
-      [checklistData.categories[idx], checklistData.categories[idx - 1]];
-      renderEditor();
-    };
-
-    window.moveCategoryDown = function(idx) {
-      if (idx === checklistData.categories.length - 1) return;
-      [checklistData.categories[idx], checklistData.categories[idx + 1]] = 
-      [checklistData.categories[idx + 1], checklistData.categories[idx]];
-      renderEditor();
-    };
-
-    window.deleteCategory = function(catId) {
-      if (!confirm('Delete this entire section?')) return;
-      checklistData.categories = checklistData.categories.filter(c => c.id !== catId);
-      renderEditor();
-    };
-
-    window.renameItem = function(itemId, newText) {
-      for (const cat of checklistData.categories) {
-        const item = cat.items.find(i => i.id === itemId);
-        if (item) { item.text = newText; return; }
-      }
-    };
-
-    window.moveItemUp = function(catId, idx) {
-      const cat = checklistData.categories.find(c => c.id === catId);
-      if (!cat || idx === 0) return;
-      [cat.items[idx - 1], cat.items[idx]] = [cat.items[idx], cat.items[idx - 1]];
-      renderEditor();
-    };
-
-    window.moveItemDown = function(catId, idx) {
-      const cat = checklistData.categories.find(c => c.id === catId);
-      if (!cat || idx === cat.items.length - 1) return;
-      [cat.items[idx], cat.items[idx + 1]] = [cat.items[idx + 1], cat.items[idx]];
-      renderEditor();
-    };
-
-    window.deleteItem = function(itemId) {
-      if (!confirm('Remove this check item?')) return;
-      for (const cat of checklistData.categories) {
-        cat.items = cat.items.filter(i => i.id !== itemId);
-      }
-      renderEditor();
-    };
-
-    window.addNewCheckItem = function() {
-      const text = document.getElementById('new-item-text').value.trim();
-      const catName = document.getElementById('new-item-category').value;
-      if (!text) { alert('Enter check text'); return; }
-      
-      let cat = checklistData.categories.find(c => c.name === catName);
-      if (!cat) {
-        cat = { id: crypto.randomUUID(), name: catName, items: [] };
-        checklistData.categories.push(cat);
-      }
-      
-      cat.items.push({ id: crypto.randomUUID(), text, order: cat.items.length + 1 });
-      document.getElementById('new-item-text').value = '';
-      renderEditor();
-    };
-
-    window.saveFullChecklist = async function() {
-      if (!currentUser) return;
-      await setDoc(doc(db, 'dvsaChecklists', currentUser.uid), {
-        ...checklistData, updatedAt: new Date()
-      });
-      alert('✅ Checklist saved — drivers see your version immediately!');
-    };
-
-    // DRIVER CHECKS
-    function resetCheckSelection() {
-      selectedCheckType = null;
-      document.querySelectorAll('.check-type-option').forEach(el => el.classList.remove('selected'));
-      document.getElementById('selection-fields').classList.add('hidden');
-      document.getElementById('driver-checklist-container').classList.add('hidden');
-      document.getElementById('submit-section').classList.add('hidden');
-      driverResponses = {};
-    }
-
-    window.selectCheckType = function(type) {
-      selectedCheckType = type;
-      document.querySelectorAll('.check-type-option').forEach(el => el.classList.remove('selected'));
-      document.getElementById(`chk-type-${type === 'both' ? 'vt' : type === 'vehicle' ? 'v' : 't'}`).classList.add('selected');
-      document.getElementById('selection-fields').classList.remove('hidden');
-      
-      populateVehicleTrailerOptions();
-      document.getElementById('driver-checklist-container').classList.remove('hidden');
-      document.getElementById('submit-section').classList.remove('hidden');
-      renderDriverChecklist();
-    };
-
-    function populateVehicleTrailerOptions() {
-      const vSelect = document.getElementById('vehicle-select');
-      const tSelect = document.getElementById('trailer-select');
-      
-      vSelect.innerHTML = '<option value="">-- Choose vehicle --</option>';
-      activeVehicles.filter(v => v.active !== false).forEach(v => {
-        vSelect.innerHTML += `<option value="${v.id}">${v.registration} — ${v.make} ${v.model}</option>`;
-      });
-      
-      tSelect.innerHTML = '<option value="">-- Choose trailer --</option>';
-      activeTrailers.filter(t => t.active !== false).forEach(t => {
-        tSelect.innerHTML += `<option value="${t.id}">${t.trailerNumber} — ${t.make}</option>`;
-      });
-      
-      const noItemsAlert = document.getElementById('no-items-alert');
-      if (!activeVehicles.length && !activeTrailers.length) {
-        noItemsAlert.classList.remove('hidden');
-      } else {
-        noItemsAlert.classList.add('hidden');
-      }
-    }
-
-    function renderDriverChecklist() {
-      const container = document.getElementById('driver-checklist-container');
-      container.innerHTML = '';
-      
-      checklistData.categories.forEach(cat => {
-        const catEl = document.createElement('div');
-        catEl.className = 'category-group';
-        catEl.innerHTML = `<div class="category-header"><strong>${cat.name}</strong></div>`;
-        
-        cat.items.forEach(item => {
-          driverResponses[item.id] = driverResponses[item.id] || { passed: null, note: '' };
-          const itemEl = document.createElement('div');
-          itemEl.className = 'checklist-item';
-          itemEl.innerHTML = `
-            <div class="item-row">
-              <div class="item-label">${item.text}</div>
-              <div class="check-status">
-                <label class="pass ${driverResponses[item.id].passed === true ? 'selected' : ''}" 
-                       onclick="setDrvStatus('${item.id}', true)">✅ Pass</label>
-                <label class="fail ${driverResponses[item.id].passed === false ? 'selected' : ''}" 
-                       onclick="setDrvStatus('${item.id}', false)">❌ Fail</label>
-              </div>
-            </div>
-            <input type="text" class="note-input" id="note-${item.id}" placeholder="Add note (optional)" 
-                   value="${driverResponses[item.id].note || ''}"
-                   onchange="setDrvNote('${item.id}', this.value)" />
-          `;
-          catEl.appendChild(itemEl);
-        });
-        container.appendChild(catEl);
-      });
-    }
-
-    window.setDrvStatus = function(itemId, passed) {
-      driverResponses[itemId] = { ...driverResponses[itemId], passed };
-      renderDriverChecklist();
-    };
-
-    window.setDrvNote = function(itemId, note) {
-      driverResponses[itemId] = { ...driverResponses[itemId], note };
-    };
-
-    window.submitDriverChecks = async function() {
-      const signature = document.getElementById('driver-signature').value.trim();
-      if (!signature) { alert('Enter your name as signature'); return; }
-      
-      const allAnswered = Object.values(driverResponses).every(r => r.passed !== null);
-      if (!allAnswered) { alert('Please answer all check items'); return; }
-      
-      const vehicleId = document.getElementById('vehicle-select')?.value || null;
-      const trailerId = document.getElementById('trailer-select')?.value || null;
-      const vehicle = activeVehicles.find(v => v.id === vehicleId);
-      const trailer = activeTrailers.find(t => t.id === trailerId);
-      
-      await addDoc(collection(db, 'completedChecks'), {
-        driverId: currentUser?.uid,
-        driverName: userProfile?.name || 'Unknown',
-        signature,
-        checkType: selectedCheckType,
-        vehicleId,
-        vehicleReg: vehicle?.registration || 'Not selected',
-        vehicleMakeModel: vehicle ? `${vehicle.make} ${vehicle.model}` : 'Not selected',
-        trailerId,
-        trailerNumber: trailer?.trailerNumber || 'Not selected',
-        trailerOwner: trailer?.owner || 'N/A',
-        responses: driverResponses,
-        completedAt: new Date(),
-        hasDefects: Object.values(driverResponses).some(r => r.passed === false)
-      });
-      
-      alert('✅ Check submitted — Thank you for keeping safe on the road!');
-      showPage('driver-portal');
-      document.getElementById('driver-signature').value = '';
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      showPage('signin-page');
+  // =====================================================
+  // DRIVER PORTAL NAV
+  // =====================================================
+  document.querySelectorAll('[data-driver-page]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-driver-page]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.driverPage;
+      document.querySelectorAll('.driver-subpage').forEach(p => p.classList.add('hidden'));
+      const el = document.getElementById(`drv-${target}`);
+      if (el) el.classList.remove('hidden');
     });
+  });
 
-    window.showPage = showPage;
-    window.doSignIn = doSignIn;
-    window.sendResetLink = sendResetLink;
-    window.registerDriver = registerDriver;
-    window.registerCompany = registerCompany;
-    window.signOutUser = signOutUser;
-    window.saveDriverDocuments = saveDriverDocuments;
-    window.addCompanyDriver = addCompanyDriver;
-    window.loadCompanyDrivers = loadCompanyDrivers;
-    window.filterDriversList = filterDriversList;
-    window.toggleDriverActive = toggleDriverActive;
-    window.removeDriver = removeDriver;
-    window.viewDriverDocs = viewDriverDocs;
-    window.editDriver = editDriverDocs;
-    window.selectCheckType = selectCheckType;
-    window.setDrvStatus = setDrvStatus;
-    window.setDrvNote = setDrvNote;
-    window.submitDriverChecks = submitDriverChecks;
-    window.addVehicle = addVehicle;
-    window.addTrailer = addTrailer;
-    window.toggleVehicleActive = toggleVehicleActive;
-    window.toggleTrailerActive = toggleTrailerActive;
-    window.deleteVehicle = deleteVehicle;
-    window.deleteTrailer = deleteTrailer;
-    window.renameCategory = renameCategory;
-    window.moveCategoryUp = moveCategoryUp;
-    window.moveCategoryDown = moveCategoryDown;
-    window.deleteCategory = deleteCategory;
-    window.renameItem = renameItem;
-    window.moveItemUp = moveItemUp;
-    window.moveItemDown = moveItemDown;
-    window.deleteItem = deleteItem;
-    window.addNewCheckItem = addNewCheckItem;
-    window.saveFullChecklist = saveFullChecklist;
-  </script>
+  // =====================================================
+  // WALKAROUND CHECKS
+  // =====================================================
+  async function loadWalkaroundChecks() {
+    const list = document.getElementById('walkaroundChecksList');
+    if (!list || !selectedCompanyId) {
+      if (list) list.innerHTML = '<p>Select a company first.</p>';
+      return;
+    }
+    try {
+      const structSnap = await getDoc(doc(db, 'companies', selectedCompanyId, 'settings', 'checklist'));
+      let items = checkStructure;
+      if (structSnap.exists && structSnap.data().items) {
+        items = structSnap.data().items;
+      }
+      list.innerHTML = items.map((name, i) => `
+        <div style="padding:10px 0; border-bottom:1px solid #eee;">
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <input type="checkbox" class="walk-check" data-index="${i}" data-name="${name}" />
+            <span>${name}</span>
+            <span style="margin-left:auto; color:var(--muted); font-size:0.9rem;">OK / Not OK</span>
+          </label>
+        </div>`).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading checks.</p>';
+    }
+  }
+
+  window.submitWalkaroundCheck = async function () {
+    const vehReg = document.getElementById('vehicleReg').value;
+    const trailer = document.getElementById('trailerNumber').value || 'None';
+    if (!vehReg || !selectedCompanyId) {
+      document.getElementById('walkMsg').textContent = '❌ Select company and vehicle first.';
+      return;
+    }
+    const checks = [];
+    document.querySelectorAll('.walk-check').forEach(cb => {
+      checks.push({
+        name: cb.dataset.name,
+        passed: cb.checked
+      });
+    });
+    try {
+      await addDoc(collection(db, 'companies', selectedCompanyId, 'checks'), {
+        driverId: currentUser.uid,
+        driverName: userProfile.name,
+        vehicleReg: vehReg,
+        trailerNumber: trailer,
+        checks,
+        completedAt: serverTimestamp(),
+        status: 'submitted'
+      });
+      document.getElementById('walkMsg').textContent = '✅ Check submitted!';
+      setTimeout(() => loadMyChecks(), 500);
+    } catch (err) {
+      document.getElementById('walkMsg').textContent = '❌ ' + err.message;
+    }
+  };
+
+  async function loadMyChecks() {
+    const list = document.getElementById('myChecksList');
+    if (!list || !selectedCompanyId) return;
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'companies', selectedCompanyId, 'checks'),
+          where('driverId', '==', currentUser.uid),
+          orderBy('completedAt', 'desc'))
+      );
+      if (snap.empty) {
+        list.innerHTML = '<p class="empty-state">No completed checks yet.</p>';
+        return;
+      }
+      list.innerHTML = snap.docs.map(d => {
+        const c = d.data();
+        const date = c.completedAt?.toDate()?.toLocaleString() || 'Unknown';
+        return `
+          <div class="check-item" style="display:block; padding:12px;">
+            <strong>${c.vehicleReg}</strong> — ${date}
+            <p style="margin:5px 0; color:var(--muted);">${c.checks?.filter(x=>!x.passed).length || 0} items flagged</p>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading checks.</p>';
+    }
+  }
+
+  // =====================================================
+  // AVAILABLE WORK
+  // =====================================================
+  async function loadAvailableWork() {
+    const list = document.getElementById('availableWorkList');
+    if (!list) return;
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'work'), where('status', '==', 'open'))
+      );
+      if (snap.empty) {
+        list.innerHTML = '<p class="empty-state">No work available right now.</p>';
+        return;
+      }
+      list.innerHTML = snap.docs.map(d => {
+        const w = d.data();
+        return `
+          <div class="card" style="margin-bottom:10px;">
+            <h4>${w.title || 'Untitled'}</h4>
+            <p>${w.location || ''}</p>
+            <p style="font-size:0.9rem; color:var(--muted);">${new Date(w.startDate?.toDate()).toLocaleString()}</p>
+            <button onclick="applyForWork('${d.id}')" style="margin-top:8px;">Apply / Express Interest</button>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading work.</p>';
+    }
+  }
+
+  window.applyForWork = async function (workId) {
+    await updateDoc(doc(db, 'work', workId), {
+      interestedDrivers: arrayUnion(currentUser.uid)
+    });
+    alert('✅ Interest recorded!');
+  };
+
+  // =====================================================
+  // CALENDAR
+  // =====================================================
+  function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const title = document.getElementById('calendarTitle');
+    if (!grid) return;
+    const months = calendarDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    title.textContent = months;
+    const y = calendarDate.getFullYear();
+    const m = calendarDate.getMonth();
+    const firstDay = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    grid.innerHTML = `
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center; font-weight:600; margin-bottom:5px;">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px;">
+        ${Array(firstDay).fill('<div></div>').join('')}
+        ${Array.from({length:daysInMonth}, (_,i) => {
+          const day = i+1;
+          return `<div style="border:1px solid #eee; border-radius:4px; padding:8px; min-height:60px;">
+            <strong>${day}</strong>
+            <div style="font-size:0.8rem; margin-top:4px; color:var(--muted);">No bookings</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  window.changeCalendarPeriod = function (delta) {
+    calendarDate.setMonth(calendarDate.getMonth() + delta);
+    renderCalendar();
+  };
+
+  // =====================================================
+  // DOCUMENTS
+  // =====================================================
+  function loadDocumentStatuses() {
+    ['drivingLicence','cpc','tacho','other'].forEach(async type => {
+      try {
+        const snap = await getDoc(doc(db, 'users', currentUser.uid, 'documents', type));
+        const p = document.getElementById(`docStatus-${type === 'drivingLicence' ? 'licence' : type}`);
+        if (p) {
+          p.textContent = snap.exists ? '✅ Added' : 'Not added';
+          p.parentElement.classList.toggle('complete', snap.exists);
+        }
+      } catch (e) {}
+    });
+  }
+
+  window.openDocPage = function (type) {
+    selectedDocType = type;
+    docPhotos = [];
+    document.querySelectorAll('.driver-subpage').forEach(p => p.classList.add('hidden'));
+    document.getElementById('docDetailPage').classList.remove('hidden');
+    const titles = { drivingLicence: 'Driving Licence', cpc: 'CPC Card', tacho: 'Tachograph Card', other: 'Other Documents' };
+    document.getElementById('docPageTitle').textContent = titles[type];
+    document.getElementById('licenceCategoriesBlock').classList.toggle('hidden', type !== 'drivingLicence');
+    document.getElementById('docPhotoPreviews').innerHTML = '';
+    document.getElementById('docSaveMsg').textContent = '';
+    getDoc(doc(db, 'users', currentUser.uid, 'documents', type)).then(snap => {
+      if (snap.exists) {
+        const d = snap.data();
+        document.getElementById('docNumber').value = d.number || '';
+        document.getElementById('docValidFrom').value = d.validFrom || '';
+        document.getElementById('docExpiry').value = d.expiry || '';
+        if (type === 'drivingLicence' && d.categories) {
+          document.querySelectorAll('.lic-cat').forEach(cb => {
+            cb.checked = d.categories.includes(cb.value);
+          });
+        }
+        docPhotos = d.photos || [];
+        renderDocPhotos();
+      } else {
+        document.getElementById('docNumber').value = '';
+        document.getElementById('docValidFrom').value = '';
+        document.getElementById('docExpiry').value = '';
+        document.querySelectorAll('.lic-cat').forEach(cb => cb.checked = false);
+      }
+    });
+  }
+
+  window.backToDocs = function () {
+    document.getElementById('docDetailPage').classList.add('hidden');
+    document.getElementById('drv-documents').classList.remove('hidden');
+    loadDocumentStatuses();
+  };
+
+  window.handleDocPhotoUpload = async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const path = `users/${currentUser.uid}/documents/${selectedDocType}/${Date.now()}_${file.name}`;
+    const snap = await uploadBytes(ref(storage, path), file);
+    const url = await getDownloadURL(snap.ref);
+    docPhotos.push(url);
+    renderDocPhotos();
+  };
+
+  function renderDocPhotos() {
+    const c = document.getElementById(' const c = document.getElementById('docPhotoPreviews');
+    c.innerHTML = docPhotos.map((url, i) => `
+      <div class="photo-item">
+        <img src="${url}" alt="Document photo" />
+        <button onclick="docPhotos.splice(${i},1); renderDocPhotos();">✕</button>
+      </div>`).join('');
+  }
+
+  window.saveDocumentData = async function () {
+    const data = {
+      type: selectedDocType,
+      number: document.getElementById('docNumber').value.trim(),
+      validFrom: document.getElementById('docValidFrom').value,
+      expiry: document.getElementById('docExpiry').value,
+      photos: docPhotos,
+      updatedAt: serverTimestamp()
+    };
+    if (selectedDocType === 'drivingLicence') {
+      data.categories = Array.from(document.querySelectorAll('.lic-cat:checked')).map(cb => cb.value);
+    }
+    await setDoc(doc(db, 'users', currentUser.uid, 'documents', selectedDocType), data);
+    document.getElementById('docSaveMsg').textContent = '✅ Saved!';
+    setTimeout(backToDocs, 800);
+  };
+
+  // =====================================================
+  // PROFILE
+  // =====================================================
+    if (!userProfile) return;
+    document.getElementById('drvName').value = userProfile.name || '';
+    document.getElementById('drvEmail').value = userProfile.email || '';
+    document.getElementById('drvPhone').value = userProfile.phone || '';
+    document.getElementById('drvAddress').value = userProfile.address || '';
+  }
+
+  window.saveDriverProfile = async function () {
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        name: document.getElementById('drvName').value.trim(),
+        phone: document.getElementById('drvPhone').value.trim(),
+        address: document.getElementById('drvAddress').value.trim()
+      });
+      document.getElementById('profileMsg').textContent = '✅ Profile saved!';
+      document.getElementById('profileMsg').style.color = 'green';
+      userProfile.name = document.getElementById('drvName').value.trim();
+      document.getElementById('driverWelcome').textContent = `Welcome, ${userProfile.name}`;
+    } catch (err) {
+      document.getElementById('profileMsg').textContent = '❌ ' + err.message;
+      document.getElementById('profileMsg').style.color = 'red';
+    }
+  };
+
+  // =====================================================
+  // COMPANY PORTAL NAV
+  // =====================================================
+  document.querySelectorAll('[data-comp-page]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-comp-page]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.compPage;
+      document.querySelectorAll('.company-subpage').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`comp-${target}`).classList.remove('hidden');
+    });
+  });
+
+  // =====================================================
+  // COMPANY — ADD DRIVER
+  // =====================================================
+  window.lookupAndAddDriver = async function () {
+    const email = document.getElementById('newDriverEmail').value.trim();
+    const msg = document.getElementById('addDriverMsg');
+    if (!email) {
+      msg.textContent = '❌ Enter an email address';
+      msg.style.color = 'red';
+      return;
+    }
+    try {
+      const usersSnap = await getDocs(
+        query(collection(db, 'users'), where('email', '==', email))
+      );
+      if (usersSnap.empty) {
+        msg.textContent = '❌ No account found with that email — driver must register first';
+        msg.style.color = 'red';
+        return;
+      }
+      const driverDoc = usersSnap.docs[0];
+      const driverData = driverDoc.data();
+      await setDoc(doc(db, 'companies', currentUser.uid, 'drivers', driverDoc.id), {
+        name: driverData.name || email,
+        email: driverData.email,
+        status: 'active',
+        addedAt: serverTimestamp(),
+        addedBy: currentUser.uid
+      });
+      msg.textContent = `✅ ${driverData.name || email} added to your company!`;
+      msg.style.color = 'green';
+      document.getElementById('newDriverEmail').value = '';
+      loadCompanyDrivers();
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
+    }
+  };
+
+  async function loadCompanyDrivers() {
+    const list = document.getElementById('companyDriversList');
+    if (!list) return;
+    try {
+      const snap = await getDocs(collection(db, 'companies', currentUser.uid, 'drivers'));
+      if (snap.empty) {
+        list.innerHTML = '<p class="empty-state">No drivers added yet.</p>';
+        return;
+      }
+      list.innerHTML = snap.docs.map(d => {
+        const drv = d.data();
+        return `
+          <div style="padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>${drv.name || 'Unnamed Driver'}</strong>
+              <p style="margin:2px 0; font-size:0.9rem; color:var(--muted);">${drv.email || ''}</p>
+              <span class="status-badge status-${drv.status === 'active' ? 'active' : 'pending'}">${drv.status || 'pending'}</span>
+            </div>
+            <button onclick="removeDriverFromCompany('${d.id}')" class="danger" style="padding:6px 10px; font-size:0.85rem;">Remove</button>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading drivers.</p>';
+    }
+  }
+
+  window.removeDriverFromCompany = async function (driverUid) {
+    if (!confirm('Remove this driver from your company?')) return;
+    try {
+      await deleteDoc(doc(db, 'companies', currentUser.uid, 'drivers', driverUid));
+      loadCompanyDrivers();
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  };
+
+  // =====================================================
+  // COMPANY — VEHICLES & TRAILERS
+  // =====================================================
+  window.saveNewVehicle = async function () {
+    const reg = document.getElementById('vehReg').value.trim();
+    const make = document.getElementById('vehMake').value.trim();
+    const model = document.getElementById('vehModel').value.trim();
+    const type = document.getElementById('vehType').value.trim() || 'HGV';
+    const year = document.getElementById('vehYear').value.trim();
+    const msg = document.getElementById('vehMsg');
+    if (!reg) {
+      msg.textContent = '❌ Enter registration number';
+      msg.style.color = 'red';
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'companies', currentUser.uid, 'vehicles'), {
+        registration: reg,
+        make,
+        model,
+        type,
+        year,
+        createdAt: serverTimestamp()
+      });
+      msg.textContent = '✅ Vehicle added!';
+      msg.style.color = 'green';
+      document.getElementById('vehReg').value = '';
+      document.getElementById('vehMake').value = '';
+      document.getElementById('vehModel').value = '';
+      document.getElementById('vehType').value = '';
+      document.getElementById('vehYear').value = '';
+      loadCompanyVehicles();
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
+    }
+  };
+
+  async function loadCompanyVehicles() {
+    const list = document.getElementById('companyVehiclesList');
+    if (!list) return;
+    try {
+      const snap = await getDocs(collection(db, 'companies', currentUser.uid, 'vehicles'));
+      if (snap.empty) {
+        list.innerHTML = '<p class="empty-state">No vehicles added yet.</p>';
+        return;
+      }
+      list.innerHTML = snap.docs.map(d => {
+        const v = d.data();
+        return `
+          <div style="padding:10px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>${v.registration}</strong> — ${v.make || ''} ${v.model || ''}
+              <p style="margin:2px 0; font-size:0.9rem; color:var(--muted);">${v.type || ''} ${v.year || ''}</p>
+            </div>
+            <button onclick="deleteVehicle('${d.id}')" class="danger" style="padding:6px 10px; font-size:0.85rem;">Delete</button>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading vehicles.</p>';
+    }
+  }
+
+  window.deleteVehicle = async function (vehId) {
+    if (!confirm('Delete this vehicle?')) return;
+    try {
+      await deleteDoc(doc(db, 'companies', currentUser.uid, 'vehicles', vehId));
+      loadCompanyVehicles();
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  };
+
+  window.saveNewTrailer = async function () {
+    const num = document.getElementById('trailerNum').value.trim();
+    const type = document.getElementById('trailerType').value.trim();
+    if (!num) {
+      alert('❌ Enter trailer number');
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'companies', currentUser.uid, 'trailers'), {
+        number: num,
+        type,
+        createdAt: serverTimestamp()
+      });
+      document.getElementById('trailerNum').value = '';
+      document.getElementById('trailerType').value = '';
+      loadCompanyTrailers();
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  };
+
+  async function loadCompanyTrailers() {
+    const list = document.getElementById('companyTrailersList');
+    if (!list) return;
+    try {
+      const snap = await getDocs(collection(db, 'companies', currentUser.uid, 'trailers'));
+      if (snap.empty) {
+        list.innerHTML = '<p class="empty-state">No trailers added yet.</p>';
+        return;
+      }
+      list.innerHTML = snap.docs.map(d => {
+        const t = d.data();
+        return `
+          <div style="padding:10px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>${t.number}</strong>
+              <p style="margin:2px 0; font-size:0.9rem; color:var(--muted);">${t.type || 'Trailer'}</p>
+            </div>
+            <button onclick="deleteTrailer('${d.id}')" class="danger" style="padding:6px 10px; font-size:0.85rem;">Delete</button>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading trailers.</p>';
+    }
+  }
+
+  window.deleteTrailer = async function (trailerId) {
+    if (!confirm('Delete this trailer?')) return;
+    try {
+      await deleteDoc(doc(db, 'companies', currentUser.uid, 'trailers', trailerId));
+      loadCompanyTrailers();
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  };
+
+  // =====================================================
+  // COMPANY — CHECK LIST EDITOR
+  // =====================================================
+  let editedChecks = [];
+
+  async function loadCompanyCheckEditor() {
+    const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
+    if (snap.exists && snap.data().items) {
+      editedChecks = [...snap.data().items];
+    } else {
+      editedChecks = [...checkStructure];
+    }
+    renderCheckEditor();
+  }
+
+  function renderCheckEditor() {
+    const list = document.getElementById('checkEditorList');
+    list.innerHTML = editedChecks.map((name, idx) => `
+      <div class="check-item" style="background:#fafafa; border-radius:4px; margin-bottom:4px;">
+        <span class="handle">⋮⋮</span>
+        <input type="text" value="${name}" onchange="editedChecks[${idx}]=this.value" style="flex:1; border:none; background:transparent; outline:none;" />
+        <button onclick="moveCheckUp(${idx})" class="secondary" style="padding:4px 8px; font-size:0.8rem;">↑</button>
+        <button onclick="moveCheckDown(${idx})" class="secondary" style="padding:4px 8px; font-size:0.8rem;">↓</button>
+        <button onclick="deleteCheckItem(${idx})" class="danger" style="padding:4px 8px; font-size:0.8rem;">✕</button>
+      </div>`).join('');
+  }
+
+  window.addNewCheckItem = function () {
+    const input = document.getElementById('newCheckName');
+    if (!input.value.trim()) return;
+    editedChecks.push(input.value.trim());
+    input.value = '';
+    renderCheckEditor();
+  };
+
+  window.deleteCheckItem = function (idx) {
+    editedChecks.splice(idx, 1);
+    renderCheckEditor();
+  };
+
+  window.moveCheckUp = function (idx) {
+    if (idx === 0) return;
+    [editedChecks[idx-1], editedChecks[idx]] = [editedChecks[idx], editedChecks[idx-1]];
+    renderCheckEditor();
+  };
+
+  window.moveCheckDown = function (idx) {
+    if (idx === editedChecks.length - 1) return;
+    [editedChecks[idx], editedChecks[idx+1]] = [editedChecks[idx+1], editedChecks[idx]];
+    renderCheckEditor();
+  };
+
+  window.saveCheckStructure = async function () {
+    try {
+      await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
+        items: editedChecks,
+        updatedAt: serverTimestamp()
+      });
+      document.getElementById('checkSaveMsg').textContent = '✅ Check list saved — drivers will see this version';
+      document.getElementById('checkSaveMsg').style.color = 'green';
+    } catch (err) {
+      document.getElementById('checkSaveMsg').textContent = '❌ ' + err.message;
+      document.getElementById('checkSaveMsg').style.color = 'red';
+    }
+  };
+
+  // =====================================================
+  // COMPANY — POST WORK
+  // =====================================================
+  window.postNewWork = async function () {
+    const title = document.getElementById('workTitle').value.trim();
+    const location = document.getElementById('workLocation').value.trim();
+    const start = document.getElementById('workStart').value;
+    const end = document.getElementById('workEnd').value;
+    const desc = document.getElementById('workDesc').value.trim();
+    const msg = document.getElementById('workMsg');
+    if (!title || !start || !end) {
+      msg.textContent = '❌ Fill in title and times';
+      msg.style.color = 'red';
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'work'), {
+        title,
+        location,
+        startDate: new Date(start),
+        endDate: new Date(end),
+        description: desc,
+        companyId: currentUser.uid,
+        companyName: userProfile.name,
+        status: 'open',
+        createdAt: serverTimestamp()
+      });
+      msg.textContent = '✅ Work posted!';
+      msg.style.color = 'green';
+      document.getElementById('workTitle').value = '';
+      document.getElementById('workLocation').value = '';
+      document.getElementById('workStart').value = '';
+      document.getElementById('workEnd').value = '';
+      document.getElementById('workDesc').value = '';
+      loadPostedWork();
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
+    }
+  };
+
+  async function loadPostedWork() {
+    const list = document.getElementById('postedWorkList');
+    if (!list) return;
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'work'), where('companyId', '==', currentUser.uid), orderBy('startDate', 'desc'))
+      );
+      if (snap.empty) {
+        list.innerHTML = '<p class="empty-state">No work posted yet.</p>';
+        return;
+      }
+      list.innerHTML = snap.docs.map(d => {
+        const w = d.data();
+        return `
+          <div style="padding:12px; border-bottom:1px solid #eee;">
+            <h4>${w.title}</h4>
+            <p>${w.location || ''}</p>
+            <p style="font-size:0.9rem; color:var(--muted);">
+              ${new Date(w.startDate?.toDate()).toLocaleString()} — ${new Date(w.endDate?.toDate()).toLocaleString()}
+            </p>
+            <span class="status-badge ${w.status === 'open' ? 'status-active' : 'status-pending'}">${w.status}</span>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<p>Error loading work.</p>';
+    }
+  }
+
+  // Expose functions globally
+  window.lookupAndAddDriver = lookupAndAddDriver;
+  window.removeDriverFromCompany = removeDriverFromCompany;
+  window.saveNewVehicle = saveNewVehicle;
+  window.deleteVehicle = deleteVehicle;
+  window.saveNewTrailer = saveNewTrailer;
+  window.deleteTrailer = deleteTrailer;
+  window.addNewCheckItem = addNewCheckItem;
+  window.deleteCheckItem = deleteCheckItem;
+  window.moveCheckUp = moveCheckUp;
+  window.moveCheckDown = moveCheckDown;
+  window.saveCheckStructure = saveCheckStructure;
+  window.postNewWork = postNewWork;
+
+</script>
 </body>
 </html>
