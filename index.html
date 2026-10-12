@@ -381,6 +381,132 @@
   </div>
 
   <!-- === COMPANY PORTAL === -->
+  <!-- ============================================== -->
+  <!-- COMPANY PROFILE PAGE -->
+  <!-- ============================================== -->
+<div id="company-profile-page" class="page hidden">
+  <div class="portal-container">
+    <h2>🏢 Company Profile</h2>
+    <p style="color:#666; margin-bottom:1.5rem;">Your details for DVSA & Traffic Commissioner compliance</p>
+
+    <div class="card" style="max-width:700px; margin:0 auto;">
+      <h3 style="margin-bottom:1rem; color:#1a365d;">Business Details</h3>
+      
+      <div class="form-group">
+        <label>Company Registered Name *</label>
+        <input type="text" id="comp-registered-name" placeholder="e.g. LSD Solutions Limited" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>HMRC / Company Registration Number *</label>
+          <input type="text" id="comp-hmrc-number" placeholder="e.g. 12345678" />
+        </div>
+        <div class="form-group">
+          <label>Operator's Licence Number *</label>
+          <input type="text" id="comp-licence-number" placeholder="e.g. OB12345678" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Trading Name (if different from Registered Name)</label>
+        <input type="text" id="comp-trading-name" placeholder="e.g. LSD Haulage Services" />
+      </div>
+
+      <div class="form-group">
+        <label>Registered Business Address *</label>
+        <textarea id="comp-registered-address" rows="3" placeholder="Full address including postcode"></textarea>
+      </div>
+
+      <hr style="margin:1.5rem 0; border:none; border-top:1px solid #e0e0e0;" />
+
+      <h3 style="margin-bottom:1rem; color:#1a365d;">Contact Information</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Main Contact Name</label>
+          <input type="text" id="comp-contact-name" placeholder="Primary responsible person" />
+        </div>
+        <div class="form-group">
+          <label>Main Phone Number</label>
+          <input type="tel" id="comp-phone-main" placeholder="e.g. 01234 567 890" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Accounts / Invoicing Contact Name</label>
+          <input type="text" id="comp-accounts-name" placeholder="Who to contact about invoices" />
+        </div>
+        <div class="form-group">
+          <label>Accounts Phone Number</label>
+          <input type="tel" id="comp-accounts-phone" placeholder="Accounts department" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Main Email Address *</label>
+        <input type="email" id="comp-email-main" placeholder="General enquiries" />
+      </div>
+
+      <div class="form-group">
+        <label>Invoicing / Finance Email Address</label>
+        <input type="email" id="comp-email-accounts" placeholder="Send invoices to..." />
+      </div>
+
+      <div class="form-group">
+        <label>DVSA / Compliance Email Address</label>
+        <input type="email" id="comp-email-compliance" placeholder="Notifications from DVSA & Traffic Commissioner" />
+      </div>
+
+      <hr style="margin:1.5rem 0; border:none; border-top:1px solid #e0e0e0;" />
+
+      <h3 style="margin-bottom:1rem; color:#1a365d;">Compliance & Additional</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Traffic Commissioner Area</label>
+          <input type="text" id="comp-tc-area" placeholder="e.g. South East & London" />
+        </div>
+        <div class="form-group">
+          <label>Standard / Restricted Licence</label>
+          <select id="comp-licence-type">
+            <option value="">— Select —</option>
+            <option value="standard-national">Standard National</option>
+            <option value="standard-international">Standard International</option>
+            <option value="restricted">Restricted</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Number of Authorised Vehicles</label>
+          <input type="number" id="comp-authorised-vehicles" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Number of Authorised Trailers</label>
+          <input type="number" id="comp-authorised-trailers" placeholder="0" min="0" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Transport Manager Name(s)</label>
+        <input type="text" id="comp-transport-managers" placeholder="Name(s) of nominated Transport Manager(s)" />
+      </div>
+
+      <div class="form-group">
+        <label>Additional Notes / Compliance Reference</label>
+        <textarea id="comp-notes" rows="3" placeholder="Any licence conditions, dates, reference numbers..."></textarea>
+      </div>
+
+      <button class="btn-primary" style="width:100%; margin-top:1rem;" onclick="saveCompanyProfile()">
+        💾 Save Company Profile
+      </button>
+      <p id="profile-save-status" style="margin-top:1rem; text-align:center; display:none;"></p>
+    </div>
+  </div>
+</div>
   <div id="company-portal" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🏢 LSD Solutions</h2>
