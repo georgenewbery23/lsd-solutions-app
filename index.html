@@ -80,10 +80,7 @@
 </head>
 <body>
 
-  <!-- ==============================================
-  SIGN IN & ACCOUNT PAGES
-  ============================================== -->
-
+  <!-- SIGN IN PAGE -->
   <div id="signin-page" class="page">
     <div class="container">
       <div class="branding">
@@ -201,9 +198,7 @@
     </div>
   </div>
 
-  <!-- ==============================================
-  DRIVER PORTAL
-  ============================================== -->
+  <!-- DRIVER PORTAL -->
   <div id="driver-portal" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🚛 LSD Solutions</h2>
@@ -239,9 +234,7 @@
     </div>
   </div>
 
-  <!-- ==============================================
-  DRIVER — DVSA WALKAROUND CHECK PAGE
-  ============================================== -->
+  <!-- DRIVER — DVSA WALKAROUND CHECK PAGE -->
   <div id="driver-checks-page" class="page" style="display:none;">
     <div class="top-nav">
       <h2>📋 Daily Walkaround Check</h2>
@@ -285,9 +278,7 @@
     </div>
   </div>
 
-  <!-- ==============================================
-  COMPANY PORTAL
-  ============================================== -->
+  <!-- COMPANY PORTAL -->
   <div id="company-portal" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🏢 LSD Solutions</h2>
@@ -323,9 +314,7 @@
     </div>
   </div>
 
-  <!-- ==============================================
-  COMPANY — CHECKLIST EDITOR (FULLY EDITABLE)
-  ============================================== -->
+  <!-- COMPANY — CHECKLIST EDITOR -->
   <div id="company-checklist-editor-page" class="page" style="display:none;">
     <div class="top-nav">
       <h2>✅ DVSA Checklist Editor</h2>
@@ -382,13 +371,13 @@
 
     let currentUser = null;
     let userProfile = null;
-    let checklistData = {}; // Full structured checklist
-    let driverResponses = {}; // Driver's check results
+    let checklistData = {};
+    let driverResponses = {};
 
     // ==================================================
-    // DVSA STANDARD CHECKLIST — BASELINE
+    // DVSA STANDARD CHECKLIST — NO SPACES IN FUNCTION NAME
     // ==================================================
-    function getDefaultDVSAChecklists() {
+    function getDefaultDVSA_Checklists() {
       return {
         categories: [
           {
@@ -565,33 +554,17 @@
       const cred = await createUserWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
       if (cred) {
         await setDoc(doc(db, 'users', cred.user.uid), { companyName: name, email, role: 'company', createdAt: new Date() });
-     // Initialise default DVSA checklist for new company
-     // ==================================================
-     // DVSA STANDARD CHECKLIST — BASELINE
-     // ==================================================
-function getDefaultDVSA_Checklists() {
-  return {
-    categories: [
-      {
-        id: 'cat-external',
-        name: 'External Body & Structure',
-        items: [
-          { id: crypto.randomUUID(), text: 'Condition of bodywork, panels & mirrors', order: 1 },
-          { id: crypto.randomUUID(), text: 'Windscreen, windows & wipers — condition & operation', order: 2 },
-          { id: crypto.randomUUID(), text: 'Number plates — clean, secure & legible', order: 3 },
-          { id: crypto.randomUUID(), text: 'Reflectors & marker boards — present & secure', order: 4 },
-          { id: crypto.randomUUID(), text: 'Roof, covers & load security — no damage', order: 5 }
-        ]
-      },
-      // ... rest of categories stay exactly the same
-    ]
-  };
-}
+        await setDoc(doc(db, 'dvsaChecklists', cred.user.uid), {
+          ...getDefaultDVSA_Checklists(),
+          updatedAt: new Date()
+        });
+      }
+    };
 
     window.signOutUser = async function() { await signOut(auth); };
 
     // ==================================================
-    // COMPANY EDITOR — FULLY EDITABLE CHECKLIST
+    // COMPANY EDITOR
     // ==================================================
     async function loadEditorChecklist() {
       if (!currentUser || userProfile?.role !== 'company') return;
@@ -600,7 +573,7 @@ function getDefaultDVSA_Checklists() {
       if (snap.exists() && snap.data()?.categories) {
         checklistData = snap.data();
       } else {
-        checklistData = getDefaultDVSA Checklists();
+        checklistData = getDefaultDVSA_Checklists();
       }
       
       renderEditor();
@@ -742,7 +715,6 @@ function getDefaultDVSA_Checklists() {
       container.innerHTML = '';
       document.getElementById('defects-log-section').classList.add('hidden');
       
-      // Load checklist — fallback to DVSA default
       let data;
       if (currentUser) {
         const q = query(collection(db, 'dvsaChecklists'), orderBy('updatedAt', 'desc'));
@@ -751,7 +723,7 @@ function getDefaultDVSA_Checklists() {
           snap.forEach(d => { data = d.data(); });
         }
       }
-      if (!data?.categories) data = getDefaultDVSA Checklists();
+      if (!data?.categories) data = getDefaultDVSA_Checklists();
       
       data.categories.forEach(cat => {
         if (!cat.items.length) return;
@@ -853,7 +825,6 @@ function getDefaultDVSA_Checklists() {
       alert('✅ Check submitted — Thank you for keeping safe on the road!');
       showPage('driver-portal');
       
-      // Reset form
       document.getElementById('veh-reg').value = '';
       document.getElementById('trailer-no').value = '';
       document.getElementById('driver-signature').value = '';
@@ -864,9 +835,7 @@ function getDefaultDVSA_Checklists() {
       showPage('signin-page');
     });
 
-    // ==================================================
-    // EXPOSE FOR ONCLICK
-    // ==================================================
+    // --- EXPOSE FOR ONCLICK ---
     window.showPage = showPage;
     window.doSignIn = doSignIn;
     window.sendResetLink = sendResetLink;
@@ -874,7 +843,6 @@ function getDefaultDVSA_Checklists() {
     window.registerCompany = registerCompany;
     window.signOutUser = signOutUser;
     
-    // Editor
     window.renameCategory = renameCategory;
     window.moveCategoryUp = moveCategoryUp;
     window.moveCategoryDown = moveCategoryDown;
@@ -886,7 +854,6 @@ function getDefaultDVSA_Checklists() {
     window.addNewCheckItem = addNewCheckItem;
     window.saveFullChecklist = saveFullChecklist;
     
-    // Driver
     window.setDrvStatus = setDrvStatus;
     window.setDrvNote = setDrvNote;
     window.submitDriverChecks = submitDriverChecks;
