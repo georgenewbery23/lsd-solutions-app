@@ -1,76 +1,65 @@
-<!DOCTYPE html>
-<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LSD Solutions — HGV & Logistics Services</title>
-  <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
-  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
       --primary: #1a365d;
-      --primary-light: #e8edf3;
-      --accent: #d47500;
-      --accent-light: #fff3e0;
-      --text: #1f2937;
-      --text-muted: #6b7280;
-      --bg: #f5f7fa;
-      --card: #ffffff;
-      --border: #d1d5db;
-      --shadow: 0 2px 8px rgba(0,0,0,0.08);
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
+      --accent: #d4af37;
+      --light: #f5f7fa;
+      --text: #333;
     }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; }
-    body.dark-mode {
-      --primary: #4a7cb8;
-      --primary-light: #1e293b;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --bg: #0f172a;
-      --card: #1e293b;
-      --border: #334155;
-    }
-    .hidden { display: none !important; }
-    .center { text-align: center; }
+    body { background: var(--light); min-height: 100vh; color: var(--text); }
+    .container { max-width: 420px; margin: 0 auto; padding: 40px 20px; }
     
-    /* ===== HEADER & LOGO STYLES ===== */
-    .site-header {
-      text-align: center;
-      padding: 30px 20px 10px;
-    }
-    .logo-img {
-      max-width: 180px;
+    /* ===== BRANDING / LOGO SECTION ===== */
+    .branding { text-align: center; margin: 30px 0 40px; }
+    .branding img {
+      max-width: 140px;
+      width: 100%;
       height: auto;
       margin-bottom: 16px;
     }
-    .site-title {
-      font-size: 26px;
+    .branding h1 {
+      font-size: 2.2rem;
       color: var(--primary);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      font-weight: 700;
     }
-    .site-tagline {
-      font-size: 15px;
-      color: var(--text-muted);
+    .branding .subtitle {
+      font-size: 1.15rem;
+      color: #444;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .branding .tagline {
+      font-size: 0.95rem;
+      color: #777;
       font-style: italic;
     }
     
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    .container-sm { max-width: 440px; margin: 0 auto; padding: 40px 20px; }
-    
+    input { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+    button { width: 100%; padding: 0.8rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1rem; margin-top: 1rem; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #2a4a7d; }
+    .btn-secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .btn-secondary:hover { background: rgba(26, 54, 93, 0.08); }
+    .btn-danger { background: #dc3545; }
+    .btn-danger:hover { background: #c82333; }
+    .page { display: none; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-
-  <!-- ===== HEADER WITH YOUR LOGO ===== -->
-  <header class="site-header">
-    <!-- Your exact logo path below -->
-    <img src="/assets/lsd-logo.png" alt="LSD Solutions Logo" class="logo-img" onerror="this.style.display='none'">
-    <h1 class="site-title">LSD Solutions — HGV & Logistics Services</h1>
-    <p class="site-tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-  </header>
+  <!-- BRANDING SECTION — Logo + Title + Subtitles -->
+  <div class="branding">
+    <img src="assets/lsd-logo.png" alt="LSD Solutions Logo" onerror="this.style.display='none'">
+    <h1>LSD Solutions</h1>
+    <p class="subtitle">HGV And Logistics Services</p>
+    <p class="tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
+  </div>
 
   <div id="offline-banner" class="offline-banner hidden">⚠️ You are offline — changes will save when you reconnect</div>
   <div id="notification-container" class="notification-container hidden"></div>
