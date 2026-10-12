@@ -1762,9 +1762,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     // ==============================================
     // PUSH NOTIFICATIONS
     // ==============================================
-      ${showPushPrompt()}
-      ${renderVerificationBanner()}
-      ${renderSearchBar()}
+      function showPushPrompt() { return ''; }
+      function renderVerificationBanner() { return ''; }
+      function renderSearchBar() { return ''; }
       ${renderQuickActions()}
     
        import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
@@ -1879,9 +1879,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       const todaysJobs = calendarEvents.filter(e => e.date === today);
       
       return `
-        ${showPushPrompt()}
-        ${renderVerificationBanner()}
-        ${renderSearchBar()}
+        function showPushPrompt() { return ''; }
+        function renderVerificationBanner() { return ''; }
+        function renderSearchBar() { return ''; }
         ${quickActions}
         ${expAlerts}
         ${renderQuickActions()}
