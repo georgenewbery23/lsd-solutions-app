@@ -1596,6 +1596,7 @@
       const expAlerts = renderExpiryAlerts();
       const today = new Date().toISOString().slice(0, 10);
       const todaysJobs = calendarEvents.filter(e => e.date === today);
+                case 'holidays': content.innerHTML = renderHolidaysPage(); break;
       
       return `
         ${showPushPrompt()}
@@ -2321,6 +2322,7 @@
       const confirmedJobs = userJobs.filter(j => j.status === 'confirmed').length;
       const pendingChecks = userChecks.filter(c => !c.reviewed).length;
       const pendingExpenses = userExpenses.filter(e => e.status === 'pending').length;
+                case 'holidays': content.innerHTML = renderHolidaysPage(); break;
       
       return `
         ${renderVerificationBanner()}
