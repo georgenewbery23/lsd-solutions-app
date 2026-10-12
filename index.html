@@ -1121,13 +1121,38 @@
       <input type="file" accept=".jpg,.pdf,.png" />
       <button class="btn-primary mt-10" onclick="uploadInfringement()">📤 Upload & Notify Driver</button>
       
-      <div class="premium-banner mt-20">
-        <h4>🔌 Tachomaster API Integration — Premium Feature</h4>
-        <p>Automatically import infringements directly from Tachomaster. Drivers get notified instantly to review & sign digitally.</p>
-        <button class="btn-sm btn-premium mt-10" onclick="alert('Contact us to enable Tachomaster integration')">🚀 Enquire About API Access</button>
+            <div class="premium-banner mt-20">
+        <h4>🔌 Tachomaster API Integration</h4>
+        
+        <!-- API Status -->
+        <div id="tacho-api-status" style="background:#fff; padding:12px; border-radius:6px; margin:12px 0;">
+          <strong>Status:</strong> 
+          <span id="tacho-status-text" style="color:var(--warning);">⚠️ Demo Mode — API not connected</span>
+          <button class="btn-sm btn-outline" style="margin-left:auto; float:right;" onclick="checkTachomasterStatus()">🔄 Check Connection</button>
+        </div>
+
+        <!-- Sync Controls -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin:15px 0;">
+          <button class="btn-sm btn-primary" onclick="syncTachomasterNow()">📥 Sync Infringements Now</button>
+          <button class="btn-sm btn-outline" onclick="showSyncHistory()">📊 Sync History</button>
+          <button class="btn-sm btn-outline" onclick="openDriverMatching()">🔗 Match Drivers</button>
+        </div>
+
+        <!-- Setup Guide -->
+        <div style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.5); border-radius:6px; font-size:13px;">
+          <p><strong>📋 How to enable live Tachomaster sync:</strong></p>
+          <ol style="margin:8px 0 8px 20px; padding:0;">
+            <li>Contact Tachomaster → request API access for your account</li>
+            <li>They will issue your API Key and Client ID</li>
+            <li>Enter them in your <code>tachomaster-config.js</code> file</li>
+            <li>Set <code>syncEnabled: true</code> and save</li>
+            <li>Run a manual sync → confirm data flows in ✅</li>
+          </ol>
+          <p style="margin-top:10px; font-size:12px; color:var(--muted);">
+            💡 Until then: Manual upload works perfectly — just upload CSV/PDF from Tachomaster directly.
+          </p>
+        </div>
       </div>
-    `;
-  }
 
   window.reviewInfringement = async function(id) {
     const notes = prompt('Add any notes (optional):');
