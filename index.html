@@ -954,6 +954,10 @@
       alert('✏️ Edit driver — coming soon. For now, add a new entry or update via the driver portal.');
     };
 
+    window.editDriverDocs = function(id) {
+      alert('📄 Edit documents — driver updates their own details via the Driver Portal → My Documents page.');
+    };
+
     // Auto-link: When a driver submits their documents, update all company lists where email matches
     async function syncDriverToCompanies(driverUid, driverEmail, docData) {
       if (!driverEmail) return;
