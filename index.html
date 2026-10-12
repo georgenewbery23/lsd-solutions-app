@@ -2429,9 +2429,6 @@ window.declineHoliday = async function(eventId) {
     // ==============================================
     // PAGE RENDERING — COMPANY
     // ==============================================
-    let allDrivers = [];
-    let companyVehicles = [];
-    let checklistItems = [];
 
     function renderCompanyDashboard() {
       const openJobs = userJobs.filter(j => j.status === 'open').length;
