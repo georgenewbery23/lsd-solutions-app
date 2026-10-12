@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LSD Solutions — HGV & Logistics Services - For all your longhaul, shunting and delivery needs</title>
+  <title>LSD Solutions — For all your long haul, shunting and delivery needs</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
@@ -44,6 +44,7 @@
     .btn-warning { background: var(--warning); color: #1f2937; margin-bottom: 12px; }
     .btn-sm { width: auto; padding: 8px 16px; font-size: 14px; }
     .btn-outline { background: white; color: var(--primary); border: 1px solid var(--primary); }
+    .btn-success { background: #10b981; color: white; }
     .link-row { text-align: center; margin-top: 20px; font-size: 15px; }
     a { color: var(--primary); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
@@ -53,8 +54,8 @@
     .dash-header {
       display: flex; justify-content: space-between; align-items: center;
       padding: 20px 0; margin-bottom: 20px; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; gap: 12px;
     }
-    .dash-header h1 { font-size: 24px; color: var(--primary); }
     .dash-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
     .dash-nav button {
       width: auto; padding: 10px 16px; background: white; color: var(--text);
@@ -66,15 +67,15 @@
     .dash-content { animation: fadeIn 0.3s; }
     @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
     .card {
       background: white; padding: 20px; border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       transition: transform 0.2s;
     }
     .card:hover { transform: translateY(-2px); }
-    .card h3 { margin: 0 0 4px; font-size: 24px; }
-    .card p { color: var(--muted); font-size: 14px; }
+    .card h3 { margin: 0 0 8px; font-size: 20px; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
 
     .form-group { margin-bottom: 16px; }
     label { display: block; margin-bottom: 6px; font-weight: 500; }
@@ -84,6 +85,7 @@
     }
     .checklist-item input[type="checkbox"] { width: auto; margin: 0; }
     .defect-box { background: #fef3c7; padding: 16px; border-radius: 8px; margin: 12px 0; }
+    .leave-box { background: #e0f2fe; padding: 16px; border-radius: 8px; margin: 12px 0; }
     .thumb-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .thumb-grid img {
       width: 80px; height: 80px; object-fit: cover; border-radius: 4px;
@@ -96,6 +98,9 @@
     .item-card.major { border-left-color: var(--danger); }
     .item-card.advisory { border-left-color: var(--warning); }
     .item-card.info { border-left-color: var(--info); }
+    .item-card.pending { border-left-color: var(--warning); }
+    .item-card.approved { border-left-color: var(--accent); }
+    .item-card.denied { border-left-color: var(--danger); }
     .status-badge {
       display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
     }
@@ -103,6 +108,7 @@
     .badge-yellow { background: #fef3c7; color: #92400e; }
     .badge-red { background: #fee2e2; color: #991b1b; }
     .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-gray { background: #e5e7eb; color: #4b5563; }
 
     table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 10px; overflow: hidden; }
     th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
@@ -117,7 +123,33 @@
     .alert { padding: 12px 16px; border-radius: 8px; margin: 16px 0; }
     .alert-info { background: #e0f2fe; color: #075985; }
     .alert-success { background: #dcfce7; color: #166534; }
+    .alert-warning { background: #fef3c7; color: #92400e; }
+    .alert-danger { background: #fee2e2; color: #991b1b; }
     .empty { color: var(--muted); text-align: center; padding: 30px; }
+    
+    .key-box { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding: 12px; background: white; border-radius: 8px; }
+    .key-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .key-swatch { width: 18px; height: 18px; border-radius: 4px; border: 1px solid #ddd; }
+    
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-day { aspect-ratio: 1; padding: 6px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
+    .cal-day:hover { background: var(--light); }
+    
+    .notification { position: relative; }
+    .notification-badge {
+      position: absolute; top: -6px; right: -6px; background: var(--danger); color: white;
+      font-size: 10px; min-width: 18px; height: 18px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-weight: bold;
+    }
+    .notifications-panel {
+      position: fixed; top: 20px; right: 20px; max-width: 360px; z-index: 1000;
+      background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 16px; display: none;
+    }
+    .notifications-panel.show { display: block; }
+    .notification-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .notification-item.unread { background: #f0f9ff; margin: 0 -16px; padding: 10px 16px; }
   </style>
 </head>
 <body>
@@ -130,7 +162,7 @@
   <div class="container">
     <div class="logo">
       <h1>LSD Solutions</h1>
-      <p>HGV & Logistics Services - For all your longhaul, shunting and delivery needs</p>
+      <p>For all your long haul, shunting and delivery needs</p>
     </div>
     <h2>Sign In</h2>
     <input type="email" id="si-email" placeholder="Email address" />
@@ -144,18 +176,24 @@
 
 <div id="page-register" class="page">
   <div class="container">
-    <div class="logo"><h1>LSD Solutions</h1></div>
+    <div class="logo"><h1>LSD Solutions</h1><p>For all your long haul, shunting and delivery needs</p></div>
     <h2>Create Account</h2>
     <h3>Register as a Company</h3>
     <input type="text" id="reg-name" placeholder="Company name" />
     <input type="email" id="reg-email" placeholder="Email address" />
     <input type="password" id="reg-password" placeholder="Password" />
     <button class="btn-primary" onclick="handleCompanyRegister()">Register as Company</button>
+    
     <h3>Register as a Driver</h3>
+    <select id="driver-type" style="margin-bottom:14px;">
+      <option value="employed">Employed Driver — Working for a company</option>
+      <option value="self-employed">Self-Employed / Agency Driver</option>
+    </select>
     <input type="text" id="dr-name" placeholder="Your full name" />
     <input type="email" id="dr-email" placeholder="Email address" />
     <input type="password" id="dr-password" placeholder="Password" />
     <button class="btn-accent" onclick="handleDriverRegister()">Register as Driver</button>
+    
     <div class="link-row">
       <a href="#" onclick="showPage('signin'); return false;">← Back to Sign In</a>
     </div>
@@ -176,28 +214,45 @@
         <h1 id="dash-title">Dashboard</h1>
         <p id="dash-subtitle" style="color: var(--muted); font-size: 14px;">Welcome</p>
       </div>
-      <button class="btn-sm btn-danger" onclick="handleSignOut()">Sign Out</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn-sm notification" onclick="toggleNotifications()">🔔 <span id="notif-count" class="notification-badge hidden">0</span></button>
+        <button class="btn-sm btn-danger" onclick="handleSignOut()">Sign Out</button>
+      </div>
     </div>
     <div class="dash-nav" id="dash-nav"></div>
     <div class="dash-content" id="dash-content"></div>
   </div>
 </div>
 
+<!-- Notifications Panel -->
+<div id="notifications-panel" class="notifications-panel">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h4 style="margin:0;">Notifications</h4>
+    <a href="#" onclick="toggleNotifications(); return false;">✕</a>
+  </div>
+  <div id="notifications-list"></div>
+</div>
+
+<!-- Company Pages -->
 <div id="company-drivers" class="page">
   <div class="dash-container">
-    <h2>👥 Company Drivers</h2>
-    <p class="alert alert-info">Manage your drivers — full-time and temporary access</p>
+    <h2>👥 My Drivers</h2>
+    <p class="alert alert-info">Manage your employed drivers and their access</p>
     <div style="background:#f8fafc; padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid #e2e8f0;">
-      <h3 style="margin-top:0;">➕ Add Driver to Company</h3>
+      <h3 style="margin-top:0;">➕ Add Employed Driver</h3>
       <input type="email" id="new-driver-email" placeholder="Driver email address" style="margin-bottom:8px;" />
-      <select id="driver-access-type" style="margin-bottom:8px;">
-        <option value="fulltime">Full-time Driver — Permanent Access</option>
-        <option value="temporary">Temporary — Job Only</option>
-      </select>
       <button onclick="addCompanyDriver()" class="btn-primary" style="width:auto;">Add Driver</button>
     </div>
     <h3>Your Drivers</h3>
     <div id="company-drivers-list"></div>
+  </div>
+</div>
+
+<div id="company-leave-requests" class="page">
+  <div class="dash-container">
+    <h2>🏝️ Annual Leave Requests</h2>
+    <p class="alert alert-info">Review and manage your drivers' leave requests</p>
+    <div id="leave-requests-list"></div>
   </div>
 </div>
 
@@ -254,7 +309,7 @@
   let currentUser = null;
   let userProfile = null;
   let calDate = new Date();
-  let availData = {}, jobsData = [], checksData = [], defectsData = [], usersData = [];
+  let availData = {}, jobsData = [], checksData = [], defectsData = [], usersData = [], leaveRequests = [], notifications = [];
   let selectedPhotoFiles = [];
   let currentSelectedCompany = null;
   let userCompanies = [];
@@ -266,6 +321,7 @@
     loading: document.getElementById('page-loading'),
     dashboard: document.getElementById('page-dashboard'),
     'company-drivers': document.getElementById('company-drivers'),
+    'company-leave-requests': document.getElementById('company-leave-requests'),
     'company-vehicles': document.getElementById('company-vehicles'),
     'select-company': document.getElementById('select-company')
   };
@@ -278,6 +334,47 @@
     console.log('📢', msg); 
     const el = document.getElementById('status-text');
     if (el) el.textContent = msg; 
+  }
+
+  // ==============================================
+  // ✅ NOTIFICATIONS SYSTEM
+  // ==============================================
+  function toggleNotifications() {
+    const panel = document.getElementById('notifications-panel');
+    panel.classList.toggle('show');
+    renderNotifications();
+  }
+
+  function renderNotifications() {
+    const list = document.getElementById('notifications-list');
+    const countEl = document.getElementById('notif-count');
+    const unread = notifications.filter(n => !n.read).length;
+    
+    if (unread > 0) {
+      countEl.textContent = unread;
+      countEl.classList.remove('hidden');
+    } else {
+      countEl.classList.add('hidden');
+    }
+    
+    if (!notifications.length) {
+      list.innerHTML = '<p style="color:var(--muted); text-align:center; padding:20px;">No notifications</p>';
+      return;
+    }
+    list.innerHTML = notifications.map(n => `
+      <div class="notification-item ${!n.read?'unread':''}">
+        <div style="font-weight:500;">${n.title}</div>
+        <div style="font-size:12px; color:var(--muted);">${n.message}</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">${n.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function addNotification(title, message) {
+    notifications.unshift({
+      title, message, read: false, time: new Date().toLocaleString()
+    });
+    renderNotifications();
   }
 
   // ==============================================
@@ -325,6 +422,7 @@
     const fullName = document.getElementById('dr-name').value.trim();
     const email = document.getElementById('dr-email').value.trim();
     const password = document.getElementById('dr-password').value;
+    const driverType = document.getElementById('driver-type').value;
     
     if (!fullName || !email || !password) return alert('Please fill in all fields');
     
@@ -336,6 +434,7 @@
         fullName: fullName,
         name: fullName,
         role: 'driver',
+        driverType: driverType,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     } catch (err) {
@@ -373,6 +472,7 @@
           id: user.uid,
           email: user.email,
           role: 'driver',
+          driverType: 'self-employed',
           name: user.email?.split('@')[0] || 'User',
           createdAt: new Date()
         };
@@ -381,8 +481,8 @@
       await loadAllData();
       await loadUserCompanies();
       showPage('dashboard');
-      renderNav(userProfile.role);
-      renderContent(userProfile.role === 'company' ? 'company-drivers' : 'check');
+      renderNav(userProfile.role, userProfile.driverType);
+      renderContent(getDefaultTab());
     } else {
       currentUser = null;
       userProfile = null;
@@ -390,34 +490,53 @@
     }
   });
 
-  // ==============================================
-  // NAVIGATION & DATA
-  // ==============================================
-  function getNavItems(role) {
-    return role === 'company'
-      ? [ 
-          {id:'company-drivers',label:'👥 My Drivers'}, 
-          {id:'company-vehicles',label:'🚛 My Fleet'}, 
-          {id:'work',label:'📤 Post Work'}, 
-          {id:'calendar',label:'📅 Calendar'}, 
-          {id:'docs',label:'📄 Documents'}, 
-          {id:'profile',label:'👤 Profile'} 
-        ]
-      : [ 
-          {id:'current-company',label:'🏢 Current Company'},
-          {id:'check',label:'✅ Vehicle Check'}, 
-          {id:'mychecks',label:'📋 My Checks'}, 
-          {id:'calendar',label:'📅 My Calendar'}, 
-          {id:'work',label:'🔍 Available Work'}, 
-          {id:'docs',label:'📄 My Documents'}, 
-          {id:'profile',label:'👤 My Profile'} 
-        ];
+  function getDefaultTab() {
+    if (userProfile?.role === 'company') return 'company-drivers';
+    if (userProfile?.driverType === 'employed' && !currentSelectedCompany) return 'current-company';
+    return 'check';
   }
 
-  function renderNav(role) {
+  // ==============================================
+  // NAVIGATION
+  // ==============================================
+  function getNavItems(role, driverType) {
+    if (role === 'company') {
+      return [
+        {id:'company-drivers',label:'👥 My Drivers'},
+        {id:'company-leave-requests',label:'🏝️ Leave Requests'},
+        {id:'company-vehicles',label:'🚛 My Fleet'},
+        {id:'post-work',label:'📤 Post Agency Work'},
+        {id:'calendar',label:'📅 Company Calendar'},
+        {id:'docs',label:'📄 Documents'},
+        {id:'profile',label:'👤 Profile'}
+      ];
+    }
+    if (driverType === 'self-employed') {
+      return [
+        {id:'check',label:'✅ Vehicle Check'},
+        {id:'mychecks',label:'📋 My Checks'},
+        {id:'calendar',label:'📅 My Calendar'},
+        {id:'agency-work',label:'🔍 Available Agency Work'},
+        {id:'docs',label:'📄 My Documents'},
+        {id:'profile',label:'👤 My Profile'}
+      ];
+    }
+    // Employed Driver
+    return [
+      {id:'current-company',label:'🏢 Current Company'},
+      {id:'check',label:'✅ Vehicle Check'},
+      {id:'mychecks',label:'📋 My Checks'},
+      {id:'calendar',label:'📅 My Calendar'},
+      {id:'leave',label:'🏝️ Annual Leave'},
+      {id:'docs',label:'📄 My Documents'},
+      {id:'profile',label:'👤 My Profile'}
+    ];
+  }
+
+  function renderNav(role, driverType) {
     const nav = document.getElementById('dash-nav');
     if (!nav) return;
-    nav.innerHTML = getNavItems(role).map(i =>
+    nav.innerHTML = getNavItems(role, driverType).map(i =>
       `<button data-nav="${i.id}" onclick="switchTab('${i.id}')">${i.label}</button>`
     ).join('');
   }
@@ -430,33 +549,39 @@
 
   async function loadAllData() {
     if (!currentUser) return;
-    const [availSnap, checksSnap, defectsSnap, jobsSnap, usersSnap] = await Promise.all([
+    const [availSnap, checksSnap, defectsSnap, jobsSnap, usersSnap, leaveSnap] = await Promise.all([
       db.collection('availability').where('userId','==',currentUser.uid).get(),
       db.collection('checks').orderBy('completedAt','desc').limit(50).get(),
       db.collection('defects').orderBy('timestamp','desc').limit(50).get(),
-      db.collection('jobs').orderBy('createdAt','desc').limit(50).get(),
-      db.collection('users').limit(50).get()
+      db.collection('agency_jobs').where('status','==','open').limit(50).get(),
+      db.collection('users').limit(50).get(),
+      db.collection('leave_requests').limit(100).get()
     ]);
     availData = {}; availSnap.forEach(d => availData[d.data().date] = d.data());
     checksData = checksSnap.docs.map(d => ({id:d.id, ...d.data()}));
     defectsData = defectsSnap.docs.map(d => ({id:d.id, ...d.data()}));
     jobsData = jobsSnap.docs.map(d => ({id:d.id, ...d.data()}));
     usersData = usersSnap.docs.map(d => ({id:d.id, ...d.data()}));
+    leaveRequests = leaveSnap.docs.map(d => ({id:d.id, ...d.data()}));
   }
 
   function renderContent(tab) {
     const role = userProfile?.role || 'driver';
+    const driverType = userProfile?.driverType || 'self-employed';
     const dashContent = document.getElementById('dash-content');
     if (!dashContent) return;
     
     switch(tab) {
       case 'check': return dashContent.innerHTML = renderVehicleCheck();
       case 'mychecks': return dashContent.innerHTML = renderMyChecks();
-      case 'work': return dashContent.innerHTML = role==='company' ? renderCompanyWork() : renderAvailableWork();
       case 'calendar': return dashContent.innerHTML = renderCalendar();
+      case 'leave': return dashContent.innerHTML = renderLeavePage();
+      case 'agency-work': return dashContent.innerHTML = renderAgencyWork();
+      case 'post-work': return dashContent.innerHTML = renderPostWork();
       case 'docs': return dashContent.innerHTML = renderDocuments();
-      case 'profile': return dashContent.innerHTML = `<h3>Profile</h3><p><strong>Email:</strong> ${userProfile?.email}</p><p><strong>Role:</strong> ${userProfile?.role}</p><p><strong>Name:</strong> ${userProfile?.name || userProfile?.fullName}</p>`;
+      case 'profile': return dashContent.innerHTML = `<h3>Profile</h3><p><strong>Email:</strong> ${userProfile?.email}</p><p><strong>Role:</strong> ${userProfile?.role}${userProfile?.driverType?` — ${userProfile.driverType.replace('-',' ')}`:''}</p><p><strong>Name:</strong> ${userProfile?.name || userProfile?.fullName}</p>`;
       case 'company-drivers': dashContent.innerHTML = ''; renderCompanyDriversList(); return;
+      case 'company-leave-requests': dashContent.innerHTML = ''; renderLeaveRequestsList(); return;
       case 'company-vehicles': dashContent.innerHTML = ''; renderCompanyVehiclesList(); return;
       case 'current-company': dashContent.innerHTML = ''; renderSelectCompanyPage(); return;
       default: return dashContent.innerHTML = `<h3>${tab}</h3><p>Coming soon...</p>`;
@@ -464,10 +589,368 @@
   }
 
   // ==============================================
-  // VEHICLE CHECK
+  // ✅ ANNUAL LEAVE SYSTEM — DRIVER SIDE
+  // ==============================================
+  function renderLeavePage() {
+    const myRequests = leaveRequests.filter(r => r.driverId === currentUser.uid);
+    return `
+      <h3>🏝️ Request Annual Leave</h3>
+      <p class="alert alert-info">Submit your leave request — your company will review and notify you of the outcome</p>
+      <div class="leave-box">
+        <h4>New Leave Request</h4>
+        <div class="form-group">
+          <label>From Date</label>
+          <input type="date" id="leave-from" />
+        </div>
+        <div class="form-group">
+          <label>To Date</label>
+          <input type="date" id="leave-to" />
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <textarea id="leave-notes" rows="2" placeholder="Any additional information..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitLeaveRequest()">📤 Submit Request</button>
+      </div>
+      
+      <h3 style="margin-top:30px;">My Requests</h3>
+      ${!myRequests.length?'<p class="empty">No leave requests submitted yet</p>':myRequests.map(r => {
+        const date = r.submittedAt?.toDate ? r.submittedAt.toDate().toLocaleDateString() : 'Recently';
+        const statusText = {pending:'⏳ Pending', approved:'✅ Approved', denied:'❌ Denied'}[r.status];
+        return `
+          <div class="item-card ${r.status}">
+            <strong>${statusText}</strong>
+            <p><strong>From:</strong> ${r.fromDate} — <strong>To:</strong> ${r.toDate}</p>
+            <p style="font-size:13px; color:var(--muted);">Submitted: ${date}</p>
+            ${r.notes?`<p><strong>Notes:</strong> ${r.notes}</p>`:''}
+            ${r.status==='denied' && r.denialNote?`<p style="color:var(--danger);"><strong>Reason:</strong> ${r.denialNote}</p>`:''}
+          </div>
+        `;
+      }).join('')}
+    `;
+  }
+
+  window.submitLeaveRequest = async function() {
+    const from = document.getElementById('leave-from').value;
+    const to = document.getElementById('leave-to').value;
+    const notes = document.getElementById('leave-notes').value.trim();
+    
+    if (!from || !to) return alert('Please select from and to dates');
+    if (new Date(from) > new Date(to)) return alert('"From" date must be before "To" date');
+    if (!currentSelectedCompany) return alert('Please select your company first from "🏢 Current Company"');
+    
+    await db.collection('leave_requests').add({
+      driverId: currentUser.uid,
+      driverName: userProfile.name,
+      companyId: currentSelectedCompany.id,
+      fromDate: from,
+      toDate: to,
+      notes: notes,
+      status: 'pending',
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('✅ Leave request submitted — you will be notified when it\'s reviewed');
+    await loadAllData();
+    renderContent('leave');
+  };
+
+  // ==============================================
+  // ✅ COMPANY LEAVE MANAGEMENT
+  // ==============================================
+  async function renderLeaveRequestsList() {
+    const companyRequests = leaveRequests.filter(r => r.companyId === currentUser.uid);
+    const list = document.getElementById('leave-requests-list');
+    
+    if (!companyRequests.length) {
+      list.innerHTML = '<p class="empty">No leave requests at this time ✅</p>';
+      return;
+    }
+    
+    list.innerHTML = companyRequests.map(r => {
+      const date = r.submittedAt?.toDate ? r.submittedAt.toDate().toLocaleDateString() : 'Recently';
+      return `
+        <div class="item-card ${r.status}">
+          <strong>${r.driverName}</strong>
+          <p><strong>From:</strong> ${r.fromDate} — <strong>To:</strong> ${r.toDate}</p>
+          <p style="font-size:13px; color:var(--muted);">Submitted: ${date}</p>
+          ${r.notes?`<p><strong>Notes:</strong> ${r.notes}</p>`:''}
+          ${r.status === 'pending' ? `
+            <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+              <button class="btn-sm btn-success" style="width:auto;" onclick="approveLeave('${r.id}','${r.fromDate}','${r.toDate}')">✅ Approve</button>
+              <button class="btn-sm btn-danger" style="width:auto;" onclick="denyLeave('${r.id}')">❌ Deny</button>
+            </div>
+          ` : ''}
+          ${r.status === 'approved' ? `<span class="status-badge badge-green">✅ Approved</span>` : ''}
+          ${r.status === 'denied' ? `<span class="status-badge badge-red">❌ Denied — ${r.denialNote || 'No reason given'}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.approveLeave = async function(requestId, fromDate, toDate) {
+    if (!confirm('Approve this leave request?')) return;
+    
+    await db.collection('leave_requests').doc(requestId).update({
+      status: 'approved',
+      reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Create calendar entries (dates only — no names stored publicly)
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      await db.collection('availability').doc(`company_leave_${currentUser.uid}_${dateStr}`).set({
+        companyId: currentUser.uid,
+        date: dateStr,
+        status: 'leave',
+        visibleTo: 'company'
+      }, {merge: true});
+    }
+    
+    // Ask if company wants to post cover work
+    const postCover = confirm('✅ Leave approved!\n\nWould you like to post agency work to cover this absence?');
+    if (postCover) {
+      switchTab('post-work');
+      // Pre-fill dates
+      setTimeout(() => {
+        const fromEl = document.getElementById('job-from-date');
+        const toEl = document.getElementById('job-to-date');
+        if (fromEl) fromEl.value = fromDate;
+        if (toEl) toEl.value = toDate;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    }
+    
+    await loadAllData();
+    renderLeaveRequestsList();
+  };
+
+  window.denyLeave = async function(requestId) {
+    const reason = prompt('Please enter a reason for denying this request:');
+    if (reason === null) return;
+    
+    await db.collection('leave_requests').doc(requestId).update({
+      status: 'denied',
+      denialNote: reason || 'No reason provided',
+      reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('✅ Request denied — driver has been notified');
+    await loadAllData();
+    renderLeaveRequestsList();
+  };
+
+  // ==============================================
+  // ✅ ENHANCED AGENCY WORK — Post & View
+  // ==============================================
+  function renderPostWork() {
+    const myJobs = jobsData.filter(j => j.companyId === currentUser?.uid);
+    return `
+      <h3>📤 Post Agency Work</h3>
+      <p class="alert alert-info">These jobs will be visible ONLY to self-employed drivers and other agencies. Your employed drivers will not see them.</p>
+      
+      <div style="background:#f8fafc; padding:20px; border-radius:8px; margin-bottom:24px; border:1px solid #e2e8f0;">
+        <h4 style="margin-top:0; margin-bottom:16px;">New Agency Job</h4>
+        
+        <div class="form-group">
+          <label>Job Title / Route</label>
+          <input type="text" id="job-title" placeholder="e.g. Manchester to Southampton" />
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label>From Date</label>
+            <input type="date" id="job-from-date" />
+          </div>
+          <div class="form-group">
+            <label>To Date</label>
+            <input type="date" id="job-to-date" />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="time" id="job-start-time" />
+        </div>
+        
+        <div class="form-group">
+          <label>Location — Start / Collection Point</label>
+          <input type="text" id="job-location" placeholder="Full address or postcode" />
+        </div>
+        
+        <div class="form-group">
+          <label>Who to Report To</label>
+          <input type="text" id="job-report-to" placeholder="Name and contact number" />
+        </div>
+        
+        <div class="form-group">
+          <label>Gate Code (if applicable)</label>
+          <input type="text" id="job-gate-code" placeholder="e.g. 1234 — leave blank if none" />
+        </div>
+        
+        <div class="form-group">
+          <label>Paperwork Location / Instructions</label>
+          <textarea id="job-paperwork" rows="2" placeholder="Where to find delivery notes, manifests, etc."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Key Location / Instructions</label>
+          <textarea id="job-keys" rows="2" placeholder="Where to find vehicle keys, fobs, etc."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Rate / Pay (£)</label>
+          <input type="text" id="job-pay" placeholder="e.g. 180 or 250 per day" />
+        </div>
+        
+        <div class="form-group">
+          <label>Additional Information</label>
+          <textarea id="job-notes" rows="3" placeholder="Any other details — vehicle type, trailer info, PPE requirements, etc."></textarea>
+        </div>
+        
+        <button class="btn-primary" onclick="postAgencyJob()">📤 Publish Agency Job</button>
+      </div>
+      
+      <h3>Your Posted Agency Jobs</h3>
+      ${!myJobs.length?'<p class="empty">No jobs posted yet — reach drivers instantly above</p>':myJobs.map(j=>`
+        <div class="item-card">
+          <strong style="font-size:16px;">${j.title}</strong>
+          <p><strong>Dates:</strong> ${j.fromDate} — ${j.toDate}</p>
+          <p><strong>Start:</strong> ${j.startTime || 'Not specified'} | <strong>Pay:</strong> £${j.pay}</p>
+          <span class="status-badge ${j.status==='open'?'badge-green':'badge-gray'}">${j.status}</span>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  window.postAgencyJob = async function() {
+    const title = document.getElementById('job-title').value.trim();
+    const fromDate = document.getElementById('job-from-date').value;
+    const toDate = document.getElementById('job-to-date').value;
+    const startTime = document.getElementById('job-start-time').value;
+    const location = document.getElementById('job-location').value.trim();
+    const reportTo = document.getElementById('job-report-to').value.trim();
+    const gateCode = document.getElementById('job-gate-code').value.trim();
+    const paperwork = document.getElementById('job-paperwork').value.trim();
+    const keys = document.getElementById('job-keys').value.trim();
+    const pay = document.getElementById('job-pay').value.trim();
+    const notes = document.getElementById('job-notes').value.trim();
+    
+    if (!title || !fromDate || !toDate || !location || !pay) {
+      return alert('Please fill in Title, Dates, Location and Pay at minimum');
+    }
+    
+    await db.collection('agency_jobs').add({
+      companyId: currentUser.uid,
+      companyName: userProfile.name,
+      title, fromDate, toDate, startTime, location,
+      reportTo, gateCode, paperwork, keys, pay, notes,
+      status: 'open',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('✅ Agency job posted! Self-employed drivers can now see it');
+    await loadAllData();
+    renderContent('post-work');
+  };
+
+  function renderAgencyWork() {
+    const open = jobsData.filter(j => j.status === 'open');
+    if (!open.length) return `<h3>🔍 Available Agency Work</h3><p class="alert alert-info">No agency jobs posted yet. Check back soon — new work appears here daily.</p>`;
+    
+    return `<h3>🔍 Available Agency Work — ${open.length} job${open.length!==1?'s':''}</h3>` + open.map(j => `
+      <div class="item-card">
+        <strong style="font-size:16px;">${j.title}</strong>
+        <p style="color:var(--muted); font-size:13px; margin:4px 0;">Posted by: ${j.companyName}</p>
+        <p><strong>Dates:</strong> ${j.fromDate} — ${j.toDate}</p>
+        ${j.startTime?`<p><strong>Start Time:</strong> ${j.startTime}</p>`:''}
+        <p><strong>Location:</strong> ${j.location}</p>
+        <p><strong>Pay:</strong> £${j.pay}</p>
+        ${j.reportTo?`<p><strong>Report to:</strong> ${j.reportTo}</p>`:''}
+        ${j.gateCode?`<p><strong>Gate Code:</strong> <code style="background:#eee; padding:2px 6px; border-radius:3px;">${j.gateCode}</code></p>`:''}
+        ${j.paperwork?`<p><strong>Paperwork:</strong> ${j.paperwork}</p>`:''}
+        ${j.keys?`<p><strong>Keys:</strong> ${j.keys}</p>`:''}
+        ${j.notes?`<p style="font-size:13px; color:var(--muted); margin-top:6px;"><strong>Additional Info:</strong> ${j.notes}</p>`:''}
+        <button class="btn-accent btn-sm" style="margin-top:12px; width:auto;">📧 Enquire / Apply</button>
+      </div>
+    `).join('');
+  }
+
+  // ==============================================
+  // ✅ CALENDAR — Updated with Leave Privacy
+  // ==============================================
+  function renderCalendar() {
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const y = calDate.getFullYear(), m = calDate.getMonth();
+    const firstDay = new Date(y,m,1).getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const isCompany = userProfile?.role === 'company';
+    const isEmployed = userProfile?.driverType === 'employed';
+    
+    return `
+      <h3>${isCompany ? 'Company Calendar Overview' : 'My Calendar'}</h3>
+      
+      <div class="key-box">
+        <div class="key-item"><span class="key-swatch" style="background:#d1fae5;"></span> Available</div>
+        <div class="key-item"><span class="key-swatch" style="background:#fee2e2;"></span> Unavailable</div>
+        <div class="key-item"><span class="key-swatch" style="background:#dbeafe;"></span> Work Booked</div>
+        <div class="key-item"><span class="key-swatch" style="background:#fde68a;"></span> Annual Leave</div>
+      </div>
+      
+      ${isEmployed ? '<p class="alert alert-info">💡 You can see <strong>when</strong> 
+      ? You can see <strong>when</strong> leave is booked across your company, but not <strong>who</strong> is taking it — privacy protected.</p>' : ''}
+      
+      <div class="cal-header">
+        <button class="btn-sm" onclick="changeCal(-1)">←</button>
+        <span style="font-weight:600;">${mNames[m]} ${y}</span>
+        <button class="btn-sm" onclick="changeCal(1)">→</button>
+      </div>
+      
+      <div class="cal-grid">
+        ${days.map(d=>`<div style="text-align:center; font-weight:600; padding:8px; font-size:13px;">${d}</div>`).join('')}
+        ${Array(firstDay).fill('').map(()=>'<div></div>').join('')}
+        ${Array.from({length:daysInMonth}, (_,i) => {
+          const d = i+1;
+          const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const status = availData[dateStr]?.status;
+          const isToday = new Date().toDateString() === new Date(y,m,d).toDateString();
+          let bg = '';
+          if (status==='available') bg='background:#d1fae5;';
+          else if (status==='unavailable') bg='background:#fee2e2;';
+          else if (status==='booked') bg='background:#dbeafe;';
+          else if (status==='leave') bg='background:#fde68a;';
+          
+          const clickable = !isCompany && isEmployed;
+          return `<div class="cal-day" style="aspect-ratio:1; padding:6px; border-radius:6px; border:1px solid var(--border); ${isToday?'border-width:2px; border-color:var(--primary);':''} ${bg}" ${clickable?`onclick="setAvail('${dateStr}')"`:""}>
+            <strong>${d}</strong>${status?`<div style="font-size:10px; margin-top:2px;">${status==='leave'?'🏖️':''}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+      
+      ${!isCompany ? `<p style="margin-top:16px; font-size:13px; color:var(--muted);">Click any day to set your availability status</p>` : ''}
+    `;
+  }
+  
+  window.changeCal = dir => { calDate.setMonth(calDate.getMonth()+dir); renderContent('calendar'); };
+  
+  window.setAvail = async function(dateStr) {
+    const choice = prompt(`Set status for ${dateStr}:\navailable\nunavailable\nbooked`);
+    if (!['available','unavailable','booked'].includes(choice)) return;
+    await db.collection('availability').doc(`${currentUser.uid}_${dateStr}`).set(
+      {userId:currentUser.uid, date:dateStr, status:choice}, 
+      {merge:true}
+    );
+    await loadAllData(); renderContent('calendar'); alert(`✅ Set to: ${choice}`);
+  };
+
+  // ==============================================
+  // ✅ VEHICLE CHECK & OTHER FUNCTIONS
   // ==============================================
   function renderVehicleCheck() {
-    if (userProfile?.role !== 'company' && !currentSelectedCompany) {
+    if (userProfile?.role !== 'company' && userProfile?.driverType === 'employed' && !currentSelectedCompany) {
       return `
         <h3>🚛 Vehicle Walkaround Check</h3>
         <div class="alert alert-warning">
@@ -623,110 +1106,6 @@
     return html;
   }
 
-  // ==============================================
-  // WORK, CALENDAR, DOCUMENTS
-  // ==============================================
-  function renderAvailableWork() {
-    const open = jobsData.filter(j => j.status === 'open');
-    if (!open.length) return `<h3>Available Work</h3><p class="alert alert-info">No jobs posted yet. Check back soon!</p>`;
-    return `<h3>Available Work — ${open.length} job${open.length!==1?'s':''}</h3>` + open.map(j => `
-      <div class="item-card">
-        <strong style="font-size:16px;">${j.title||'Untitled Job'}</strong>
-        <p style="color:var(--muted); font-size:13px; margin:4px 0;">Posted by: ${j.companyName||'Company'}</p>
-        <p><strong>Date:</strong> ${j.date||'Not specified'}</p>
-        <p><strong>Pay:</strong> £${j.pay||'Negotiable'}</p>
-        <button class="btn-accent btn-sm" style="margin-top:12px; width:auto;">Apply / Enquire</button>
-      </div>
-    `).join('');
-  }
-
-  function renderCompanyWork() {
-    const myJobs = jobsData.filter(j => j.companyId === currentUser?.uid);
-    return `
-      <h3>Post New Work</h3>
-      <div class="form-group"><label>Job Title / Route</label><input type="text" id="job-title" /></div>
-      <div class="form-group"><label>Date</label><input type="date" id="job-date" /></div>
-      <div class="form-group"><label>Rate / Pay (£)</label><input type="text" id="job-pay" placeholder="e.g. 180" /></div>
-      <button class="btn-primary" onclick="postJob()">📤 Publish Job</button>
-      <h3 style="margin-top:40px;">Your Posted Jobs</h3>
-      ${!myJobs.length?'<p class="empty">No jobs posted yet</p>':myJobs.map(j=>`
-        <div class="item-card">
-          <strong>${j.title}</strong>
-          <p>Date: ${j.date} | £${j.pay} | <span class="status-badge ${j.status==='open'?'badge-green':'badge-yellow'}">${j.status}</span></p>
-        </div>
-      `).join('')}
-    `;
-  }
-
-  window.postJob = async function() {
-    const title = document.getElementById('job-title').value.trim();
-    const date = document.getElementById('job-date').value;
-    const pay = document.getElementById('job-pay').value.trim();
-    if (!title || !date) return alert('Please enter title and date');
-    await db.collection('jobs').add({
-      companyId: currentUser.uid, 
-      companyName: userProfile.name, 
-      title, date, pay,
-      status: 'open', 
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    alert('✅ Job posted'); 
-    await loadAllData(); 
-    renderContent('work');
-  };
-
-  function renderCalendar() {
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const y = calDate.getFullYear(), m = calDate.getMonth();
-    const firstDay = new Date(y,m,1).getDay();
-    const daysInMonth = new Date(y,m+1,0).getDate();
-    const isDriver = userProfile?.role !== 'company';
-    return `
-      <h3>${isDriver ? 'My Calendar' : 'Company Calendar Overview'}</h3>
-      <div class="key-box">
-        <div class="key-item"><span class="key-swatch" style="background:#d1fae5;"></span> Available</div>
-        <div class="key-item"><span class="key-swatch" style="background:#fee2e2;"></span> Unavailable</div>
-        <div class="key-item"><span class="key-swatch" style="background:#dbeafe;"></span> Work Booked</div>
-      </div>
-      <div class="cal-header">
-        <button class="btn-sm" onclick="changeCal(-1)">←</button>
-        <span style="font-weight:600;">${mNames[m]} ${y}</span>
-        <button class="btn-sm" onclick="changeCal(1)">→</button>
-      </div>
-      <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px;">
-        ${days.map(d=>`<div style="text-align:center; font-weight:600; padding:8px; font-size:13px;">${d}</div>`).join('')}
-        ${Array(firstDay).fill('').map(()=>'<div></div>').join('')}
-        ${Array.from({length:daysInMonth}, (_,i) => {
-          const d = i+1;
-          const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const status = availData[dateStr]?.status;
-          const isToday = new Date().toDateString() === new Date(y,m,d).toDateString();
-          let bg = '';
-          if (status==='available') bg='background:#d1fae5;';
-          else if (status==='unavailable') bg='background:#fee2e2;';
-          else if (status==='booked') bg='background:#dbeafe;';
-          return `<div class="cal-day" style="aspect-ratio:1; padding:6px; border-radius:6px; border:1px solid var(--border); ${isToday?'border-width:2px; border-color:var(--primary);':''} ${bg}" ${isDriver?`onclick="setAvail('${dateStr}')"`:""}>
-            <strong>${d}</strong>${status?`<div style="font-size:10px; margin-top:4px;">${status}</div>`:''}
-          </div>`;
-        }).join('')}
-      </div>
-      <p style="margin-top:16px; font-size:13px; color:var(--muted);">
-        ${isDriver?'Click any day to set your availability':'Driver availability will appear here'}
-      </p>
-    `;
-  }
-  window.changeCal = dir => { calDate.setMonth(calDate.getMonth()+dir); renderContent('calendar'); };
-  window.setAvail = async dateStr => {
-    const choice = prompt(`Set status for ${dateStr}:\navailable\nunavailable\nbooked`);
-    if (!['available','unavailable','booked'].includes(choice)) return;
-    await db.collection('availability').doc(`${currentUser.uid}_${dateStr}`).set(
-      {userId:currentUser.uid, date:dateStr, status:choice}, 
-      {merge:true}
-    );
-    await loadAllData(); renderContent('calendar'); alert(`✅ Set to: ${choice}`);
-  };
-
   function renderDocuments() {
     const docs = userProfile?.role==='company'
       ? [
@@ -752,7 +1131,7 @@
   }
 
   // ==============================================
-  // MULTI-COMPANY & VEHICLE MANAGEMENT
+  // ✅ COMPANY & VEHICLE MANAGEMENT
   // ==============================================
   async function loadUserCompanies() {
     if (!currentUser) return [];
@@ -764,7 +1143,11 @@
       const cSnap = await db.collection('users').doc(data.companyId).get();
       if (cSnap.exists) userCompanies.push({id: data.companyId, name: cSnap.data().companyName || cSnap.data().name});
     }
-    if (userCompanies.length === 1 && !currentSelectedCompany) {
+    const savedCompanyId = localStorage.getItem('currentCompanyId');
+    if (savedCompanyId && userCompanies.length > 0) {
+      const saved = userCompanies.find(c => c.id === savedCompanyId);
+      if (saved) setCurrentCompany(saved);
+    } else if (userCompanies.length === 1 && !currentSelectedCompany) {
       setCurrentCompany(userCompanies[0]);
     }
     return userCompanies;
@@ -790,12 +1173,11 @@
 
   window.addCompanyDriver = async function() {
     const email = document.getElementById('new-driver-email').value.trim();
-    const accessType = document.getElementById('driver-access-type').value;
     if (!email) return alert('Enter driver email');
     
     const driverSnap = await db.collection('users')
-      .where('email', '==', email).where('role', '==', 'driver').limit(1).get();
-    if (driverSnap.empty) return alert('No driver found — ask them to register first');
+      .where('email', '==', email).where('role', '==', 'driver').where('driverType','==','employed').limit(1).get();
+    if (driverSnap.empty) return alert('No employed driver found — ask them to register first and select "Employed Driver"');
     
     const driverId = driverSnap.docs[0].id;
     const existing = await db.collection('company_drivers')
@@ -804,7 +1186,7 @@
     if (!existing.empty) return alert('This driver is already in your list');
     
     await db.collection('company_drivers').add({
-      companyId: currentUser.uid, driverId: driverId, accessType, active: true,
+      companyId: currentUser.uid, driverId: driverId, active: true,
       addedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     alert('✅ Driver added!');
@@ -844,14 +1226,10 @@
       const driverEmail = driverSnap.exists ? (driverSnap.data().email || '') : '';
       list.innerHTML += `
         <div class="item-card">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <strong>${driverName}</strong>
-              <p style="font-size:13px; color:var(--muted); margin:2px 0;">${driverEmail}</p>
-              <span class="status-badge ${data.accessType==='fulltime'?'badge-green':'badge-blue'}">
-                ${data.accessType==='fulltime'?'🔒 Full-time':'⏱️ Temporary'}
-              </span>
-            </div>
+          <div>
+            <strong>${driverName}</strong>
+            <p style="font-size:13px; color:var(--muted);">${driverEmail}</p>
+            <span class="status-badge badge-green">Employed</span>
           </div>
         </div>
       `;
@@ -884,7 +1262,7 @@
       list.innerHTML = `
         <div class="alert alert-info">
           You don't have access to any companies yet. When a company adds you 
-          or confirms you for a job, they will appear here.
+          as an employed driver, it will appear here.
         </div>
       `;
       return;
@@ -892,7 +1270,7 @@
     if (companies.length === 1) {
       list.innerHTML = `
         <div class="alert alert-success">
-          Working for: <strong>${companies[0].name}</strong>
+          ✅ Current Company: <strong>${companies[0].name}</strong>
         </div>
       `;
       return;
@@ -901,11 +1279,9 @@
       <div class="item-card" style="cursor:pointer;" onclick="setCurrentCompanyAndReload('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
         <strong>${c.name}</strong>
       </div>
-    `
-        `).join('');
+    `).join('');
   }
 
-  // ================================= END OF CODE ==================================
 </script>
 
 </body>
