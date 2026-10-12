@@ -1594,7 +1594,6 @@ window.declineHoliday = async function(eventId) {
         ${showPushPrompt()}
         ${renderVerificationBanner()}
         ${renderSearchBar()}
-        ${renderQuickActions()}
       `;
     }
 
@@ -1719,7 +1718,6 @@ window.declineHoliday = async function(eventId) {
         function renderSearchBar() { return ''; }
         ${quickActions}
         ${expAlerts}
-        ${renderQuickActions()}
         
         <h3>👋 Welcome back, ${userProfile.name}!</h3>
                 case 'downloads': content = renderDownloadCentre(); break;
@@ -2439,7 +2437,6 @@ window.declineHoliday = async function(eventId) {
       return `
         ${renderVerificationBanner()}
         ${renderSearchBar()}
-        ${renderQuickActions()}
         
         <h2>🏢 Company Dashboard</h2>
         <p class="text-muted">Welcome back, ${userProfile.companyName || userProfile.name}!</p>
