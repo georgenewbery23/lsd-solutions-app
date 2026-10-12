@@ -201,8 +201,30 @@
 
   <script type="module"> 
   // ==================================================
-// LSD SOLUTIONS — FINAL CONSOLIDATED SCRIPT
-// ==================================================
+  // LSD SOLUTIONS — FINAL CONSOLIDATED SCRIPT
+  // ==================================================
+  // --- FIREBASE CONFIG & INIT ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
+  authDomain: "lsd-solutions.firebaseapp.com",
+  projectId: "lsd-solutions",
+  storageBucket: "lsd-solutions.firebasestorage.app",
+  messagingSenderId: "833767217116",
+  appId: "1:833767217116:web:b8c5d6e7f8a9b0c1d2e3f4"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let currentUser = null;
+let userProfile = null;
 
 // --- STATE — declare ONCE only ---
 let favouriteDrivers = [];
@@ -237,6 +259,68 @@ function showMessage(text, type = 'info') {
   console.log(`📢 ${text}`);
 }
 
+// --- AUTH STATE MANAGEMENT ---
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  
+  if (user) {
+    console.log('🔐 Signed in:', user.email);
+    await loadUserProfile(user.uid);
+  } else {
+    console.log('🔐 Signed out');
+    userProfile = null;
+    showPage('signin-page');
+  }
+});
+
+async function loadUserProfile(uid) {
+  try {
+    const profileRef = doc(db, 'users', uid);
+    const snap = await getDoc(profileRef);
+    
+    if (snap.exists()) {
+      userProfile = snap.data();
+      console.log('✅ Profile loaded — role:', userProfile.role);
+      routeByRole();
+    } else {
+      // New user — create minimal profile
+      userProfile = { role: 'driver', createdAt: new Date() };
+      await setDoc(doc(db, 'users', uid), userProfile);
+      routeByRole();
+    }
+  } catch (err) {
+    console.warn('⚠️ Profile load issue:', err.code);
+    // Still route so user isn't stuck
+    if (!userProfile) userProfile = { role: 'driver' };
+    routeByRole();
+  }
+}
+
+function routeByRole() {
+  if (!userProfile) return;
+  
+  if (userProfile.role === 'company') {
+    showPage('company-portal');
+  } else {
+    showPage('driver-portal');
+  }
+}
+
+// --- SIGN IN ---
+window.signInUser = async function(email, password) {
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    alert('Sign in failed: ' + err.message);
+  }
+};
+
+// --- SIGN OUT ---
+window.signOutUser = async function() {
+  await signOut(auth);
+  showPage('signin-page');
+};
+
 // --- RENDER FUNCTIONS — declare ONCE only ---
 function renderQuickActions() { return ''; }
 function renderSearchBar() { return ''; }
@@ -250,8 +334,157 @@ async function initAuth() {
 // --- YOUR REMAINING FUNCTIONS GO HERE ---
 // ONLY add genuinely NEW functions that don't exist above
 // DO NOT paste blocks containing anything already listed!
+// --- HELPER UI ACTIONS ---
+window.doSignIn = async function() {
+  const email = document.getElementById('email').value;
+  const pass = document.getElementById('password').value;
+  if (!email || !pass) { alert('Fill in all fields'); return; }
+  await signInWithEmailAndPassword(auth, email, pass);
+};
 
+window.registerDriver = async function() {
+  const name = document.getElementById('driver-name').value;
+  const email = document.getElementById('driver-email').value;
+  const pass = document.getElementById('driver-pass').value;
+  if (!name || !email || !pass) { alert('Fill in all fields'); return; }
+  
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      name,
+      email,
+      role: 'driver',
+      createdAt: new Date()
+    });
+  } catch (err) {
+    alert('Registration failed: ' + err.message);
+  }
+};
+
+window.registerCompany = async function() {
+  const name = document.getElementById('company-name').value;
+  const email = document.getElementById('company-email').value;
+  const pass = document.getElementById('company-pass').value;
+  if (!name || !email || !pass) { alert('Fill in all fields'); return; }
+  
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      companyName: name,
+      email,
+      role: 'company',
+      createdAt: new Date()
+    });
+  } catch (err) {
+    alert('Registration failed: ' + err.message);
+  }
+};
 console.log('✅ Script loaded — no duplicates');
   </script>
+  <!-- SIGN IN PAGE -->
+document.addEventListener('DOMContentLoaded', () => {
+  showPage('signin-page');
+});
+<div id="signin-page" class="page">
+  <div class="container">
+    <h1 style="text-align:center;margin:2rem 0;">🚛 LSD Solutions</h1>
+    <h2 style="text-align:center;margin-bottom:2rem;">Sign In</h2>
+    <input type="email" id="email" placeholder="Email" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <input type="password" id="password" placeholder="Password" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <button onclick="doSignIn()" style="width:100%;padding:0.8rem;background:#1a365d;color:white;border:none;border-radius:6px;font-size:1rem;margin-top:1rem;">Sign In</button>
+    <p style="text-align:center;margin-top:1.5rem;">
+      <a href="#" onclick="showPage('register-page'); return false;">Register as Driver</a> | 
+      <a href="#" onclick="showPage('register-company-page'); return false;">Register as Company</a>
+    </p>
+  </div>
+</div>
+
+<!-- REGISTER DRIVER -->
+<div id="register-page" class="page" style="display:none;">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:2rem;">Register as Driver</h2>
+    <input type="text" id="driver-name" placeholder="Full Name" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <input type="email" id="driver-email" placeholder="Email" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <input type="password" id="driver-pass" placeholder="Password" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <button onclick="registerDriver()" style="width:100%;padding:0.8rem;background:#1a365d;color:white;border:none;border-radius:6px;font-size:1rem;margin-top:1rem;">Create Account</button>
+    <p style="text-align:center;margin-top:1.5rem;"><a href="#" onclick="showPage('signin-page'); return false;">← Back to Sign In</a></p>
+  </div>
+</div>
+
+<!-- REGISTER COMPANY -->
+<div id="register-company-page" class="page" style="display:none;">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:2rem;">Register as Company</h2>
+    <input type="text" id="company-name" placeholder="Company Name" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <input type="email" id="company-email" placeholder="Email" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <input type="password" id="company-pass" placeholder="Password" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ddd;border-radius:6px;" />
+    <button onclick="registerCompany()" style="width:100%;padding:0.8rem;background:#1a365d;color:white;border:none;border-radius:6px;font-size:1rem;margin-top:1rem;">Create Account</button>
+    <p style="text-align:center;margin-top:1.5rem;"><a href="#" onclick="showPage('signin-page'); return false;">← Back to Sign In</a></p>
+  </div>
+</div>
+
+<!-- DRIVER PORTAL -->
+<div id="driver-portal" class="page" style="display:none;">
+  <div style="padding:1rem 2rem;background:#f5f7fa;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;">
+    <h2>🚛 Driver Portal</h2>
+    <button onclick="signOutUser()" style="padding:0.5rem 1rem;background:#dc3545;color:white;border:none;border-radius:4px;">Sign Out</button>
+  </div>
+  <div style="padding:2rem;">
+    <h3>Welcome, <span id="driver-name-display">Driver</span></h3>
+    <p style="margin:1rem 0;">Your dashboard is ready.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:2rem;">
+      <button onclick="alert('Vehicle Walk Around — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>📋 Vehicle Walk Around</strong>
+      </button>
+      <button onclick="alert('My Checks — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>✅ My Checks</strong>
+      </button>
+      <button onclick="alert('Available Work — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>📋 Available Work</strong>
+      </button>
+      <button onclick="alert('My Calendar — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>📅 My Calendar</strong>
+      </button>
+      <button onclick="alert('My Documents — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>📄 My Documents</strong>
+      </button>
+      <button onclick="alert('My Profile — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>👤 My Profile</strong>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPANY PORTAL -->
+<div id="company-portal" class="page" style="display:none;">
+  <div style="padding:1rem 2rem;background:#f5f7fa;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;">
+    <h2>🏢 Company Portal</h2>
+    <button onclick="signOutUser()" style="padding:0.5rem 1rem;background:#dc3545;color:white;border:none;border-radius:4px;">Sign Out</button>
+  </div>
+  <div style="padding:2rem;">
+    <h3>Welcome, <span id="company-name-display">Company</span></h3>
+    <p style="margin:1rem 0;">Your management dashboard.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:2rem;">
+      <button onclick="alert('Manage Drivers — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>👥 Drivers</strong>
+      </button>
+      <button onclick="alert('Manage Vehicles — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>🚚 Vehicles</strong>
+      </button>
+      <button onclick="alert('Checklist Builder — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>✅ Vehicle Checks</strong>
+      </button>
+      <button onclick="alert('Post Work — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>📋 Post Available Work</strong>
+      </button>
+      <button onclick="alert('Company Calendar — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>📅 Calendar</strong>
+      </button>
+      <button onclick="alert('Company Profile — coming soon')" style="padding:1.5rem;background:white;border:1px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;">
+        <strong>⚙️ Settings</strong>
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
