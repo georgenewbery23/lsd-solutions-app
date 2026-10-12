@@ -492,6 +492,10 @@
   </div>
 
   <!-- DASHBOARD SECTION -->
+        ${showPushPrompt()}
+      ${renderVerificationBanner()}
+      ${renderSearchBar()}
+      ${renderQuickActions()}
   <div id="dashboard-section" class="hidden">
     <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
     <div id="sidebar-overlay" onclick="closeMobileMenu()"></div>
@@ -809,6 +813,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
           <a href="#" onclick="navigateTo('expenses')" class="${currentPage === 'expenses' ? 'active' : ''}">💰 Expense Claims</a>
           <a href="#" onclick="navigateTo('messages')" class="${currentPage === 'messages' ? 'active' : ''}">💬 Messages</a>
           <a href="#" onclick="navigateTo('downloads')" class="${currentPage === 'downloads' ? 'active' : ''}">📥 My Data</a>
+          <a href="#" onclick="navigateTo('downloads')">📥 My Data & Downloads</a>
           <a href="#" onclick="navigateTo('profile')" class="${currentPage === 'profile' ? 'active' : ''}">👤 My Profile</a>
         `;
       } else {
@@ -1757,6 +1762,11 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     // ==============================================
     // PUSH NOTIFICATIONS
     // ==============================================
+      ${showPushPrompt()}
+      ${renderVerificationBanner()}
+      ${renderSearchBar()}
+      ${renderQuickActions()}
+    
        import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
     
     let messaging = null;
@@ -1874,9 +1884,10 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
         ${renderSearchBar()}
         ${quickActions}
         ${expAlerts}
+        ${renderQuickActions()}
         
         <h3>👋 Welcome back, ${userProfile.name}!</h3>
-        
+                case 'downloads': content = renderDownloadCentre(); break;
         <div class="grid grid-3 mt-3">
           <div class="stat-card">
             <div class="stat-value">${userJobs.filter(j => j.status === 'confirmed').length}</div>
@@ -2597,6 +2608,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       return `
         ${renderVerificationBanner()}
         ${renderSearchBar()}
+        ${renderQuickActions()}
         
         <h2>🏢 Company Dashboard</h2>
         <p class="text-muted">Welcome back, ${userProfile.companyName || userProfile.name}!</p>
