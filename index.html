@@ -2619,7 +2619,6 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       const confirmedJobs = userJobs.filter(j => j.status === 'confirmed').length;
       const pendingChecks = userChecks.filter(c => !c.reviewed).length;
       const pendingExpenses = userExpenses.filter(e => e.status === 'pending').length;
-                case 'holidays': content.innerHTML = renderHolidaysPage(); break;
       
       return `
         ${renderVerificationBanner()}
@@ -3357,7 +3356,15 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     // ==============================================
     // MAIN PAGE ROUTER
     // ==============================================
-function renderPage(page) {
+function renderPage(pageId) {
+  // ...
+  switch (pageId) {
+    // ... other cases ...
+    case 'holidays': 
+      content.innerHTML = renderHolidaysPage(); 
+      break;  // ✅ Correct place — inside switch
+  }
+}
   const content = document.getElementById('page-content');
   
   if (userProfile.role === 'driver') {
