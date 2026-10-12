@@ -3056,39 +3056,42 @@
     // ==============================================
     // MAIN PAGE ROUTER
     // ==============================================
-    function renderPage(page) {
-      const content = document.getElementById('page-content');
-      
-      if (userProfile.role === 'driver') {
-        switch(page) {
-          case 'dashboard': content.innerHTML = renderDriverDashboard(); break;
-          case 'jobs': content.innerHTML = renderJobsPage(); break;
-          case 'calendar': content.innerHTML = renderCalendarPage(); break;
-          case 'documents': content.innerHTML = renderDocumentsPage(); break;
-          case 'checks': content.innerHTML = renderChecksPage(); break;
-          case 'expenses': content.innerHTML = renderExpensesPage(); break;
-          case 'messages': content.innerHTML = renderMessagesPage(); break;
-          case 'downloads': content.innerHTML = renderDownloadsPage(); break;
-          case 'profile': content.innerHTML = renderProfilePage(); break;
-          default: content.innerHTML = renderDriverDashboard();
-        }
-      } else {
-        switch(page) {
-          case 'dashboard': content.innerHTML = renderCompanyDashboard(); break;
-          case 'post-job': content.innerHTML = renderPostJobPage(); break;
-          case 'jobs-manage': content.innerHTML = renderManageJobsPage(); break;
-          case 'drivers': content.innerHTML = renderDriversPage(); break;
-          case 'vehicles': content.innerHTML = renderVehiclesPage(); break;
-          case 'checks-editor': content.innerHTML = renderChecklistEditorPage(); break;
-          case 'reminders': content.innerHTML = renderRemindersPage(); break;
-          case 'expenses-review': content.innerHTML = renderExpensesReviewPage(); break;
-          case 'reports': content.innerHTML = renderReportsPage(); break;
-          case 'messages': content.innerHTML = renderMessagesPage(); break;
-          case 'profile': content.innerHTML = renderCompanyProfilePage(); break;
-          default: content.innerHTML = renderCompanyDashboard();
-        }
-      }
+function renderPage(page) {
+  const content = document.getElementById('page-content');
+  
+  if (userProfile.role === 'driver') {
+    switch(page) {
+      case 'dashboard': content.innerHTML = renderDriverDashboard(); break;
+      case 'jobs': content.innerHTML = renderJobsPage(); break;
+      case 'calendar': content.innerHTML = renderCalendarPage(); break;
+      case 'documents': content.innerHTML = renderDocumentsPage(); break;
+      case 'checks': content.innerHTML = renderChecksPage(); break;
+      case 'expenses': content.innerHTML = renderExpensesPage(); break;
+      case 'messages': content.innerHTML = renderMessagesPage(); break;
+      case 'downloads': content.innerHTML = renderDownloadsPage(); break;
+      case 'profile': content.innerHTML = renderProfilePage(); break;
+      case 'holidays': content.innerHTML = renderHolidaysPage(); break;  // ✅ ADDED
+      default: content.innerHTML = renderDriverDashboard();
     }
+  } else {
+    switch(page) {
+      case 'dashboard': content.innerHTML = renderCompanyDashboard(); break;
+      case 'post-job': content.innerHTML = renderPostJobPage(); break;
+      case 'jobs-manage': content.innerHTML = renderManageJobsPage(); break;
+      case 'drivers': content.innerHTML = renderDriversPage(); break;
+      case 'vehicles': content.innerHTML = renderVehiclesPage(); break;
+      case 'checks-editor': content.innerHTML = renderChecklistEditorPage(); break;
+      case 'reminders': content.innerHTML = renderRemindersPage(); break;
+      case 'expenses-review': content.innerHTML = renderExpensesReviewPage(); break;
+      case 'reports': content.innerHTML = renderReportsPage(); break;
+      case 'messages': content.innerHTML = renderMessagesPage(); break;
+      case 'profile': content.innerHTML = renderCompanyProfilePage(); break;
+      case 'holiday-calendar': content.innerHTML = renderCompanyHolidayCalendarPage(); break;  // ✅ ADDED
+      case 'driver-holidays': content.innerHTML = renderDriverHolidayRequestsPage(); break;    // ✅ ADDED
+      default: content.innerHTML = renderCompanyDashboard();
+    }
+  }
+}
 
     // ==============================================
     // AUTH STATE LISTENER
