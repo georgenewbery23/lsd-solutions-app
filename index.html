@@ -514,7 +514,7 @@ loadCheckList();
     }
   }
 
-  function renderVehicleCheck() {
+function renderVehicleCheck() {
   // If no company selected as driver
   if (userProfile?.role !== 'company' && !currentSelectedCompany) {
     return `
@@ -542,14 +542,14 @@ loadCheckList();
     "Fire Extinguisher & First Aid",
     "Load Security / Doors"
   ];
-  
+
   // Use company's saved list if available
   const checkListItems = window.companyCheckListItems || defaultItems;
 
   return `
     <h3>Daily Vehicle Walkaround Check</h3>
     <p style="color:var(--muted); margin-bottom:20px;">Complete before starting your shift — ${currentSelectedCompany ? `Working for: <strong>${currentSelectedCompany.name}</strong>` : ''}</p>
-    
+
     <div class="form-group">
       <label>Vehicle Registration</label>
       <select id="vreg" style="margin-bottom:14px;">
@@ -561,8 +561,8 @@ loadCheckList();
           </option>
         `).join('')}
       </select>
-      ${companyVehicles.length === 0 
-        ? '<p style="font-size:13px; color:var(--warning);">⚠️ No vehicles listed — ask your company to add your vehicle</p>' 
+      ${companyVehicles.length === 0
+        ? '<p style="font-size:13px; color:var(--warning);">⚠️ No vehicles listed — ask your company to add your vehicle</p>'
         : ''}
     </div>
 
