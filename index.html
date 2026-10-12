@@ -1442,7 +1442,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     // ==============================================
     // GLOBAL SEARCH
     // ==============================================
-    let searchTimeout = null;
+   let searchTimeout = null;
     let searchResults = [];
     
     window.handleSearchInput = function(query) {
@@ -1460,16 +1460,37 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     function performSearch(query) {
       searchResults = [];
       
+      // Search Jobs
       userJobs.forEach(job => {
         if ((job.title && job.title.toLowerCase().includes(query)) ||
-            (job.location && job.location.toLowerCase().includes(query))) {
-          searchResults.push({ type: 'job', icon: '🚛', title: job.title || 'Job', subtitle: job.location, link: 'jobs' });
+            (job.location && job.location.toLowerCase().includes(query)) ||
+            (job.vehicleReg && job.vehicleReg.toLowerCase().includes(query))) {
+          searchResults.push({ type: 'job', icon: '🚛', title: job.title || 'Job', subtitle: job.location, link: 'jobs', data: job });
         }
       });
       
+      // Search Documents
+      if (userProfile.documents) {
+        Object.entries(userProfile.documents).forEach(([key, doc]) => {
+          if (key.toLowerCase().includes(query) || (doc.number && doc.number.includes(query))) {
+            searchResults.push({ type: 'document', icon: '📄', title: key.replace(/([A-Z])/g, ' $1').trim(), subtitle: doc.number || 'Document', link: 'documents' });
+          }
+        });
+      }
+      
+      // Search Expenses
       userExpenses.forEach(exp => {
-        if ((exp.description && exp.description.toLowerCase().includes(query))) {
-          searchResults.push({ type: 'expense', icon: '💰', title: exp.description, subtitle: `£${exp.amount}`, link: 'expenses' });
+        if ((exp.description && exp.description.toLowerCase().includes(query)) ||
+            (exp.category && exp.category.toLowerCase().includes(query))) {
+          searchResults.push({ type: 'expense', icon: '💰', title: exp.description, subtitle: `£${exp.amount.toFixed(2)}`, link: 'expenses', data: exp });
+        }
+      });
+      
+      // Search Calendar Events
+      calendarEvents.forEach(evt => {
+        if ((evt.title && evt.title.toLowerCase().includes(query)) ||
+            (evt.notes && evt.notes.toLowerCase().includes(query))) {
+          searchResults.push({ type: 'event', icon: '📅', title: evt.title, subtitle: evt.date, link: 'calendar', data: evt });
         }
       });
       
@@ -1496,7 +1517,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       `).join('');
     }
     
-    function renderSearchBar() {
+    window.renderSearchBar = function() {
       return `
         <div class="search-container">
           <input type="text" class="search-input" placeholder="Search jobs, docs, expenses..." 
@@ -1504,8 +1525,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
           <div id="search-results" class="search-results"></div>
         </div>
       `;
-    }
-
+    };
     // ==============================================
     // PUSH NOTIFICATIONS
     // ==============================================
