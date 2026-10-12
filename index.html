@@ -1593,7 +1593,6 @@
       const expAlerts = renderExpiryAlerts();
       const today = new Date().toISOString().slice(0, 10);
       const todaysJobs = calendarEvents.filter(e => e.date === today);
-                case 'holidays': content.innerHTML = renderHolidaysPage(); break;
       
       return `
         ${showPushPrompt()}
