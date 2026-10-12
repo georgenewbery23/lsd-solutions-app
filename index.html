@@ -250,6 +250,161 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     };
     applyTheme();
 
+    // =====================================================
+// Multi-Company Access System
+// =====================================================
+
+let currentUserCompanies = [];
+let selectedCompanyId = null;
+let companyVehicles = [];
+
+// Load companies the driver can access
+async function loadUserCompanies() {
+  const userDocRef = doc(db, "users", auth.currentUser.uid);
+  const userSnap = await getDoc(userDocRef);
+  
+  if (!userSnap.exists()) return [];
+  
+  const userData = userSnap.data();
+  currentUserCompanies = userData.companyAccess || [];
+  return currentUserCompanies;
+}
+
+// When driver selects a company → load their vehicles
+async function selectCompany(companyId) {
+  selectedCompanyId = companyId;
+  
+  // Load vehicles ONLY for this company
+  const vehiclesSnap = await getDocs(
+    query(
+      collection(db, `companies/${companyId}/vehicles`),
+      where("active", "==", true)
+    )
+  );
+  
+  companyVehicles = vehiclesSnap.docs.map(d => ({
+    id: d.id,
+    ...d.data()
+  }));
+  
+  populateVehicleDropdowns();
+}
+
+// Populate dropdowns with ONLY assigned vehicles
+function populateVehicleDropdowns() {
+  const plateSelect = document.getElementById("vehiclePlate");
+  const trailerSelect = document.getElementById("trailerNumber");
+  
+  if (plateSelect) {
+    plateSelect.innerHTML = `<option value="">-- Select Vehicle --</option>`;
+    companyVehicles
+      .filter(v => v.type === "truck")
+      .forEach(v => {
+        plateSelect.innerHTML += `<option value="${v.id}">${v.plateNumber} — ${v.makeModel}</option>`;
+      });
+  }
+  
+  if (trailerSelect) {
+    trailerSelect.innerHTML = `<option value="">-- Select Trailer --</option>`;
+    companyVehicles
+      .filter(v => v.type === "trailer")
+      .forEach(v => {
+        trailerSelect.innerHTML += `<option value="${v.id}">${v.plateNumber} — ${v.makeModel}</option>`;
+      });
+  }
+}
+
+// Company adds a FULL-TIME driver
+async function addFulltimeDriver(companyId, driverUid, driverEmail, driverName) {
+  await setDoc(doc(db, `companies/${companyId}/drivers`, driverUid), {
+    driverId: driverUid,
+    driverEmail,
+    driverName,
+    accessType: "fulltime",
+    addedAt: new Date(),
+    addedBy: auth.currentUser.uid,
+    validFrom: new Date(),
+    validUntil: null
+  });
+  
+  // Also add to user's companyAccess list
+  const userRef = doc(db, "users", driverUid);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.exists() ? userSnap.data() : { companyAccess: [] };
+  
+  await updateDoc(userRef, {
+    companyAccess: [...(userData.companyAccess || []), {
+      companyId,
+      companyName: (await getDoc(doc(db, "companies", companyId))).data().name,
+      type: "fulltime",
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: null
+    }]
+  });
+}
+
+// When work is CONFIRMED → grant temporary access
+async function confirmWorkAndGrantAccess(companyId, workId, driverUid) {
+  const workRef = doc(db, `companies/${companyId}/work`, workId);
+  await updateDoc(workRef, { status: "confirmed", assignedDriverId: driverUid });
+  
+  // Add calendar-based access
+  const userRef = doc(db, "users", driverUid);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.exists() ? userSnap.data() : { companyAccess: [] };
+  
+  const workData = (await getDoc(workRef)).data();
+  
+  await updateDoc(userRef, {
+    companyAccess: [...(userData.companyAccess || []), {
+      companyId,
+      companyName: (await getDoc(doc(db, "companies", companyId))).data().name,
+      type: "calendar-assigned",
+      workId,
+      startDate: workData.date,
+      endDate: workData.date
+    }]
+  });
+}
+
+// On sign-in → show company selector if multiple
+async function initCompanyAccess() {
+  const companies = await loadUserCompanies();
+  
+  if (companies.length === 0) {
+    showSection("dashboard");
+    return;
+  }
+  
+  if (companies.length === 1) {
+    await selectCompany(companies[0].companyId);
+    showSection("driver-portal");
+    return;
+  }
+  
+  // Show company picker
+  renderCompanyPicker(companies);
+}
+
+function renderCompanyPicker(companies) {
+  const container = document.getElementById("company-picker-list");
+  container.innerHTML = companies.map(c => `
+    <button class="company-option" data-company="${c.companyId}">
+      <strong>${c.companyName}</strong><br>
+      <small>${c.type === "fulltime" ? "Full Time" : "Assigned Work"}</small>
+    </button>
+  `).join("");
+  
+  container.querySelectorAll(".company-option").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await selectCompany(btn.dataset.company);
+      showSection("driver-portal");
+    });
+  });
+  
+  showSection("company-picker");
+}
+
     // ==============================================
     // NOTIFICATIONS
     // ==============================================
