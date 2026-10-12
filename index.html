@@ -931,8 +931,8 @@
     renderDocPhotos();
   };
 
-  function renderDocPhotos() {
-    const c = document.getElementById(' const c = document.getElementById('docPhotoPreviews');
+   function renderDocPhotos() {
+    const c = document.getElementById('docPhotoPreviews');
     c.innerHTML = docPhotos.map((url, i) => `
       <div class="photo-item">
         <img src="${url}" alt="Document photo" />
