@@ -472,6 +472,15 @@
     document.addEventListener('DOMContentLoaded', () => {
       showPage('signin-page');
     });
+  // ==================================================
+// EXPOSE FUNCTIONS FOR HTML ONCLICK HANDLERS
+// ==================================================
+window.showPage = showPage;
+window.doSignIn = doSignIn;
+window.sendResetLink = sendResetLink;
+window.registerDriver = registerDriver;
+window.registerCompany = registerCompany;
+window.signOutUser = signOutUser;
   </script>
 </body>
 </html>
