@@ -1509,28 +1509,64 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
     // ==============================================
     // PUSH NOTIFICATIONS
     // ==============================================
+       import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+    
     let messaging = null;
     let pushSupported = false;
+    let pushEnabled = localStorage.getItem('pushEnabled') === 'true';
     
     async function initPushNotifications() {
       try {
-        const { isSupported, getToken, onMessage, getMessaging } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js");
-        if (!await isSupported()) return;
-        
+        if (!await isSupported()) {
+          console.log('⚠️ Push notifications not supported on this browser');
+          return;
+        }
         pushSupported = true;
         messaging = getMessaging(app);
         
         onMessage(messaging, (payload) => {
+          console.log('📩 Push received:', payload);
           showNotification(`${payload.notification.title}: ${payload.notification.body}`, 'info');
           addNotification(payload.notification.title, payload.notification.body, payload.data?.link || '#');
         });
       } catch (e) {
-        console.log('Push not available:', e.message);
+        console.log('ℹ️ Push init skipped:', e.message);
       }
     }
     
+    window.requestPushPermission = async function() {
+      if (!pushSupported) {
+        showNotification('⚠️ Notifications not supported on this device/browser', 'warning');
+        return;
+      }
+      
+      try {
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
+          const token = await getToken(messaging, { vapidKey: 'YOUR_VAPID_PUBLIC_KEY_HERE' });
+          
+          if (token && currentUser) {
+            await setDoc(doc(db, 'users', currentUser.uid), {
+              pushToken: token,
+              pushEnabled: true
+            }, { merge: true });
+          }
+          
+          localStorage.setItem('pushEnabled', 'true');
+          pushEnabled = true;
+          showNotification('✅ Notifications enabled!', 'success');
+        } else {
+          showNotification('Notifications were denied', 'info');
+        }
+      } catch (e) {
+        console.error('Push error:', e);
+        showNotification('⚠️ Could not enable notifications', 'warning');
+      }
+    };
+    
     window.showPushPrompt = function() {
-      if (localStorage.getItem('pushEnabled') === 'true' || localStorage.getItem('pushPromptDismissed') === 'true') return '';
+      if (pushEnabled || localStorage.getItem('pushPromptDismissed') === 'true') return '';
       return `
         <div class="push-prompt">
           <div class="push-icon">🔔</div>
