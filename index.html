@@ -515,39 +515,89 @@ loadCheckList();
   }
 
   function renderVehicleCheck() {
+  // If no company selected as driver
+  if (userProfile?.role !== 'company' && !currentSelectedCompany) {
     return `
-      <h3>Daily Vehicle Walkaround Check</h3>
-      <p style="color:var(--muted); margin-bottom:20px;">Complete before starting your shift</p>
-      <div class="form-group"><label>Vehicle Registration</label><input type="text" id="vreg" placeholder="e.g. AB12 CDE" /></div>
-      <h3>Checklist Items</h3>
-      ${['Tyres & Wheels','Brakes','Lights & Indicators','Mirrors','Windscreen & Wipers','Fluid Levels (Oil, Coolant, Screenwash)','Fuel Caps & Security','Coupling / Fifth Wheel','Body & Exterior','Number Plates','Horns & Warning Devices','Tachograph Equipment','Fire Extinguisher & First Aid','Load Security / Doors'].map(item => `
-        <div class="checklist-item">
-          <input type="checkbox" id="check-${item.replace(/\s+/g,'-')}" />
-          <label for="check-${item.replace(/\s+/g,'-')}">${item}</label>
-          <button class="btn-sm btn-warning" style="margin-left:auto; width:auto; padding:4px 8px; font-size:12px;" onclick="showDefect('${item}')">Report Defect</button>
-        </div>`).join('')}
-      <div id="defect-form" class="hidden mt-20">
-        <div class="defect-box">
-          <h4>Report Defect</h4>
-          <input type="text" id="defect-item" placeholder="Defect / Component" />
-          <textarea id="defect-desc" rows="3" placeholder="Describe the issue in detail..." style="resize:none;"></textarea>
-          <label>Severity</label>
-          <select id="defect-severity">
-            <option value="advisory">⚠️ Advisory</option>
-            <option value="major">🔴 Major — Immediate attention</option>
-          </select>
-          <label>Add Photos</label>
-          <input type="file" id="defect-photos" accept="image/*" multiple onchange="showPhotoPreviews(this)" />
-          <div id="photo-preview-area" class="thumb-grid"></div>
-          <button class="btn-primary mt-20" id="save-defect-btn" onclick="saveDefect()">📸 Save Defect</button>
-          <button class="btn-sm" style="background:transparent; color:var(--muted);" onclick="hideDefect()">Cancel</button>
-        </div>
+      <h3>🚛 Vehicle Walkaround Check</h3>
+      <div class="alert alert-warning">
+        ⚠️ Please go to <strong>"🏢 Current Company"</strong> first and select which company you're working for.
       </div>
-      <h3 style="margin-top:30px;">Other Defects</h3>
-      <button class="btn-accent" onclick="showOtherDefect()">Add Any Other Defect</button>
-      <button class="btn-primary mt-20" onclick="submitCheck()">✅ Submit Completed Check</button>
     `;
   }
+
+  // Get custom checklist items — use company's custom list or fall back to defaults
+  const defaultItems = [
+    "Tyres & Wheels",
+    "Brakes",
+    "Lights & Indicators",
+    "Mirrors",
+    "Windscreen & Wipers",
+    "Fluid Levels (Oil, Coolant, Screenwash)",
+    "Fuel Caps & Security",
+    "Coupling / Fifth Wheel",
+    "Body & Exterior",
+    "Number Plates",
+    "Horns & Warning Devices",
+    "Tachograph Equipment",
+    "Fire Extinguisher & First Aid",
+    "Load Security / Doors"
+  ];
+  
+  // Use company's saved list if available
+  const checkListItems = window.companyCheckListItems || defaultItems;
+
+  return `
+    <h3>Daily Vehicle Walkaround Check</h3>
+    <p style="color:var(--muted); margin-bottom:20px;">Complete before starting your shift — ${currentSelectedCompany ? `Working for: <strong>${currentSelectedCompany.name}</strong>` : ''}</p>
+    
+    <div class="form-group">
+      <label>Vehicle Registration</label>
+      <select id="vreg" style="margin-bottom:14px;">
+        <option value="">— Select Vehicle —</option>
+        ${companyVehicles.map(v => `
+          <option value="${v.registration}${v.trailerNumber ? ' / ' + v.trailerNumber : ''}">
+            ${v.type==='trailer'?'📦':'🚛'} ${v.registration}
+            ${v.trailerNumber ? '+ 📦 ' + v.trailerNumber : ''}
+          </option>
+        `).join('')}
+      </select>
+      ${companyVehicles.length === 0 
+        ? '<p style="font-size:13px; color:var(--warning);">⚠️ No vehicles listed — ask your company to add your vehicle</p>' 
+        : ''}
+    </div>
+
+    <h3>Checklist Items</h3>
+    ${checkListItems.map(item => `
+      <div class="checklist-item">
+        <input type="checkbox" id="check-${item.replace(/\s+/g,'-').replace(/[&/]/g,'-')}" />
+        <label for="check-${item.replace(/\s+/g,'-').replace(/[&/]/g,'-')}">${item}</label>
+        <button class="btn-sm btn-warning" style="margin-left:auto; width:auto; padding:4px 8px; font-size:12px;" onclick="showDefect('${item.replace(/'/g, "\\'")}')">Report Defect</button>
+      </div>
+    `).join('')}
+
+    <div id="defect-form" class="hidden mt-20">
+      <div class="defect-box">
+        <h4>Report Defect</h4>
+        <input type="text" id="defect-item" placeholder="Defect / Component" />
+        <textarea id="defect-desc" rows="3" placeholder="Describe the issue in detail..." style="resize:none;"></textarea>
+        <label>Severity</label>
+        <select id="defect-severity">
+          <option value="advisory">⚠️ Advisory</option>
+          <option value="major">🔴 Major — Immediate attention</option>
+        </select>
+        <label>Add Photos</label>
+        <input type="file" id="defect-photos" accept="image/*" multiple onchange="showPhotoPreviews(this)" />
+        <div id="photo-preview-area" class="thumb-grid"></div>
+        <button class="btn-primary mt-20" id="save-defect-btn" onclick="saveDefect()">📸 Save Defect</button>
+        <button class="btn-sm" style="background:transparent; color:var(--muted);" onclick="hideDefect()">Cancel</button>
+      </div>
+    </div>
+
+    <h3 style="margin-top:30px;">Other Defects</h3>
+    <button class="btn-accent" onclick="showOtherDefect()">Add Any Other Defect</button>
+    <button class="btn-primary mt-20" onclick="submitCheck()">✅ Submit Completed Check</button>
+  `;
+}
 
   function showPhotoPreviews(input) {
     selectedPhotoFiles = Array.from(input.files);
