@@ -721,10 +721,13 @@
       return;
     }
     try {
-      const structSnap = await getDoc(doc(db, 'companies', selectedCompanyId, 'settings', 'checklist'));
-      let items = checkStructure;
-      if (structSnap.exists && structSnap.data().items) {
-        items = structSnap.data().items;
+            const structSnap = await getDoc(doc(db, 'companies', selectedCompanyId, 'settings', 'checklist'));
+      let items = checkStructure; // Built-in default list
+      if (structSnap.exists) {
+        const data = structSnap.data();
+        if (data && data.items && Array.isArray(data.items) && data.items.length > 0) {
+          items = data.items;
+        }
       }
       list.innerHTML = items.map((name, i) => `
         <div style="padding:10px 0; border-bottom:1px solid #eee;">
