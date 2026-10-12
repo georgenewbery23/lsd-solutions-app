@@ -2358,6 +2358,24 @@
   // 🔌 TACHOMASTER API — FULL INTEGRATION
   // ==============================================
   
+          <!-- 📊 Auto-Sync Status -->
+        <div style="background:#fff; padding:16px; border-radius:6px; margin:16px 0; border:1px solid #e2e8f0;">
+          <h4 style="margin:0 0 10px 0;">⏰ Automatic Daily Sync</h4>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">Runs automatically at <strong>04:00 UK time</strong> every day</p>
+          
+          <div id="auto-sync-status">
+            <p><strong>Last Run:</strong> <span id="last-sync-run">— Not run yet</span></p>
+            <p><strong>Status:</strong> <span id="sync-status">⏳ Pending first run</span></p>
+            <p><strong>New Infringements Today:</strong> <span id="sync-today-count">0</span></p>
+            <p><strong>Unmatched Drivers:</strong> <span id="sync-unmatched">0</span></p>
+          </div>
+          
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn-sm btn-primary" onclick="runManualSync()">🔄 Run Sync Now</button>
+            <button class="btn-sm btn-outline" onclick="viewSyncLog()">📋 Full Sync History</button>
+          </div>
+        </div>
+        
   let tachoSyncHistory = [];
 
   window.checkTachomasterStatus = async function() {
