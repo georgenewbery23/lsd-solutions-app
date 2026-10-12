@@ -1759,15 +1759,31 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
       if (userProfile.role === 'driver') renderDriverPage(page);
       else renderCompanyPage(page);
     };
+        // ==============================================
+    // PUSH NOTIFICATIONS & MISSING FUNCTIONS
     // ==============================================
-    // PUSH NOTIFICATIONS
-    // ==============================================
-      function showPushPrompt() { return ''; }
-      function renderVerificationBanner() { return ''; }
-      function renderSearchBar() { return ''; }
-      ${renderQuickActions()}
     
-       import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+    // Stub functions — return empty strings so template literals work
+    function showPushPrompt() { return ''; }
+    function renderVerificationBanner() { return ''; }
+    function renderSearchBar() { return ''; }
+    function renderQuickActions() { return ''; }
+
+    // All placeholders must be INSIDE a template literal (backticks)
+    function renderExtraContent() {
+      return `
+        ${showPushPrompt()}
+        ${renderVerificationBanner()}
+        ${renderSearchBar()}
+        ${renderQuickActions()}
+      `;
+    }
+
+    // ==============================================
+    // PUSH NOTIFICATIONS — Firebase Messaging Import
+    // ==============================================
+    import { getMessaging, getToken, onMessage, isSupported } 
+      from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
     
     let messaging = null;
     let pushSupported = false;
