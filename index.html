@@ -59,16 +59,11 @@
     .check-status label.pass:hover, .check-status label.pass.selected { background: rgba(40,167,69,0.1); border-color: var(--success); }
     .check-status label.fail:hover, .check-status label.fail.selected { background: rgba(220,53,69,0.1); border-color: var(--danger); }
     .note-input { margin-top: 0.5rem; max-width: 100%; }
-    .back-link { display: inline-block; margin-bottom: 1.5rem; }
-    .edit-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 0.8rem 1.2rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
-    .add-item-row { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
-    .add-item-row input { flex: 1; margin: 0; }
     .hidden { display: none !important; }
     .signature-box { border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; margin-top: 2rem; text-align: center; }
     .defect-log { margin-top: 1.5rem; padding: 1rem; background: #fff1f1; border-radius: 6px; border: 1px solid #ffcccc; }
     .defect-entry { padding: 0.8rem; border-bottom: 1px solid #ffcccc; }
     
-    /* === VEHICLE MANAGEMENT STYLES === */
     .veh-table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 6px; overflow: hidden; }
     .veh-table th, .veh-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
     .veh-table th { background: #f8f9fa; font-weight: 600; }
@@ -80,12 +75,10 @@
     .check-type-selector { display: flex; gap: 0.8rem; margin: 1rem 0; flex-wrap: wrap; }
     .check-type-option { flex: 1; min-width: 140px; padding: 1rem; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
     .check-type-option.selected { border-color: var(--primary); background: rgba(26,54,93,0.05); font-weight: 600; }
-    .check-type-option.disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-  <!-- SIGN IN PAGE -->
   <div id="signin-page" class="page">
     <div class="container">
       <div class="branding">
@@ -203,7 +196,6 @@
     </div>
   </div>
 
-  <!-- DRIVER PORTAL -->
   <div id="driver-portal" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🚛 LSD Solutions</h2>
@@ -239,7 +231,6 @@
     </div>
   </div>
 
-  <!-- DRIVER — DVSA WALKAROUND CHECK PAGE -->
   <div id="driver-checks-page" class="page" style="display:none;">
     <div class="top-nav">
       <h2>📋 Daily Walkaround Check</h2>
@@ -256,7 +247,6 @@
         </div>
       </div>
       
-      <!-- CHECK TYPE SELECTOR -->
       <h4 style="margin:1rem 0 0.5rem;">What are you checking today?</h4>
       <div class="check-type-selector">
         <div class="check-type-option" id="chk-type-v" onclick="selectCheckType('vehicle')">
@@ -270,7 +260,6 @@
         </div>
       </div>
       
-      <!-- VEHICLE & TRAILER SELECTORS -->
       <div id="selection-fields" class="hidden">
         <div style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
           <div id="veh-select-wrap" style="flex:1; min-width:220px;">
@@ -308,7 +297,6 @@
     </div>
   </div>
 
-  <!-- COMPANY PORTAL -->
   <div id="company-portal" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🏢 LSD Solutions</h2>
@@ -345,7 +333,6 @@
     </div>
   </div>
 
-  <!-- COMPANY — VEHICLES & TRAILERS PAGE -->
   <div id="company-vehicles-page" class="page" style="display:none;">
     <div class="top-nav">
       <h2>🚚 Vehicles &amp; Trailers</h2>
@@ -353,7 +340,6 @@
     </div>
     <div style="padding:2rem; max-width:900px; margin:0 auto;">
       
-      <!-- ADD VEHICLE FORM -->
       <div class="section-card">
         <h3>➕ Add New Vehicle</h3>
         <div class="form-grid">
@@ -367,7 +353,6 @@
         <button class="btn-success small" style="width:auto; margin-top:1rem;" onclick="addVehicle()">✅ Add Vehicle</button>
       </div>
       
-      <!-- ADD TRAILER FORM -->
       <div class="section-card">
         <h3>🔌 Add New Trailer</h3>
         <div class="form-grid">
@@ -384,7 +369,6 @@
         <button class="btn-success small" style="width:auto; margin-top:1rem;" onclick="addTrailer()">✅ Add Trailer</button>
       </div>
       
-      <!-- VEHICLES LIST -->
       <div class="section-card">
         <h3>Your Vehicles</h3>
         <table class="veh-table">
@@ -402,7 +386,6 @@
         </table>
       </div>
       
-      <!-- TRAILERS LIST -->
       <div class="section-card">
         <h3>Your Trailers</h3>
         <table class="veh-table">
@@ -422,14 +405,13 @@
     </div>
   </div>
 
-  <!-- COMPANY — CHECKLIST EDITOR -->
   <div id="company-checklist-editor-page" class="page" style="display:none;">
     <div class="top-nav">
       <h2>✅ DVSA Checklist Editor</h2>
       <button class="btn-secondary small" onclick="showPage('company-portal')">← Back</button>
     </div>
     <div class="checklist-container">
-      <div class="edit-banner">
+      <div class="edit-banner" style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:0.8rem 1.2rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.8rem;">
         <span>✏️ <strong>Edit Mode</strong> — Customise your checks below.</span>
         <button class="btn-success small" onclick="saveFullChecklist()">💾 Save All Changes</button>
       </div>
@@ -452,10 +434,6 @@
   </div>
 
   <script type="module">
-    // ==================================================
-    // LSD SOLUTIONS — COMPLETE FLEET & CHECK SYSTEM
-    // ==================================================
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -481,9 +459,6 @@
     let activeTrailers = [];
     let selectedCheckType = null;
 
-    // ==================================================
-    // DVSA STANDARD CHECKLIST
-    // ==================================================
     function getDefaultDVSA_Checklists() {
       return {
         categories: [
@@ -543,7 +518,6 @@
       };
     }
 
-    // --- UTILITIES ---
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
       const page = document.getElementById(pageId);
@@ -559,7 +533,6 @@
       if (pageId === 'company-checklist-editor-page') loadEditorChecklist();
     }
 
-    // --- AUTH ---
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if (user) {
@@ -603,7 +576,6 @@
       }
     }
 
-    // --- AUTH ACTIONS ---
     window.doSignIn = async function() {
       const email = document.getElementById('email').value;
       const pass = document.getElementById('password').value;
@@ -643,9 +615,6 @@
 
     window.signOutUser = async function() { await signOut(auth); };
 
-    // ==================================================
-    // CHECK TYPE SELECTION — DRIVER
-    // ==================================================
     function resetCheckSelection() {
       selectedCheckType = null;
       activeVehicles = [];
@@ -671,18 +640,15 @@
       document.getElementById('driver-checklist-container').classList.add('hidden');
       document.getElementById('submit-section').classList.add('hidden');
       
-      // Show/hide relevant dropdowns
       document.getElementById('veh-select-wrap').classList.toggle('hidden', type === 'trailer');
       document.getElementById('trailer-select-wrap').classList.toggle('hidden', type === 'vehicle');
       
-      // Populate dropdowns
       populateDropdowns();
     };
 
     async function loadActiveFleetForDriver() {
       if (!currentUser) return;
       
-      // Load vehicles
       const vSnap = await getDocs(query(
         collection(db, 'companyVehicles'),
         where('companyId', '==', currentUser.uid),
@@ -690,7 +656,6 @@
       ));
       activeVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      // Load trailers
       const tSnap = await getDocs(query(
         collection(db, 'companyTrailers'),
         where('companyId', '==', currentUser.uid),
@@ -713,7 +678,6 @@
         tSelect.innerHTML += `<option value="${t.id}">${t.trailerNumber} — ${t.make} (${t.owner})</option>`;
       });
       
-      // Show alert if nothing available
       const hasV = activeVehicles.length > 0;
       const hasT = activeTrailers.length > 0;
       
@@ -725,7 +689,6 @@
         document.getElementById('no-items-alert').classList.add('hidden');
       }
       
-      // Attach change listeners
       vSelect.onchange = checkReadyToShowChecklist;
       tSelect.onchange = checkReadyToShowChecklist;
     }
@@ -744,9 +707,6 @@
       }
     }
 
-    // ==================================================
-    // DRIVER — CHECKLIST CONTENT
-    // ==================================================
     async function loadDriverChecklistContent() {
       driverResponses = {};
       const container = document.getElementById('driver-checklist-container');
@@ -761,11 +721,8 @@
           snap.forEach(d => { data = d.data(); });
         }
       }
-      if (!data?.categories) data = getDefault
-      DefaultDVSA_Checklists();
-      }
+      if (!data?.categories) data = getDefaultDVSA_Checklists();
       
-      // Filter checklist based on check type
       let categories = data.categories;
       if (selectedCheckType === 'vehicle') {
         categories = data.categories.filter(cat => 
@@ -773,9 +730,9 @@
         );
       } else if (selectedCheckType === 'trailer') {
         categories = data.categories.filter(cat => 
-          cat.name.includes('Coupling') || cat.name.includes('Trailer') || 
+          cat.name.includes('Coupling') || cat.name.includes('External') || 
           cat.name.includes('Lights') || cat.name.includes('Tyres') ||
-          cat.name.includes('Brakes') || cat.name.includes('External')
+          cat.name.includes('Brakes')
         );
       }
       
@@ -895,24 +852,22 @@
     async function loadCompanyFleet() {
       if (!currentUser || userProfile?.role !== 'company') return;
       
-      // Load vehicles
       const vSnap = await getDocs(query(
         collection(db, 'companyVehicles'),
         where('companyId', '==', currentUser.uid),
         orderBy('registration')
       ));
-      const vehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      activeVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      // Load trailers
       const tSnap = await getDocs(query(
         collection(db, 'companyTrailers'),
         where('companyId', '==', currentUser.uid),
         orderBy('trailerNumber')
       ));
-      const trailers = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      activeTrailers = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      renderVehiclesTable(vehicles);
-      renderTrailersTable(trailers);
+      renderVehiclesTable(activeVehicles);
+      renderTrailersTable(activeTrailers);
     }
 
     function renderVehiclesTable(vehicles) {
@@ -991,7 +946,6 @@
         createdAt: new Date()
       });
       
-      // Clear form
       document.getElementById('veh-make').value = '';
       document.getElementById('veh-model').value = '';
       document.getElementById('veh-reg').value = '';
@@ -1025,7 +979,6 @@
         createdAt: new Date()
       });
       
-      // Clear form
       document.getElementById('trailer-number').value = '';
       document.getElementById('trailer-make').value = '';
       document.getElementById('trailer-type').value = '';
@@ -1200,12 +1153,10 @@
       alert('✅ Checklist saved! All drivers see the updated version immediately.');
     };
 
-    // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
       showPage('signin-page');
     });
 
-    // --- EXPOSE GLOBALS ---
     window.showPage = showPage;
     window.doSignIn = doSignIn;
     window.sendResetLink = sendResetLink;
