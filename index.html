@@ -3219,15 +3219,6 @@ function renderPage(pageId) {
     // ==============================================
     // AUTH STATE LISTENER
     // ==============================================
-    function formatDate(dateInput) {
-  if (!dateInput) return 'Unknown';
-  let date;
-  if (dateInput.toDate && typeof dateInput.toDate === 'function') date = dateInput.toDate();
-  else if (typeof dateInput === 'string') date = new Date(dateInput);
-  else date = new Date(dateInput);
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-window.formatDate = formatDate;
 
 function renderQuickActions() { return ''; }
 function renderSearchBar() { return ''; }
