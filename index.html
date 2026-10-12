@@ -8,19 +8,12 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
-      --primary: #1a365d;
-      --accent: #d4af37;
-      --light: #f5f7fa;
-      --text: #333;
-      --success: #28a745;
-      --danger: #dc3545;
-      --warning: #ffc107;
-      --dvsa-blue: #005ea5;
+      --primary: #1a365d; --accent: #d4af37; --light: #f5f7fa; --text: #333;
+      --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dvsa-blue: #005ea5;
     }
     body { background: var(--light); min-height: 100vh; color: var(--text); }
     .container { max-width: 420px; margin: 0 auto; padding: 20px; }
     
-    /* ===== BRANDING ===== */
     .branding { text-align: center; margin: 30px 0 40px; }
     .branding img { max-width: 140px; width: 100%; height: auto; margin-bottom: 16px; }
     .branding h1 { font-size: 2.2rem; color: var(--primary); margin-bottom: 4px; font-weight: 700; }
@@ -49,11 +42,9 @@
     .dashboard-card { padding: 1.5rem; background: white; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: box-shadow 0.2s; }
     .dashboard-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     
-    /* ===== DVSA COMPLIANT CHECK STYLES ===== */
     .checklist-container { max-width: 760px; margin: 0 auto; padding: 2rem; }
     .dvsa-banner { background: var(--dvsa-blue); color: white; padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
     .dvsa-banner h3 { font-size: 1rem; font-weight: 600; }
-    .dvsa-banner p { font-size: 0.85rem; opacity: 0.9; }
     .category-group { margin-bottom: 2rem; }
     .category-header { background: #e9ecef; padding: 0.8rem 1.2rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 600; color: #495057; display: flex; justify-content: space-between; align-items: center; }
     .checklist-item { background: white; border: 1px solid #e9ecef; border-radius: 6px; padding: 1rem 1.2rem; margin: 0.6rem 0; transition: all 0.2s; }
@@ -76,6 +67,20 @@
     .signature-box { border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; margin-top: 2rem; text-align: center; }
     .defect-log { margin-top: 1.5rem; padding: 1rem; background: #fff1f1; border-radius: 6px; border: 1px solid #ffcccc; }
     .defect-entry { padding: 0.8rem; border-bottom: 1px solid #ffcccc; }
+    
+    /* === VEHICLE MANAGEMENT STYLES === */
+    .veh-table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 6px; overflow: hidden; }
+    .veh-table th, .veh-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+    .veh-table th { background: #f8f9fa; font-weight: 600; }
+    .veh-table .inactive { opacity: 0.5; background: #f8f9fa; }
+    .toggle-active { width: auto; padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem 1rem; }
+    .form-grid input, .form-grid select { margin: 0; }
+    .section-card { background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid #eee; }
+    .check-type-selector { display: flex; gap: 0.8rem; margin: 1rem 0; flex-wrap: wrap; }
+    .check-type-option { flex: 1; min-width: 140px; padding: 1rem; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .check-type-option.selected { border-color: var(--primary); background: rgba(26,54,93,0.05); font-weight: 600; }
+    .check-type-option.disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -251,25 +256,50 @@
         </div>
       </div>
       
-      <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
-        <div style="flex:1; min-width:200px;">
-          <label><strong>Vehicle Registration:</strong></label>
-          <input type="text" id="veh-reg" placeholder="e.g. AB12 CDE" style="text-transform:uppercase;" />
+      <!-- CHECK TYPE SELECTOR -->
+      <h4 style="margin:1rem 0 0.5rem;">What are you checking today?</h4>
+      <div class="check-type-selector">
+        <div class="check-type-option" id="chk-type-v" onclick="selectCheckType('vehicle')">
+          🚛<br>Vehicle Only
         </div>
-        <div style="flex:1; min-width:200px;">
-          <label><strong>Trailer No. (if applicable):</strong></label>
-          <input type="text" id="trailer-no" placeholder="e.g. T12345" />
+        <div class="check-type-option" id="chk-type-vt" onclick="selectCheckType('both')">
+          🚛+🔌<br>Vehicle + Trailer
+        </div>
+        <div class="check-type-option" id="chk-type-t" onclick="selectCheckType('trailer')">
+          🔌<br>Trailer Only
         </div>
       </div>
       
-      <div id="driver-checklist-container"></div>
+      <!-- VEHICLE & TRAILER SELECTORS -->
+      <div id="selection-fields" class="hidden">
+        <div style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+          <div id="veh-select-wrap" style="flex:1; min-width:220px;">
+            <label><strong>Select Vehicle:</strong></label>
+            <select id="vehicle-select">
+              <option value="">-- Choose vehicle --</option>
+            </select>
+          </div>
+          <div id="trailer-select-wrap" style="flex:1; min-width:220px;">
+            <label><strong>Select Trailer:</strong></label>
+            <select id="trailer-select">
+              <option value="">-- Choose trailer --</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div id="no-items-alert" class="hidden" style="background:#fff3cd; padding:1rem; border-radius:6px; margin:1rem 0;">
+        ⚠️ No active vehicles/trailers found. Ask your company admin to add them first.
+      </div>
+      
+      <div id="driver-checklist-container" class="hidden"></div>
       
       <div id="defects-log-section" class="defect-log hidden">
         <h4 style="color:#a71d2a; margin-bottom:1rem;">⚠️ Reported Defects</h4>
         <div id="defects-list"></div>
       </div>
       
-      <div class="signature-box">
+      <div class="signature-box hidden" id="submit-section">
         <p><strong>I confirm that I have personally carried out this vehicle safety check and all items marked 'Pass' are in a safe and satisfactory condition.</strong></p>
         <p style="margin:1rem 0; font-size:0.9rem; color:#666;">Any defects marked 'Fail' have been recorded and reported to the transport manager immediately.</p>
         <input type="text" id="driver-signature" placeholder="Enter your full name as signature" style="margin-top:1rem;" />
@@ -294,8 +324,9 @@
         <div class="dashboard-card" onclick="alert('Manage Drivers — coming soon')">
           <strong>👥 Drivers</strong>
         </div>
-        <div class="dashboard-card" onclick="alert('Manage Vehicles — coming soon')">
-          <strong>🚚 Vehicles</strong>
+        <div class="dashboard-card" onclick="showPage('company-vehicles-page')">
+          <strong>🚚 Vehicles &amp; Trailers</strong>
+          <p style="font-size:0.85rem; color:#666; margin-top:0.3rem;">Manage your fleet</p>
         </div>
         <div class="dashboard-card" onclick="showPage('company-checklist-editor-page')">
           <strong>✅ DVSA Checklist Editor</strong>
@@ -314,6 +345,83 @@
     </div>
   </div>
 
+  <!-- COMPANY — VEHICLES & TRAILERS PAGE -->
+  <div id="company-vehicles-page" class="page" style="display:none;">
+    <div class="top-nav">
+      <h2>🚚 Vehicles &amp; Trailers</h2>
+      <button class="btn-secondary small" onclick="showPage('company-portal')">← Back</button>
+    </div>
+    <div style="padding:2rem; max-width:900px; margin:0 auto;">
+      
+      <!-- ADD VEHICLE FORM -->
+      <div class="section-card">
+        <h3>➕ Add New Vehicle</h3>
+        <div class="form-grid">
+          <input type="text" id="veh-make" placeholder="Make (e.g. DAF, Mercedes)" />
+          <input type="text" id="veh-model" placeholder="Model" />
+          <input type="text" id="veh-reg" placeholder="Registration Number" style="text-transform:uppercase;" />
+          <input type="text" id="veh-type" placeholder="Type / Fleet No. (optional)" />
+          <input type="text" id="veh-mot-expiry" placeholder="MOT Expiry (DD/MM/YYYY)" />
+          <input type="text" id="veh-tacho-expiry" placeholder="Tachograph Calibration Expiry" />
+        </div>
+        <button class="btn-success small" style="width:auto; margin-top:1rem;" onclick="addVehicle()">✅ Add Vehicle</button>
+      </div>
+      
+      <!-- ADD TRAILER FORM -->
+      <div class="section-card">
+        <h3>🔌 Add New Trailer</h3>
+        <div class="form-grid">
+          <input type="text" id="trailer-number" placeholder="Trailer Number / ID" />
+          <input type="text" id="trailer-make" placeholder="Make / Manufacturer" />
+          <input type="text" id="trailer-type" placeholder="Type / Description" />
+          <select id="trailer-owner">
+            <option value="company">Owned by this company</option>
+            <option value="hired">Hired / Leased</option>
+            <option value="subcontractor">Subcontractor / Third Party</option>
+          </select>
+          <input type="text" id="trailer-mot-expiry" placeholder="MOT / Test Expiry (DD/MM/YYYY)" />
+        </div>
+        <button class="btn-success small" style="width:auto; margin-top:1rem;" onclick="addTrailer()">✅ Add Trailer</button>
+      </div>
+      
+      <!-- VEHICLES LIST -->
+      <div class="section-card">
+        <h3>Your Vehicles</h3>
+        <table class="veh-table">
+          <thead>
+            <tr>
+              <th>Reg / Plate</th>
+              <th>Make &amp; Model</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="vehicles-list-body">
+            <tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- TRAILERS LIST -->
+      <div class="section-card">
+        <h3>Your Trailers</h3>
+        <table class="veh-table">
+          <thead>
+            <tr>
+              <th>Trailer No.</th>
+              <th>Make / Owner</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trailers-list-body">
+            <tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- COMPANY — CHECKLIST EDITOR -->
   <div id="company-checklist-editor-page" class="page" style="display:none;">
     <div class="top-nav">
@@ -322,12 +430,10 @@
     </div>
     <div class="checklist-container">
       <div class="edit-banner">
-        <span>✏️ <strong>Edit Mode</strong> — Rename, add, remove, or reorder checks below. Changes apply to all drivers immediately.</span>
+        <span>✏️ <strong>Edit Mode</strong> — Customise your checks below.</span>
         <button class="btn-success small" onclick="saveFullChecklist()">💾 Save All Changes</button>
       </div>
-      
-      <p style="color:#666; margin-bottom:1.5rem;">Your checklist is pre-loaded with standard DVSA daily walkaround items. You can customise every part of it.</p>
-      
+      <p style="color:#666; margin-bottom:1.5rem;">Standard DVSA items pre-loaded — edit, add, remove or reorder as needed.</p>
       <div class="add-item-row">
         <select id="new-item-category" style="max-width:180px; margin:0;">
           <option value="External">External</option>
@@ -341,20 +447,18 @@
         <input type="text" id="new-item-text" placeholder="Enter new check item..." />
         <button class="btn-secondary small" onclick="addNewCheckItem()">+ Add</button>
       </div>
-      
       <div id="editor-categories-container"></div>
     </div>
   </div>
 
   <script type="module">
     // ==================================================
-    // LSD SOLUTIONS — DVSA COMPLIANT VEHICLE CHECKS
+    // LSD SOLUTIONS — COMPLETE FLEET & CHECK SYSTEM
     // ==================================================
 
-    // --- FIREBASE IMPORTS & CONFIG ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
@@ -373,93 +477,68 @@
     let userProfile = null;
     let checklistData = {};
     let driverResponses = {};
+    let activeVehicles = [];
+    let activeTrailers = [];
+    let selectedCheckType = null;
 
     // ==================================================
-    // DVSA STANDARD CHECKLIST — NO SPACES IN FUNCTION NAME
+    // DVSA STANDARD CHECKLIST
     // ==================================================
     function getDefaultDVSA_Checklists() {
       return {
         categories: [
-          {
-            id: 'cat-external',
-            name: 'External Body & Structure',
-            items: [
-              { id: crypto.randomUUID(), text: 'Condition of bodywork, panels & mirrors', order: 1 },
-              { id: crypto.randomUUID(), text: 'Windscreen, windows & wipers — condition & operation', order: 2 },
-              { id: crypto.randomUUID(), text: 'Number plates — clean, secure & legible', order: 3 },
-              { id: crypto.randomUUID(), text: 'Reflectors & marker boards — present & secure', order: 4 },
-              { id: crypto.randomUUID(), text: 'Roof, covers & load security — no damage', order: 5 }
-            ]
-          },
-          {
-            id: 'cat-lights',
-            name: 'Lights & Signals',
-            items: [
-              { id: crypto.randomUUID(), text: 'Headlights — main beam & dip beam', order: 1 },
-              { id: crypto.randomUUID(), text: 'Rear lights, side lights & number plate lights', order: 2 },
-              { id: crypto.randomUUID(), text: 'Indicators — front, rear & side repeaters', order: 3 },
-              { id: crypto.randomUUID(), text: 'Brake lights — all working', order: 4 },
-              { id: crypto.randomUUID(), text: 'Hazard warning lights', order: 5 },
-              { id: crypto.randomUUID(), text: 'Fog lights — front & rear', order: 6 }
-            ]
-          },
-          {
-            id: 'cat-tyres',
-            name: 'Tyres, Wheels & Wheel Nuts',
-            items: [
-              { id: crypto.randomUUID(), text: 'Tyre condition — adequate tread depth & no cuts/lumps', order: 1 },
-              { id: crypto.randomUUID(), text: 'Tyre pressures — correct for load', order: 2 },
-              { id: crypto.randomUUID(), text: 'Wheel nuts & studs — no missing or loose', order: 3 },
-              { id: crypto.randomUUID(), text: 'Valves & dust caps — secure & in place', order: 4 },
-              { id: crypto.randomUUID(), text: 'Spare wheel — secure & correct type/pressure', order: 5 }
-            ]
-          },
-          {
-            id: 'cat-brakes',
-            name: 'Brakes & Steering',
-            items: [
-              { id: crypto.randomUUID(), text: 'Service brake — operation & effectiveness', order: 1 },
-              { id: crypto.randomUUID(), text: 'Parking brake — holds vehicle on gradient', order: 2 },
-              { id: crypto.randomUUID(), text: 'Brake lines & hoses — no leaks or damage', order: 3 },
-              { id: crypto.randomUUID(), text: 'Brake fluid level — within min/max', order: 4 },
-              { id: crypto.randomUUID(), text: 'Steering — free from play, no noises', order: 5 },
-              { id: crypto.randomUUID(), text: 'Power steering fluid level & operation', order: 6 }
-            ]
-          },
-          {
-            id: 'cat-coupling',
-            name: 'Coupling & Trailer Equipment',
-            items: [
-              { id: crypto.randomUUID(), text: 'Fifth wheel / coupling — secure & properly engaged', order: 1 },
-              { id: crypto.randomUUID(), text: 'Air lines & electrical connections — secure & free from damage', order: 2 },
-              { id: crypto.randomUUID(), text: 'Breakaway cable / secondary coupling — attached correctly', order: 3 },
-              { id: crypto.randomUUID(), text: 'Trailer brakes — operation & responsiveness', order: 4 },
-              { id: crypto.randomUUID(), text: 'Trailer lights — all functioning', order: 5 },
-              { id: crypto.randomUUID(), text: 'Load security — straps, chains & sheets secure', order: 6 }
-            ]
-          },
-          {
-            id: 'cat-underhood',
-            name: 'Under Bonnet & Fluids',
-            items: [
-              { id: crypto.randomUUID(), text: 'Engine oil level — between min & max', order: 1 },
-              { id: crypto.randomUUID(), text: 'Coolant level — correct', order: 2 },
-              { id: crypto.randomUUID(), text: 'Screen wash — topped up', order: 3 },
-              { id: crypto.randomUUID(), text: 'Battery — secure & terminals clean', order: 4 },
-              { id: crypto.randomUUID(), text: 'All fluid levels — no visible leaks', order: 5 }
-            ]
-          },
-          {
-            id: 'cat-other',
-            name: 'General & Safety Equipment',
-            items: [
-              { id: crypto.randomUUID(), text: 'Horn — works correctly', order: 1 },
-              { id: crypto.randomUUID(), text: 'Fire extinguisher — present, in date & secure', order: 2 },
-              { id: crypto.randomUUID(), text: 'Warning triangles / safety vest — carried', order: 3 },
-              { id: crypto.randomUUID(), text: 'Tachograph — calibrated, working & card inserted', order: 4 },
-              { id: crypto.randomUUID(), text: 'All doors, catches & steps — secure & undamaged', order: 5 }
-            ]
-          }
+          { id: 'cat-external', name: 'External Body & Structure', items: [
+            { id: crypto.randomUUID(), text: 'Condition of bodywork, panels & mirrors', order: 1 },
+            { id: crypto.randomUUID(), text: 'Windscreen, windows & wipers — condition & operation', order: 2 },
+            { id: crypto.randomUUID(), text: 'Number plates — clean, secure & legible', order: 3 },
+            { id: crypto.randomUUID(), text: 'Reflectors & marker boards — present & secure', order: 4 },
+            { id: crypto.randomUUID(), text: 'Roof, covers & load security — no damage', order: 5 }
+          ]},
+          { id: 'cat-lights', name: 'Lights & Signals', items: [
+            { id: crypto.randomUUID(), text: 'Headlights — main beam & dip beam', order: 1 },
+            { id: crypto.randomUUID(), text: 'Rear lights, side lights & number plate lights', order: 2 },
+            { id: crypto.randomUUID(), text: 'Indicators — front, rear & side repeaters', order: 3 },
+            { id: crypto.randomUUID(), text: 'Brake lights — all working', order: 4 },
+            { id: crypto.randomUUID(), text: 'Hazard warning lights', order: 5 },
+            { id: crypto.randomUUID(), text: 'Fog lights — front & rear', order: 6 }
+          ]},
+          { id: 'cat-tyres', name: 'Tyres, Wheels & Wheel Nuts', items: [
+            { id: crypto.randomUUID(), text: 'Tyre condition — adequate tread depth & no cuts/lumps', order: 1 },
+            { id: crypto.randomUUID(), text: 'Tyre pressures — correct for load', order: 2 },
+            { id: crypto.randomUUID(), text: 'Wheel nuts & studs — no missing or loose', order: 3 },
+            { id: crypto.randomUUID(), text: 'Valves & dust caps — secure & in place', order: 4 },
+            { id: crypto.randomUUID(), text: 'Spare wheel — secure & correct type/pressure', order: 5 }
+          ]},
+          { id: 'cat-brakes', name: 'Brakes & Steering', items: [
+            { id: crypto.randomUUID(), text: 'Service brake — operation & effectiveness', order: 1 },
+            { id: crypto.randomUUID(), text: 'Parking brake — holds vehicle on gradient', order: 2 },
+            { id: crypto.randomUUID(), text: 'Brake lines & hoses — no leaks or damage', order: 3 },
+            { id: crypto.randomUUID(), text: 'Brake fluid level — within min/max', order: 4 },
+            { id: crypto.randomUUID(), text: 'Steering — free from play, no noises', order: 5 },
+            { id: crypto.randomUUID(), text: 'Power steering fluid level & operation', order: 6 }
+          ]},
+          { id: 'cat-coupling', name: 'Coupling & Trailer Equipment', items: [
+            { id: crypto.randomUUID(), text: 'Fifth wheel / coupling — secure & properly engaged', order: 1 },
+            { id: crypto.randomUUID(), text: 'Air lines & electrical connections — secure & free from damage', order: 2 },
+            { id: crypto.randomUUID(), text: 'Breakaway cable / secondary coupling — attached correctly', order: 3 },
+            { id: crypto.randomUUID(), text: 'Trailer brakes — operation & responsiveness', order: 4 },
+            { id: crypto.randomUUID(), text: 'Trailer lights — all functioning', order: 5 },
+            { id: crypto.randomUUID(), text: 'Load security — straps, chains & sheets secure', order: 6 }
+          ]},
+          { id: 'cat-underhood', name: 'Under Bonnet & Fluids', items: [
+            { id: crypto.randomUUID(), text: 'Engine oil level — between min & max', order: 1 },
+            { id: crypto.randomUUID(), text: 'Coolant level — correct', order: 2 },
+            { id: crypto.randomUUID(), text: 'Screen wash — topped up', order: 3 },
+            { id: crypto.randomUUID(), text: 'Battery — secure & terminals clean', order: 4 },
+            { id: crypto.randomUUID(), text: 'All fluid levels — no visible leaks', order: 5 }
+          ]},
+          { id: 'cat-other', name: 'General & Safety Equipment', items: [
+            { id: crypto.randomUUID(), text: 'Horn — works correctly', order: 1 },
+            { id: crypto.randomUUID(), text: 'Fire extinguisher — present, in date & secure', order: 2 },
+            { id: crypto.randomUUID(), text: 'Warning triangles / safety vest — carried', order: 3 },
+            { id: crypto.randomUUID(), text: 'Tachograph — calibrated, working & card inserted', order: 4 },
+            { id: crypto.randomUUID(), text: 'All doors, catches & steps — secure & undamaged', order: 5 }
+          ]}
         ]
       };
     }
@@ -474,8 +553,9 @@
         document.getElementById('check-date').textContent = new Date().toLocaleDateString('en-GB', {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         });
-        loadDriverChecklist();
+        resetCheckSelection();
       }
+      if (pageId === 'company-vehicles-page') loadCompanyFleet();
       if (pageId === 'company-checklist-editor-page') loadEditorChecklist();
     }
 
@@ -564,7 +644,421 @@
     window.signOutUser = async function() { await signOut(auth); };
 
     // ==================================================
-    // COMPANY EDITOR
+    // CHECK TYPE SELECTION — DRIVER
+    // ==================================================
+    function resetCheckSelection() {
+      selectedCheckType = null;
+      activeVehicles = [];
+      activeTrailers = [];
+      document.querySelectorAll('.check-type-option').forEach(el => el.classList.remove('selected'));
+      document.getElementById('selection-fields').classList.add('hidden');
+      document.getElementById('driver-checklist-container').classList.add('hidden');
+      document.getElementById('submit-section').classList.add('hidden');
+      document.getElementById('no-items-alert').classList.add('hidden');
+      document.getElementById('veh-select-wrap').classList.remove('hidden');
+      document.getElementById('trailer-select-wrap').classList.remove('hidden');
+      document.getElementById('defects-log-section').classList.add('hidden');
+      driverResponses = {};
+      loadActiveFleetForDriver();
+    }
+
+    window.selectCheckType = async function(type) {
+      selectedCheckType = type;
+      document.querySelectorAll('.check-type-option').forEach(el => el.classList.remove('selected'));
+      document.getElementById(`chk-type-${type === 'vehicle' ? 'v' : type === 'both' ? 'vt' : 't'}`).classList.add('selected');
+      
+      document.getElementById('selection-fields').classList.remove('hidden');
+      document.getElementById('driver-checklist-container').classList.add('hidden');
+      document.getElementById('submit-section').classList.add('hidden');
+      
+      // Show/hide relevant dropdowns
+      document.getElementById('veh-select-wrap').classList.toggle('hidden', type === 'trailer');
+      document.getElementById('trailer-select-wrap').classList.toggle('hidden', type === 'vehicle');
+      
+      // Populate dropdowns
+      populateDropdowns();
+    };
+
+    async function loadActiveFleetForDriver() {
+      if (!currentUser) return;
+      
+      // Load vehicles
+      const vSnap = await getDocs(query(
+        collection(db, 'companyVehicles'),
+        where('companyId', '==', currentUser.uid),
+        where('active', '==', true)
+      ));
+      activeVehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // Load trailers
+      const tSnap = await getDocs(query(
+        collection(db, 'companyTrailers'),
+        where('companyId', '==', currentUser.uid),
+        where('active', '==', true)
+      ));
+      activeTrailers = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    function populateDropdowns() {
+      const vSelect = document.getElementById('vehicle-select');
+      const tSelect = document.getElementById('trailer-select');
+      
+      vSelect.innerHTML = '<option value="">-- Choose vehicle --</option>';
+      activeVehicles.forEach(v => {
+        vSelect.innerHTML += `<option value="${v.id}">${v.registration} — ${v.make} ${v.model}</option>`;
+      });
+      
+      tSelect.innerHTML = '<option value="">-- Choose trailer --</option>';
+      activeTrailers.forEach(t => {
+        tSelect.innerHTML += `<option value="${t.id}">${t.trailerNumber} — ${t.make} (${t.owner})</option>`;
+      });
+      
+      // Show alert if nothing available
+      const hasV = activeVehicles.length > 0;
+      const hasT = activeTrailers.length > 0;
+      
+      if ((selectedCheckType === 'vehicle' && !hasV) ||
+          (selectedCheckType === 'trailer' && !hasT) ||
+          (selectedCheckType === 'both' && (!hasV || !hasT))) {
+        document.getElementById('no-items-alert').classList.remove('hidden');
+      } else {
+        document.getElementById('no-items-alert').classList.add('hidden');
+      }
+      
+      // Attach change listeners
+      vSelect.onchange = checkReadyToShowChecklist;
+      tSelect.onchange = checkReadyToShowChecklist;
+    }
+
+    function checkReadyToShowChecklist() {
+      const vOk = selectedCheckType === 'trailer' || document.getElementById('vehicle-select').value;
+      const tOk = selectedCheckType === 'vehicle' || document.getElementById('trailer-select').value;
+      
+      if (vOk && tOk) {
+        document.getElementById('driver-checklist-container').classList.remove('hidden');
+        document.getElementById('submit-section').classList.remove('hidden');
+        loadDriverChecklistContent();
+      } else {
+        document.getElementById('driver-checklist-container').classList.add('hidden');
+        document.getElementById('submit-section').classList.add('hidden');
+      }
+    }
+
+    // ==================================================
+    // DRIVER — CHECKLIST CONTENT
+    // ==================================================
+    async function loadDriverChecklistContent() {
+      driverResponses = {};
+      const container = document.getElementById('driver-checklist-container');
+      container.innerHTML = '';
+      document.getElementById('defects-log-section').classList.add('hidden');
+      
+      let data;
+      if (currentUser) {
+        const q = query(collection(db, 'dvsaChecklists'), orderBy('updatedAt', 'desc'));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          snap.forEach(d => { data = d.data(); });
+        }
+      }
+      if (!data?.categories) data = getDefault
+      DefaultDVSA_Checklists();
+      }
+      
+      // Filter checklist based on check type
+      let categories = data.categories;
+      if (selectedCheckType === 'vehicle') {
+        categories = data.categories.filter(cat => 
+          !cat.name.includes('Coupling') && !cat.name.includes('Trailer')
+        );
+      } else if (selectedCheckType === 'trailer') {
+        categories = data.categories.filter(cat => 
+          cat.name.includes('Coupling') || cat.name.includes('Trailer') || 
+          cat.name.includes('Lights') || cat.name.includes('Tyres') ||
+          cat.name.includes('Brakes') || cat.name.includes('External')
+        );
+      }
+      
+      categories.forEach(cat => {
+        if (!cat.items.length) return;
+        
+        const catEl = document.createElement('div');
+        catEl.className = 'category-group';
+        catEl.innerHTML = `<h4 class="category-header">${cat.name}</h4>`;
+        container.appendChild(catEl);
+        
+        cat.items.forEach(item => {
+          driverResponses[item.id] = { passed: null, note: '', text: item.text };
+          
+          const itemEl = document.createElement('div');
+          itemEl.className = 'checklist-item';
+          itemEl.id = `drv-check-${item.id}`;
+          itemEl.innerHTML = `
+            <div class="item-label"><strong>${item.text}</strong></div>
+            <div class="check-status">
+              <label class="pass" id="pass-lbl-${item.id}">
+                <input type="radio" name="chk-${item.id}" value="pass" 
+                       onchange="setDrvStatus('${item.id}', true)"> ✅ Pass
+              </label>
+              <label class="fail" id="fail-lbl-${item.id}">
+                <input type="radio" name="chk-${item.id}" value="fail" 
+                       onchange="setDrvStatus('${item.id}', false)"> ⚠️ Fail / Defect
+              </label>
+            </div>
+            <input type="text" class="note-input" id="note-${item.id}" 
+                   placeholder="Add note if required..."
+                   onchange="setDrvNote('${item.id}', this.value)">
+          `;
+          container.appendChild(itemEl);
+        });
+      });
+    }
+
+    window.setDrvStatus = function(id, passed) {
+      if (driverResponses[id]) {
+        driverResponses[id].passed = passed;
+        const el = document.getElementById(`drv-check-${id}`);
+        if (el) {
+          el.classList.remove('completed-pass', 'completed-fail');
+          el.classList.add(passed ? 'completed-pass' : 'completed-fail');
+        }
+        updateDefectsDisplay();
+      }
+    };
+
+    window.setDrvNote = function(id, note) {
+      if (driverResponses[id]) driverResponses[id].note = note;
+    };
+
+    function updateDefectsDisplay() {
+      const fails = Object.entries(driverResponses).filter(([_, r]) => r.passed === false);
+      const section = document.getElementById('defects-log-section');
+      const list = document.getElementById('defects-list');
+      
+      if (fails.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+      
+      section.classList.remove('hidden');
+      list.innerHTML = fails.map(([id, r]) => `
+        <div class="defect-entry">
+          <strong>${r.text}</strong>
+          ${r.note ? `<p style="margin-top:0.3rem; font-size:0.9rem;">Note: ${r.note}</p>` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.submitDriverChecks = async function() {
+      const allAnswered = Object.values(driverResponses).every(r => r.passed !== null);
+      if (!allAnswered) {
+        alert('⚠️ Please answer ALL check items before submitting.');
+        return;
+      }
+      
+      const signature = document.getElementById('driver-signature').value.trim();
+      if (!signature) {
+        alert('⚠️ Please enter your name as confirmation.');
+        return;
+      }
+      
+      const vehicleId = document.getElementById('vehicle-select')?.value || null;
+      const trailerId = document.getElementById('trailer-select')?.value || null;
+      const vehicle = activeVehicles.find(v => v.id === vehicleId);
+      const trailer = activeTrailers.find(t => t.id === trailerId);
+      
+      await addDoc(collection(db, 'completedChecks'), {
+        driverId: currentUser?.uid,
+        driverName: userProfile?.name || 'Unknown',
+        signature: signature,
+        checkType: selectedCheckType,
+        vehicleId: vehicleId,
+        vehicleReg: vehicle?.registration || 'Not selected',
+        vehicleMakeModel: vehicle ? `${vehicle.make} ${vehicle.model}` : 'Not selected',
+        trailerId: trailerId,
+        trailerNumber: trailer?.trailerNumber || 'Not selected',
+        trailerOwner: trailer?.owner || 'N/A',
+        responses: driverResponses,
+        completedAt: new Date(),
+        hasDefects: Object.values(driverResponses).some(r => r.passed === false)
+      });
+      
+      alert('✅ Check submitted — Thank you for keeping safe on the road!');
+      showPage('driver-portal');
+      
+      document.getElementById('driver-signature').value = '';
+    };
+
+    // ==================================================
+    // COMPANY — FLEET MANAGEMENT
+    // ==================================================
+    async function loadCompanyFleet() {
+      if (!currentUser || userProfile?.role !== 'company') return;
+      
+      // Load vehicles
+      const vSnap = await getDocs(query(
+        collection(db, 'companyVehicles'),
+        where('companyId', '==', currentUser.uid),
+        orderBy('registration')
+      ));
+      const vehicles = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // Load trailers
+      const tSnap = await getDocs(query(
+        collection(db, 'companyTrailers'),
+        where('companyId', '==', currentUser.uid),
+        orderBy('trailerNumber')
+      ));
+      const trailers = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      renderVehiclesTable(vehicles);
+      renderTrailersTable(trailers);
+    }
+
+    function renderVehiclesTable(vehicles) {
+      const tbody = document.getElementById('vehicles-list-body');
+      if (!vehicles.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">No vehicles added yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = vehicles.map(v => `
+        <tr class="${v.active === false ? 'inactive' : ''}">
+          <td><strong>${v.registration || '—'}</strong></td>
+          <td>${v.make || ''} ${v.model || ''}</td>
+          <td>
+            ${v.active !== false 
+              ? '<span style="color:green; font-weight:600;">✅ Active</span>' 
+              : '<span style="color:#999;">⏸️ Inactive</span>'}
+          </td>
+          <td>
+            <button class="tiny toggle-active ${v.active !== false ? 'btn-warning' : 'btn-success'}" 
+                    onclick="toggleVehicleActive('${v.id}', ${v.active !== false})">
+              ${v.active !== false ? 'Deactivate' : 'Activate'}
+            </button>
+            <button class="tiny btn-danger" onclick="deleteVehicle('${v.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderTrailersTable(trailers) {
+      const tbody = document.getElementById('trailers-list-body');
+      if (!trailers.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:1rem;">No trailers added yet.</td></tr>';
+        return;
+      }
+      const ownerLabels = { company: 'Company Owned', hired: 'Hired/Leased', subcontractor: 'Subcontractor' };
+      tbody.innerHTML = trailers.map(t => `
+        <tr class="${t.active === false ? 'inactive' : ''}">
+          <td><strong>${t.trailerNumber || '—'}</strong></td>
+          <td>${t.make || ''}<br><small style="color:#666;">${ownerLabels[t.owner] || t.owner}</small></td>
+          <td>
+            ${t.active !== false 
+              ? '<span style="color:green; font-weight:600;">✅ Active</span>' 
+              : '<span style="color:#999;">⏸️ Inactive</span>'}
+          </td>
+          <td>
+            <button class="tiny toggle-active ${t.active !== false ? 'btn-warning' : 'btn-success'}" 
+                    onclick="toggleTrailerActive('${t.id}', ${t.active !== false})">
+              ${t.active !== false ? 'Deactivate' : 'Activate'}
+            </button>
+            <button class="tiny btn-danger" onclick="deleteTrailer('${t.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    window.addVehicle = async function() {
+      if (!currentUser) { alert('Please sign in'); return; }
+      
+      const make = document.getElementById('veh-make').value.trim();
+      const model = document.getElementById('veh-model').value.trim();
+      const reg = document.getElementById('veh-reg').value.trim();
+      const type = document.getElementById('veh-type').value.trim();
+      const motExp = document.getElementById('veh-mot-expiry').value.trim();
+      const tachoExp = document.getElementById('veh-tacho-expiry').value.trim();
+      
+      if (!make || !model || !reg) { alert('Fill in Make, Model & Registration at minimum'); return; }
+      
+      await addDoc(collection(db, 'companyVehicles'), {
+        companyId: currentUser.uid,
+        make, model,
+        registration: reg.toUpperCase(),
+        type,
+        motExpiry: motExp,
+        tachoExpiry: tachoExp,
+        active: true,
+        createdAt: new Date()
+      });
+      
+      // Clear form
+      document.getElementById('veh-make').value = '';
+      document.getElementById('veh-model').value = '';
+      document.getElementById('veh-reg').value = '';
+      document.getElementById('veh-type').value = '';
+      document.getElementById('veh-mot-expiry').value = '';
+      document.getElementById('veh-tacho-expiry').value = '';
+      
+      alert('✅ Vehicle added — now visible to your drivers');
+      loadCompanyFleet();
+    };
+
+    window.addTrailer = async function() {
+      if (!currentUser) { alert('Please sign in'); return; }
+      
+      const number = document.getElementById('trailer-number').value.trim();
+      const make = document.getElementById('trailer-make').value.trim();
+      const type = document.getElementById('trailer-type').value.trim();
+      const owner = document.getElementById('trailer-owner').value;
+      const motExp = document.getElementById('trailer-mot-expiry').value.trim();
+      
+      if (!number || !make) { alert('Fill in Trailer Number & Make at minimum'); return; }
+      
+      await addDoc(collection(db, 'companyTrailers'), {
+        companyId: currentUser.uid,
+        trailerNumber: number,
+        make,
+        type,
+        owner,
+        motExpiry: motExp,
+        active: true,
+        createdAt: new Date()
+      });
+      
+      // Clear form
+      document.getElementById('trailer-number').value = '';
+      document.getElementById('trailer-make').value = '';
+      document.getElementById('trailer-type').value = '';
+      document.getElementById('trailer-mot-expiry').value = '';
+      
+      alert('✅ Trailer added — now visible to your drivers');
+      loadCompanyFleet();
+    };
+
+    window.toggleVehicleActive = async function(id, currentlyActive) {
+      await updateDoc(doc(db, 'companyVehicles', id), { active: !currentlyActive });
+      loadCompanyFleet();
+    };
+
+    window.toggleTrailerActive = async function(id, currentlyActive) {
+      await updateDoc(doc(db, 'companyTrailers', id), { active: !currentlyActive });
+      loadCompanyFleet();
+    };
+
+    window.deleteVehicle = async function(id) {
+      if (!confirm('Permanently delete this vehicle? This cannot be undone.')) return;
+      await updateDoc(doc(db, 'companyVehicles', id), { active: false, deleted: true });
+      loadCompanyFleet();
+    };
+
+    window.deleteTrailer = async function(id) {
+      if (!confirm('Permanently delete this trailer? This cannot be undone.')) return;
+      await updateDoc(doc(db, 'companyTrailers', id), { active: false, deleted: true });
+      loadCompanyFleet();
+    };
+
+    // ==================================================
+    // COMPANY — CHECKLIST EDITOR
     // ==================================================
     async function loadEditorChecklist() {
       if (!currentUser || userProfile?.role !== 'company') return;
@@ -706,142 +1200,30 @@
       alert('✅ Checklist saved! All drivers see the updated version immediately.');
     };
 
-    // ==================================================
-    // DRIVER CHECK COMPLETION
-    // ==================================================
-    async function loadDriverChecklist() {
-      driverResponses = {};
-      const container = document.getElementById('driver-checklist-container');
-      container.innerHTML = '';
-      document.getElementById('defects-log-section').classList.add('hidden');
-      
-      let data;
-      if (currentUser) {
-        const q = query(collection(db, 'dvsaChecklists'), orderBy('updatedAt', 'desc'));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          snap.forEach(d => { data = d.data(); });
-        }
-      }
-      if (!data?.categories) data = getDefaultDVSA_Checklists();
-      
-      data.categories.forEach(cat => {
-        if (!cat.items.length) return;
-        
-        const catEl = document.createElement('div');
-        catEl.className = 'category-group';
-        catEl.innerHTML = `<h4 class="category-header">${cat.name}</h4>`;
-        container.appendChild(catEl);
-        
-        cat.items.forEach(item => {
-          driverResponses[item.id] = { passed: null, note: '', text: item.text };
-          
-          const itemEl = document.createElement('div');
-          itemEl.className = 'checklist-item';
-          itemEl.id = `drv-check-${item.id}`;
-          itemEl.innerHTML = `
-            <div class="item-label"><strong>${item.text}</strong></div>
-            <div class="check-status">
-              <label class="pass" id="pass-lbl-${item.id}">
-                <input type="radio" name="chk-${item.id}" value="pass" 
-                       onchange="setDrvStatus('${item.id}', true)"> ✅ Pass
-              </label>
-              <label class="fail" id="fail-lbl-${item.id}">
-                <input type="radio" name="chk-${item.id}" value="fail" 
-                       onchange="setDrvStatus('${item.id}', false)"> ⚠️ Fail / Defect
-              </label>
-            </div>
-            <input type="text" class="note-input" id="note-${item.id}" 
-                   placeholder="Add note if required..."
-                   onchange="setDrvNote('${item.id}', this.value)">
-          `;
-          container.appendChild(itemEl);
-        });
-      });
-    }
-
-    window.setDrvStatus = function(id, passed) {
-      if (driverResponses[id]) {
-        driverResponses[id].passed = passed;
-        const el = document.getElementById(`drv-check-${id}`);
-        if (el) {
-          el.classList.remove('completed-pass', 'completed-fail');
-          el.classList.add(passed ? 'completed-pass' : 'completed-fail');
-        }
-        updateDefectsDisplay();
-      }
-    };
-
-    window.setDrvNote = function(id, note) {
-      if (driverResponses[id]) driverResponses[id].note = note;
-    };
-
-    function updateDefectsDisplay() {
-      const fails = Object.entries(driverResponses).filter(([_, r]) => r.passed === false);
-      const section = document.getElementById('defects-log-section');
-      const list = document.getElementById('defects-list');
-      
-      if (fails.length === 0) {
-        section.classList.add('hidden');
-        return;
-      }
-      
-      section.classList.remove('hidden');
-      list.innerHTML = fails.map(([id, r]) => `
-        <div class="defect-entry">
-          <strong>${r.text}</strong>
-          ${r.note ? `<p style="margin-top:0.3rem; font-size:0.9rem;">Note: ${r.note}</p>` : ''}
-        </div>
-      `).join('');
-    }
-
-    window.submitDriverChecks = async function() {
-      const allAnswered = Object.values(driverResponses).every(r => r.passed !== null);
-      if (!allAnswered) {
-        alert('⚠️ Please answer ALL check items before submitting.');
-        return;
-      }
-      
-      const signature = document.getElementById('driver-signature').value.trim();
-      if (!signature) {
-        alert('⚠️ Please enter your name as confirmation.');
-        return;
-      }
-      
-      const reg = document.getElementById('veh-reg').value.trim() || 'Not entered';
-      const trailer = document.getElementById('trailer-no').value.trim() || 'None';
-      
-      await addDoc(collection(db, 'completedChecks'), {
-        driverId: currentUser?.uid,
-        driverName: userProfile?.name || 'Unknown',
-        signature: signature,
-        vehicleReg: reg,
-        trailerNumber: trailer,
-        responses: driverResponses,
-        completedAt: new Date(),
-        hasDefects: Object.values(driverResponses).some(r => r.passed === false)
-      });
-      
-      alert('✅ Check submitted — Thank you for keeping safe on the road!');
-      showPage('driver-portal');
-      
-      document.getElementById('veh-reg').value = '';
-      document.getElementById('trailer-no').value = '';
-      document.getElementById('driver-signature').value = '';
-    };
-
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
       showPage('signin-page');
     });
 
-    // --- EXPOSE FOR ONCLICK ---
+    // --- EXPOSE GLOBALS ---
     window.showPage = showPage;
     window.doSignIn = doSignIn;
     window.sendResetLink = sendResetLink;
     window.registerDriver = registerDriver;
     window.registerCompany = registerCompany;
     window.signOutUser = signOutUser;
+    
+    window.selectCheckType = selectCheckType;
+    window.setDrvStatus = setDrvStatus;
+    window.setDrvNote = setDrvNote;
+    window.submitDriverChecks = submitDriverChecks;
+    
+    window.addVehicle = addVehicle;
+    window.addTrailer = addTrailer;
+    window.toggleVehicleActive = toggleVehicleActive;
+    window.toggleTrailerActive = toggleTrailerActive;
+    window.deleteVehicle = deleteVehicle;
+    window.deleteTrailer = deleteTrailer;
     
     window.renameCategory = renameCategory;
     window.moveCategoryUp = moveCategoryUp;
@@ -853,10 +1235,6 @@
     window.deleteItem = deleteItem;
     window.addNewCheckItem = addNewCheckItem;
     window.saveFullChecklist = saveFullChecklist;
-    
-    window.setDrvStatus = setDrvStatus;
-    window.setDrvNote = setDrvNote;
-    window.submitDriverChecks = submitDriverChecks;
   </script>
 </body>
 </html>
