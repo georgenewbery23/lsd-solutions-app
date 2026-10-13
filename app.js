@@ -17,6 +17,16 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+window.signIn = async function() {
+  const email = document.getElementById('signin-email').value;
+  const password = document.getElementById('signin-password').value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (e) {
+    alert('Sign in failed: ' + e.message);
+  }
+};
+
 // --------------------------
 // 2. FIREBASE IMPORTS
 // --------------------------
