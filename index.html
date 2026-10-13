@@ -722,7 +722,20 @@
     }
     try {
             const structSnap = await getDoc(doc(db, 'companies', selectedCompanyId, 'settings', 'checklist'));
-      let items = checkStructure; // Built-in default list
+      let items = checkStructure; // editedChecks = [
+  "Vehicle Exterior — Body, panels, mirrors, markings",
+  "Windscreen & Windows — Condition, wipers, washers, mirrors",
+  "Lights & Indicators — All working, lenses clean, correct colour",
+  "Tyres & Wheels — Pressure, tread depth (min 1.6mm), condition, security",
+  "Brakes — Service brake, parking brake, air pressure build-up",
+  "Steering — Free play, fluid level, no leaks",
+  "Suspension — Springs, shock absorbers, mounting points",
+  "Fluid Levels — Engine oil, coolant, screen wash, fuel/water leaks",
+  "Coupling & Trailer Securement — Fifth wheel, air lines, electrics, breakaway",
+  "Load Security — Straps, chains, sheeted, weight distribution",
+  "Emergency Equipment — Fire extinguisher, warning triangle, first aid, wheel chocks",
+  "Cab & Interior — Controls, seatbelts, tachograph, handbrake, doors secure"
+];
       if (structSnap.exists) {
         const data = structSnap.data();
         if (data && data.items && Array.isArray(data.items) && data.items.length > 0) {
@@ -1210,12 +1223,26 @@
   // =====================================================
   let editedChecks = [];
 
-  async function loadCompanyCheckEditor() {
+   async function loadCompanyCheckEditor() {
     const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
-    if (snap.exists && snap.data().items) {
+    if (snap.exists && snap.data().items && Array.isArray(snap.data().items)) {
       editedChecks = [...snap.data().items];
     } else {
-      editedChecks = [...checkStructure];
+      // ✅ DVSA COMPLIANT DEFAULT LIST
+      editedChecks = [
+        "Vehicle Exterior — Body, panels, mirrors, markings",
+        "Windscreen & Windows — Condition, wipers, washers, mirrors",
+        "Lights & Indicators — All working, lenses clean, correct colour",
+        "Tyres & Wheels — Pressure, tread depth (min 1.6mm), condition, security",
+        "Brakes — Service brake, parking brake, air pressure build-up",
+        "Steering — Free play, fluid level, no leaks",
+        "Suspension — Springs, shock absorbers, mounting points",
+        "Fluid Levels — Engine oil, coolant, screen wash, fuel/water leaks",
+        "Coupling & Trailer Securement — Fifth wheel, air lines, electrics, breakaway",
+        "Load Security — Straps, chains, sheeted, weight distribution",
+        "Emergency Equipment — Fire extinguisher, warning triangle, first aid, wheel chocks",
+        "Cab & Interior — Controls, seatbelts, tachograph, handbrake, doors secure"
+      ];
     }
     renderCheckEditor();
   }
