@@ -245,6 +245,33 @@ const INVOICE_PREFIX = "LSDSA";
 // ==================================================
 // DVSA COMPLIANT WALKAROUND CHECKLIST
 // ==================================================
+// Vehicles dropdown
+if (type !== 'trailer') {
+  vehSelect.innerHTML = `<option value="">— Select Vehicle —</option>`;
+  for (const cold of accessibleCompanies) {
+    if (!cold) continue;
+    const vehQ = query(collection(db, 'companies', cold, 'vehicles'), where('active', '==', true));
+    const vehSnap = await getDocs(vehQ);
+    vehSnap.docs.forEach(d => {
+      const v = d.data();
+      vehSelect.innerHTML += `<option value="${d.id}">${v.registration} — ${v.make} ${v.model}</option>`;
+    });
+  }
+}
+
+// Trailers dropdown
+if (type !== 'vehicle') {
+  trlSelect.innerHTML = `<option value="">— Select Trailer —</option>`;
+  for (const cold of accessibleCompanies) {
+    if (!cold) continue;
+    const trlQ = query(collection(db, 'companies', cold, 'trailers'), where('active', '==', true));
+    const trlSnap = await getDocs(trlQ);
+    trlSnap.docs.forEach(d => {
+      const t = d.data();
+      trlSelect.innerHTML += `<option value="${d.id}">${t.trailerNumber} — ${t.ownership || 'Company Owned'}</option>`;
+    });
+  }
+}
 const DEFAULT_CHECKLIST = {
   title: "DVSA Compliant HGV Walkaround Check",
   items: [
