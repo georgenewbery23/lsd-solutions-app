@@ -560,6 +560,10 @@ async function handleRegisterDriver() {
       medicalExpiry: null,
       companies: [],
       active: true
+      
+      document.getElementById('drvValidFrom').value = toInputDate(profile.validFrom);
+      document.getElementById('drvExpiry').value = toInputDate(profile.expiryDate);
+      document.getElementById('drvMedicalExp').value = toInputDate(profile.medicalExpiry);
     });
     
     showToast('✅ Account created! Check your email to verify.', 'success');
