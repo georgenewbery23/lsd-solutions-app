@@ -618,6 +618,7 @@
         await loadCompanyVehicles();
         await loadCompanyCheckEditor();
         await loadPostedWork();
+        await loadCompanyProfile();  // ← ADD THIS
       }
     } catch (err) {
       console.error('Profile load error:', err);
