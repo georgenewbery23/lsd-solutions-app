@@ -1770,4 +1770,446 @@
       await setDoc(doc(db, 'companies', companyId, 'trailers', editId), data, { merge: true });
       hideFleetForm();
     }
-    
+        // ==============================================
+    // COMPANY DRIVERS MANAGEMENT
+    // ==============================================
+    async function renderCompanyDrivers() {
+      const companyId = currentUser.uid;
+      const list = document.getElementById('companyDriversList');
+      
+      const unsub = onSnapshot(
+        collection(db, 'companies', companyId, 'drivers'),
+        (snap) => {
+          if (snap.empty) {
+            list.innerHTML = `<p class="muted">No drivers added yet. Drivers will appear here automatically when they accept work from you.</p>`;
+            return;
+          }
+          list.innerHTML = `<div class="grid-2">${snap.docs.map(d => {
+            const drv = d.data();
+            return `
+              <div class="vehicle-card" style="margin:0;">
+                <div class="flex-between">
+                  <div>
+                    <h4 style="margin:0;">${escapeHtml(drv.fullName || 'Unknown Driver')}</h4>
+                    <p class="muted">${escapeHtml(drv.email || '')}</p>
+                  </div>
+                  <span class="status-badge ${drv.active !== false ? 'status-active' : 'status-inactive'}">
+                    ${drv.active !== false ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div class="mt-1">
+                  ${drv.licenceNumber ? `<p class="muted">Licence: ${escapeHtml(drv.licenceNumber)}</p>` : ''}
+                  ${drv.expiryDate ? `<p class="muted">Licence Expires: ${drv.expiryDate}</p>` : ''}
+                  ${drv.medicalExpiry ? `<p class="muted">Medical Expires: ${drv.medicalExpiry}</p>` : ''}
+                  ${drv.linkedAt ? `<p class="muted">Added: ${drv.linkedAt.toDate().toLocaleDateString()}</p>` : ''}
+                </div>
+                <div class="btn-group mt-2" style="justify-content:flex-end;">
+                  <button class="btn-sm btn-secondary" onclick="viewDriverDocs('${d.id}')">📄 Documents</button>
+                  <button class="btn-sm btn-secondary" onclick="editDriver('${d.id}')">Edit</button>
+                  <button class="btn-sm btn-danger" onclick="toggleDriverActive('${d.id}', ${drv.active !== false})">
+                    ${drv.active !== false ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}</div>`;
+        }
+      );
+      unsubscribeSnapshots.push(unsub);
+    }
+
+    window.showAddDriverForm = function() {
+      document.getElementById('addDriverFormWrap').innerHTML = `
+        <div class="card">
+          <h3>Add Employed Driver</h3>
+          <label class="label-sm">Full Name *</label>
+          <input type="text" id="newDrvName" placeholder="Full name" />
+          <label class="label-sm">Email Address *</label>
+          <input type="email" id="newDrvEmail" placeholder="driver@email.com" />
+          <label class="label-sm">Driving Licence Number</label>
+          <input type="text" id="newDrvLic" placeholder="Driving licence number" />
+          <label class="label-sm">DVLA Check Code</label>
+          <input type="text" id="newDrvDvla" placeholder="DVLA share code" />
+          <div class="grid-2">
+            <div>
+              <label class="label-sm">Licence Valid From</label>
+              <input type="date" id="newDrvValid" />
+            </div>
+            <div>
+              <label class="label-sm">Licence Expiry Date</label>
+              <input type="date" id="newDrvExpiry" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="label-sm">Medical Certificate Expiry</label>
+              <input type="date" id="newDrvMedical" />
+            </div>
+            <div>
+              <label class="label-sm">Penalty Points</label>
+              <input type="number" id="newDrvPoints" min="0" max="99" value="0" />
+            </div>
+          </div>
+          <label class="label-sm">Licence Categories</label>
+          <input type="text" id="newDrvCats" placeholder="C, C+E, CPC, D, etc." />
+          <div class="btn-group mt-3">
+            <button class="btn-primary" onclick="saveNewDriver()">Save Driver</button>
+            <button class="btn-secondary" onclick="hideAddDriverForm()">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    window.hideAddDriverForm = function() {
+      document.getElementById('addDriverFormWrap').innerHTML = '';
+    }
+
+    window.saveNewDriver = async function() {
+      const companyId = currentUser.uid;
+      const name = document.getElementById('newDrvName').value.trim();
+      const email = document.getElementById('newDrvEmail').value.trim();
+      
+      if (!name || !email) return alert('Name and email are required.');
+      
+      await addDoc(collection(db, 'companies', companyId, 'drivers'), {
+        fullName: name,
+        email,
+        licenceNumber: document.getElementById('newDrvLic').value.trim(),
+        dvlaCheckCode: document.getElementById('newDrvDvla').value.trim(),
+        validFrom: document.getElementById('newDrvValid').value || null,
+        expiryDate: document.getElementById('newDrvExpiry').value || null,
+        medicalExpiry: document.getElementById('newDrvMedical').value || null,
+        points: Number(document.getElementById('newDrvPoints').value) || 0,
+        categories: document.getElementById('newDrvCats').value.split(',').map(s => s.trim()).filter(Boolean),
+        active: true,
+        linkedAt: serverTimestamp(),
+        addedManually: true
+      });
+      
+      hideAddDriverForm();
+    }
+
+    window.toggleDriverActive = async function(driverId, currentState) {
+      const companyId = currentUser.uid;
+      await updateDoc(doc(db, 'companies', companyId, 'drivers', driverId), {
+        active: !currentState,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    window.viewDriverDocs = async function(driverId) {
+      alert('Document viewer — would show documents uploaded by this driver. Ready for next phase development.');
+    }
+
+    window.editDriver = async function(driverId) {
+      const companyId = currentUser.uid;
+      const snap = await getDoc(doc(db, 'companies', companyId, 'drivers', driverId));
+      if (!snap.exists()) return;
+      const d = snap.data();
+      
+      document.getElementById('addDriverFormWrap').innerHTML = `
+        <div class="card">
+          <h3>Edit Driver — ${escapeHtml(d.fullName)}</h3>
+          <input type="hidden" id="editDrvId" value="${driverId}" />
+          <label class="label-sm">Full Name *</label>
+          <input type="text" id="editDrvName" value="${escapeHtml(d.fullName)}" />
+          <label class="label-sm">Email Address *</label>
+          <input type="email" id="editDrvEmail" value="${escapeHtml(d.email)}" />
+          <label class="label-sm">Driving Licence Number</label>
+          <input type="text" id="editDrvLic" value="${escapeHtml(d.licenceNumber || '')}" />
+          <label class="label-sm">DVLA Check Code</label>
+          <input type="text" id="editDrvDvla" value="${escapeHtml(d.dvlaCheckCode || '')}" />
+          <div class="grid-2">
+            <div>
+              <label class="label-sm">Licence Valid From</label>
+              <input type="date" id="editDrvValid" value="${d.validFrom || ''}" />
+            </div>
+            <div>
+              <label class="label-sm">Licence Expiry Date</label>
+              <input type="date" id="editDrvExpiry" value="${d.expiryDate || ''}" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="label-sm">Medical Certificate Expiry</label>
+              <input type="date" id="editDrvMedical" value="${d.medicalExpiry || ''}" />
+            </div>
+            <div>
+              <label class="label-sm">Penalty Points</label>
+              <input type="number" id="editDrvPoints" min="0" max="99" value="${d.points || 0}" />
+            </div>
+          </div>
+          <label class="label-sm">Licence Categories</label>
+          <input type="text" id="editDrvCats" value="${escapeHtml((d.categories || []).join(', '))}" />
+          <div class="btn-group mt-3">
+            <button class="btn-primary" onclick="saveEditedDriver()">Update Driver</button>
+            <button class="btn-secondary" onclick="hideAddDriverForm()">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    window.saveEditedDriver = async function() {
+      const companyId = currentUser.uid;
+      const editId = document.getElementById('editDrvId').value;
+      
+      await setDoc(doc(db, 'companies', companyId, 'drivers', editId), {
+        fullName: document.getElementById('editDrvName').value.trim(),
+        email: document.getElementById('editDrvEmail').value.trim(),
+        licenceNumber: document.getElementById('editDrvLic').value.trim(),
+        dvlaCheckCode: document.getElementById('editDrvDvla').value.trim(),
+        validFrom: document.getElementById('editDrvValid').value || null,
+        expiryDate: document.getElementById('editDrvExpiry').value || null,
+        medicalExpiry: document.getElementById('editDrvMedical').value || null,
+        points: Number(document.getElementById('editDrvPoints').value) || 0,
+        categories: document.getElementById('editDrvCats').value.split(',').map(s => s.trim()).filter(Boolean),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      
+      hideAddDriverForm();
+    }
+
+    // ==============================================
+    // DVSA COMPLIANT CHECKLIST EDITOR
+    // ==============================================
+    let checklistItems = [];
+
+    async function renderChecklistEditor() {
+      const companyId = currentUser.uid;
+      const editor = document.getElementById('checklistEditorContent');
+      
+      const docSnap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
+      
+      if (!docSnap.exists() || !docSnap.data().items) {
+        checklistItems = [
+          "Vehicle Exterior & Body Condition — no damage, secure panels",
+          "Windscreen, Windows & Mirrors — clean, no cracks, properly secured",
+          "Lights & Indicators — all working, lenses clean and intact",
+          "Tyres & Wheels — pressure correct, tread depth legal, no damage, wheel nuts secure",
+          "Brakes — sufficient fluid, no leaks, brake pedal firm, handbrake holds vehicle",
+          "Fluid Levels — engine oil, coolant, washer fluid at correct levels",
+          "Coupling & Trailer Securement — fifth wheel, legs, air lines, electrical connections secure",
+          "Load Security — load properly secured, straps/chains in good condition",
+          "Emergency Equipment — fire extinguisher, warning triangle, first aid kit present & valid",
+          "Cab & Interior — mirrors adjusted, controls clear, seats secure, paperwork complete"
+        ];
+      } else {
+        checklistItems = docSnap.data().items;
+      }
+      
+      renderChecklistUI();
+    }
+
+    function renderChecklistUI() {
+      const editor = document.getElementById('checklistEditorContent');
+      
+      editor.innerHTML = `
+        <p class="muted mb-2">Drag to reorder, edit or remove items. Changes apply to all future checks.</p>
+        <div id="checklistItemsList">
+          ${checklistItems.map((item, idx) => `
+            <div class="checklist-row" style="padding:0.5rem 0; border-bottom:1px solid var(--border);" data-idx="${idx}">
+              <span style="cursor:grab; padding:0 0.5rem;">⋮⋮</span>
+              <span style="flex:1;" id="item-text-${idx}">${escapeHtml(item)}</span>
+              <button class="btn-sm btn-secondary" onclick="editCheckItem(${idx})">✏️</button>
+              <button class="btn-sm btn-danger" onclick="removeCheckItem(${idx})">🗑️</button>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="divider"></div>
+        <div class="btn-group">
+          <button class="btn-secondary" onclick="addCheckItem()">+ Add New Item</button>
+          <button class="btn-secondary" onclick="resetChecklist()">↩️ Reset to DVSA Defaults</button>
+          <button class="btn-primary" onclick="saveChecklist()">💾 Save Checklist</button>
+        </div>
+      `;
+    }
+
+    window.addCheckItem = function() {
+      const newItem = prompt('Enter new checklist item:');
+      if (newItem && newItem.trim()) {
+        checklistItems.push(newItem.trim());
+        renderChecklistUI();
+      }
+    }
+
+    window.editCheckItem = function(idx) {
+      const current = checklistItems[idx];
+      const updated = prompt('Edit item:', current);
+      if (updated !== null && updated.trim()) {
+        checklistItems[idx] = updated.trim();
+        renderChecklistUI();
+      }
+    }
+
+    window.removeCheckItem = function(idx) {
+      if (confirm('Remove this checklist item?')) {
+        checklistItems.splice(idx, 1);
+        renderChecklistUI();
+      }
+    }
+
+    window.resetChecklist = function() {
+      if (confirm('Reset to DVSA defaults? Your custom items will be lost.')) {
+        checklistItems = [
+          "Vehicle Exterior & Body Condition — no damage, secure panels",
+          "Windscreen, Windows & Mirrors — clean, no cracks, properly secured",
+          "Lights & Indicators — all working, lenses clean and intact",
+          "Tyres & Wheels — pressure correct, tread depth legal, no damage, wheel nuts secure",
+          "Brakes — sufficient fluid, no leaks, brake pedal firm, handbrake holds vehicle",
+          "Fluid Levels — engine oil, coolant, washer fluid at correct levels",
+          "Coupling & Trailer Securement — fifth wheel, legs, air lines, electrical connections secure",
+          "Load Security — load properly secured, straps/chains in good condition",
+          "Emergency Equipment — fire extinguisher, warning triangle, first aid kit present & valid",
+          "Cab & Interior — mirrors adjusted, controls clear, seats secure, paperwork complete"
+        ];
+        renderChecklistUI();
+      }
+    }
+
+    window.saveChecklist = async function() {
+      const companyId = currentUser.uid;
+      try {
+        await setDoc(doc(db, 'companies', companyId, 'settings', 'checklist'), {
+          items: checklistItems,
+          updatedAt: serverTimestamp()
+        });
+        alert('✅ Checklist saved and active for all drivers.');
+      } catch (e) {
+        alert('Error saving: ' + e.message);
+      }
+    }
+
+    // ==============================================
+    // JOBS / WORK POSTING
+    // ==============================================
+    async function loadPostedJobs() {
+      const companyId = currentUser.uid;
+      const list = document.getElementById('postedJobsList');
+      
+      const unsub = onSnapshot(
+        query(collection(db, 'jobs'), where('companyId', '==', companyId), orderBy('postedAt', 'desc')),
+        (snap) => {
+          if (snap.empty) {
+            list.innerHTML = `<p class="muted">No jobs posted yet. Click "+ Post New Job" to advertise work to drivers.</p>`;
+            return;
+          }
+          list.innerHTML = snap.docs.map(d => {
+            const j = d.data();
+            const date = j.postedAt?.toDate ? j.postedAt.toDate().toLocaleString() : 'Unknown';
+            const statusText = j.status === 'open' ? '✅ Open' : j.status === 'accepted' ? '👤 Accepted' : '✅ Completed';
+            return `
+              <div class="vehicle-card">
+                <div class="flex-between">
+                  <h4 style="margin:0;">${escapeHtml(j.title || 'Untitled Job')}</h4>
+                  <span>${statusText}</span>
+                </div>
+                <p class="muted">${date}</p>
+                <p>${escapeHtml(j.description || '')}</p>
+                <p><strong>Rate:</strong> £${j.rate || '0'}/hr</p>
+                ${j.status === 'open' 
+                  ? `<button class="btn-sm btn-danger" onclick="cancelJobPost('${d.id}')">Cancel Job</button>`
+                  : ''
+                }
+              </div>
+            `;
+          }).join('');
+        }
+      );
+      unsubscribeSnapshots.push(unsub);
+    }
+
+    window.showPostJobForm = function() {
+      document.getElementById('postJobFormWrap').innerHTML = `
+        <div class="card">
+          <h3>Post New Job / Work</h3>
+          <label class="label-sm">Job Title *</label>
+          <input type="text" id="jobTitle" placeholder="e.g. Shunting — Depot A to Depot B" />
+          <label class="label-sm">Description / Instructions</label>
+          <textarea id="jobDesc" rows="4" placeholder="Include timings, requirements, and any special instructions..."></textarea>
+          <div class="grid-2">
+            <div>
+              <label class="label-sm">Hourly Rate (£) *</label>
+              <input type="number" id="jobRate" step="0.01" min="0" placeholder="18.50" />
+            </div>
+            <div>
+              <label class="label-sm">Expected Duration</label>
+              <input type="text" id="jobDuration" placeholder="e.g. 8 hours" />
+            </div>
+          </div>
+          <label class="label-sm">Start Date / Time</label>
+          <input type="datetime-local" id="jobStart" />
+          <div class="btn-group mt-3">
+            <button class="btn-primary" onclick="postNewJob()">Post Job</button>
+            <button class="btn-secondary" onclick="hideJobForm()">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    window.hideJobForm = function() {
+      document.getElementById('postJobFormWrap').innerHTML = '';
+    }
+
+    window.postNewJob = async function() {
+      const companyId = currentUser.uid;
+      const title = document.getElementById('jobTitle').value.trim();
+      const rate = document.getElementById('jobRate').value;
+      
+      if (!title || !rate) return alert('Title and rate are required.');
+      
+      await addDoc(collection(db, 'jobs'), {
+        companyId,
+        companyName: userProfile.tradingName || userProfile.registeredName || 'Our Company',
+        title,
+        description: document.getElementById('jobDesc').value.trim(),
+        rate: Number(rate),
+        duration: document.getElementById('jobDuration').value.trim(),
+        startTime: document.getElementById('jobStart').value || null,
+        status: 'open',
+        postedAt: serverTimestamp()
+      });
+      
+      alert('✅ Job posted. Drivers can now view and accept this work.');
+      hideJobForm();
+    }
+
+    window.cancelJobPost = async function(jobId) {
+      if (!confirm('Cancel this job? It will no longer be visible to drivers.')) return;
+      await updateDoc(doc(db, 'jobs', jobId), {
+        status: 'cancelled',
+        cancelledAt: serverTimestamp()
+      });
+    }
+
+    // ==============================================
+    // INVOICING SETTINGS
+    // ==============================================
+    async function loadInvoicingPage() {
+      const list = document.getElementById('invoicesList');
+      list.innerHTML = `<p class="muted">Configure your billing preferences here. Invoicing history will appear once work has been completed.</p>`;
+    }
+
+    window.updateBillingDisplay = function() {
+      const pref = document.getElementById('billingPref').value;
+      const note = document.getElementById('billingNote');
+      note.textContent = pref === 'per-period' 
+        ? 'Invoices will show all drivers, their total hours, and separate sections for vehicle checks — issued weekly.'
+        : 'Separate invoices will be generated for each driver, plus separate invoices for vehicle checks — issued weekly.';
+    }
+
+    // ==============================================
+    // FINAL PAGE ROUTING HOOKS & GLOBAL EXPOSURE
+    // ==============================================
+    window.loadCompanyProfile = loadCompanyProfile;
+    window.loadCompanyDashboard = loadCompanyDashboard;
+    window.renderFleetPage = renderFleetPage;
+    window.renderCompanyDrivers = renderCompanyDrivers;
+    window.renderChecklistEditor = renderChecklistEditor;
+    window.loadPostedJobs = loadPostedJobs;
+    window.loadInvoicingPage = loadInvoicingPage;
+    window.updateBillingDisplay = updateBillingDisplay;
+
+  </script>
+</body>
+</html>
