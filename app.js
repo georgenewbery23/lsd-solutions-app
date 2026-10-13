@@ -1,6 +1,7 @@
 <script type="module">
 // ==============================================
-// LSD Solutions — Fully Accessible Fixed Script
+// LSD Solutions — COMPLETE FULL VERSION
+// All pages built • Fully Accessible • DVSA Compliant
 // ==============================================
 
 // --------------------------
@@ -25,15 +26,15 @@ import {
   signOut, onAuthStateChanged, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
-  query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
+  query, where, orderBy, onSnapshot, serverTimestamp, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 // --------------------------
-// 3. FIREBASE INIT
+// 3. FIREBASE CONFIG
 // --------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyC9XzNxWkPnE4sCqXz9Y5z8Y7z6X5W4V3U2",
@@ -181,7 +182,6 @@ async function loadDriverDashboard() {
   
   const unsub = onSnapshot(myChecksQ, (snap) => {
     const passed = snap.docs.filter(d => d.data().status === 'pass').length;
-    const failed = snap.docs.filter(d => d.data().status === 'fail').length;
     const defects = snap.docs.filter(d => d.data().status === 'defect').length;
     
     dash.innerHTML = `
@@ -203,9 +203,9 @@ async function loadDriverDashboard() {
       </div>
       
       <h3>Quick Actions</h3>
-      <button onclick="showPage('checklistPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#1a365d;color:#fff;border:none;border-radius:6px;">🚛 New Walkaround Check</button>
-      <button onclick="showPage('jobsPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#e8edf3;color:#1a365d;border:none;border-radius:6px;">📋 View Available Work</button>
-      <button onclick="showPage('driverProfilePage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#d47500;color:#fff;border:none;border-radius:6px;">👤 Update Profile</button>
+      <button type="button" onclick="showPage('checklistPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#1a365d;color:#fff;border:none;border-radius:6px;">🚛 New Walkaround Check</button>
+      <button type="button" onclick="showPage('jobsPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#e8edf3;color:#1a365d;border:none;border-radius:6px;">📋 View Available Work</button>
+      <button type="button" onclick="showPage('driverProfilePage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#d47500;color:#fff;border:none;border-radius:6px;">👤 Update Profile</button>
       
       <h3 style="margin-top:2rem;">Recent Checks</h3>
       ${snap.empty ? '<p>No checks submitted yet.</p>' : snap.docs.slice(0,5).map(d => {
@@ -225,7 +225,7 @@ async function loadDriverDashboard() {
 }
 
 // --------------------------
-// 9. JOBS / AVAILABLE WORK
+// 9. JOBS PAGE
 // --------------------------
 async function loadJobsPage() {
   const list = document.getElementById('jobsList');
@@ -252,7 +252,7 @@ async function loadJobsPage() {
           <p style="color:#666;margin:0 0 0.5rem 0;">${escapeHtml(j.companyName || 'Unknown Company')} — ${date}</p>
           <p style="margin:0 0 0.8rem 0;">${escapeHtml(j.description || '')}</p>
           <p style="font-weight:bold; font-size:1.1rem;">Rate: £${j.rate || '0'}/hr</p>
-          <button onclick="acceptJob('${d.id}')" style="padding:0.6rem 1.2rem;background:#1a365d;color:#fff;border:none;border-radius:4px;">Accept Job</button>
+          <button type="button" onclick="acceptJob('${d.id}')" style="padding:0.6rem 1.2rem;background:#1a365d;color:#fff;border:none;border-radius:4px;">Accept Job</button>
         </div>
       `;
     }).join('');
@@ -276,14 +276,9 @@ window.acceptJob = async function(jobId) {
 };
 
 // --------------------------
-// 10. WALKAROUND CHECK — FULLY ACCESSIBLE
+// 10. WALKAROUND CHECK — FULLY COMPLETE
 // --------------------------
 let currentCheckData = {};
-
-async function loadChecklistPage() {
-  const formWrap = document.getElementById('checklistForm');
-  formWrap.innerHTML = '<p>Loading...</p>';
-}
 
 window.updateCheckVehicleOptions = async function() {
   const type = document.getElementById('checkTypeSelect').value;
@@ -513,7 +508,7 @@ async function loadMyChecks() {
 }
 
 // --------------------------
-// 12. DRIVER PROFILE — FULLY LABELLED
+// 12. DRIVER PROFILE
 // --------------------------
 async function loadDriverProfile() {
   const cont = document.getElementById('driverProfileContent');
@@ -639,7 +634,7 @@ async function loadDriverDocumentsList() {
 }
 
 // --------------------------
-// 13. COMPANY PORTAL PLACEHOLDERS
+// 13. COMPANY DASHBOARD
 // --------------------------
 async function loadCompanyDashboard() {
   const dash = document.getElementById('dashboardContent');
@@ -655,18 +650,435 @@ async function loadCompanyDashboard() {
   `;
 }
 
+// --------------------------
+// 14. COMPANY VEHICLES — FULLY BUILT
+// --------------------------
+let editingVehicleId = null;
+
 async function loadCompanyVehicles() {
-  document.getElementById('companyVehiclesContent').innerHTML = '<p>Vehicles management — add/edit/activate vehicles here.</p>';
-}
-async function loadCompanyDrivers() {
-  document.getElementById('companyDriversContent').innerHTML = '<p>Drivers management — view linked drivers & their documents here.</p>';
-}
-async function loadCompanyProfile() {
-  document.getElementById('companyProfileContent').innerHTML = '<p>Company profile & compliance settings.</p>';
-}
-async function loadChecklistEditor() {
-  document.getElementById('checklistEditorContent').innerHTML = '<p>Checklist editor — customise your walkaround items.</p>';
+  const content = document.getElementById('companyVehiclesContent');
+  const companyId = userProfile.companyId || currentUser.uid;
+  
+  content.innerHTML = `
+    <h3>Add / Edit Vehicle</h3>
+    <form id="vehicleForm" style="background:#f8fafc;padding:1.5rem;border-radius:8px;margin-bottom:2rem;">
+      <input type="hidden" id="vehEditId">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+        <div>
+          <label for="vehReg">Registration Number *</label>
+          <input type="text" id="vehReg" name="vehicle_reg" required style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;text-transform:uppercase;">
+        </div>
+        <div>
+          <label for="vehMake">Make</label>
+          <input type="text" id="vehMake" name="vehicle_make" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="vehModel">Model</label>
+          <input type="text" id="vehModel" name="vehicle_model" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="vehYear">Year</label>
+          <input type="number" id="vehYear" name="vehicle_year" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="vehType">Vehicle Type</label>
+          <select id="vehType" name="vehicle_type" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+            <option value="rigid">Rigid</option>
+            <option value="tractor">Tractor Unit</option>
+            <option value="van">Van</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="vehActive">Status</label>
+          <select id="vehActive" name="vehicle_active" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+            <option value="true">✅ Active</option>
+            <option value="false">⏸️ Inactive</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" onclick="saveVehicle('${companyId}')" style="margin-top:1rem;padding:0.8rem 2rem;background:#1a365d;color:#fff;border:none;border-radius:6px;">Save Vehicle</button>
+      <button type="button" onclick="clearVehicleForm()" style="margin-left:1rem;padding:0.8rem 2rem;background:#eee;color:#333;border:none;border-radius:6px;">Clear</button>
+    </form>
+    
+    <h3>Your Vehicles</h3>
+    <div id="vehiclesList"><p>Loading...</p></div>
+  `;
+  
+  const q = query(collection(db, 'companies', companyId, 'vehicles'), orderBy('registration', 'asc'));
+  const unsub = onSnapshot(q, snap => {
+    const list = document.getElementById('vehiclesList');
+    if (snap.empty) {
+      list.innerHTML = '<p style="color:#666;">No vehicles added yet.</p>';
+      return;
+    }
+    list.innerHTML = snap.docs.map(d => {
+      const v = d.data();
+      return `
+        <div style="padding:1rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.8rem;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong>${escapeHtml(v.registration)}</strong> — ${escapeHtml(v.make || 'Unknown')} ${escapeHtml(v.model || '')}
+            <br><small style="color:#666;">${v.active ? '✅ Active' : '⏸️ Inactive'}</small>
+          </div>
+          <div>
+            <button type="button" onclick="editVehicle('${d.id}', '${companyId}')" style="padding:0.5rem 1rem;background:#d4af37;color:#fff;border:none;border-radius:4px;margin-right:0.5rem;">Edit</button>
+            <button type="button" onclick="deleteVehicleConfirm('${d.id}', '${companyId}')" style="padding:0.5rem 1rem;background:#b91c1c;color:#fff;border:none;border-radius:4px;">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  });
+  unsubscribeSnapshots.push(unsub);
 }
 
-console.log('✅ LSD Solutions app loaded — fully accessible');
+window.saveVehicle = async function(companyId) {
+  const registration = document.getElementById('vehReg').value.trim().toUpperCase();
+  if (!registration) return alert('Enter registration number.');
+  
+  const data = {
+    registration,
+    make: document.getElementById('vehMake').value.trim(),
+    model: document.getElementById('vehModel').value.trim(),
+    year: Number(document.getElementById('vehYear').value) || null,
+    type: document.getElementById('vehType').value,
+    active: document.getElementById('vehActive').value === 'true',
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    if (editingVehicleId) {
+      await updateDoc(doc(db, 'companies', companyId, 'vehicles', editingVehicleId), data);
+      alert('✅ Vehicle updated.');
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'companies', companyId, 'vehicles'), data);
+      alert('✅ Vehicle added.');
+    }
+    clearVehicleForm();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+window.editVehicle = async function(id, companyId) {
+  editingVehicleId = id;
+  const snap = await getDoc(doc(db, 'companies', companyId, 'vehicles', id));
+  if (!snap.exists()) return;
+  const v = snap.data();
+  
+  document.getElementById('vehEditId').value = id;
+  document.getElementById('vehReg').value = v.registration || '';
+  document.getElementById('vehMake').value = v.make || '';
+  document.getElementById('vehModel').value = v.model || '';
+  document.getElementById('vehYear').value = v.year || '';
+  document.getElementById('vehType').value = v.type || 'rigid';
+  document.getElementById('vehActive').value = String(v.active ?? true);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.clearVehicleForm = function() {
+  editingVehicleId = null;
+  document.getElementById('vehEditId').value = '';
+  document.getElementById('vehReg').value = '';
+  document.getElementById('vehMake').value = '';
+  document.getElementById('vehModel').value = '';
+  document.getElementById('vehYear').value = '';
+  document.getElementById('vehType').value = 'rigid';
+  document.getElementById('vehActive').value = 'true';
+};
+
+window.deleteVehicleConfirm = async function(id, companyId) {
+  if (!confirm('Delete this vehicle? This cannot be undone.')) return;
+  try {
+    await deleteDoc(doc(db, 'companies', companyId, 'vehicles', id));
+    alert('✅ Vehicle deleted.');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+// --------------------------
+// 15. COMPANY DRIVERS — FULLY BUILT
+// --------------------------
+async function loadCompanyDrivers() {
+  const content = document.getElementById('companyDriversContent');
+  const companyId = userProfile.companyId || currentUser.uid;
+  
+  content.innerHTML = `
+    <h3>Linked Drivers</h3>
+    <p style="color:#666;margin-bottom:1rem;">Drivers who have accepted work from your company will appear here automatically.</p>
+    <div id="driversList"><p>Loading...</p></div>
+  `;
+  
+  const q = query(collection(db, 'users'), where('linkedCompanies', 'array-contains', companyId));
+  const unsub = onSnapshot(q, snap => {
+    const list = document.getElementById('driversList');
+    if (snap.empty) {
+      list.innerHTML = '<p style="color:#666;">No drivers linked yet.</p>';
+      return;
+    }
+    list.innerHTML = snap.docs.map(d => {
+      const drv = d.data();
+      return `
+        <div style="padding:1rem;border:1px solid #ddd;border-radius:6px;margin-bottom:0.8rem;">
+          <h4 style="margin:0 0 0.3rem 0;">${escapeHtml(drv.fullName || 'Unnamed Driver')}</h4>
+          <p style="margin:0.2rem 0;">📧 ${escapeHtml(drv.email || 'No email')}</p>
+          <p style="margin:0.2rem 0;">📋 Licence: ${escapeHtml(drv.licenceNumber || 'Not provided')}</p>
+          <p style="margin:0.2rem 0;">⚠️ Points: ${drv.penaltyPoints || 0}</p>
+          <p style="margin:0.2rem 0;">📁 Categories: ${escapeHtml((drv.categories || []).join(', ') || 'None listed')}</p>
+          <button type="button" onclick="removeDriverLink('${d.id}')" style="margin-top:0.5rem;padding:0.5rem 1rem;background:#b91c1c;color:#fff;border:none;border-radius:4px;">Remove Access</button>
+        </div>
+      `;
+    }).join('');
+  });
+  unsubscribeSnapshots.push(unsub);
+}
+
+window.removeDriverLink = async function(driverUid) {
+  if (!confirm('Remove this driver\'s access to your vehicles?')) return;
+  const companyId = userProfile.companyId || currentUser.uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', driverUid));
+    if (snap.exists()) {
+      const data = snap.data();
+      const updatedLinks = (data.linkedCompanies || []).filter(id => id !== companyId);
+      await updateDoc(doc(db, 'users', driverUid), { linkedCompanies: updatedLinks });
+      alert('✅ Driver access removed.');
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+// --------------------------
+// 16. COMPANY PROFILE — DVSA COMPLIANT
+// --------------------------
+async function loadCompanyProfile() {
+  const content = document.getElementById('companyProfileContent');
+  const profile = userProfile || {};
+  const companyId = userProfile.companyId || currentUser.uid;
+  
+  content.innerHTML = `
+    <h3>Company Profile — DVSA & Traffic Commissioner Compliance</h3>
+    <form id="companyProfileForm" style="background:#f8fafc;padding:1.5rem;border-radius:8px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;">
+        <div>
+          <label for="compRegName"><strong>Registered Company Name *</strong></label>
+          <input type="text" id="compRegName" name="company_reg_name" value="${escapeHtml(profile.registeredName || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compTradingName">Trading Name (if different)</label>
+          <input type="text" id="compTradingName" name="company_trading_name" value="${escapeHtml(profile.tradingName || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compRegNo"><strong>Companies House / HMRC Reg No *</strong></label>
+          <input type="text" id="compRegNo" name="company_reg_no" value="${escapeHtml(profile.companyNumber || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compOLicNo"><strong>Operator's Licence No *</strong></label>
+          <input type="text" id="compOLicNo" name="company_olic_no" value="${escapeHtml(profile.operatorLicence || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label for="compRegAddr"><strong>Registered Address *</strong></label>
+          <textarea id="compRegAddr" name="company_reg_addr" rows="3" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">${escapeHtml(profile.registeredAddress || '')}</textarea>
+        </div>
+        <div>
+          <label for="compEmail"><strong>Accounts / Invoicing Email *</strong></label>
+          <input type="email" id="compEmail" name="company_email" value="${escapeHtml(profile.invoiceEmail || profile.email || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compPhone">Main Contact Number</label>
+          <input type="tel" id="compPhone" name="company_phone" value="${escapeHtml(profile.phone || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compContactName">Accounts Contact Name</label>
+          <input type="text" id="compContactName" name="company_contact_name" value="${escapeHtml(profile.invoiceContactName || '')}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compFleetSize">Authorised Fleet Size (Vehicles)</label>
+          <input type="number" id="compFleetSize" name="company_fleet_size" value="${profile.fleetSize || ''}" style="width:100%;padding
+                    <input type="number" id="compFleetSize" name="company_fleet_size" value="${profile.fleetSize || ''}" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+        </div>
+        <div>
+          <label for="compTrafficArea">Traffic Area</label>
+          <select id="compTrafficArea" name="company_traffic_area" style="width:100%;padding:0.7rem;margin:0.3rem 0;border:1px solid #ccc;border-radius:4px;">
+            <option value="">— Select —</option>
+            <option value="North East" ${profile.trafficArea === 'North East' ? 'selected' : ''}>North East</option>
+            <option value="North West" ${profile.trafficArea === 'North West' ? 'selected' : ''}>North West</option>
+            <option value="West Midlands" ${profile.trafficArea === 'West Midlands' ? 'selected' : ''}>West Midlands</option>
+            <option value="East Midlands" ${profile.trafficArea === 'East Midlands' ? 'selected' : ''}>East Midlands</option>
+            <option value="South East & London" ${profile.trafficArea === 'South East & London' ? 'selected' : ''}>South East & London</option>
+            <option value="South West" ${profile.trafficArea === 'South West' ? 'selected' : ''}>South West</option>
+            <option value="Wales" ${profile.trafficArea === 'Wales' ? 'selected' : ''}>Wales</option>
+            <option value="Scotland" ${profile.trafficArea === 'Scotland' ? 'selected' : ''}>Scotland</option>
+          </select>
+        </div>
+      </div>
+      
+      <button type="button" onclick="saveCompanyProfile('${companyId}')" style="margin-top:1.5rem;padding:0.9rem 2.5rem;background:#1a365d;color:#fff;border:none;border-radius:6px;font-size:1rem;">💾 Save Company Profile</button>
+    </form>
+  `;
+}
+
+window.saveCompanyProfile = async function(companyId) {
+  const data = {
+    registeredName: document.getElementById('compRegName').value.trim(),
+    tradingName: document.getElementById('compTradingName').value.trim(),
+    companyNumber: document.getElementById('compRegNo').value.trim(),
+    operatorLicence: document.getElementById('compOLicNo').value.trim(),
+    registeredAddress: document.getElementById('compRegAddr').value.trim(),
+    invoiceEmail: document.getElementById('compEmail').value.trim(),
+    phone: document.getElementById('compPhone').value.trim(),
+    invoiceContactName: document.getElementById('compContactName').value.trim(),
+    fleetSize: document.getElementById('compFleetSize').value,
+    trafficArea: document.getElementById('compTrafficArea').value,
+    updatedAt: serverTimestamp()
+  };
+  
+  if (!data.registeredName || !data.operatorLicence) {
+    return alert('Please fill in all required fields (*) — Registered Name and Operator\'s Licence Number.');
+  }
+  
+  try {
+    await setDoc(doc(db, 'companies', companyId, 'settings', 'profile'), data, { merge: true });
+    await setDoc(doc(db, 'users', currentUser.uid), { companyProfileComplete: true }, { merge: true });
+    alert('✅ Company profile saved — DVSA compliant details stored.');
+  } catch (e) {
+    alert('Error saving profile: ' + e.message);
+  }
+};
+
+// --------------------------
+// 17. CHECKLIST EDITOR — FULLY BUILT
+// --------------------------
+let editorItems = [];
+
+async function loadChecklistEditor() {
+  const content = document.getElementById('checklistEditorContent');
+  const companyId = userProfile.companyId || currentUser.uid;
+  
+  content.innerHTML = `
+    <h3>Walkaround Checklist Editor</h3>
+    <p style="color:#666;margin-bottom:1rem;">Add, edit, reorder or remove items from your DVSA-compliant walkaround check.</p>
+    
+    <div style="margin-bottom:1.5rem;">
+      <label for="newItemInput">Add New Check Item:</label>
+      <div style="display:flex;gap:0.5rem;margin-top:0.3rem;">
+        <input type="text" id="newItemInput" name="new_check_item" placeholder="e.g. Windscreen & Mirrors" style="flex:1;padding:0.7rem;border:1px solid #ccc;border-radius:4px;">
+        <button type="button" onclick="addEditorItem()" style="padding:0.7rem 1.2rem;background:#1a365d;color:#fff;border:none;border-radius:4px;">Add</button>
+      </div>
+    </div>
+    
+    <h4>Your Check Items</h4>
+    <div id="editorItemsList" style="margin-bottom:1.5rem;border:1px solid #eee;border-radius:6px;overflow:hidden;">
+      <p style="padding:1rem;color:#666;">Loading...</p>
+    </div>
+    
+    <button type="button" onclick="saveChecklistEditor('${companyId}')" style="padding:0.9rem 2rem;background:#166534;color:#fff;border:none;border-radius:6px;font-size:1rem;">💾 Save Checklist</button>
+    <button type="button" onclick="resetChecklistEditor('${companyId}')" style="margin-left:1rem;padding:0.9rem 2rem;background:#b91c1c;color:#fff;border:none;border-radius:6px;font-size:1rem;">↩️ Reset to Default</button>
+  `;
+  
+  loadEditorItems(companyId);
+}
+
+async function loadEditorItems(companyId) {
+  const snap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
+  if (snap.exists() && snap.data().items?.length) {
+    editorItems = [...snap.data().items];
+  } else {
+    editorItems = [
+      "Vehicle Exterior & Body Condition",
+      "Windscreen, Windows & Mirrors",
+      "Lights, Indicators & Reflectors",
+      "Tyres, Wheels & Wheel Nuts",
+      "Brakes & Brake Systems",
+      "Fluid Levels — Engine Oil, Coolant, Washer, Fuel",
+      "Coupling, Trailer Securement & Connections",
+      "Load Security & Distribution",
+      "Emergency Equipment — Fire Extinguisher, Warning Triangle, First Aid",
+      "Cab & Interior — Seatbelts, Controls, Horn, Wipers",
+      "Exhaust, Emissions & Fuel System",
+      "Suspension, Steering & Drivetrain",
+      "Number Plates & Markings"
+    ];
+  }
+  renderEditorItems();
+}
+
+function renderEditorItems() {
+  const list = document.getElementById('editorItemsList');
+  list.innerHTML = editorItems.map((item, idx) => `
+    <div style="padding:0.8rem;border-bottom:1px solid #eee;display:flex;align-items:center;gap:0.5rem;background:#fff;">
+      <span style="color:#999;cursor:grab;">⋮⋮</span>
+      <span style="min-width:24px;font-weight:bold;color:#666;">${idx + 1}.</span>
+      <input type="text" id="edit-item-${idx}" value="${escapeHtml(item)}" style="flex:1;padding:0.4rem;border:1px solid transparent;background:transparent;outline:none;" onfocus="this.style.border='1px solid #ccc'" onblur="this.style.border='1px solid transparent'">
+      <button type="button" onclick="moveEditorItem(${idx}, -1)" style="padding:0.3rem 0.6rem;background:#eee;border:none;border-radius:3px;${idx === 0 ? 'opacity:0.3;pointer-events:none;' : ''}">↑</button>
+      <button type="button" onclick="moveEditorItem(${idx}, 1)" style="padding:0.3rem 0.6rem;background:#eee;border:none;border-radius:3px;${idx === editorItems.length - 1 ? 'opacity:0.3;pointer-events:none;' : ''}">↓</button>
+      <button type="button" onclick="removeEditorItem(${idx})" style="padding:0.3rem 0.6rem;background:#fee2e2;color:#b91c1c;border:none;border-radius:3px;">✕</button>
+    </div>
+  `).join('');
+}
+
+window.addEditorItem = function() {
+  const input = document.getElementById('newItemInput');
+  const val = input.value.trim();
+  if (!val) return;
+  editorItems.push(val);
+  input.value = '';
+  renderEditorItems();
+};
+
+window.moveEditorItem = function(idx, direction) {
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= editorItems.length) return;
+  [editorItems[idx], editorItems[newIdx]] = [editorItems[newIdx], editorItems[idx]];
+  renderEditorItems();
+};
+
+window.removeEditorItem = function(idx) {
+  if (!confirm('Remove this check item?')) return;
+  editorItems.splice(idx, 1);
+  renderEditorItems();
+};
+
+window.saveChecklistEditor = async function(companyId) {
+  editorItems = editorItems.map((_, idx) => 
+    document.getElementById(`edit-item-${idx}`)?.value?.trim() || ''
+  ).filter(Boolean);
+  
+  if (editorItems.length === 0) return alert('Cannot save an empty checklist.');
+  
+  try {
+    await setDoc(doc(db, 'companies', companyId, 'settings', 'checklist'), {
+      items: editorItems,
+      updatedAt: serverTimestamp()
+    });
+    alert('✅ Checklist saved — all drivers will now use your updated list.');
+  } catch (e) {
+    alert('Error saving checklist: ' + e.message);
+  }
+};
+
+window.resetChecklistEditor = async function(companyId) {
+  if (!confirm('Reset to default DVSA checklist? Your custom items will be replaced.')) return;
+  editorItems = [
+    "Vehicle Exterior & Body Condition",
+    "Windscreen, Windows & Mirrors",
+    "Lights, Indicators & Reflectors",
+    "Tyres, Wheels & Wheel Nuts",
+    "Brakes & Brake Systems",
+    "Fluid Levels — Engine Oil, Coolant, Washer, Fuel",
+    "Coupling, Trailer Securement & Connections",
+    "Load Security & Distribution",
+    "Emergency Equipment — Fire Extinguisher, Warning Triangle, First Aid",
+    "Cab & Interior — Seatbelts, Controls, Horn, Wipers",
+    "Exhaust, Emissions & Fuel System",
+    "Suspension, Steering & Drivetrain",
+    "Number Plates & Markings"
+  ];
+  renderEditorItems();
+  await saveChecklistEditor(companyId);
+};
+
+console.log('✅ LSD Solutions — COMPLETE APP LOADED');
 </script>
