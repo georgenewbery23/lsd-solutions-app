@@ -241,28 +241,85 @@ const INVOICE_PREFIX = "LSDSA";
 // ==================================================
 // DVSA COMPLIANT WALKAROUND CHECKLIST
 // ==================================================
-const DEFAULT_CHECKLIST = [
-  { id: 'ext_body', label: 'Vehicle Exterior — Body & Panels', category: 'Exterior', required: true },
-  { id: 'ext_wheels', label: 'Wheels & Tyres — Condition & Pressure', category: 'Wheels', required: true },
-  { id: 'ext_lights', label: 'Lights & Indicators — Operation & Security', category: 'Lights', required: true },
-  { id: 'ext_mirrors', label: 'Mirrors — Condition & Security', category: 'Vision', required: true },
-  { id: 'ext_windscreen', label: 'Windscreen — Chips, Cracks & Washers/Wipers', category: 'Vision', required: true },
-  { id: 'ext_coupling', label: 'Coupling & Trailer Securement', category: 'Coupling', required: true },
-  { id: 'ext_undercarriage', label: 'Undercarriage / Mudguards', category: 'Exterior', required: true },
-  { id: 'int_doors', label: 'Doors & Locking Mechanisms', category: 'Security', required: true },
-  { id: 'int_seats', label: 'Seats & Seatbelts', category: 'Interior', required: true },
-  { id: 'int_fire', label: 'Fire Extinguisher — Present & In Date', category: 'Safety', required: true },
-  { id: 'int_triangle', label: 'Warning Triangle / Hazard Signs', category: 'Safety', required: true },
-  { id: 'int_firstaid', label: 'First Aid Kit', category: 'Safety', required: true },
-  { id: 'fluid_oil', label: 'Engine Oil — Level', category: 'Fluids', required: true },
-  { id: 'fluid_coolant', label: 'Coolant — Level', category: 'Fluids', required: true },
-  { id: 'fluid_wash', label: 'Screen Wash — Level', category: 'Fluids', required: true },
-  { id: 'fluid_brake', label: 'Brake Fluid — Level', category: 'Fluids', required: true },
-  { id: 'trailer_brakes', label: 'Trailer Brakes — Operation', category: 'Trailer', required: true, trailerOnly: true },
-  { id: 'trailer_lights', label: 'Trailer Lights — Operation', category: 'Trailer', required: true, trailerOnly: true },
-  { id: 'trailer_doors', label: 'Trailer Doors & Security', category: 'Trailer', required: true, trailerOnly: true },
-  { id: 'trailer_load', label: 'Load Securement / Curtains', category: 'Trailer', required: true, trailerOnly: true }
-];
+const DEFAULT_CHECKLIST = {
+  title: "DVSA Compliant HGV Walkaround Check",
+  items: [
+    // 1 — Exterior Body & General Condition
+    "Body, panels, mudguards & spray suppression — secure, no damage or excessive corrosion",
+    "Doors, catches & mirrors — secure, operate correctly, mirrors clean & properly adjusted",
+    "Windscreen & windows — free from damage, chips or cracks in critical vision areas",
+    "Number plates — clean, secure, legible, correct lighting working",
+    "Markings & registration plates — match vehicle identity",
+
+    // 2 — Lights & Indicators
+    "Headlights — main beam & dipped beam both working, correct alignment",
+    "Front/rear position lights & side markers — all working at front, rear & sides",
+    "Direction indicators — amber, flashing evenly, front/rear/side all working",
+    "Brake lights — both or all working, bright, operate when brake pedal pressed",
+    "Rear fog lights — working, warning lamp on dashboard illuminates",
+    "Reversing lights — activate correctly when reverse gear selected",
+    "Hazard warning lights — all flash evenly when switched on",
+
+    // 3 — Tyres, Wheels & Suspension
+    "Tyre condition — no cuts, bulges, lumps, sidewall damage or exposed cords",
+    "Tyre tread depth — minimum 1.0mm across 3/4 width for all tyres; check drive axle duals",
+    "Tyre pressures — correct for load, no visible under/over inflation",
+    "Wheel fixings — all nuts present, no movement, no rust or distortion around nuts",
+    "Wheels — no cracks, distortion, damage or welding repairs",
+    "Suspension — springs, shock absorbers, air bellows & mountings secure; no leaks or damage",
+    "Axles — straight, no damage, axle boxes/hubs secure, no excessive play",
+
+    // 4 — Brakes
+    "Brake system — no air or fluid leaks; pressure holds within specified limits",
+    "Service brake — operates smoothly, equal braking on all sides, no pulling left/right",
+    "Secondary/parking brake — holds vehicle on gradient, sufficient efficiency",
+    "Brake lines & hoses — secure, no chafing, cracks, bulges or corrosion",
+    "Brake drums/discs — no excessive wear, cracking or scoring",
+    "Brake fluid reservoir — level correct, cap secure, no contamination",
+    "Air dryer & compressor — functioning correctly, no moisture build-up",
+
+    // 5 — Steering
+    "Steering wheel & column — no excessive free play, no binding, lock-to-lock smooth",
+    "Steering box & linkage — secure, no wear, gaiters intact, no fluid leaks",
+    "Power steering — fluid level correct, no noise, assist working throughout travel",
+
+    // 6 — Coupling & Trailer Equipment
+    "Fifth wheel/coupling — secure, mounting bolts tight, locking mechanism engages fully",
+    "Kingpin — no excessive wear, mounting secure",
+    "Air & electrical connections — clean, secure, no damage, seals intact, cables free from snagging",
+    "Secondary coupling — safety chain/cable present, secure, correctly attached",
+    "Landing gear — operates smoothly, pads/feet intact, no structural damage",
+
+    // 7 — Load Security & Body Integrity
+    "Load compartment — no holes, loose panels or failed fasteners that could lose load",
+    "Straps, chains & load restraints — rated, free from damage, correctly tensioned",
+    "Sheeting & ropes — secure, no fraying, covers entire load where required",
+    "Tailboard & dropsides — latches secure, hinges not worn, pins in place",
+
+    // 8 — Fluids & Leaks
+    "Engine oil — level between min/max, no visible leaks",
+    "Coolant — level correct, no leaks, expansion tank secure",
+    "Windscreen washer fluid — reservoir full, jets operate & reach screen",
+    "Fuel system — no leaks, caps secure, pipes/hoses intact",
+    "Fluid levels — all reservoirs topped up, no fresh wet patches under vehicle",
+
+    // 9 — Emergency Equipment
+    "Fire extinguisher — present, mounted securely, gauge in green, in date",
+    "Warning triangle — present, undamaged, reflective side clean",
+    "First aid kit — present, sealed, contents appear complete & in date",
+    "Wheel chocks — two present, suitable size, free from cracking or wear",
+    "Spare bulbs & fuses — recommended, correct types available",
+
+    // 10 — Cab & Interior / Driver Controls
+    "Seats & seatbelts — anchors secure, belts retract smoothly, no fraying, buckles fasten",
+    "Dashboard warning lights — all illuminate on ignition then extinguish as expected",
+    "Horn — works clearly, audible from reasonable distance",
+    "Wipers — operate smoothly, blades in good condition, clear screen effectively",
+    "Handholds & steps — secure, non-slip surfaces clean, no damage",
+    "Cab tidy — no loose items that could become projectiles under braking"
+  ],
+  updatedAt: new Date()
+};
 
 // ==================================================
 // 🔴 10/10 FEATURE: FIREBASE-PERSISTED INVOICE COUNTER
