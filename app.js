@@ -2,7 +2,6 @@
 // 🚛 LSD SOLUTIONS — 10/10 PRODUCTION VERSION
 // Firebase v10.7.1 | Fully Validated | DVSA Compliant
 // ==================================================
-
 'use strict';
 
 // ==================================================
@@ -30,7 +29,6 @@ const Utils = {
     },
     remove(key) { localStorage.removeItem(key); }
   },
-
   Validators: {
     email(email) {
       if (!email) return 'Email is required';
@@ -67,7 +65,6 @@ const Utils = {
       return regex.test(clean) ? null : 'Enter a valid UK phone number';
     }
   },
-
   Dates: {
     today: () => new Date().toISOString().split('T')[0],
     addDays(date, days) {
@@ -101,7 +98,6 @@ const Utils = {
       return `${this.formatShort(dateStr)} at ${this.formatTime(dateStr)}`;
     }
   },
-
   Files: {
     formatSize(bytes) {
       if (!bytes) return '0 B';
@@ -121,7 +117,6 @@ const Utils = {
       return bytes <= maxBytes ? null : `File too large. Maximum: ${maxMB}MB`;
     }
   },
-
   friendlyError(error) {
     if (!error) return 'An unknown error occurred';
     const code = error.code || '';
@@ -148,7 +143,6 @@ const Utils = {
     }
     return message || 'Something went wrong. Please try again.';
   },
-
   debounce(func, delay = 300) {
     let timeoutId;
     return (...args) => {
@@ -156,7 +150,6 @@ const Utils = {
       timeoutId = setTimeout(() => func.apply(this, args), delay);
     };
   },
-
   serializeForm(formElement) {
     const formData = new FormData(formElement);
     const data = {};
@@ -169,7 +162,6 @@ const Utils = {
     }
     return data;
   },
-
   async copyToClipboard(text) {
     try {
       await navigator.clipboard.writeText(text);
@@ -186,13 +178,11 @@ const Utils = {
       finally { document.body.removeChild(ta); }
     }
   },
-
   generateUID(length = 12) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
   }
 };
-
 Object.assign(window, { Utils });
 
 // ==================================================
@@ -213,7 +203,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 // ==================================================
-// FIREBASE CONFIG — ⚠️ UPDATE THESE VALUES!
+// FIREBASE CONFIG
 // ==================================================
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
@@ -223,7 +213,6 @@ const firebaseConfig = {
   messagingSenderId: "833767217116",
   appId: "1:833767217116:web:b29188de76b5778a086119"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -244,91 +233,72 @@ const INVOICE_PREFIX = "LSDSA";
 const DEFAULT_CHECKLIST = {
   title: "DVSA Compliant HGV Walkaround Check",
   items: [
-    // 1 — Exterior Body & General Condition
-    "Body, panels, mudguards & spray suppression — secure, no damage or excessive corrosion",
-    "Doors, catches & mirrors — secure, operate correctly, mirrors clean & properly adjusted",
-    "Windscreen & windows — free from damage, chips or cracks in critical vision areas",
-    "Number plates — clean, secure, legible, correct lighting working",
-    "Markings & registration plates — match vehicle identity",
-
-    // 2 — Lights & Indicators
-    "Headlights — main beam & dipped beam both working, correct alignment",
-    "Front/rear position lights & side markers — all working at front, rear & sides",
-    "Direction indicators — amber, flashing evenly, front/rear/side all working",
-    "Brake lights — both or all working, bright, operate when brake pedal pressed",
-    "Rear fog lights — working, warning lamp on dashboard illuminates",
-    "Reversing lights — activate correctly when reverse gear selected",
-    "Hazard warning lights — all flash evenly when switched on",
-
-    // 3 — Tyres, Wheels & Suspension
-    "Tyre condition — no cuts, bulges, lumps, sidewall damage or exposed cords",
-    "Tyre tread depth — minimum 1.0mm across 3/4 width for all tyres; check drive axle duals",
-    "Tyre pressures — correct for load, no visible under/over inflation",
-    "Wheel fixings — all nuts present, no movement, no rust or distortion around nuts",
-    "Wheels — no cracks, distortion, damage or welding repairs",
-    "Suspension — springs, shock absorbers, air bellows & mountings secure; no leaks or damage",
-    "Axles — straight, no damage, axle boxes/hubs secure, no excessive play",
-
-    // 4 — Brakes
-    "Brake system — no air or fluid leaks; pressure holds within specified limits",
-    "Service brake — operates smoothly, equal braking on all sides, no pulling left/right",
-    "Secondary/parking brake — holds vehicle on gradient, sufficient efficiency",
-    "Brake lines & hoses — secure, no chafing, cracks, bulges or corrosion",
-    "Brake drums/discs — no excessive wear, cracking or scoring",
-    "Brake fluid reservoir — level correct, cap secure, no contamination",
-    "Air dryer & compressor — functioning correctly, no moisture build-up",
-
-    // 5 — Steering
-    "Steering wheel & column — no excessive free play, no binding, lock-to-lock smooth",
-    "Steering box & linkage — secure, no wear, gaiters intact, no fluid leaks",
-    "Power steering — fluid level correct, no noise, assist working throughout travel",
-
-    // 6 — Coupling & Trailer Equipment
-    "Fifth wheel/coupling — secure, mounting bolts tight, locking mechanism engages fully",
-    "Kingpin — no excessive wear, mounting secure",
-    "Air & electrical connections — clean, secure, no damage, seals intact, cables free from snagging",
-    "Secondary coupling — safety chain/cable present, secure, correctly attached",
-    "Landing gear — operates smoothly, pads/feet intact, no structural damage",
-
-    // 7 — Load Security & Body Integrity
-    "Load compartment — no holes, loose panels or failed fasteners that could lose load",
-    "Straps, chains & load restraints — rated, free from damage, correctly tensioned",
-    "Sheeting & ropes — secure, no fraying, covers entire load where required",
-    "Tailboard & dropsides — latches secure, hinges not worn, pins in place",
-
-    // 8 — Fluids & Leaks
-    "Engine oil — level between min/max, no visible leaks",
-    "Coolant — level correct, no leaks, expansion tank secure",
-    "Windscreen washer fluid — reservoir full, jets operate & reach screen",
-    "Fuel system — no leaks, caps secure, pipes/hoses intact",
-    "Fluid levels — all reservoirs topped up, no fresh wet patches under vehicle",
-
-    // 9 — Emergency Equipment
-    "Fire extinguisher — present, mounted securely, gauge in green, in date",
-    "Warning triangle — present, undamaged, reflective side clean",
-    "First aid kit — present, sealed, contents appear complete & in date",
-    "Wheel chocks — two present, suitable size, free from cracking or wear",
-    "Spare bulbs & fuses — recommended, correct types available",
-
-    // 10 — Cab & Interior / Driver Controls
-    "Seats & seatbelts — anchors secure, belts retract smoothly, no fraying, buckles fasten",
-    "Dashboard warning lights — all illuminate on ignition then extinguish as expected",
-    "Horn — works clearly, audible from reasonable distance",
-    "Wipers — operate smoothly, blades in good condition, clear screen effectively",
-    "Handholds & steps — secure, non-slip surfaces clean, no damage",
-    "Cab tidy — no loose items that could become projectiles under braking"
+    { category: "Exterior", label: "Body, panels, mudguards & spray suppression — secure, no damage or excessive corrosion" },
+    { category: "Exterior", label: "Doors, catches & mirrors — secure, operate correctly, mirrors clean & properly adjusted" },
+    { category: "Vision", label: "Windscreen & windows — free from damage, chips or cracks in critical vision areas" },
+    { category: "Exterior", label: "Number plates — clean, secure, legible, correct lighting working" },
+    { category: "Exterior", label: "Markings & registration plates — match vehicle identity" },
+    { category: "Lights", label: "Headlights — main beam & dipped beam both working, correct alignment" },
+    { category: "Lights", label: "Front/rear position lights & side markers — all working at front, rear & sides" },
+    { category: "Lights", label: "Direction indicators — amber, flashing evenly, front/rear/side all working" },
+    { category: "Lights", label: "Brake lights — both or all working, bright, operate when brake pedal pressed" },
+    { category: "Lights", label: "Rear fog lights — working, warning lamp on dashboard illuminates" },
+    { category: "Lights", label: "Reversing lights — activate correctly when reverse gear selected" },
+    { category: "Lights", label: "Hazard warning lights — all flash evenly when switched on" },
+    { category: "Wheels", label: "Tyre condition — no cuts, bulges, lumps, sidewall damage or exposed cords" },
+    { category: "Wheels", label: "Tyre tread depth — minimum 1.0mm across 3/4 width for all tyres; check drive axle duals" },
+    { category: "Wheels", label: "Tyre pressures — correct for load, no visible under/over inflation" },
+    { category: "Wheels", label: "Wheel fixings — all nuts present, no movement, no rust or distortion around nuts" },
+    { category: "Wheels", label: "Wheels — no cracks, distortion, damage or welding repairs" },
+    { category: "Wheels", label: "Suspension — springs, shock absorbers, air bellows & mountings secure; no leaks or damage" },
+    { category: "Wheels", label: "Axles — straight, no damage, axle boxes/hubs secure, no excessive play" },
+    { category: "Brakes", label: "Brake system — no air or fluid leaks; pressure holds within specified limits" },
+    { category: "Brakes", label: "Service brake — operates smoothly, equal braking on all sides, no pulling left/right" },
+    { category: "Brakes", label: "Secondary/parking brake — holds vehicle on gradient, sufficient efficiency" },
+    { category: "Brakes", label: "Brake lines & hoses — secure, no chafing, cracks, bulges or corrosion" },
+    { category: "Brakes", label: "Brake drums/discs — no excessive wear, cracking or scoring" },
+    { category: "Brakes", label: "Brake fluid reservoir — level correct, cap secure, no contamination" },
+    { category: "Brakes", label: "Air dryer & compressor — functioning correctly, no moisture build-up" },
+    { category: "Steering", label: "Steering wheel & column — no excessive free play, no binding, lock-to-lock smooth" },
+    { category: "Steering", label: "Steering box & linkage — secure, no wear, gaiters intact, no fluid leaks" },
+    { category: "Steering", label: "Power steering — fluid level correct, no noise, assist working throughout travel" },
+    { category: "Coupling", label: "Fifth wheel/coupling — secure, mounting bolts tight, locking mechanism engages fully" },
+    { category: "Coupling", label: "Kingpin — no excessive wear, mounting secure" },
+    { category: "Coupling", label: "Air & electrical connections — clean, secure, no damage, seals intact, cables free from snagging" },
+    { category: "Coupling", label: "Secondary coupling — safety chain/cable present, secure, correctly attached" },
+    { category: "Coupling", label: "Landing gear — operates smoothly, pads/feet intact, no structural damage", trailerOnly: true },
+    { category: "Load", label: "Load compartment — no holes, loose panels or failed fasteners that could lose load" },
+    { category: "Load", label: "Straps, chains & load restraints — rated, free from damage, correctly tensioned" },
+    { category: "Load", label: "Sheeting & ropes — secure, no fraying, covers entire load where required" },
+    { category: "Load", label: "Tailboard & dropsides — latches secure, hinges not worn, pins in place" },
+    { category: "Fluids", label: "Engine oil — level between min/max, no visible leaks" },
+    { category: "Fluids", label: "Coolant — level correct, no leaks, expansion tank secure" },
+    { category: "Fluids", label: "Windscreen washer fluid — reservoir full, jets operate & reach screen" },
+    { category: "Fluids", label: "Fuel system — no leaks, caps secure, pipes/hoses intact" },
+    { category: "Fluids", label: "Fluid levels — all reservoirs topped up, no fresh wet patches under vehicle" },
+    { category: "Safety", label: "Fire extinguisher — present, mounted securely, gauge in green, in date" },
+    { category: "Safety", label: "Warning triangle — present, undamaged, reflective side clean" },
+    { category: "Safety", label: "First aid kit — present, sealed, contents appear complete & in date" },
+    { category: "Safety", label: "Wheel chocks — two present, suitable size, free from cracking or wear" },
+    { category: "Safety", label: "Spare bulbs & fuses — recommended, correct types available" },
+    { category: "Interior", label: "Seats & seatbelts — anchors secure, belts retract smoothly, no fraying, buckles fasten" },
+    { category: "Interior", label: "Dashboard warning lights — all illuminate on ignition then extinguish as expected" },
+    { category: "Interior", label: "Horn — works clearly, audible from reasonable distance" },
+    { category: "Interior", label: "Wipers — operate smoothly, blades in good condition, clear screen effectively" },
+    { category: "Interior", label: "Handholds & steps — secure, non-slip surfaces clean, no damage" },
+    { category: "Interior", label: "Cab tidy — no loose items that could become projectiles under braking" }
   ],
   updatedAt: new Date()
 };
+
 async function initialiseCompanyChecklist(companyId) {
   const companyChecklistRef = doc(db, 'companies', companyId, 'settings', 'checklist');
-  
   await setDoc(companyChecklistRef, DEFAULT_CHECKLIST);
-  
   console.log('✅ DVSA-compliant checklist installed');
 }
+
 // ==================================================
-// 🔴 10/10 FEATURE: FIREBASE-PERSISTED INVOICE COUNTER
+// 🔴 INVOICE COUNTER
 // ==================================================
 async function generateInvoiceNumber() {
   try {
@@ -348,7 +318,6 @@ async function generateInvoiceNumber() {
     return invoiceNumber;
   } catch (error) {
     console.error('Invoice counter error, falling back to local:', error);
-    // Graceful fallback
     let localCount = parseInt(Utils.Storage.get('invoiceCounter') || '0', 10) + 1;
     Utils.Storage.set('invoiceCounter', localCount);
     const padded = String(localCount).padStart(6, '0');
@@ -442,7 +411,7 @@ function toggleDarkMode() {
 window.toggleDarkMode = toggleDarkMode;
 
 // ==================================================
-// 🔴 10/10 FEATURE: FULL OFFLINE ACTION QUEUE & SYNC
+// 🔴 OFFLINE ACTION QUEUE & SYNC
 // ==================================================
 function updateOnlineStatus() {
   const banner = document.getElementById('offlineBanner');
@@ -484,7 +453,6 @@ async function processOfflineQueue() {
   for (const action of pending) {
     try {
       console.log('Syncing offline action:', action.type);
-      
       switch (action.type) {
         case 'setDoc':
           await setDoc(doc(db, action.path), action.data, action.options || {});
@@ -631,7 +599,7 @@ async function handleRegisterCompany() {
       active: true
     });
     batch.set(doc(db, 'companies', user.uid, 'settings', 'checklist'), {
-      items: DEFAULT_CHECKLIST,
+      items: DEFAULT_CHECKLIST.items,
       updatedAt: serverTimestamp()
     });
     await batch.commit();
@@ -710,7 +678,6 @@ function initAuthState() {
         return;
       }
       
-      // Update username display
       const nameEl = document.getElementById('userNameDisplay');
       if (nameEl) {
         nameEl.textContent = currentUserRole === 'company' 
@@ -718,7 +685,6 @@ function initAuthState() {
           : (driverDoc.data()?.fullName || 'Driver');
       }
       
-      // Email verification banner
       const banner = document.getElementById('verificationBanner');
       if (banner) {
         banner.classList.toggle('hidden', user.emailVerified);
@@ -733,17 +699,17 @@ function initAuthState() {
 }
 window.initAuthState = initAuthState;
 
-// Cleanup on unload
 window.addEventListener('beforeunload', () => {
   unsubscribeAuth?.();
 });
 
 // ==================================================
-// PORTAL LOADERS — Define these in your page code
+// PORTAL LOADERS
 // ==================================================
 window.loadCompanyPortal = async function(companyData) {
   console.log('🏢 Company Portal:', companyData?.registeredName);
 };
+
 window.loadDriverPortal = async function(driverData) {
   console.log('👤 Driver Portal:', driverData?.fullName);
 };
