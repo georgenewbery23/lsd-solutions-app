@@ -220,8 +220,8 @@ const firebaseConfig = {
   authDomain: "lsd-solutions.firebaseapp.com",
   projectId: "lsd-solutions",
   storageBucket: "lsd-solutions.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",  // 🔴 REPLACE ME
-  appId: "YOUR_APP_ID"                   // 🔴 REPLACE ME
+  messagingSenderId: "833767217116",
+  appId: "1:833767217116:web:b29188de76b5778a086119"
 };
 
 const app = initializeApp(firebaseConfig);
