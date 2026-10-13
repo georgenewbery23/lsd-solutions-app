@@ -935,58 +935,64 @@
       const profile = profileSnap.exists() ? profileSnap.data() : {};
       
       cont.innerHTML = `
-        <div class="card">
-          <h3>Personal Details</h3>
-          <label class="label-sm">Full Name</label>
-          <input type="text" id="drvProfName" value="${escapeHtml(profile.fullName || '')}" />
-          <label class="label-sm">Email</label>
-          <input type="email" value="${escapeHtml(profile.email || '')}" disabled style="background:#f3f4f6;" />
-          
-          <h3 class="mt-3">Driving Licence</h3>
-          <div class="grid-2">
-            <div>
-              <label class="label-sm">Licence Number</label>
-              <input type="text" id="drvLicNo" value="${escapeHtml(profile.licenceNumber || '')}" />
-            </div>
-            <div>
-              <label class="label-sm">DVLA Check Code</label>
-              <input type="text" id="drvDvlaCode" value="${escapeHtml(profile.dvlaCheckCode || '')}" />
-            </div>
-            <div>
-              <label class="label-sm">Valid From</label>
-              <input type="date" id="drvValidFrom" value="" />
-            </div>
-            <div>
-              <label class="label-sm">Expiry Date</label>
-              <input type="date" id="drvExpiry" value="" />
-            </div>
-            <div>
-              <label class="label-sm">Medical Expiry</label>
-              <input type="date" id="drvMedicalExp" value="" />
-            </div>
-            <div>
-              <label class="label-sm">Penalty Points</label>
-              <input type="number" id="drvPoints" value="" />
-            </div>
-          </div>
-          
-          <label class="label-sm mt-2">Licence Categories</label>
-          <input type="text" id="drvCats" value="${escapeHtml((profile.categories || []).join(', '))}" placeholder="C, C+E, CPC, etc." />
-          
-          <button class="btn-primary mt-3" onclick="saveDriverProfile()">Save Profile</button>
-          <p id="drvProfSave" class="muted mt-1"></p>
-        </div>
-        
-        <div class="card mt-3">
-          <h3>Documents</h3>
-          <p class="muted">Upload licence, CPC, tachograph card etc.</p>
-          <input type="file" id="docUploader" multiple accept=".pdf,.jpg,.jpeg,.png" />
-          <button class="btn-primary mt-1" onclick="uploadDriverDocuments()">Upload Selected</button>
-          <div id="driverDocsList" class="mt-3"></div>
-        </div>
-      `;
-      
-      loadDriverDocumentsList();
+  <div class="card">
+    <h3>Personal Details</h3>
+    <label class="label-sm">Full Name</label>
+    <input type="text" id="drvProfName" value="${escapeHtml(profile.fullName || '')}" />
+    <label class="label-sm">Email</label>
+    <input type="email" value="${escapeHtml(profile.email || '')}" disabled style="background:#f3f4f6;" />
+    
+    <h3 class="mt-3">Driving Licence</h3>
+    <div class="grid-2">
+      <div>
+        <label class="label-sm">Licence Number</label>
+        <input type="text" id="drvLicNo" value="${escapeHtml(profile.licenceNumber || '')}" />
+      </div>
+      <div>
+        <label class="label-sm">DVLA Check Code</label>
+        <input type="text" id="drvDvlaCode" value="${escapeHtml(profile.dvlaCheckCode || '')}" />
+      </div>
+      <div>
+        <label class="label-sm">Valid From</label>
+        <input type="date" id="drvValidFrom" />
+      </div>
+      <div>
+        <label class="label-sm">Expiry Date</label>
+        <input type="date" id="drvExpiry" />
+      </div>
+      <div>
+        <label class="label-sm">Medical Expiry</label>
+        <input type="date" id="drvMedicalExp" />
+      </div>
+      <div>
+        <label class="label-sm">Penalty Points</label>
+        <input type="number" id="drvPoints" min="0" max="99" />
+      </div>
+    </div>
+    
+    <label class="label-sm mt-2">Licence Categories</label>
+    <input type="text" id="drvCats" value="${escapeHtml((profile.categories || []).join(', '))}" placeholder="C, C+E, CPC, etc." />
+    
+    <button class="btn-primary mt-3" onclick="saveDriverProfile()">Save Profile</button>
+    <p id="drvProfSave" class="muted mt-1"></p>
+  </div>
+  
+  <div class="card mt-3">
+    <h3>Documents</h3>
+    <p class="muted">Upload licence, CPC, tachograph card etc.</p>
+    <input type="file" id="docUploader" multiple accept=".pdf,.jpg,.jpeg,.png" />
+    <button class="btn-primary mt-1" onclick="uploadDriverDocuments()">Upload Selected</button>
+    <div id="driverDocsList" class="mt-3"></div>
+  </div>
+`;
+
+// ✅ Set date values AFTER the HTML is inserted
+document.getElementById('drvValidFrom').value = profile.validFrom || '';
+document.getElementById('drvExpiry').value = profile.expiryDate || '';
+document.getElementById('drvMedicalExp').value = profile.medicalExpiry || '';
+document.getElementById('drvPoints').value = profile.points || 0;
+
+loadDriverDocumentsList();
     }
 
     window.saveDriverProfile = async function() {
