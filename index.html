@@ -1223,8 +1223,9 @@
   // =====================================================
   let editedChecks = [];
 
-     async function loadCompanyCheckEditor() {
+       async function loadCompanyCheckEditor() {
     const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
+    
     if (snap.exists && snap.data().items && Array.isArray(snap.data().items)) {
       editedChecks = [...snap.data().items];
     } else {
@@ -1244,6 +1245,7 @@
         "Cab & Interior — Controls, seatbelts, tachograph, handbrake, doors secure"
       ];
     }
+    
     renderCheckEditor();
   }
 
