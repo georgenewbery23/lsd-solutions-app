@@ -319,6 +319,7 @@
       <button class="nav-btn" data-comp-page="checks">Check Lists</button>
       <button class="nav-btn" data-comp-page="work">Post Work</button>
       <button class="nav-btn" data-comp-page="calendar">Company Calendar</button>
+      <button class="nav-btn" data-comp-page="profile">Company Profile</button>
     </div>
 
     <!-- DRIVERS -->
@@ -424,6 +425,36 @@
     </div>
   </div>
 </div>
+      <!-- COMPANY PROFILE -->
+    <div id="comp-profile" class="company-subpage">
+      <div class="card">
+        <h3>🏢 Company Profile</h3>
+        <div class="grid-2" style="margin-top:15px;">
+          <div>
+            <label>Company Name</label>
+            <input type="text" id="compName" />
+          </div>
+          <div>
+            <label>Email Address</label>
+            <input type="email" id="compEmail" disabled style="background:#eee;" />
+          </div>
+          <div>
+            <label>Phone Number</label>
+            <input type="tel" id="compPhone" />
+          </div>
+          <div>
+            <label>Company Registration No.</label>
+            <input type="text" id="compRegNo" />
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>Registered Address</label>
+            <input type="text" id="compAddress" />
+          </div>
+        </div>
+        <button onclick="saveCompanyProfile()" style="margin-top:20px;">Save Profile</button>
+        <p id="compProfileMsg" style="margin-top:10px;"></p>
+      </div>
+    </div>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1392,7 +1423,47 @@
   window.moveCheckDown = moveCheckDown;
   window.saveCheckStructure = saveCheckStructure;
   window.postNewWork = postNewWork;
-
+  // =====================================================
+  // COMPANY — PROFILE
+  // =====================================================
+  async function loadCompanyProfile() {
+    if (!userProfile) return;
+    document.getElementById('compName').value = userProfile.name || '';
+    document.getElementById('compEmail').value = userProfile.email || '';
+    
+    const compSnap = await getDoc(doc(db, 'companies', currentUser.uid));
+    if (compSnap.exists) {
+      const compData = compSnap.data();
+      document.getElementById('compPhone').value = compData.phone || '';
+      document.getElementById('compRegNo').value = compData.registrationNo || '';
+      document.getElementById('compAddress').value = compData.address || '';
+    }
+  }
+  
+  window.saveCompanyProfile = async function () {
+    const msg = document.getElementById('compProfileMsg');
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        name: document.getElementById('compName').value.trim()
+      });
+      await setDoc(doc(db, 'companies', currentUser.uid), {
+        name: document.getElementById('compName').value.trim(),
+        email: userProfile.email,
+        phone: document.getElementById('compPhone').value.trim(),
+        registrationNo: document.getElementById('compRegNo').value.trim(),
+        address: document.getElementById('compAddress').value.trim(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      
+      msg.textContent = '✅ Profile saved!';
+      msg.style.color = 'green';
+      document.getElementById('companyWelcome').textContent = document.getElementById('compName').value.trim();
+      userProfile.name = document.getElementById('compName').value.trim();
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
+    }
+  };
 </script>
 </body>
 </html>
