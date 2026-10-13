@@ -895,7 +895,9 @@
   </script>
 
   <!-- Main Application Script -->
+    <!-- Main Application Script -->
   <script>
+  // <!-- <![CDATA[
     // ==========================================
     // GLOBAL STATE
     // ==========================================
@@ -1035,65 +1037,34 @@
     }
 
     function showPage(pageId) {
-      // Hide all pages
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      
-      // Show requested page
       const targetPage = document.getElementById(pageId);
       if (targetPage) {
         targetPage.classList.add('active');
         currentPage = pageId;
       }
-      
-      // Close mobile menu
       document.getElementById('navLinks').classList.remove('open');
-      
-      // Update active nav link
       document.querySelectorAll('.nav-links a').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.page === pageId) link.classList.add('active');
       });
-
-      // Load page-specific data
       loadPageData(pageId);
-      
       return false;
     }
     window.showPage = showPage;
 
     function loadPageData(pageId) {
       switch(pageId) {
-        case 'dashboard':
-          updateDashboard();
-          break;
-        case 'checklist':
-          loadChecklist();
-          loadVehicleOptions();
-          break;
-        case 'checklistEditor':
-          loadChecklistEditor();
-          break;
-        case 'vehicles':
-          if (currentUserProfile?.role === 'company') loadVehicles();
-          break;
-        case 'drivers':
-          if (currentUserProfile?.role === 'company') loadDrivers();
-          break;
-        case 'documents':
-          loadDocuments();
-          break;
-        case 'profile':
-          loadProfile();
-          break;
-        case 'companyProfile':
-          loadCompanyProfile();
-          break;
-        case 'jobs':
-          loadJobs();
-          break;
-        case 'reports':
-          loadCheckHistoryList();
-          break;
+        case 'dashboard': updateDashboard(); break;
+        case 'checklist': loadChecklist(); loadVehicleOptions(); break;
+        case 'checklistEditor': loadChecklistEditor(); break;
+        case 'vehicles': if (currentUserProfile?.role === 'company') loadVehicles(); break;
+        case 'drivers': if (currentUserProfile?.role === 'company') loadDrivers(); break;
+        case 'documents': loadDocuments(); break;
+        case 'profile': loadProfile(); break;
+        case 'companyProfile': loadCompanyProfile(); break;
+        case 'jobs': loadJobs(); break;
+        case 'reports': loadCheckHistoryList(); break;
       }
     }
 
@@ -1104,15 +1075,12 @@
       document.querySelectorAll('.auth-tab').forEach(tab => {
         tab.classList.toggle('active', tab.dataset.tab === tabName);
       });
-      document.querySelectorAll('.auth-form').forEach(form => {
-        form.classList.remove('active');
-      });
+      document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
       document.getElementById(tabName + 'Form').classList.add('active');
       document.getElementById('authAlert').classList.remove('show');
     }
     window.switchAuthTab = switchAuthTab;
 
-    // Registration role selection styling
     document.getElementById('regOptDriver').addEventListener('click', function() {
       document.getElementById('regOptDriver').style.borderColor = 'var(--primary)';
       document.getElementById('regOptDriver').style.background = 'var(--primary-light)';
@@ -1127,7 +1095,6 @@
       document.getElementById('regOptDriver').style.background = 'white';
       this.querySelector('input').checked = true;
     });
-    // Initial state
     document.getElementById('regOptDriver').style.borderColor = 'var(--primary)';
     document.getElementById('regOptDriver').style.background = 'var(--primary-light)';
 
@@ -1136,14 +1103,9 @@
       const email = document.getElementById('signinEmail').value;
       const password = document.getElementById('signinPassword').value;
       const alertBox = document.getElementById('authAlert');
-      
       try {
-        alertBox.className = 'alert';
-        alertBox.textContent = 'Signing in...';
-        alertBox.classList.add('show');
-        
+        alertBox.className = 'alert'; alertBox.textContent = 'Signing in...'; alertBox.classList.add('show');
         await signInWithEmailAndPassword(auth, email, password);
-        // Auth state change will redirect
       } catch (error) {
         alertBox.className = 'alert alert-error show';
         alertBox.textContent = 'Sign in failed: ' + error.message;
@@ -1157,34 +1119,18 @@
       const password = document.getElementById('registerPassword').value;
       const role = document.querySelector('input[name="regRole"]:checked').value;
       const alertBox = document.getElementById('authAlert');
-      
       try {
-        alertBox.className = 'alert';
-        alertBox.textContent = 'Creating account...';
-        alertBox.classList.add('show');
-        
+        alertBox.className = 'alert'; alertBox.textContent = 'Creating account...'; alertBox.classList.add('show');
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
         const uid = userCred.user.uid;
-        
-        // Create profile document
-        await setDoc(doc(db, 'profiles', uid), {
-          name,
-          email,
-          role,
-          createdAt: serverTimestamp()
-        });
-        
-        // If company, create empty checklist
+        await setDoc(doc(db, 'profiles', uid), { name, email, role, createdAt: serverTimestamp() });
         if (role === 'company') {
           await setDoc(doc(db, 'companies', uid, 'settings', 'checklist'), {
-            items: DEFAULT_CHECKLIST,
-            updatedAt: serverTimestamp()
+            items: DEFAULT_CHECKLIST, updatedAt: serverTimestamp()
           });
         }
-        
         alertBox.className = 'alert alert-success show';
-        alertBox.textContent = 'Account created successfully! Signing you in...';
-        // Auth state change will redirect
+        alertBox.textContent = 'Account created successfully!';
       } catch (error) {
         alertBox.className = 'alert alert-error show';
         alertBox.textContent = 'Registration failed: ' + error.message;
@@ -1195,7 +1141,6 @@
       event.preventDefault();
       const email = document.getElementById('resetEmail').value;
       const alertBox = document.getElementById('authAlert');
-      
       try {
         await sendPasswordResetEmail(auth, email);
         alertBox.className = 'alert alert-success show';
@@ -1209,27 +1154,19 @@
     async function loadUserProfile(uid) {
       try {
         const profileSnap = await getDoc(doc(db, 'profiles', uid));
-        if (profileSnap.exists()) {
-          currentUserProfile = profileSnap.data();
-          return currentUserProfile;
-        }
-        return null;
-      } catch (error) {
-        console.error('Error loading profile:', error);
-        return null;
-      }
+        if (profileSnap.exists()) currentUserProfile = profileSnap.data();
+        return currentUserProfile;
+      } catch (error) { return null; }
     }
 
     function buildNavLinks() {
       const navLinks = document.getElementById('navLinks');
       const role = currentUserProfile?.role;
-      
       let linksHTML = `
         <a href="#" data-page="dashboard" onclick="showPage('dashboard'); return false;">📊 Dashboard</a>
         <a href="#" data-page="checklist" onclick="showPage('checklist'); return false;">✅ Walkaround Check</a>
         <a href="#" data-page="jobs" onclick="showPage('jobs'); return false;">📋 Jobs</a>
       `;
-      
       if (role === 'company') {
         linksHTML += `
           <a href="#" data-page="vehicles" onclick="showPage('vehicles'); return false;">🚛 Vehicles</a>
@@ -1243,28 +1180,23 @@
           <a href="#" data-page="profile" onclick="showPage('profile'); return false;">👤 Profile</a>
         `;
       }
-      
       linksHTML += `<a href="#" onclick="signOut(); return false;" style="color:var(--danger)">🚪 Sign Out</a>`;
-      
       navLinks.innerHTML = linksHTML;
     }
 
     function signOut() {
       signOut(auth).then(() => {
-        currentUser = null;
-        currentUserProfile = null;
+        currentUser = null; currentUserProfile = null;
         showPage('authPage');
         document.getElementById('mainNav').style.display = 'none';
       }).catch(err => showAlert('Error signing out', 'error'));
     }
     window.signOut = signOut;
 
-    // Auth state listener
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
         const profile = await loadUserProfile(user.uid);
-        
         if (profile) {
           currentUserProfile = profile;
           document.getElementById('authPage').classList.remove('active');
@@ -1273,34 +1205,23 @@
           showPage('dashboard');
         }
       } else {
-        currentUser = null;
-        currentUserProfile = null;
+        currentUser = null; currentUserProfile = null;
         document.getElementById('authPage').classList.add('active');
         document.getElementById('mainNav').style.display = 'none';
       }
     });
 
     // ==========================================
-    // SECTION 3 ENDS HERE — Continue to Section 4
-    // ==========================================
-  </script>
-</body>
-</html>
-    // ==========================================
     // DASHBOARD
     // ==========================================
     function updateDashboard() {
       if (!currentUser || !currentUserProfile) return;
-      
       document.getElementById('userName').textContent = currentUserProfile.name || currentUser.email;
-      document.getElementById('userRoleDisplay').textContent = 
+      document.getElementById('userRoleDisplay').textContent =
         currentUserProfile.role === 'company' ? '🏢 Company Portal' : '👤 Driver Portal';
-      
-      // Show/hide role-specific quick actions
       const vehiclesLink = document.getElementById('vehiclesLink');
       const reportsLink = document.getElementById('reportsLink');
       const documentsLink = document.querySelector('.quick-action-card[onclick="showPage(\'documents\')"]');
-      
       if (currentUserProfile.role === 'company') {
         vehiclesLink.style.display = 'block';
         reportsLink.style.display = 'block';
@@ -1310,44 +1231,39 @@
         reportsLink.style.display = 'none';
         if (documentsLink) documentsLink.style.display = 'block';
       }
-      
       loadRecentActivity();
     }
 
     async function loadRecentActivity() {
       const container = document.getElementById('recentActivity');
       container.innerHTML = '<p class="text-muted">Loading activity...</p>';
-      
       try {
         const checksRef = collection(db, 'walkaroundChecks');
-        const q = query(checksRef, where('userId', '==', currentUser.uid));
-        const snapshot = await getDocs(q);
-        
+        const qry = query(checksRef, where('userId', '==', currentUser.uid));
+        const snapshot = await getDocs(qry);
         if (snapshot.empty) {
           container.innerHTML = '<p class="text-muted text-center py-3">No recent checks yet.</p>';
           return;
         }
-        
         let html = '';
         snapshot.docs.slice(0, 5).forEach(doc => {
-          const data = doc.data();
-          const date = data.timestamp ? formatDate(data.timestamp.toDate()) : 'Unknown date';
+          const c = doc.data();
+          const date = c.timestamp ? formatDate(c.timestamp.toDate()) : 'Unknown date';
           html += `
             <div class="list-item">
               <div>
-                <strong>${data.vehicleReg || 'Vehicle'}</strong>
+                <strong>${c.vehicleReg || 'Vehicle'}</strong>
                 <span class="text-muted"> — ${date}</span>
-                <div class="text-muted" style="font-size:0.8rem">${data.checkType === 'trailer' ? 'Trailer only' : data.checkType === 'vehicle-trailer' ? 'Vehicle & Trailer' : 'Vehicle only'}</div>
+                <div class="text-muted" style="font-size:0.8rem">${c.checkType === 'trailer' ? 'Trailer only' : c.checkType === 'vehicle-trailer' ? 'Vehicle & Trailer' : 'Vehicle only'}</div>
               </div>
-              <span class="badge ${data.hasFaults ? 'badge-danger' : 'badge-success'}">
-                ${data.hasFaults ? '⚠️ Faults Reported' : '✅ Passed'}
+              <span class="badge ${c.hasFaults ? 'badge-danger' : 'badge-success'}">
+                ${c.hasFaults ? '⚠️ Faults Reported' : '✅ Passed'}
               </span>
             </div>
           `;
         });
         container.innerHTML = html;
       } catch (error) {
-        console.error('Error loading activity:', error);
         container.innerHTML = '<p class="text-muted text-center py-3">Could not load activity.</p>';
       }
     }
@@ -1360,22 +1276,17 @@
     async function loadChecklist() {
       const container = document.getElementById('checklistContainer');
       container.innerHTML = '<p class="text-muted">Loading checklist...</p>';
-      
       try {
-        // Try to load company checklist first
         let checklistItems = DEFAULT_CHECKLIST;
-        
         if (currentUserProfile?.companyId) {
           const checklistDoc = await getDoc(doc(db, 'companies', currentUserProfile.companyId, 'settings', 'checklist'));
           if (checklistDoc.exists() && checklistDoc.data().items) {
             checklistItems = checklistDoc.data().items;
           }
         }
-        
         currentChecklistData = checklistItems;
         renderChecklist(checklistItems);
       } catch (error) {
-        console.error('Error loading checklist:', error);
         renderChecklist(DEFAULT_CHECKLIST);
       }
     }
@@ -1383,11 +1294,9 @@
     function renderChecklist(categories) {
       const container = document.getElementById('checklistContainer');
       let html = '';
-      
       categories.forEach((cat, catIndex) => {
         const items = Array.isArray(cat) ? cat : cat.items;
         const name = Array.isArray(cat) ? 'Checklist Items' : cat.category;
-        
         html += `<div class="checklist-category"><h4>${name}</h4>`;
         items.forEach((item, idx) => {
           const itemText = typeof item === 'string' ? item : item.text || '';
@@ -1415,26 +1324,21 @@
         });
         html += `</div>`;
       });
-      
       container.innerHTML = html;
-      
-      // Attach listeners to show/hide fault notes
       container.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', function() {
           const [catIdx, itemIdx] = this.name.replace('result-', '').split('-');
           const note = document.getElementById(`fault-note-${catIdx}-${itemIdx}`);
-          if (note) {
-            note.classList.toggle('show', this.value === 'fault');
-          }
+          if (note) note.classList.toggle('show', this.value === 'fault');
         });
       });
     }
 
     function updateVehicleOptions() {
       const type = document.getElementById('checkType').value;
-      document.getElementById('vehicleSelectGroup').style.display = 
+      document.getElementById('vehicleSelectGroup').style.display =
         (type === 'vehicle' || type === 'vehicle-trailer') ? 'block' : 'none';
-      document.getElementById('trailerSelectGroup').style.display = 
+      document.getElementById('trailerSelectGroup').style.display =
         (type === 'trailer' || type === 'vehicle-trailer') ? 'block' : 'none';
     }
     window.updateVehicleOptions = updateVehicleOptions;
@@ -1442,92 +1346,60 @@
     async function loadVehicleOptions() {
       const vehSelect = document.getElementById('selectedVehicle');
       const trailSelect = document.getElementById('selectedTrailer');
-      
-      // Clear existing except placeholder
       vehSelect.innerHTML = '<option value="">-- Select Vehicle --</option>';
       trailSelect.innerHTML = '<option value="">-- Select Trailer --</option>';
-      
       try {
-        // Load vehicles
-        const vehiclesSnap = await getDocs(
-          query(collection(db, 'companyVehicles'), where('status', '==', 'active'))
-        );
+        const vehiclesSnap = await getDocs(query(collection(db, 'companyVehicles'), where('status', '==', 'active')));
         vehiclesSnap.forEach(doc => {
           const v = doc.data();
           vehSelect.innerHTML += `<option value="${doc.id}">${v.regNumber || ''} — ${v.make || ''} ${v.model || ''}</option>`;
         });
-        
-        // Load trailers
-        const trailersSnap = await getDocs(
-          query(collection(db, 'companyTrailers'), where('status', '==', 'active'))
-        );
+        const trailersSnap = await getDocs(query(collection(db, 'companyTrailers'), where('status', '==', 'active')));
         trailersSnap.forEach(doc => {
           const t = doc.data();
           trailSelect.innerHTML += `<option value="${doc.id}">${t.trailerNumber || doc.id} — ${t.type || 'Trailer'}</option>`;
         });
-      } catch (error) {
-        console.error('Error loading vehicles:', error);
-      }
+      } catch (error) {}
     }
 
     document.getElementById('checklistForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      
       const checkType = document.getElementById('checkType').value;
       const vehicleId = document.getElementById('selectedVehicle').value;
       const trailerId = document.getElementById('selectedTrailer').value;
       const odometer = document.getElementById('odometer').value;
       const notes = document.getElementById('checkNotes').value;
-      
       if ((checkType === 'vehicle' || checkType === 'vehicle-trailer') && !vehicleId) {
-        showAlert('Please select a vehicle', 'warning');
-        return;
+        showAlert('Please select a vehicle', 'warning'); return;
       }
       if ((checkType === 'trailer' || checkType === 'vehicle-trailer') && !trailerId) {
-        showAlert('Please select a trailer', 'warning');
-        return;
+        showAlert('Please select a trailer', 'warning'); return;
       }
-      
-      // Collect results
       const results = [];
       let hasFaults = false;
-      
       currentChecklistData.forEach((cat, catIdx) => {
         const items = Array.isArray(cat) ? cat : cat.items;
         items.forEach((item, idx) => {
           const itemText = typeof item === 'string' ? item : item.text || '';
           const result = document.querySelector(`input[name="result-${catIdx}-${idx}"]:checked`)?.value || 'pass';
           const faultNote = document.getElementById(`fault-text-${catIdx}-${idx}`)?.value || '';
-          
           if (result === 'fault' && faultNote) hasFaults = true;
-          
           results.push({
             category: Array.isArray(cat) ? 'Checklist Items' : cat.category,
-            item: itemText,
-            result,
-            faultNote
+            item: itemText, result, faultNote
           });
         });
       });
-      
       try {
         await addDoc(collection(db, 'walkaroundChecks'), {
           userId: currentUser.uid,
           userName: currentUserProfile.name,
-          checkType,
-          vehicleId,
-          trailerId,
-          odometer,
-          notes,
-          results,
-          hasFaults,
+          checkType, vehicleId, trailerId, odometer, notes, results, hasFaults,
           timestamp: serverTimestamp()
         });
-        
         showAlert('✅ Check submitted successfully!', 'success');
         resetChecklist();
       } catch (error) {
-        console.error('Error saving check:', error);
         showAlert('Failed to save check: ' + error.message, 'error');
       }
     });
@@ -1544,14 +1416,13 @@
     window.resetChecklist = resetChecklist;
 
     // ==========================================
-    // CHECKLIST EDITOR (COMPANY)
+    // CHECKLIST EDITOR
     // ==========================================
     let editorItems = [];
 
     async function loadChecklistEditor() {
       const container = document.getElementById('editorChecklist');
       container.innerHTML = '<p class="text-muted">Loading...</p>';
-      
       try {
         const checklistDoc = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
         if (checklistDoc.exists() && checklistDoc.data().items) {
@@ -1561,7 +1432,6 @@
         }
         renderEditorItems();
       } catch (error) {
-        console.error('Error loading editor:', error);
         editorItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
         renderEditorItems();
       }
@@ -1570,12 +1440,11 @@
     function renderEditorItems() {
       const container = document.getElementById('editorChecklist');
       let html = '';
-      
       editorItems.forEach((cat, catIdx) => {
         html += `
           <div style="border:1px solid var(--border);border-radius:6px;padding:1rem;margin-bottom:1rem;">
             <div class="flex-between mb-1">
-              <input type="text" value="${cat.category}" 
+              <input type="text" value="${cat.category}"
                 onchange="updateCategory(${catIdx}, this.value)"
                 style="font-weight:bold;border:none;outline:none;font-size:1rem;width:70%">
               <button class="btn-danger btn-sm" onclick="removeCategory(${catIdx})">🗑️ Remove</button>
@@ -1585,10 +1454,10 @@
         cat.items.forEach((item, itemIdx) => {
           html += `
             <div class="flex-between" style="padding:0.35rem 0;border-bottom:1px solid #f0f2f5;">
-              <input type="text" value="${item}" 
+              <input type="text" value="${item}"
                 onchange="updateItem(${catIdx}, ${itemIdx}, this.value)"
                 style="border:none;outline:none;font-size:0.9rem;flex:1;">
-              <button class="btn-danger btn-sm" style="padding:0.15rem 0.4rem;font-size:0.7rem" 
+              <button class="btn-danger btn-sm" style="padding:0.15rem 0.4rem;font-size:0.7rem"
                 onclick="removeItem(${catIdx}, ${itemIdx})">✕</button>
             </div>
           `;
@@ -1598,16 +1467,11 @@
           </div></div>
         `;
       });
-      
       container.innerHTML = html;
     }
 
-    window.updateCategory = function(idx, value) {
-      editorItems[idx].category = value;
-    };
-    window.updateItem = function(catIdx, itemIdx, value) {
-      editorItems[catIdx].items[itemIdx] = value;
-    };
+    window.updateCategory = function(idx, value) { editorItems[idx].category = value; };
+    window.updateItem = function(catIdx, itemIdx, value) { editorItems[catIdx].items[itemIdx] = value; };
     window.removeCategory = function(idx) {
       if (confirm('Remove this category and all its items?')) {
         editorItems.splice(idx, 1);
@@ -1627,11 +1491,8 @@
       renderEditorItems();
     };
     window.addNewItem = function() {
-      if (editorItems.length === 0) {
-        addNewCategory();
-      } else {
-        editorItems[0].items.push('New check item');
-      }
+      if (editorItems.length === 0) addNewCategory();
+      else editorItems[0].items.push('New check item');
       renderEditorItems();
     };
 
@@ -1646,22 +1507,19 @@
     window.saveChecklist = async function() {
       try {
         await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
-          items: editorItems,
-          updatedAt: serverTimestamp()
+          items: editorItems, updatedAt: serverTimestamp()
         });
         showAlert('✅ Checklist saved successfully!', 'success');
       } catch (error) {
-        console.error('Error saving checklist:', error);
         showAlert('Failed to save: ' + error.message, 'error');
       }
     };
 
     // ==========================================
-    // VEHICLE MANAGEMENT (COMPANY)
+    // VEHICLE MANAGEMENT
     // ==========================================
     async function addVehicle(event) {
       event.preventDefault();
-      
       const data = {
         make: document.getElementById('vehMake').value,
         model: document.getElementById('vehModel').value,
@@ -1673,22 +1531,17 @@
         companyId: currentUser.uid,
         createdAt: serverTimestamp()
       };
-      
       try {
         await addDoc(collection(db, 'companyVehicles'), data);
         showAlert('✅ Vehicle added!', 'success');
         document.getElementById('addVehicleForm').reset();
-        loadVehicles();
-        loadVehicleOptions();
-      } catch (error) {
-        showAlert('Error: ' + error.message, 'error');
-      }
+        loadVehicles(); loadVehicleOptions();
+      } catch (error) { showAlert('Error: ' + error.message, 'error'); }
     }
     document.getElementById('addVehicleForm').onsubmit = addVehicle;
 
     async function addTrailer(event) {
       event.preventDefault();
-      
       const data = {
         trailerNumber: document.getElementById('trailerId').value,
         type: document.getElementById('trailerType').value,
@@ -1700,33 +1553,24 @@
         companyId: currentUser.uid,
         createdAt: serverTimestamp()
       };
-      
       try {
         await addDoc(collection(db, 'companyTrailers'), data);
         showAlert('✅ Trailer added!', 'success');
         document.getElementById('addTrailerForm').reset();
-        loadTrailers();
-        loadVehicleOptions();
-      } catch (error) {
-        showAlert('Error: ' + error.message, 'error');
-      }
+        loadTrailers(); loadVehicleOptions();
+      } catch (error) { showAlert('Error: ' + error.message, 'error'); }
     }
     document.getElementById('addTrailerForm').onsubmit = addTrailer;
 
     async function loadVehicles() {
       const container = document.getElementById('vehiclesList');
       container.innerHTML = '<p class="text-muted">Loading...</p>';
-      
       try {
-        const snapshot = await getDocs(
-          query(collection(db, 'companyVehicles'), where('companyId', '==', currentUser.uid))
-        );
-        
+        const snapshot = await getDocs(query(collection(db, 'companyVehicles'), where('companyId', '==', currentUser.uid)));
         if (snapshot.empty) {
           container.innerHTML = '<p class="text-muted">No vehicles added yet.</p>';
           return;
         }
-        
         let html = '';
         snapshot.forEach(doc => {
           const v = doc.data();
@@ -1735,7 +1579,7 @@
               <div>
                 <strong>${v.regNumber || 'No Reg'}</strong> — ${v.make || ''} ${v.model || ''}
                 <div class="text-muted" style="font-size:0.8rem">
-                  MOT Due: ${formatDate(v.nextMotDue)} | 
+                  MOT Due: ${formatDate(v.nextMotDue)} |
                   <span class="badge ${v.status === 'active' ? 'badge-success' : 'badge-danger'}">${v.status}</span>
                 </div>
               </div>
@@ -1754,17 +1598,12 @@
     async function loadTrailers() {
       const container = document.getElementById('trailersList');
       container.innerHTML = '<p class="text-muted">Loading...</p>';
-      
       try {
-        const snapshot = await getDocs(
-          query(collection(db, 'companyTrailers'), where('companyId', '==', currentUser.uid))
-        );
-        
+        const snapshot = await getDocs(query(collection(db, 'companyTrailers'), where('companyId', '==', currentUser.uid)));
         if (snapshot.empty) {
           container.innerHTML = '<p class="text-muted">No trailers added yet.</p>';
           return;
         }
-        
         let html = '';
         snapshot.forEach(doc => {
           const t = doc.data();
@@ -1792,63 +1631,49 @@
     window.archiveVehicle = async function(id) {
       if (confirm('Remove this vehicle?')) {
         await updateDoc(doc(db, 'companyVehicles', id), { status: 'inactive' });
-        loadVehicles();
-        loadVehicleOptions();
+        loadVehicles(); loadVehicleOptions();
         showAlert('Vehicle archived', 'success');
       }
     };
     window.archiveTrailer = async function(id) {
       if (confirm('Remove this trailer?')) {
         await updateDoc(doc(db, 'companyTrailers', id), { status: 'inactive' });
-        loadTrailers();
-        loadVehicleOptions();
+        loadTrailers(); loadVehicleOptions();
         showAlert('Trailer archived', 'success');
       }
     };
 
     // ==========================================
-    // DRIVER MANAGEMENT (COMPANY)
+    // DRIVER MANAGEMENT
     // ==========================================
     async function addDriver(event) {
       event.preventDefault();
-      
-      const email = document.getElementById('driverEmail').value;
-      const name = document.getElementById('driverName').value;
-      
       try {
         await addDoc(collection(db, 'companyDrivers'), {
-          name,
-          email,
+          name: document.getElementById('driverName').value,
+          email: document.getElementById('driverEmail').value,
           phone: document.getElementById('driverPhone').value,
           type: document.getElementById('driverType').value,
           companyId: currentUser.uid,
           active: true,
           joined: serverTimestamp()
         });
-        
         showAlert('✅ Driver added!', 'success');
         document.getElementById('addDriverForm').reset();
         loadDrivers();
-      } catch (error) {
-        showAlert('Error: ' + error.message, 'error');
-      }
+      } catch (error) { showAlert('Error: ' + error.message, 'error'); }
     }
     document.getElementById('addDriverForm').onsubmit = addDriver;
 
     async function loadDrivers() {
       const container = document.getElementById('driversList');
       container.innerHTML = '<p class="text-muted">Loading...</p>';
-      
       try {
-        const snapshot = await getDocs(
-          query(collection(db, 'companyDrivers'), where('companyId', '==', currentUser.uid))
-        );
-        
+        const snapshot = await getDocs(query(collection(db, 'companyDrivers'), where('companyId', '==', currentUser.uid)));
         if (snapshot.empty) {
           container.innerHTML = '<p class="text-muted">No drivers added yet.</p>';
           return;
         }
-        
         let html = '';
         snapshot.forEach(doc => {
           const d = doc.data();
@@ -1856,9 +1681,7 @@
             <div class="list-item">
               <div>
                 <strong>${d.name}</strong>
-                <div class="text-muted" style="font-size:0.8rem">
-                  ${d.email} | ${d.type}
-                </div>
+                <div class="text-muted" style="font-size:0.8rem">${d.email} | ${d.type}</div>
               </div>
               <div class="item-actions">
                 <span class="badge ${d.active ? 'badge-success' : 'badge-danger'}">${d.active ? 'Active' : 'Inactive'}</span>
@@ -1904,14 +1727,11 @@
           document.getElementById('operatingCentre').value = d.operatingCentre || '';
           document.getElementById('authorisedVehicles').value = d.authorisedVehicles || '';
         }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      }
+      } catch (error) {}
     }
 
     async function saveCompanyProfile(event) {
       event.preventDefault();
-      
       const data = {
         regName: document.getElementById('companyRegName').value,
         tradeName: document.getElementById('companyTradeName').value,
@@ -1930,13 +1750,10 @@
         authorisedVehicles: parseInt(document.getElementById('authorisedVehicles').value) || null,
         updatedAt: serverTimestamp()
       };
-      
       try {
         await setDoc(doc(db, 'companies', currentUser.uid, 'profile', 'details'), data);
         showAlert('✅ Company profile saved!', 'success');
-      } catch (error) {
-        showAlert('Error: ' + error.message, 'error');
-      }
+      } catch (error) { showAlert('Error: ' + error.message, 'error'); }
     }
     document.getElementById('companyProfileForm').onsubmit = saveCompanyProfile;
 
@@ -1949,7 +1766,6 @@
         if (docSnap.exists()) {
           const d = docSnap.data();
           document.getElementById('profileName').value = d.name || currentUserProfile.name || '';
-          document.getElementById('profileEmail').value = currentUser.email || '';
           document.getElementById('profilePhone').value = d.phone || '';
           document.getElementById('licenceNumber').value = d.licenceNumber || '';
           document.getElementById('dvlaCode').value = d.dvlaCheckCode || '';
@@ -1962,14 +1778,11 @@
         }
         document.getElementById('profileEmail').value = currentUser.email || '';
         document.getElementById('profileName').value = currentUserProfile?.name || '';
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      }
+      } catch (error) {}
     }
 
     async function saveProfile(event) {
       event.preventDefault();
-      
       const data = {
         name: document.getElementById('profileName').value,
         phone: document.getElementById('profilePhone').value,
@@ -1983,19 +1796,13 @@
         medicalExpiry: document.getElementById('medicalExpiry').value,
         updatedAt: serverTimestamp()
       };
-      
       try {
         await setDoc(doc(db, 'driverProfiles', currentUser.uid), data);
-        // Also update main profile name
-        await setDoc(doc(db, 'profiles', currentUser.uid), {
-          name: data.name
-        }, { merge: true });
+        await setDoc(doc(db, 'profiles', currentUser.uid), { name: data.name }, { merge: true });
         currentUserProfile.name = data.name;
         showAlert('✅ Profile saved!', 'success');
         updateDashboard();
-      } catch (error) {
-        showAlert('Error: ' + error.message, 'error');
-      }
+      } catch (error) { showAlert('Error: ' + error.message, 'error'); }
     }
     document.getElementById('profileForm').onsubmit = saveProfile;
 
@@ -2005,17 +1812,12 @@
     async function loadDocuments() {
       const container = document.getElementById('documentsList');
       container.innerHTML = '<p class="text-muted">Loading...</p>';
-      
       try {
-        const snapshot = await getDocs(
-          query(collection(db, 'driverDocuments'), where('userId', '==', currentUser.uid))
-        );
-        
+        const snapshot = await getDocs(query(collection(db, 'driverDocuments'), where('userId', '==', currentUser.uid)));
         if (snapshot.empty) {
           container.innerHTML = '<p class="text-muted">No documents uploaded yet.</p>';
           return;
         }
-        
         let html = '';
         snapshot.forEach(doc => {
           const d = doc.data();
@@ -2039,11 +1841,7 @@
 
     async function uploadDocument() {
       const file = document.getElementById('docFile').files[0];
-      if (!file) {
-        showAlert('Please select a file', 'warning');
-        return;
-      }
-      
+      if (!file) { showAlert('Please select a file', 'warning'); return; }
       const docData = {
         userId: currentUser.uid,
         type: document.getElementById('docType').value,
@@ -2053,26 +1851,18 @@
         fileSize: file.size,
         uploadedAt: serverTimestamp()
       };
-      
       try {
-        // Upload to Storage
         const fileRef = ref(storage, `documents/${currentUser.uid}/${Date.now()}_${file.name}`);
         await uploadBytes(fileRef, file);
         docData.fileUrl = await getDownloadURL(fileRef);
-        
-        // Save to Firestore
         await addDoc(collection(db, 'driverDocuments'), docData);
-        
         showAlert('✅ Document uploaded!', 'success');
         document.getElementById('docType').value = 'license';
         document.getElementById('docName').value = '';
         document.getElementById('docExpiry').value = '';
         document.getElementById('docFile').value = '';
         loadDocuments();
-      } catch (error) {
-        console.error('Upload error:', error);
-        showAlert('Upload failed: ' + error.message, 'error');
-      }
+      } catch (error) { showAlert('Upload failed: ' + error.message, 'error'); }
     }
     window.uploadDocument = uploadDocument;
 
@@ -2082,9 +1872,7 @@
     async function loadJobs() {
       const container = document.getElementById('jobsList');
       container.innerHTML = '<p class="text-muted">Loading jobs...</p>';
-      
       try {
-        // Placeholder — replace with real jobs query
         container.innerHTML = `
           <div class="card">
             <p class="text-muted text-center py-3">Job listings will appear here when posted by companies.</p>
@@ -2114,27 +1902,24 @@
       const to = document.getElementById('reportTo').value;
       const container = document.getElementById('checkHistoryList');
       container.innerHTML = '<p class="text-muted">Loading...</p>';
-      
       try {
-        let q = collection(db, 'walkaroundChecks');
-        
+        let qry = collection(db, 'walkaroundChecks');
+        const fromDate = new Date(from);
+        const toDate = new Date(to + 'T23:59:59');
         if (currentUserProfile.role === 'company') {
-          q = query(q, where('timestamp', '>=', new Date(from)), where('timestamp', '<=', new Date(to + 'T23:59:59')));
+          qry = query(qry, where('timestamp', '>=', fromDate), where('timestamp', '<=', toDate));
         } else {
-          q = query(q, 
+          qry = query(qry,
             where('userId', '==', currentUser.uid),
-            where('timestamp', '>=', new Date(from)),
-            where('timestamp', '<=', new Date(to + 'T23:59:59'))
+            where('timestamp', '>=', fromDate),
+            where('timestamp', '<=', toDate)
           );
         }
-        
-        const snapshot = await getDocs(q);
-        
+        const snapshot = await getDocs(qry);
         if (snapshot.empty) {
           container.innerHTML = '<p class="text-muted">No checks found for this period.</p>';
           return;
         }
-        
         let html = '<table><thead><tr><th>Date</th><th>Vehicle</th><th>Type</th><th>Status</th></tr></thead><tbody>';
         snapshot.docs.forEach(doc => {
           const c = doc.data();
@@ -2161,10 +1946,8 @@
     }
     window.exportChecks = exportChecks;
 
-    // ==========================================
-    // INITIALISATION
-    // ==========================================
     console.log('✅ LSD Solutions App Loaded — DVSA Compliant Checklist Included');
+  // ]]><![CDATA[
   </script>
 </body>
 </html>
