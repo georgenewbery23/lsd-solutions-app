@@ -1228,7 +1228,7 @@
   // =====================================================
   let editedChecks = [];
 
-  async function loadCompanyCheckEditor() {
+   async function loadCompanyCheckEditor() {
     const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
     
     if (snap.exists && snap.data().items && Array.isArray(snap.data().items)) {
@@ -1244,11 +1244,16 @@
         "Steering — Free play, fluid level, no leaks",
         "Suspension — Springs, shock absorbers, mounting points",
         "Fluid Levels — Engine oil, coolant, screen wash, fuel/water leaks",
-        "Coupling & Trailer Securement — Fifth wheel, air lines, electrics, breakaway",
+        "Coupling & Trailer Securement — Fifth wheel, air lines, electrics, breakaway cable",
         "Load Security — Straps, chains, sheeted, weight distribution",
         "Emergency Equipment — Fire extinguisher, warning triangle, first aid, wheel chocks",
         "Cab & Interior — Controls, seatbelts, tachograph, handbrake, doors secure"
       ];
+      // Save defaults so they persist
+      await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
+        items: editedChecks,
+        updatedAt: serverTimestamp()
+      });
     }
     
     renderCheckEditor();
