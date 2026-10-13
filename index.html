@@ -1645,11 +1645,13 @@
       const pay = parseFloat(document.getElementById('jobPay').value) || 0;
       const description = document.getElementById('jobDescription').value.trim();
       
-      if (!title || !from || !to || pay <= 0) {
-        showToast('Please fill in all required fields', 'warning');
-        return;
-      }
-      
+     <script>
+//<![CDATA[
+// Your ENTIRE existing JavaScript code goes here — including the if statement:
+if (!title || !from || !to || pay <= 0) {
+  showToast('Please fill in all required fields', 'warning');
+  return;
+}   
       try {
         await addDoc(collection(db, 'jobs'), {
           title,
@@ -1679,6 +1681,7 @@
         showToast('❌ Failed to post: ' + error.message, 'error');
       }
     }
+       </script>
     window.submitNewJob = submitNewJob;
 
     async function deleteJob(jobId) {
