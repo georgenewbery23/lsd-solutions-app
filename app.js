@@ -320,7 +320,13 @@ const DEFAULT_CHECKLIST = {
   ],
   updatedAt: new Date()
 };
-
+async function initialiseCompanyChecklist(companyId) {
+  const companyChecklistRef = doc(db, 'companies', companyId, 'settings', 'checklist');
+  
+  await setDoc(companyChecklistRef, DEFAULT_CHECKLIST);
+  
+  console.log('✅ DVSA-compliant checklist installed');
+}
 // ==================================================
 // 🔴 10/10 FEATURE: FIREBASE-PERSISTED INVOICE COUNTER
 // ==================================================
