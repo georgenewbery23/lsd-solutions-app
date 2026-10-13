@@ -80,6 +80,8 @@ function showPage(pageId) {
     case 'checklistPage': loadChecklistPage(); break;
     case 'myChecksPage': loadMyChecks(); break;
     case 'driverProfilePage': loadDriverProfile(); break;
+    case 'driverCalendarPage': loadDriverCalendarPage(); break;  // ✅ NEW
+    case 'driverDocumentsPage': loadDriverDocumentsPage(); break; // ✅ NEW
     case 'companyProfilePage': loadCompanyProfile(); break;
     case 'companyVehiclesPage': loadCompanyVehicles(); break;
     case 'companyDriversPage': loadCompanyDrivers(); break;
