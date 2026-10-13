@@ -7,6 +7,15 @@
 // ==================================================
 // 🛠️ COMPLETE UTILITIES LIBRARY
 // ==================================================
+function toInputDate(val) {
+  if (!val) return '';
+  // If already correct format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  // Convert from Firestore Timestamp or other formats
+  const d = val.toDate ? val.toDate() : new Date(val);
+  if (isNaN(d.getTime())) return '';
+  return d.toISOString().split('T')[0];
+}
 const Utils = {
   Storage: {
     get(key, defaultValue = null) {
