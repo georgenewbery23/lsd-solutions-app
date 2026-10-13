@@ -867,11 +867,23 @@
     <div id="globalAlert" class="alert" style="position:fixed;top:1rem;right:1rem;z-index:999;max-width:400px;"></div>
   </main>
 
-  <!-- Firebase Imports -->
+    <!-- Firebase Imports & Global Exposure -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      sendPasswordResetEmail, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/auth.js";
+    import { 
+      getFirestore, 
+      doc, setDoc, getDoc, 
+      collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, 
+      onSnapshot, serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     // Firebase Configuration — Replace with your own
@@ -890,9 +902,484 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // Make available globally
-    window.firebaseApp = { app, auth, db, storage };
+    // Make ALL Firebase functions & objects available GLOBALLY
+    window.auth = auth;
+    window.db = db;
+    window.storage = storage;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.sendPasswordResetEmail = sendPasswordResetEmail;
+    window.signOut = signOut;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+    window.collection = collection;
+    window.query = query;
+    window.where = where;
+    window.getDocs = getDocs;
+    window.addDoc = addDoc;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.onSnapshot = onSnapshot;
+    window.serverTimestamp = serverTimestamp;
+    window.ref = ref;
+    window.uploadBytes = uploadBytes;
+    window.getDownloadURL = getDownloadURL;
   </script>
+
+  <!-- Main Application Script -->
+  <script>
+    // ==========================================
+    // GLOBAL STATE
+    // ==========================================
+    let currentUser = null;
+    let currentUserProfile = null;
+    let currentPage = 'authPage';
+    let isOnline = navigator.onLine;
+
+    // Default DVSA-Compliant Checklist
+    const DEFAULT_CHECKLIST = [
+      { category: "1. Vehicle Exterior & Body", items: [
+        "Body, panels and wings — secure, no damage or sharp edges",
+        "Doors, hinges and locks — secure and operating correctly",
+        "Steps, catwalk and handholds — secure and free from damage",
+        "Wings/side guards — correctly fitted and secure",
+        "Rear under-run protection — present and secure",
+        "Markings / livery / registration plates — legible and correct"
+      ]},
+      { category: "2. Windscreen & Windows", items: [
+        "Windscreen — clear, no obstruction to view, no significant damage",
+        "Wipers and washers — working correctly, blades in good condition",
+        "Mirrors — all present, secure, clean and properly adjusted",
+        "Side windows — intact, no illegal tinting"
+      ]},
+      { category: "3. Lights & Reflectors", items: [
+        "Headlights — main beam and dipped working correctly",
+        "Sidelights — front and rear working",
+        "Indicator lights — all working, correct flash rate",
+        "Brake lights — both working correctly",
+        "Rear number plate light — working",
+        "Rear reflectors — present, clean and secure",
+        "Marker lights — working where fitted"
+      ]},
+      { category: "4. Tyres & Wheels", items: [
+        "Tyre condition — no cuts, bulges or uneven wear",
+        "Tyre tread depth — at least 1.6mm across ¾ width",
+        "Tyre pressure — correct for load",
+        "Wheels — no cracks, distortion or loose bolts/nuts",
+        "Wheel nuts — security markers aligned",
+        "No mixing of tyre types/sizes on same axle"
+      ]},
+      { category: "5. Brakes & Suspension", items: [
+        "Brake operation — service brake holds vehicle on flat ground",
+        "Parking brake — holds vehicle on gradient",
+        "Brake lines/hoses — no leaks, secure routing, no chafing",
+        "Suspension components — springs, shocks, arms secure and intact",
+        "Axle — no damage, mounting secure",
+        "Air tanks — secure, no damage, drain if applicable"
+      ]},
+      { category: "6. Fluid Levels & Leaks", items: [
+        "Engine oil — level between min/max",
+        "Coolant — correct level, no visible leaks",
+        "Screen wash — topped up, suitable for current conditions",
+        "Brake fluid — correct level, no leaks",
+        "Power steering fluid — correct level",
+        "Air system — no excessive air leaks",
+        "Under vehicle — no fuel, oil or fluid leaks"
+      ]},
+      { category: "7. Coupling & Trailer Equipment", items: [
+        "Fifth wheel — securely mounted, release mechanism operating correctly",
+        "Fifth wheel jaw/latch — fully closed and locked",
+        "Fifth wheel plate — well greased, no excessive wear",
+        "Air lines — correctly connected, no damage, gladhand seals good",
+        "Electrical connections — secure, lights working",
+        "Trailer brake operation — test applies and releases correctly",
+        "Secondary coupling (chain/cable) — if required, secure and correctly attached"
+      ]},
+      { category: "8. Load Security", items: [
+        "Load — secure within body, no movement",
+        "Straps/chains — sufficient number, undamaged, correctly tensioned",
+        "Sheeting — secure and intact if fitted",
+        "Doors/barriers — closed and secured",
+        "Load does not obscure lights, markers or plates",
+        "Load height and projection — within legal limits"
+      ]},
+      { category: "9. Emergency Equipment", items: [
+        "Fire extinguisher — present, secure, pressure in green zone, in date",
+        "Warning triangle — present and serviceable",
+        "First aid kit — present, contents complete and in date",
+        "Wheel chocks — present and in good condition",
+        "Spare bulbs — recommended"
+      ]},
+      { category: "10. Cab & Interior", items: [
+        "Seats and seatbelts — secure, buckles operate correctly, no fraying",
+        "Horn — working correctly",
+        "Speedometer — working clearly",
+        "Mirrors inside — clean and secure",
+        "Floor area — clear, no loose items",
+        "Handbrake warning light — extinguishes when released",
+        "All warning lights — illuminate on ignition and extinguish as required"
+      ]}
+    ];
+
+    // ==========================================
+    // UTILITY FUNCTIONS
+    // ==========================================
+    function showAlert(message, type = 'info', duration = 4000) {
+      const alertBox = document.getElementById('globalAlert');
+      alertBox.className = `alert alert-${type} show`;
+      alertBox.textContent = message;
+      if (duration > 0) {
+        setTimeout(() => alertBox.classList.remove('show'), duration);
+      }
+    }
+
+    function formatDate(date) {
+      if (!date) return '';
+      const d = date instanceof Date ? date : new Date(date);
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // ==========================================
+    // ONLINE / OFFLINE DETECTION
+    // ==========================================
+    function updateOnlineStatus() {
+      isOnline = navigator.onLine;
+      const banner = document.getElementById('offlineBanner');
+      banner.classList.toggle('show', !isOnline);
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // ==========================================
+    // NAVIGATION
+    // ==========================================
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+        currentPage = pageId;
+      }
+      document.getElementById('navLinks').classList.remove('open');
+      document.querySelectorAll('.nav-links a').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.page === pageId) link.classList.add('active');
+      });
+      loadPageData(pageId);
+      return false;
+    }
+    window.showPage = showPage;
+
+    function loadPageData(pageId) {
+      switch(pageId) {
+        case 'dashboard': updateDashboard(); break;
+        case 'checklist': loadChecklist(); loadVehicleOptions(); break;
+        case 'checklistEditor': loadChecklistEditor(); break;
+        case 'vehicles': if (currentUserProfile?.role === 'company') loadVehicles(); break;
+        case 'drivers': if (currentUserProfile?.role === 'company') loadDrivers(); break;
+        case 'documents': loadDocuments(); break;
+        case 'profile': loadProfile(); break;
+        case 'companyProfile': loadCompanyProfile(); break;
+        case 'jobs': loadJobs(); break;
+        case 'reports': loadCheckHistoryList(); break;
+      }
+    }
+
+    // ==========================================
+    // AUTHENTICATION
+    // ==========================================
+    function switchAuthTab(tabName) {
+      document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+      document.getElementById(tabName + 'Form').classList.add('active');
+      document.getElementById('authAlert').classList.remove('show');
+    }
+    window.switchAuthTab = switchAuthTab;
+
+    document.getElementById('regOptDriver').addEventListener('click', function() {
+      document.getElementById('regOptDriver').style.borderColor = 'var(--primary)';
+      document.getElementById('regOptDriver').style.background = 'var(--primary-light)';
+      document.getElementById('regOptCompany').style.borderColor = 'var(--border)';
+      document.getElementById('regOptCompany').style.background = 'white';
+      this.querySelector('input').checked = true;
+    });
+    document.getElementById('regOptCompany').addEventListener('click', function() {
+      document.getElementById('regOptCompany').style.borderColor = 'var(--primary)';
+      document.getElementById('regOptCompany').style.background = 'var(--primary-light)';
+      document.getElementById('regOptDriver').style.borderColor = 'var(--border)';
+      document.getElementById('regOptDriver').style.background = 'white';
+      this.querySelector('input').checked = true;
+    });
+
+    async function handleSignIn(event) {
+      event.preventDefault();
+      const email = document.getElementById('signinEmail').value;
+      const password = document.getElementById('signinPassword').value;
+      const alertBox = document.getElementById('authAlert');
+      try {
+        alertBox.className = 'alert show';
+        alertBox.textContent = 'Signing in...';
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alertBox.className = 'alert alert-error show';
+        alertBox.textContent = 'Sign in failed: ' + error.message;
+      }
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      const name = document.getElementById('registerName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const role = document.querySelector('input[name="regRole"]:checked').value;
+      const alertBox = document.getElementById('authAlert');
+      try {
+        alertBox.className = 'alert show';
+        alertBox.textContent = 'Creating account...';
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCred.user.uid;
+        await setDoc(doc(db, 'profiles', uid), {
+          name, email, role, createdAt: serverTimestamp()
+        });
+        if (role === 'company') {
+          await setDoc(doc(db, 'companies', uid, 'settings', 'checklist'), {
+            items: DEFAULT_CHECKLIST, updatedAt: serverTimestamp()
+          });
+        }
+        alertBox.className = 'alert alert-success show';
+        alertBox.textContent = '✅ Account created! Signing you in...';
+      } catch (error) {
+        alertBox.className = 'alert alert-error show';
+        alertBox.textContent = 'Registration failed: ' + error.message;
+      }
+    }
+
+    async function handlePasswordReset(event) {
+      event.preventDefault();
+      const email = document.getElementById('resetEmail').value;
+      const alertBox = document.getElementById('authAlert');
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alertBox.className = 'alert alert-success show';
+        alertBox.textContent = '✅ Password reset link sent — check your email';
+      } catch (error) {
+        alertBox.className = 'alert alert-error show';
+        alertBox.textContent = 'Error: ' + error.message;
+      }
+    }
+
+    async function loadUserProfile(uid) {
+      try {
+        const profileSnap = await getDoc(doc(db, 'profiles', uid));
+        if (profileSnap.exists()) currentUserProfile = profileSnap.data();
+        return currentUserProfile;
+      } catch (error) { return null; }
+    }
+
+    function buildNavLinks() {
+      const navLinks = document.getElementById('navLinks');
+      const role = currentUserProfile?.role;
+      let linksHTML = `
+        <a href="#" data-page="dashboard" onclick="showPage('dashboard'); return false;">📊 Dashboard</a>
+        <a href="#" data-page="checklist" onclick="showPage('checklist'); return false;">✅ Walkaround Check</a>
+        <a href="#" data-page="jobs" onclick="showPage('jobs'); return false;">📋 Jobs</a>
+      `;
+      if (role === 'company') {
+        linksHTML += `
+          <a href="#" data-page="vehicles" onclick="showPage('vehicles'); return false;">🚛 Vehicles</a>
+          <a href="#" data-page="drivers" onclick="showPage('drivers'); return false;">👤 Drivers</a>
+          <a href="#" data-page="companyProfile" onclick="showPage('companyProfile'); return false;">🏢 Company Profile</a>
+          <a href="#" data-page="reports" onclick="showPage('reports'); return false;">📊 Reports</a>
+        `;
+      } else {
+        linksHTML += `
+          <a href="#" data-page="documents" onclick="showPage('documents'); return false;">📁 Documents</a>
+          <a href="#" data-page="profile" onclick="showPage('profile'); return false;">👤 Profile</a>
+        `;
+      }
+      linksHTML += `<a href="#" onclick="signOut(); return false;" style="color:var(--danger)">🚪 Sign Out</a>`;
+      navLinks.innerHTML = linksHTML;
+    }
+
+    function signOutUser() {
+      signOut(auth).then(() => {
+        currentUser = null; currentUserProfile = null;
+        showPage('authPage');
+        document.getElementById('mainNav').style.display = 'none';
+      }).catch(err => showAlert('Error signing out', 'error'));
+    }
+    window.signOut = signOutUser;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        const profile = await loadUserProfile(user.uid);
+        if (profile) {
+          currentUserProfile = profile;
+          document.getElementById('authPage').classList.remove('active');
+          document.getElementById('mainNav').style.display = 'block';
+          buildNavLinks();
+          showPage('dashboard');
+        }
+      } else {
+        currentUser = null; currentUserProfile = null;
+        document.getElementById('authPage').classList.add('active');
+        document.getElementById('mainNav').style.display = 'none';
+      }
+    });
+
+    // ==========================================
+    // DASHBOARD & REMAINING FUNCTIONS
+    // ==========================================
+    function updateDashboard() {
+      if (!currentUser || !currentUserProfile) return;
+      document.getElementById('userName').textContent = currentUserProfile.name || currentUser.email;
+      document.getElementById('userRoleDisplay').textContent =
+        currentUserProfile.role === 'company' ? '🏢 Company Portal' : '👤 Driver Portal';
+      const vehiclesLink = document.getElementById('vehiclesLink');
+      const reportsLink = document.getElementById('reportsLink');
+      const documentsLink = document.querySelector('.quick-action-card[onclick*="documents"]');
+      if (currentUserProfile.role === 'company') {
+        vehiclesLink.style.display = 'block';
+        reportsLink.style.display = 'block';
+        if (documentsLink) documentsLink.style.display = 'none';
+      } else {
+        vehiclesLink.style.display = 'none';
+        reportsLink.style.display = 'none';
+        if (documentsLink) documentsLink.style.display = 'block';
+      }
+      loadRecentActivity();
+    }
+
+    async function loadRecentActivity() {
+      const container = document.getElementById('recentActivity');
+      container.innerHTML = '<p class="text-muted">Loading activity...</p>';
+      try {
+        const qry = query(collection(db, 'walkaroundChecks'), where('userId', '==', currentUser.uid));
+        const snapshot = await getDocs(qry);
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-muted text-center py-3">No recent checks yet.</p>';
+          return;
+        }
+        let html = '';
+        snapshot.docs.slice(0, 5).forEach(doc => {
+          const c = doc.data();
+          const date = c.timestamp ? formatDate(c.timestamp.toDate()) : 'Unknown date';
+          html += `
+            <div class="list-item">
+              <div>
+                <strong>${c.vehicleReg || 'Vehicle'}</strong>
+                <span class="text-muted"> — ${date}</span>
+              </div>
+              <span class="badge ${c.hasFaults ? 'badge-danger' : 'badge-success'}">
+                ${c.hasFaults ? '⚠️ Faults' : '✅ Passed'}
+              </span>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = '<p class="text-muted">Could not load activity.</p>';
+      }
+    }
+
+    // ==========================================
+    // REST OF YOUR FUNCTIONS
+    // ==========================================
+    // Checklist
+    let currentChecklistData = [];
+    async function loadChecklist() {
+      const container = document.getElementById('checklistContainer');
+      container.innerHTML = '<p class="text-muted">Loading...</p>';
+      let checklistItems = DEFAULT_CHECKLIST;
+      try {
+        if (currentUserProfile?.companyId) {
+          const snap = await getDoc(doc(db, 'companies', currentUserProfile.companyId, 'settings', 'checklist'));
+          if (snap.exists()) checklistItems = snap.data().items;
+        }
+      } catch (e) {}
+      currentChecklistData = checklistItems;
+      renderChecklist(checklistItems);
+    }
+
+    function renderChecklist(categories) {
+      const container = document.getElementById('checklistContainer');
+      let html = '';
+      categories.forEach((cat, catIndex) => {
+        const items = Array.isArray(cat) ? cat : cat.items;
+        html += `<div class="checklist-category"><h4>${Array.isArray(cat) ? 'Checklist' : cat.category}</h4>`;
+        items.forEach((item, idx) => {
+          const text = typeof item === 'string' ? item : item.text;
+          html += `
+            <div class="check-item">
+              <label style="flex:1">${text}</label>
+              <span style="display:flex;gap:0.5rem">
+                <label><input type="radio" name="r${catIndex}-${idx}" value="pass" checked> OK</label>
+                <label><input type="radio" name="r${catIndex}-${idx}" value="fault"> Fault</label>
+                <label><input type="radio" name="r${catIndex}-${idx}" value="na"> N/A</label>
+              </span>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    window.updateVehicleOptions = function() {
+      const type = document.getElementById('checkType').value;
+      document.getElementById('vehicleSelectGroup').style.display = 
+        (type === 'vehicle' || type === 'vehicle-trailer') ? 'block' : 'none';
+      document.getElementById('trailerSelectGroup').style.display = 
+        (type === 'trailer' || type === 'vehicle-trailer') ? 'block' : 'none';
+    };
+
+    async function loadVehicleOptions() {
+      const v = document.getElementById('selectedVehicle');
+      const t = document.getElementById('selectedTrailer');
+      v.innerHTML = '<option value="">-- Select Vehicle --</option>';
+      t.innerHTML = '<option value="">-- Select Trailer --</option>';
+      try {
+        const vSnap = await getDocs(query(collection(db, 'companyVehicles'), where('status', '==', 'active')));
+        vSnap.forEach(d => { const x = d.data(); v.innerHTML += `<option value="${d.id}">${x.regNumber || 'Vehicle'}</option>`; });
+        const tSnap = await getDocs(query(collection(db, 'companyTrailers'), where('status', '==', 'active')));
+        tSnap.forEach(d => { const x = d.data(); t.innerHTML += `<option value="${d.id}">${x.trailerNumber || 'Trailer'}</option>`; });
+      } catch (e) {}
+    }
+
+    window.resetChecklist = function() {
+      document.getElementById('checklistForm').reset();
+      loadChecklist();
+    };
+
+    // Stub remaining page loaders so navigation works
+    function loadChecklistEditor() {}
+    function loadVehicles() {}
+    function loadTrailers() {}
+    function loadDrivers() {}
+    function loadDocuments() {}
+    function loadProfile() {}
+    function loadCompanyProfile() {}
+    function loadJobs() {}
+    function loadCheckHistoryList() {}
+    window.loadCheckHistory = function() { showAlert('History feature coming soon', 'info'); };
+    window.exportChecks = function() { showAlert('Export coming soon', 'info'); };
+    window.uploadDocument = function() { showAlert('Upload coming soon', 'info'); };
+    window.applyFilters = function() { loadJobs(); };
+
+    console.log('✅ App loaded — Firebase functions exposed globally');
+  </script>
+</body>
+</html>
 
   <!-- Main Application Script -->
     <!-- Main Application Script -->
