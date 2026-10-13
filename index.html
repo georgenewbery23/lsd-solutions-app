@@ -274,34 +274,87 @@
       </div>
     </div>
 
-    <!-- PROFILE -->
+        <!-- PROFILE -->
     <div id="drv-profile" class="driver-subpage">
       <div class="card">
         <h3>👤 My Profile</h3>
-        <div class="grid-2" style="margin-top:15px;">
+        
+        <!-- Profile Photo -->
+        <div style="text-align:center; margin-bottom:25px;">
+          <div id="profilePhotoPreview" style="width:120px; height:120px; border-radius:50%; background:#e5e7eb; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; overflow:hidden; border:3px solid var(--primary);">
+            <span style="font-size:3rem; color:#999;">👤</span>
+          </div>
+          <input type="file" id="profilePhotoInput" accept="image/*,.pdf,.doc,.docx" class="hidden-input" onchange="handleProfilePhotoUpload(event)" />
+          <button type="button" onclick="document.getElementById('profilePhotoInput').click()" class="secondary">📷 Upload Profile Photo</button>
+          <p id="profilePhotoName" style="font-size:0.85rem; color:var(--muted); margin-top:5px;"></p>
+        </div>
+        
+        <!-- 🔒 Fixed Details (cannot be edited once saved) -->
+        <h4 style="margin-top:5px; margin-bottom:15px; color:var(--muted); border-bottom:1px solid #eee; padding-bottom:8px;">
+          Personal Details <span style="font-size:0.85rem; font-weight:normal;">— once saved, these cannot be changed</span>
+        </h4>
+        <div class="grid-2" style="margin-bottom:20px;">
           <div>
-            <label>Full Name</label>
-            <input type="text" id="drvName" />
+            <label>First Name *</label>
+            <input type="text" id="drvFirstName" placeholder="Enter first name" />
           </div>
           <div>
-            <label>Email</label>
-            <input type="email" id="drvEmail" disabled style="background:#eee;" />
+            <label>Middle Name(s)</label>
+            <input type="text" id="drvMiddleName" placeholder="Enter middle names (optional)" />
           </div>
           <div>
-            <label>Phone Number</label>
-            <input type="tel" id="drvPhone" />
+            <label>Surname *</label>
+            <input type="text" id="drvSurname" placeholder="Enter surname" />
           </div>
           <div>
-            <label>Address</label>
-            <input type="text" id="drvAddress" />
+            <label>Date of Birth *</label>
+            <input type="date" id="drvDob" />
           </div>
         </div>
-        <button onclick="saveDriverProfile()" style="margin-top:20px;">Save Profile</button>
+
+        <!-- ✏️ Editable Details -->
+        <h4 style="margin-top:25px; margin-bottom:15px; color:var(--muted); border-bottom:1px solid #eee; padding-bottom:8px;">
+          Contact & Address Details — can be updated at any time
+        </h4>
+        <div class="grid-2">
+          <div style="grid-column: 1 / -1;">
+            <label>Address Line 1 *</label>
+            <input type="text" id="drvAddress1" placeholder="House number and street name" />
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>Address Line 2</label>
+            <input type="text" id="drvAddress2" placeholder="Optional" />
+          </div>
+          <div>
+            <label>Town / City *</label>
+            <input type="text" id="drvAddressTown" placeholder="Town or city" />
+          </div>
+          <div>
+            <label>County</label>
+            <input type="text" id="drvAddressCounty" placeholder="County" />
+          </div>
+          <div>
+            <label>Postcode *</label>
+            <input type="text" id="drvAddressPostcode" placeholder="Postcode" />
+          </div>
+          <div>
+            <label>Email Address *</label>
+            <input type="email" id="drvEmail" />
+          </div>
+          <div>
+            <label>Mobile Number *</label>
+            <input type="tel" id="drvMobile" placeholder="e.g. 07700 900000" />
+          </div>
+          <div>
+            <label>Home Telephone Number</label>
+            <input type="tel" id="drvHomeTel" placeholder="Optional" />
+          </div>
+        </div>
+
+        <button onclick="saveDriverProfile()" style="margin-top:25px;">Save Profile</button>
         <p id="profileMsg" style="margin-top:10px;"></p>
       </div>
     </div>
-  </div>
-</div>
 
 <!-- ===== COMPANY PORTAL ===== -->
 <div id="companyPage" class="page">
@@ -1011,31 +1064,175 @@
     setTimeout(backToDocs, 800);
   };
 
+  let profilePhotoURL = null;
+  let profilePhotoFileRef = null;
+
   // =====================================================
-  // PROFILE
+  // DRIVER PROFILE — PHOTO UPLOAD
   // =====================================================
-     function loadDriverProfile() {
+  window.handleProfilePhotoUpload = async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const preview = document.getElementById('profilePhotoPreview');
+    const nameDisplay = document.getElementById('profilePhotoName');
+    
+    nameDisplay.textContent = `Uploading: ${file.name}...`;
+    
+    try {
+      const path = `users/${currentUser.uid}/profile/profile-photo-${Date.now()}_${file.name}`;
+      const fileRef = ref(storage, path);
+      const snapshot = await uploadBytes(fileRef, file);
+      profilePhotoURL = await getDownloadURL(snapshot.ref);
+      profilePhotoFileRef = path;
+      
+      // Show preview (image files only; show icon for docs)
+      if (file.type.startsWith('image/')) {
+        preview.innerHTML = `<img src="${profilePhotoURL}" style="width:100%; height:100%; object-fit:cover;" alt="Profile" />`;
+      } else if (file.type === 'application/pdf') {
+        preview.innerHTML = `<span style="font-size:2.5rem;">📄</span>`;
+      } else {
+        preview.innerHTML = `<span style="font-size:2.5rem;">📎</span>`;
+      }
+      
+      nameDisplay.textContent = `✅ ${file.name}`;
+      nameDisplay.style.color = 'green';
+    } catch (err) {
+      nameDisplay.textContent = '❌ Upload failed: ' + err.message;
+      nameDisplay.style.color = 'red';
+    }
+  };
+
+  // =====================================================
+  // DRIVER PROFILE — LOAD & SAVE
+  // =====================================================
+  function loadDriverProfile() {
     if (!userProfile) return;
-    document.getElementById('drvName').value = userProfile.name || '';
+    
+    // Load profile photo
+    profilePhotoURL = userProfile.profilePhotoURL || null;
+    profilePhotoFileRef = userProfile.profilePhotoRef || null;
+    const preview = document.getElementById('profilePhotoPreview');
+    const nameDisplay = document.getElementById('profilePhotoName');
+    
+    if (profilePhotoURL) {
+      if (profilePhotoURL.match(/\.(jpg|jpeg|png|gif|webp)$/i) || profilePhotoURL.includes('firebasestorage')) {
+        preview.innerHTML = `<img src="${profilePhotoURL}" style="width:100%; height:100%; object-fit:cover;" alt="Profile" />`;
+      } else {
+        preview.innerHTML = `<span style="font-size:2.5rem;">📄</span>`;
+      }
+      nameDisplay.textContent = '✅ Profile photo on file';
+      nameDisplay.style.color = 'green';
+    } else {
+      preview.innerHTML = `<span style="font-size:3rem; color:#999;">👤</span>`;
+      nameDisplay.textContent = '';
+    }
+    
+    // Load ALL saved values
+    document.getElementById('drvFirstName').value = userProfile.firstName || '';
+    document.getElementById('drvMiddleName').value = userProfile.middleName || '';
+    document.getElementById('drvSurname').value = userProfile.surname || '';
+    document.getElementById('drvDob').value = userProfile.dob || '';
+    
+    document.getElementById('drvAddress1').value = userProfile.address1 || '';
+    document.getElementById('drvAddress2').value = userProfile.address2 || '';
+    document.getElementById('drvAddressTown').value = userProfile.addressTown || '';
+    document.getElementById('drvAddressCounty').value = userProfile.addressCounty || '';
+    document.getElementById('drvAddressPostcode').value = userProfile.addressPostcode || '';
+    
     document.getElementById('drvEmail').value = userProfile.email || '';
-    document.getElementById('drvPhone').value = userProfile.phone || '';
-    document.getElementById('drvAddress').value = userProfile.address || '';
+    document.getElementById('drvMobile').value = userProfile.mobile || '';
+    document.getElementById('drvHomeTel').value = userProfile.homeTel || '';
+    
+    // 🔒 LOCK fixed fields if already completed
+    const fixedFields = ['drvFirstName', 'drvMiddleName', 'drvSurname', 'drvDob'];
+    const hasCompletedFixed = userProfile.firstName && userProfile.surname && userProfile.dob;
+    
+    fixedFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (hasCompletedFixed && el.value) {
+        el.disabled = true;
+        el.style.background = '#e9ecef';
+        el.style.cursor = 'not-allowed';
+      } else {
+        el.disabled = false;
+        el.style.background = '';
+        el.style.cursor = '';
+      }
+    });
   }
 
   window.saveDriverProfile = async function () {
+    const msg = document.getElementById('profileMsg');
+    
+    // Get values
+    const firstName = document.getElementById('drvFirstName').value.trim();
+    const middleName = document.getElementById('drvMiddleName').value.trim();
+    const surname = document.getElementById('drvSurname').value.trim();
+    const dob = document.getElementById('drvDob').value;
+    
+    const address1 = document.getElementById('drvAddress1').value.trim();
+    const address2 = document.getElementById('drvAddress2').value.trim();
+    const addressTown = document.getElementById('drvAddressTown').value.trim();
+    const addressCounty = document.getElementById('drvAddressCounty').value.trim();
+    const addressPostcode = document.getElementById('drvAddressPostcode').value.trim();
+    
+    const email = document.getElementById('drvEmail').value.trim();
+    const mobile = document.getElementById('drvMobile').value.trim();
+    const homeTel = document.getElementById('drvHomeTel').value.trim();
+    
+    // Basic validation
+    if (!firstName || !surname || !dob || !address1 || !addressTown || !addressPostcode || !email || !mobile) {
+      msg.textContent = '❌ Please fill in all required fields (*)';
+      msg.style.color = 'red';
+      return;
+    }
+    
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        name: document.getElementById('drvName').value.trim(),
-        phone: document.getElementById('drvPhone').value.trim(),
-        address: document.getElementById('drvAddress').value.trim()
-      });
-      document.getElementById('profileMsg').textContent = '✅ Profile saved!';
-      document.getElementById('profileMsg').style.color = 'green';
-      userProfile.name = document.getElementById('drvName').value.trim();
-      document.getElementById('driverWelcome').textContent = `Welcome, ${userProfile.name}`;
+      // Check if fixed fields were already locked
+      const existingSnap = await getDoc(doc(db, 'users', currentUser.uid));
+      const existingData = existingSnap.data();
+      const fixedAlreadyLocked = existingData.firstName && existingData.surname && existingData.dob;
+      
+      const updates = {
+        address1, address2, addressTown, addressCounty, addressPostcode,
+        email, mobile, homeTel,
+        updatedAt: serverTimestamp()
+      };
+      
+      // Include profile photo if uploaded
+      if (profilePhotoURL && profilePhotoFileRef) {
+        updates.profilePhotoURL = profilePhotoURL;
+        updates.profilePhotoRef = profilePhotoFileRef;
+      }
+      
+      // Only include fixed fields if NOT already locked
+      if (!fixedAlreadyLocked) {
+        updates.firstName = firstName;
+        updates.middleName = middleName;
+        updates.surname = surname;
+        updates.dob = dob;
+        updates.fullName = middleName 
+          ? `${firstName} ${middleName} ${surname}` 
+          : `${firstName} ${surname}`;
+      }
+      
+      await updateDoc(doc(db, 'users', currentUser.uid), updates);
+      
+      // Update local cache
+      Object.assign(userProfile, updates);
+      
+      msg.textContent = fixedAlreadyLocked 
+        ? '✅ Profile updated successfully!' 
+        : '✅ Profile saved! Your personal details are now locked.';
+      msg.style.color = 'green';
+      
+      // Refresh to lock the fields
+      setTimeout(loadDriverProfile, 600);
+      
     } catch (err) {
-      document.getElementById('profileMsg').textContent = '❌ ' + err.message;
-      document.getElementById('profileMsg').style.color = 'red';
+      msg.textContent = '❌ ' + err.message;
+      msg.style.color = 'red';
     }
   };
 
