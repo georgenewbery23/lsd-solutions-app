@@ -1041,5 +1041,63 @@ window.resetChecklistEditor = resetChecklistEditor;
 // Job functions
 window.acceptJob = acceptJob;
 
+// ==============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
+// ==============================================
+window.showPage = showPage;
+window.handleSignIn = handleSignIn;
+window.handlePasswordReset = handlePasswordReset;
+window.handleRegisterDriver = handleRegisterDriver;
+window.handleRegisterCompany = handleRegisterCompany;
+window.doSignOut = doSignOut;
+
+// Driver functions
+window.acceptJob = acceptJob;
+window.updateCheckVehicleOptions = updateCheckVehicleOptions;
+window.renderChecklistForm = renderChecklistForm;
+window.setCheckResponse = setCheckResponse;
+window.submitCheck = submitCheck;
+window.saveDriverProfile = saveDriverProfile;
+window.uploadDriverDocuments = uploadDriverDocuments;
+
+// Company — Fleet
+window.showAddVehicleForm = showAddVehicleForm;
+window.showAddTrailerForm = showAddTrailerForm;
+window.hideFleetForm = hideFleetForm;
+window.saveVehicle = saveVehicle;
+window.saveTrailer = saveTrailer;
+window.toggleVehicleActive = toggleVehicleActive;
+window.toggleTrailerActive = toggleTrailerActive;
+window.editVehicle = editVehicle;
+window.saveEditedVehicle = saveEditedVehicle;
+window.editTrailer = editTrailer;
+window.saveEditedTrailer = saveEditedTrailer;
+
+// Company — Drivers
+window.showAddDriverForm = showAddDriverForm;
+window.hideAddDriverForm = hideAddDriverForm;
+window.saveNewDriver = saveNewDriver;
+window.toggleDriverActive = toggleDriverActive;
+window.viewDriverDocs = viewDriverDocs;
+window.editDriver = editDriver;
+window.saveEditedDriver = saveEditedDriver;
+
+// Company — Checklist Editor
+window.addCheckItem = addCheckItem;
+window.editCheckItem = editCheckItem;
+window.removeCheckItem = removeCheckItem;
+window.resetChecklist = resetChecklist;
+window.saveChecklist = saveChecklist;
+
+// Company — Jobs
+window.showPostJobForm = showPostJobForm;
+window.hideJobForm = hideJobForm;
+window.postNewJob = postNewJob;
+window.cancelJobPost = cancelJobPost;
+
+// Company — Profile
+window.saveCompanyProfile = saveCompanyProfile;
+window.updateBillingDisplay = updateBillingDisplay;
+
 console.log('✅ LSD Solutions — COMPLETE APP LOADED');
 </script>
