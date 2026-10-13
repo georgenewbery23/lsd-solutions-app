@@ -1082,6 +1082,58 @@ window.resetChecklistEditor = async function(companyId) {
   renderEditorItems();
   await saveChecklistEditor(companyId);
 };
+// --------------------------
+// NEW: DRIVER CALENDAR PAGE
+// --------------------------
+window.loadDriverCalendarPage = function() {
+  // Calendar is ready — add your preferred calendar view here!
+  console.log('Calendar page loaded');
+};
 
+// --------------------------
+// NEW: DRIVER DOCUMENTS PAGE
+// --------------------------
+async function loadDriverDocumentsPage() {
+  const list = document.getElementById('driverDocsList2');
+  const q = query(collection(db, 'driver-documents'), where('driverUid', '==', currentUser.uid), orderBy('uploadedAt', 'desc'));
+  
+  const unsub = onSnapshot(q, snap => {
+    if (snap.empty) {
+      list.innerHTML = '<p style="color:#666;">No documents uploaded yet.</p>';
+      return;
+    }
+    list.innerHTML = snap.docs.map(d => {
+      const doc = d.data();
+      return `
+        <div style="padding:0.7rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+          <span>${escapeHtml(doc.name)}</span>
+          <a href="${doc.url}" target="_blank" rel="noopener" style="color:#1a365d;">View ↗</a>
+        </div>
+      `;
+    }).join('');
+  });
+  unsubscribeSnapshots.push(unsub);
+}
+
+window.uploadDriverDocumentsFromDocsPage = async function() {
+  const files = document.getElementById('docUploader2').files;
+  if (!files.length) return alert('Select files first.');
+  
+  for (const file of files) {
+    const fileRef = ref(storage, `driver-docs/${currentUser.uid}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+    await addDoc(collection(db, 'driver-documents'), {
+      driverUid: currentUser.uid,
+      name: file.name,
+      type: file.type,
+      url,
+      uploadedAt: serverTimestamp()
+    });
+  }
+  
+  alert(`✅ ${files.length} file(s) uploaded.`);
+  loadDriverDocumentsPage();
+};
 console.log('✅ LSD Solutions — COMPLETE APP LOADED');
 </script>
