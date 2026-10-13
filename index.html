@@ -595,12 +595,114 @@
     </div>
 
     <!-- Company Profile Page -->
-    <div id="companyProfilePage" class="page">
-      <div class="container">
-        <div class="flex-between mb-2">
-          <h3>Company Profile & Compliance</h3>
-          <button class="btn-secondary btn-sm" onclick="showPage('dashboard')">← Back</button>
+// ==============================================
+// COMPANY PORTAL — MAIN DASHBOARD
+// ==============================================
+function renderCompanyPage() {
+  return `
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <h2>🏢 Company Portal</h2>
+        <p>Welcome, ${currentUser?.displayName || 'User'}</p>
+      </div>
+
+      <!-- MAIN DASHBOARD BUTTONS -->
+      <div id="company-dashboard" class="page-section">
+        <div class="card-grid" style="margin-top: 2rem;">
+          
+          <div class="card" style="cursor: pointer;" onclick="showCompanySubpage('checks')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+            <h3>Walkaround Checks</h3>
+            <p>Manage DVSA checklists & view submissions</p>
+          </div>
+
+          <div class="card" style="cursor: pointer;" onclick="showCompanySubpage('vehicles')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚛</div>
+            <h3>Vehicles & Trailers</h3>
+            <p>Manage your fleet</p>
+          </div>
+
+          <div class="card" style="cursor: pointer;" onclick="showCompanySubpage('drivers')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👷</div>
+            <h3>Drivers</h3>
+            <p>Manage drivers & documents</p>
+          </div>
+
+          <div class="card" style="cursor: pointer;" onclick="showCompanySubpage('profile')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏢</div>
+            <h3>Company Profile</h3>
+            <p>Compliance details</p>
+          </div>
+
+          <div class="card" style="cursor: pointer;" onclick="showCompanySubpage('billing')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">💰</div>
+            <h3>Invoicing & Billing</h3>
+            <p>View invoices & preferences</p>
+          </div>
+
+          <div class="card" style="cursor: pointer;" onclick="showCompanySubpage('holidays')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏝️</div>
+            <h3>Holiday Management</h3>
+            <p>Approve leave requests</p>
+          </div>
+          
         </div>
+      </div>
+
+      <!-- SUBPAGE CONTENT AREA -->
+      <div id="company-subpage" class="page-section" style="display: none;"></div>
+
+    </div>
+  `;
+}
+
+// ==============================================
+// SUBPAGE NAVIGATION SYSTEM
+// ==============================================
+let currentCompanySubpage = null;
+
+function showCompanySubpage(pageName) {
+  currentCompanySubpage = pageName;
+  document.getElementById('company-dashboard').style.display = 'none';
+  const subpageContainer = document.getElementById('company-subpage');
+  subpageContainer.style.display = 'block';
+
+  switch(pageName) {
+    case 'checks': subpageContainer.innerHTML = renderChecksSubpage(); break;
+    case 'vehicles': subpageContainer.innerHTML = renderVehiclesSubpage(); break;
+    case 'drivers': subpageContainer.innerHTML = renderDriversSubpage(); break;
+    case 'profile': subpageContainer.innerHTML = renderProfileSubpage(); break;
+    case 'billing': subpageContainer.innerHTML = renderBillingSubpage(); break;
+    case 'holidays': subpageContainer.innerHTML = renderHolidaysSubpage(); break;
+    default: goBackToCompanyDashboard();
+  }
+  
+  // Load data after page renders
+  setTimeout(() => {
+    if (pageName === 'checks') loadChecklistEditor();
+    if (pageName === 'vehicles') loadCompanyVehicles();
+    if (pageName === 'drivers') loadCompanyDrivers();
+    if (pageName === 'profile') loadCompanyProfile();
+    if (pageName === 'billing') loadCompanyInvoices();
+    if (pageName === 'holidays') loadHolidayRequests();
+  }, 50);
+}
+
+function goBackToCompanyDashboard() {
+  currentCompanySubpage = null;
+  document.getElementById('company-dashboard').style.display = 'block';
+  document.getElementById('company-subpage').style.display = 'none';
+}
+
+function renderBackButton() {
+  return `
+    <button onclick="goBackToCompanyDashboard()" 
+      style="margin-bottom: 1.5rem; background: transparent; color: var(--primary); 
+      border: none; padding: 0.5rem 0; cursor: pointer; font-size: 1rem;">
+      ← Back to Dashboard
+    </button>
+  `;
+}
 
         <div class="card">
           <form id="companyProfileForm" onsubmit="saveCompanyProfile(event)">
