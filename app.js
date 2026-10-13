@@ -170,7 +170,7 @@ window.signOutUser = async function() {
 };
 
 // --------------------------
-// 8. DRIVER DASHBOARD
+// 8. DRIVER DASHBOARD — UPDATED
 // --------------------------
 async function loadDriverDashboard() {
   const dash = document.getElementById('dashboardContent');
@@ -205,7 +205,10 @@ async function loadDriverDashboard() {
       <h3>Quick Actions</h3>
       <button type="button" onclick="showPage('checklistPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#1a365d;color:#fff;border:none;border-radius:6px;">🚛 New Walkaround Check</button>
       <button type="button" onclick="showPage('jobsPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#e8edf3;color:#1a365d;border:none;border-radius:6px;">📋 View Available Work</button>
-      <button type="button" onclick="showPage('driverProfilePage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#d47500;color:#fff;border:none;border-radius:6px;">👤 Update Profile</button>
+      <button type="button" onclick="showPage('myChecksPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#e8edf3;color:#1a365d;border:none;border-radius:6px;">📝 My Checks</button>
+      <button type="button" onclick="showPage('driverCalendarPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#d4af37;color:#fff;border:none;border-radius:6px;">📅 My Calendar</button>
+      <button type="button" onclick="showPage('driverDocumentsPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#d47500;color:#fff;border:none;border-radius:6px;">📁 My Documents</button>
+      <button type="button" onclick="showPage('driverProfilePage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#6b7280;color:#fff;border:none;border-radius:6px;">👤 My Profile</button>
       
       <h3 style="margin-top:2rem;">Recent Checks</h3>
       ${snap.empty ? '<p>No checks submitted yet.</p>' : snap.docs.slice(0,5).map(d => {
