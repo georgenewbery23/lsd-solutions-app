@@ -655,6 +655,189 @@ function renderCompanyPage() {
     </div>
   `;
 }
+// ==============================================
+// SUBPAGE: WALAROUND CHECKLIST EDITOR
+// ==============================================
+function renderChecksSubpage() {
+  return `
+    ${renderBackButton()}
+    <h2>📋 Walkaround Checklist Editor</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">DVSA compliant — edit, add, remove or reorder checks</p>
+    
+    <div class="card">
+      <h3>Checklist Items</h3>
+      <div id="checklist-items-list"></div>
+      <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button onclick="addNewChecklistItem()">➕ Add Item</button>
+        <button onclick="saveChecklist()">💾 Save Changes</button>
+        <button onclick="resetChecklist()">↩️ Reset to Default</button>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 1.5rem;">
+      <h3>Recent Check Submissions</h3>
+      <div id="check-submissions-list">
+        <p style="color: #666;">Loading submissions...</p>
+      </div>
+    </div>
+  `;
+}
+
+// ==============================================
+// SUBPAGE: VEHICLES & TRAILERS
+// ==============================================
+function renderVehiclesSubpage() {
+  return `
+    ${renderBackButton()}
+    <h2>🚛 Vehicles & Trailers</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">Manage your company fleet</p>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <button onclick="showAddVehicleForm()">➕ Add Vehicle</button>
+      <button onclick="showAddTrailerForm()">➕ Add Trailer</button>
+    </div>
+    
+    <div class="card">
+      <h3>Vehicles</h3>
+      <div id="vehicles-list">
+        <p style="color: #666;">Loading vehicles...</p>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 1.5rem;">
+      <h3>Trailers</h3>
+      <div id="trailers-list">
+        <p style="color: #666;">Loading trailers...</p>
+      </div>
+    </div>
+  `;
+}
+
+// ==============================================
+// SUBPAGE: DRIVERS
+// ==============================================
+function renderDriversSubpage() {
+  return `
+    ${renderBackButton()}
+    <h2>👷 Driver Management</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">Manage drivers, licences & documents</p>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <button onclick="showAddDriverForm()">➕ Add Driver</button>
+      <button onclick="refreshDriverList()">🔄 Refresh</button>
+    </div>
+    
+    <div class="card">
+      <div id="drivers-list">
+        <p style="color: #666;">Loading drivers...</p>
+      </div>
+    </div>
+  `;
+}
+
+// ==============================================
+// SUBPAGE: COMPANY PROFILE
+// ==============================================
+function renderProfileSubpage() {
+  return `
+    ${renderBackButton()}
+    <h2>🏢 Company Profile</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">DVSA & Traffic Commissioner compliance</p>
+    
+    <div class="card">
+      <form onsubmit="saveCompanyProfile(event)">
+        <div class="form-group">
+          <label>Company Registered Name *</label>
+          <input type="text" id="company-registered-name" required />
+        </div>
+        <div class="form-group">
+          <label>HMRC Registered Number</label>
+          <input type="text" id="company-hmrc" />
+        </div>
+        <div class="form-group">
+          <label>Operator's Licence Number *</label>
+          <input type="text" id="company-licence" required />
+        </div>
+        <div class="form-group">
+          <label>Trading Name (if different)</label>
+          <input type="text" id="company-trading" />
+        </div>
+        <div class="form-group">
+          <label>Registered Address *</label>
+          <textarea id="company-address" rows="3" required></textarea>
+        </div>
+        <h4 style="margin: 1.5rem 0 0.5rem;">📧 Invoice Contact Details</h4>
+        <div class="form-group">
+          <label>Contact Name</label>
+          <input type="text" id="invoice-contact-name" />
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="invoice-email" />
+        </div>
+        <div class="form-group">
+          <label>Telephone Number</label>
+          <input type="tel" id="invoice-phone" />
+        </div>
+        <button type="submit" style="margin-top: 1rem;">💾 Save Company Profile</button>
+      </form>
+    </div>
+  `;
+}
+
+// ==============================================
+// SUBPAGE: INVOICING & BILLING
+// ==============================================
+function renderBillingSubpage() {
+  return `
+    ${renderBackButton()}
+    <h2>💰 Invoicing & Billing</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">Manage billing preferences & view invoices</p>
+    
+    <div class="card">
+      <h3>Billing Preferences</h3>
+      <div class="form-group">
+        <label>Charge Type</label>
+        <select id="billing-charge-type" onchange="saveBillingPreference(this.value)">
+          <option value="per_period">Per Billing Period (Weekly)</option>
+          <option value="per_driver">Per Driver</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 1.5rem;">
+      <h3>Recent Invoices</h3>
+      <div id="invoices-list">
+        <p style="color: #666;">Loading invoices...</p>
+      </div>
+    </div>
+  `;
+}
+
+// ==============================================
+// SUBPAGE: HOLIDAY MANAGEMENT
+// ==============================================
+function renderHolidaysSubpage() {
+  return `
+    ${renderBackButton()}
+    <h2>🏝️ Holiday Management</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">Review & approve driver leave requests</p>
+    
+    <div class="card">
+      <h3>Pending Requests</h3>
+      <div id="holidays-pending">
+        <p style="color: #666;">No pending requests</p>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 1.5rem;">
+      <h3>Approved Holidays</h3>
+      <div id="holidays-approved">
+        <p style="color: #666;">Loading...</p>
+      </div>
+    </div>
+  `;
+}
 
 // ==============================================
 // SUBPAGE NAVIGATION SYSTEM
