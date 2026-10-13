@@ -130,7 +130,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // --------------------------
-// 7. AUTH HANDLERS
+// 7. AUTH HANDLERS — FIXED
 // --------------------------
 window.signIn = async function() {
   const email = document.getElementById('signin-email').value;
