@@ -17,7 +17,7 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-window.signIn = async function() {
+ {
   const email = document.getElementById('signin-email').value;
   const password = document.getElementById('signin-password').value;
   try {
