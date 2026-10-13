@@ -1137,5 +1137,39 @@ window.uploadDriverDocumentsFromDocsPage = async function() {
   alert(`✅ ${files.length} file(s) uploaded.`);
   loadDriverDocumentsPage();
 };
+// ==============================================
+// EXPOSE FUNCTIONS TO HTML ONCLICK HANDLERS
+// ==============================================
+window.signIn = signIn;
+window.sendReset = sendReset;
+window.chooseRole = chooseRole;
+window.registerUser = registerUser;
+window.signOutUser = signOutUser;
+window.showPage = showPage;
+
+// Driver functions
+window.updateCheckVehicleOptions = updateCheckVehicleOptions;
+window.setCheckResponse = setCheckResponse;
+window.submitCheck = submitCheck;
+window.saveDriverProfile = saveDriverProfile;
+window.uploadDriverDocuments = uploadDriverDocuments;
+window.uploadDriverDocumentsFromDocsPage = uploadDriverDocumentsFromDocsPage;
+window.loadDriverCalendarPage = loadDriverCalendarPage;
+
+// Company functions
+window.saveVehicle = saveVehicle;
+window.editVehicle = editVehicle;
+window.clearVehicleForm = clearVehicleForm;
+window.deleteVehicleConfirm = deleteVehicleConfirm;
+window.removeDriverLink = removeDriverLink;
+window.saveCompanyProfile = saveCompanyProfile;
+window.addEditorItem = addEditorItem;
+window.moveEditorItem = moveEditorItem;
+window.removeEditorItem = removeEditorItem;
+window.saveChecklistEditor = saveChecklistEditor;
+window.resetChecklistEditor = resetChecklistEditor;
+
+// Job functions
+window.acceptJob = acceptJob;
 console.log('✅ LSD Solutions — COMPLETE APP LOADED');
 </script>
