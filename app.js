@@ -794,26 +794,33 @@ window.saveCompanyProfile = async function(companyId) {
 // --------------------------
 let editorItems = [];
 
-async function loadChecklistEditor() {
-  const content = document.getElementById('checklistEditorContent');
-  const companyId = userProfile.companyId || currentUser.uid;
+async function renderChecklistEditor() {
+  const companyId = currentUser.uid;
+  const editor = document.getElementById('checklistEditorContent');
   
-  content.innerHTML = `
-    <h3>Walkaround Checklist Editor</h3>
-    <p style="color:#666;margin-bottom:1rem;">Add, edit, reorder or remove items from your DVSA-compliant walkaround check.</p>
-    
-    <div style="margin-bottom:1.5rem;">
-      <label for="newItemInput">Add New Check Item:</label>
-      <div style="display:flex;gap:0.5rem;margin-top:0.3rem;">
-        <input type="text" id="newItemInput" placeholder="e.g. Windscreen & Mirrors" style="flex:1;padding:0.7rem;border:1px solid #ccc;border-radius:4px;">
-        <button type="button" onclick="addEditorItem()" style="padding:0.7rem 1.2rem;background:#1a365d;color:#fff;border:none;border-radius:4px;">Add</button>
-      </div>
-    </div>
-    
-    <h4>Your Check Items</h4>
-    <div id="editorItemsList" style="margin-bottom:1.5rem;border:1px solid #eee;border-radius:6px;overflow:hidden;">
-      <p style="padding:1rem;color:#666;">Loading...</p>
-    </div>
+  const docSnap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
+  
+  // ✅ Load EXISTING items first
+  if (docSnap.exists() && docSnap.data().items && docSnap.data().items.length > 0) {
+    checklistItems = docSnap.data().items;
+  } else {
+    // No saved checklist — use DVSA defaults
+    checklistItems = [
+      "Vehicle Exterior & Body Condition — no damage, secure panels",
+      "Windscreen, Windows & Mirrors — clean, no cracks, properly secured",
+      "Lights & Indicators — all working, lenses clean and intact",
+      "Tyres & Wheels — pressure correct, tread depth legal, no damage, wheel nuts secure",
+      "Brakes — sufficient fluid, no leaks, brake pedal firm, handbrake holds vehicle",
+      "Fluid Levels — engine oil, coolant, washer fluid at correct levels",
+      "Coupling & Trailer Securement — fifth wheel, legs, air lines, electrical connections secure",
+      "Load Security — load properly secured, straps/chains in good condition",
+      "Emergency Equipment — fire extinguisher, warning triangle, first aid kit present & valid",
+      "Cab & Interior — mirrors adjusted, controls clear, seats secure, paperwork complete"
+    ];
+  }
+  
+  renderChecklistUI();
+}
     
     <button type="button" onclick="saveChecklistEditor('${companyId}')" style="padding:0.9rem 2rem;background:#166534;color:#fff;border:none;border-radius:6px;font-size:1rem;">💾 Save Checklist</button>
     <button type="button" onclick="resetChecklistEditor('${companyId}')" style="margin-left:1rem;padding:0.9rem 2rem;background:#b91c1c;color:#fff;border:none;border-radius:6px;font-size:1rem;">↩️ Reset to Default</button>
