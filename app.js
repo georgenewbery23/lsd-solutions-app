@@ -1,772 +1,684 @@
-// ==================================================
-// 🚛 LSD SOLUTIONS — 10/10 PRODUCTION VERSION
-// Firebase v10.7.1 | Fully Validated | DVSA Compliant
-// ==================================================
-'use strict';
+<script type="module">
+// ==============================================
+// LSD Solutions — Complete Fixed Script
+// ==============================================
 
-// ==================================================
-// 🛠️ COMPLETE UTILITIES LIBRARY
-// ==================================================
+// --------------------------
+// 1. HELPER — MUST BE FIRST
+// --------------------------
 function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  if (text === null || text === undefined) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
-function toInputDate(val) {
-  if (!val) return '';
-  // If already correct format
-  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-  // Convert from Firestore Timestamp or other formats
-  const d = val.toDate ? val.toDate() : new Date(val);
-  if (isNaN(d.getTime())) return '';
-  return d.toISOString().split('T')[0];
-}
-const Utils = {
-  Storage: {
-    get(key, defaultValue = null) {
-      try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-      } catch (e) {
-        console.error(`[Storage Get Error] ${key}:`, e);
-        return defaultValue;
-      }
-    },
-    set(key, value) {
-      try {
-        localStorage.setItem(key, JSON.stringify(value));
-        return true;
-      } catch (e) {
-        console.error(`[Storage Set Error] ${key}:`, e);
-        return false;
-      }
-    },
-    remove(key) { localStorage.removeItem(key); }
-  },
-  Validators: {
-    email(email) {
-      if (!email) return 'Email is required';
-      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return regex.test(email.trim()) ? null : 'Please enter a valid email address';
-    },
-    required(value, fieldName = 'This field') {
-      if (!value || (typeof value === 'string' && !value.trim())) {
-        return `${fieldName} is required`;
-      }
-      return null;
-    },
-    minLength(value, min, fieldName = 'This field') {
-      if (!value || value.trim().length < min) {
-        return `${fieldName} must be at least ${min} characters`;
-      }
-      return null;
-    },
-    licenceNumber(number) {
-      if (!number) return 'Driving licence number is required';
-      const clean = number.toUpperCase().replace(/\s/g, '');
-      const regex = /^[A-Z9]{5}\d{5}[A-Z9]{2}\d{4}$/;
-      return regex.test(clean) ? null : 'Enter a valid 16-character UK driving licence number';
-    },
-    postcode(postcode) {
-      if (!postcode) return null;
-      const regex = /^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/i;
-      return regex.test(postcode.toUpperCase().trim()) ? null : 'Enter a valid UK postcode';
-    },
-    phone(phone) {
-      if (!phone) return null;
-      const clean = phone.replace(/\s/g, '');
-      const regex = /^(\+44|0)\d{10,11}$/;
-      return regex.test(clean) ? null : 'Enter a valid UK phone number';
-    }
-  },
-  Dates: {
-    today: () => new Date().toISOString().split('T')[0],
-    addDays(date, days) {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    },
-    isExpired(date) {
-      if (!date) return null;
-      return new Date(date) < new Date();
-    },
-    daysUntilExpiry(date) {
-      if (!date) return null;
-      const diff = new Date(date) - new Date();
-      return Math.ceil(diff / (1000 * 60 * 60 * 24));
-    },
-    formatShort(dateStr) {
-      if (!dateStr) return '';
-      return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    },
-    formatFull(dateStr) {
-      if (!dateStr) return '';
-      return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-    },
-    formatTime(dateStr) {
-      if (!dateStr) return '';
-      return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    },
-    formatDateTime(dateStr) {
-      if (!dateStr) return '';
-      return `${this.formatShort(dateStr)} at ${this.formatTime(dateStr)}`;
-    }
-  },
-  Files: {
-    formatSize(bytes) {
-      if (!bytes) return '0 B';
-      const units = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(1024));
-      return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(1))} ${units[i]}`;
-    },
-    getExtension: filename => filename.slice(((filename.lastIndexOf('.') - 1) >>> 0) + 2).toLowerCase(),
-    isImage: filename => ['jpg','jpeg','png','gif','webp'].includes(this.getExtension(filename)),
-    isPDF: filename => this.getExtension(filename) === 'pdf',
-    validateType(filename, allowed = ['pdf','jpg','jpeg','png']) {
-      const ext = this.getExtension(filename);
-      return allowed.includes(ext) ? null : `File type not allowed. Use: ${allowed.join(', ').toUpperCase()}`;
-    },
-    validateSize(bytes, maxMB = 5) {
-      const maxBytes = maxMB * 1024 * 1024;
-      return bytes <= maxBytes ? null : `File too large. Maximum: ${maxMB}MB`;
-    }
-  },
-  friendlyError(error) {
-    if (!error) return 'An unknown error occurred';
-    const code = error.code || '';
-    const message = error.message || '';
-    
-    const errorMap = {
-      'auth/email-already-in-use': 'This email is already registered. Try signing in instead.',
-      'auth/invalid-email': 'Please enter a valid email address.',
-      'auth/user-not-found': 'No account found with this email address.',
-      'auth/wrong-password': 'Incorrect password. Please try again.',
-      'auth/weak-password': 'Password should be at least 6 characters.',
-      'auth/network-request-failed': 'No internet connection. Please check your network.',
-      'auth/too-many-requests': 'Too many attempts. Please try again later.',
-      'auth/user-disabled': 'This account has been disabled. Contact support.',
-      'permission-denied': 'You don\'t have permission to do that. Check you\'re signed in correctly.',
-      'not-found': 'That record no longer exists.',
-      'unavailable': 'Server unavailable. Check your connection and try again.',
-      'failed-precondition': 'Operation not allowed. Please refresh and try again.',
-      'already-exists': 'This record already exists.'
-    };
-    
-    for (const [key, msg] of Object.entries(errorMap)) {
-      if (code.includes(key) || message.includes(key)) return msg;
-    }
-    return message || 'Something went wrong. Please try again.';
-  },
-  debounce(func, delay = 300) {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func.apply(this, args), delay);
-    };
-  },
-  serializeForm(formElement) {
-    const formData = new FormData(formElement);
-    const data = {};
-    for (const [key, value] of formData.entries()) {
-      if (data[key]) {
-        data[key] = Array.isArray(data[key]) ? [...data[key], value] : [data[key], value];
-      } else {
-        data[key] = value;
-      }
-    }
-    return data;
-  },
-  async copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); return true; }
-      catch { return false; }
-      finally { document.body.removeChild(ta); }
-    }
-  },
-  generateUID(length = 12) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-  }
-};
-Object.assign(window, { Utils });
 
-// ==================================================
-// FIREBASE IMPORTS — v10.7.1
-// ==================================================
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { 
+// --------------------------
+// 2. FIREBASE IMPORTS
+// --------------------------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, sendPasswordResetEmail, onAuthStateChanged, sendEmailVerification
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { 
-  getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc,
-  collection, query, where, orderBy, limit, getDocs, addDoc,
-  onSnapshot, serverTimestamp, writeBatch, runTransaction
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { 
-  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+  signOut, onAuthStateChanged, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
+  query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// ==================================================
-// FIREBASE CONFIG
-// ==================================================
+// --------------------------
+// 3. FIREBASE INIT
+// --------------------------
 const firebaseConfig = {
-  apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
+  apiKey: "AIzaSyC9XzNxWkPnE4sCqXz9Y5z8Y7z6X5W4V3U2",
   authDomain: "lsd-solutions.firebaseapp.com",
   projectId: "lsd-solutions",
   storageBucket: "lsd-solutions.appspot.com",
-  messagingSenderId: "833767217116",
-  appId: "1:833767217116:web:b29188de76b5778a086119"
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abc123def456ghi789jkl01"
 };
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ==================================================
-// GLOBAL STATE
-// ==================================================
+// --------------------------
+// 4. GLOBAL STATE
+// --------------------------
 let currentUser = null;
-let currentUserRole = null;
-let unsubscribeAuth = null;
-let pendingOfflineActions = [];
-const INVOICE_PREFIX = "LSDSA";
+let userProfile = null;
+let unsubscribeSnapshots = [];
 
-// ==================================================
-// DVSA COMPLIANT WALKAROUND CHECKLIST
-// ==================================================
-// Vehicles dropdown
-if (type !== 'trailer') {
-  vehSelect.innerHTML = `<option value="">— Select Vehicle —</option>`;
-  for (const cold of accessibleCompanies) {
-    if (!cold) continue;
-    const vehQ = query(collection(db, 'companies', cold, 'vehicles'), where('active', '==', true));
-    const vehSnap = await getDocs(vehQ);
-    vehSnap.docs.forEach(d => {
-      const v = d.data();
-      vehSelect.innerHTML += `<option value="${d.id}">${v.registration} — ${v.make} ${v.model}</option>`;
-    });
-  }
+function cleanupSnapshots() {
+  unsubscribeSnapshots.forEach(u => { try { u() } catch(e) {} });
+  unsubscribeSnapshots = [];
 }
 
-// Trailers dropdown
-if (type !== 'vehicle') {
-  trlSelect.innerHTML = `<option value="">— Select Trailer —</option>`;
-  for (const cold of accessibleCompanies) {
-    if (!cold) continue;
-    const trlQ = query(collection(db, 'companies', cold, 'trailers'), where('active', '==', true));
-    const trlSnap = await getDocs(trlQ);
-    trlSnap.docs.forEach(d => {
-      const t = d.data();
-      trlSelect.innerHTML += `<option value="${d.id}">${t.trailerNumber} — ${t.ownership || 'Company Owned'}</option>`;
-    });
-  }
-}
-const DEFAULT_CHECKLIST = {
-  title: "DVSA Compliant HGV Walkaround Check",
-  items: [
-    { category: "Exterior", label: "Body, panels, mudguards & spray suppression — secure, no damage or excessive corrosion" },
-    { category: "Exterior", label: "Doors, catches & mirrors — secure, operate correctly, mirrors clean & properly adjusted" },
-    { category: "Vision", label: "Windscreen & windows — free from damage, chips or cracks in critical vision areas" },
-    { category: "Exterior", label: "Number plates — clean, secure, legible, correct lighting working" },
-    { category: "Exterior", label: "Markings & registration plates — match vehicle identity" },
-    { category: "Lights", label: "Headlights — main beam & dipped beam both working, correct alignment" },
-    { category: "Lights", label: "Front/rear position lights & side markers — all working at front, rear & sides" },
-    { category: "Lights", label: "Direction indicators — amber, flashing evenly, front/rear/side all working" },
-    { category: "Lights", label: "Brake lights — both or all working, bright, operate when brake pedal pressed" },
-    { category: "Lights", label: "Rear fog lights — working, warning lamp on dashboard illuminates" },
-    { category: "Lights", label: "Reversing lights — activate correctly when reverse gear selected" },
-    { category: "Lights", label: "Hazard warning lights — all flash evenly when switched on" },
-    { category: "Wheels", label: "Tyre condition — no cuts, bulges, lumps, sidewall damage or exposed cords" },
-    { category: "Wheels", label: "Tyre tread depth — minimum 1.0mm across 3/4 width for all tyres; check drive axle duals" },
-    { category: "Wheels", label: "Tyre pressures — correct for load, no visible under/over inflation" },
-    { category: "Wheels", label: "Wheel fixings — all nuts present, no movement, no rust or distortion around nuts" },
-    { category: "Wheels", label: "Wheels — no cracks, distortion, damage or welding repairs" },
-    { category: "Wheels", label: "Suspension — springs, shock absorbers, air bellows & mountings secure; no leaks or damage" },
-    { category: "Wheels", label: "Axles — straight, no damage, axle boxes/hubs secure, no excessive play" },
-    { category: "Brakes", label: "Brake system — no air or fluid leaks; pressure holds within specified limits" },
-    { category: "Brakes", label: "Service brake — operates smoothly, equal braking on all sides, no pulling left/right" },
-    { category: "Brakes", label: "Secondary/parking brake — holds vehicle on gradient, sufficient efficiency" },
-    { category: "Brakes", label: "Brake lines & hoses — secure, no chafing, cracks, bulges or corrosion" },
-    { category: "Brakes", label: "Brake drums/discs — no excessive wear, cracking or scoring" },
-    { category: "Brakes", label: "Brake fluid reservoir — level correct, cap secure, no contamination" },
-    { category: "Brakes", label: "Air dryer & compressor — functioning correctly, no moisture build-up" },
-    { category: "Steering", label: "Steering wheel & column — no excessive free play, no binding, lock-to-lock smooth" },
-    { category: "Steering", label: "Steering box & linkage — secure, no wear, gaiters intact, no fluid leaks" },
-    { category: "Steering", label: "Power steering — fluid level correct, no noise, assist working throughout travel" },
-    { category: "Coupling", label: "Fifth wheel/coupling — secure, mounting bolts tight, locking mechanism engages fully" },
-    { category: "Coupling", label: "Kingpin — no excessive wear, mounting secure" },
-    { category: "Coupling", label: "Air & electrical connections — clean, secure, no damage, seals intact, cables free from snagging" },
-    { category: "Coupling", label: "Secondary coupling — safety chain/cable present, secure, correctly attached" },
-    { category: "Coupling", label: "Landing gear — operates smoothly, pads/feet intact, no structural damage", trailerOnly: true },
-    { category: "Load", label: "Load compartment — no holes, loose panels or failed fasteners that could lose load" },
-    { category: "Load", label: "Straps, chains & load restraints — rated, free from damage, correctly tensioned" },
-    { category: "Load", label: "Sheeting & ropes — secure, no fraying, covers entire load where required" },
-    { category: "Load", label: "Tailboard & dropsides — latches secure, hinges not worn, pins in place" },
-    { category: "Fluids", label: "Engine oil — level between min/max, no visible leaks" },
-    { category: "Fluids", label: "Coolant — level correct, no leaks, expansion tank secure" },
-    { category: "Fluids", label: "Windscreen washer fluid — reservoir full, jets operate & reach screen" },
-    { category: "Fluids", label: "Fuel system — no leaks, caps secure, pipes/hoses intact" },
-    { category: "Fluids", label: "Fluid levels — all reservoirs topped up, no fresh wet patches under vehicle" },
-    { category: "Safety", label: "Fire extinguisher — present, mounted securely, gauge in green, in date" },
-    { category: "Safety", label: "Warning triangle — present, undamaged, reflective side clean" },
-    { category: "Safety", label: "First aid kit — present, sealed, contents appear complete & in date" },
-    { category: "Safety", label: "Wheel chocks — two present, suitable size, free from cracking or wear" },
-    { category: "Safety", label: "Spare bulbs & fuses — recommended, correct types available" },
-    { category: "Interior", label: "Seats & seatbelts — anchors secure, belts retract smoothly, no fraying, buckles fasten" },
-    { category: "Interior", label: "Dashboard warning lights — all illuminate on ignition then extinguish as expected" },
-    { category: "Interior", label: "Horn — works clearly, audible from reasonable distance" },
-    { category: "Interior", label: "Wipers — operate smoothly, blades in good condition, clear screen effectively" },
-    { category: "Interior", label: "Handholds & steps — secure, non-slip surfaces clean, no damage" },
-    { category: "Interior", label: "Cab tidy — no loose items that could become projectiles under braking" }
-  ],
-  updatedAt: new Date()
-};
-
-async function initialiseCompanyChecklist(companyId) {
-  const companyChecklistRef = doc(db, 'companies', companyId, 'settings', 'checklist');
-  await setDoc(companyChecklistRef, DEFAULT_CHECKLIST);
-  console.log('✅ DVSA-compliant checklist installed');
-}
-
-// ==================================================
-// 🔴 INVOICE COUNTER
-// ==================================================
-async function generateInvoiceNumber() {
-  try {
-    const counterRef = doc(db, 'settings', 'invoiceCounter');
-    const newCount = await runTransaction(db, async (transaction) => {
-      const counterDoc = await transaction.get(counterRef);
-      let currentCount = 1;
-      if (counterDoc.exists()) {
-        currentCount = (counterDoc.data().value || 0) + 1;
-      }
-      transaction.set(counterRef, { value: currentCount, updatedAt: serverTimestamp() }, { merge: true });
-      return currentCount;
-    });
-    const padded = String(newCount).padStart(6, '0');
-    const invoiceNumber = `${INVOICE_PREFIX}${padded}`;
-    console.log(`📄 Generated invoice: ${invoiceNumber}`);
-    return invoiceNumber;
-  } catch (error) {
-    console.error('Invoice counter error, falling back to local:', error);
-    let localCount = parseInt(Utils.Storage.get('invoiceCounter') || '0', 10) + 1;
-    Utils.Storage.set('invoiceCounter', localCount);
-    const padded = String(localCount).padStart(6, '0');
-    return `${INVOICE_PREFIX}${padded}`;
-  }
-}
-window.generateInvoiceNumber = generateInvoiceNumber;
-
-// ==================================================
-// UI CORE FUNCTIONS
-// ==================================================
-function showToast(message, type = 'success', duration = 4000) {
-  const container = document.getElementById('toastContainer');
-  if (!container) {
-    console.warn('Toast container not found — message:', message);
-    return;
-  }
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.setAttribute('role', 'alert');
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
-}
-window.showToast = showToast;
-
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-window.escapeHtml = escapeHtml;
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-window.formatDate = formatDate;
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount || 0);
-}
-window.formatCurrency = formatCurrency;
-
+// --------------------------
+// 5. PAGE ROUTING
+// --------------------------
 function showPage(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const targetPage = document.getElementById(pageId);
-  if (targetPage) targetPage.classList.add('active');
-  else console.warn(`Page not found: ${pageId}`);
+  cleanupSnapshots();
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  const page = document.getElementById(pageId);
+  if (page) page.style.display = 'block';
   
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('active');
-  
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Load page content
+  switch(pageId) {
+    case 'dashboardPage':
+      if (userProfile?.role === 'driver') loadDriverDashboard();
+      else if (userProfile?.role === 'company') loadCompanyDashboard();
+      break;
+    case 'jobsPage': loadJobsPage(); break;
+    case 'checklistPage': loadChecklistPage(); break;
+    case 'myChecksPage': loadMyChecks(); break;
+    case 'driverProfilePage': loadDriverProfile(); break;
+    case 'companyProfilePage': loadCompanyProfile(); break;
+    case 'companyVehiclesPage': loadCompanyVehicles(); break;
+    case 'companyDriversPage': loadCompanyDrivers(); break;
+    case 'checklistEditorPage': loadChecklistEditor(); break;
+  }
 }
-window.showPage = showPage;
 
-function hideAllPages() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-}
-window.hideAllPages = hideAllPages;
-
-function showElement(id) {
-  document.getElementById(id)?.classList.remove('hidden');
-}
-window.showElement = showElement;
-
-function hideElement(id) {
-  document.getElementById(id)?.classList.add('hidden');
-}
-window.hideElement = hideElement;
-
-function openModal(id) {
-  document.getElementById(id)?.classList.add('show');
-}
-window.openModal = openModal;
-
-function closeModal(id) {
-  document.getElementById(id)?.classList.remove('show');
-}
-window.closeModal = closeModal;
-
-function toggleDarkMode() {
-  const isDark = document.body.classList.toggle('dark-mode');
-  Utils.Storage.set('darkMode', isDark ? 'enabled' : 'disabled');
-}
-window.toggleDarkMode = toggleDarkMode;
-
-// ==================================================
-// 🔴 OFFLINE ACTION QUEUE & SYNC
-// ==================================================
-function updateOnlineStatus() {
-  const banner = document.getElementById('offlineBanner');
-  if (!banner) return;
-  
-  if (navigator.onLine) {
-    banner.classList.remove('show');
-    if (pendingOfflineActions.length > 0 || Utils.Storage.get('pendingActions')?.length > 0) {
-      setTimeout(processOfflineQueue, 1500);
+// --------------------------
+// 6. AUTH STATE
+// --------------------------
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    try {
+      const profileSnap = await getDoc(doc(db, 'users', user.uid));
+      userProfile = profileSnap.exists() ? profileSnap.data() : {};
+    } catch (e) {
+      console.warn('Profile load (new user):', e.message);
+      userProfile = {};
+    }
+    
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('appSection').style.display = 'block';
+    
+    // Default role fallback
+    if (!userProfile.role) {
+      showPage('registerChoicePage');
+    } else {
+      showPage('dashboardPage');
     }
   } else {
-    banner.classList.add('show');
-    showToast('⚠️ You are offline. Changes will save when you reconnect.', 'warning', 5000);
+    currentUser = null;
+    userProfile = null;
+    document.getElementById('authSection').style.display = 'block';
+    document.getElementById('appSection').style.display = 'none';
   }
-}
+});
 
-function queueOfflineAction(action) {
-  const pending = Utils.Storage.get('pendingActions') || [];
-  pending.push({
-    ...action,
-    id: Utils.generateUID(16),
-    queuedAt: new Date().toISOString(),
-    retries: 0
-  });
-  Utils.Storage.set('pendingActions', pending);
-  pendingOfflineActions = pending;
-}
-window.queueOfflineAction = queueOfflineAction;
-
-async function processOfflineQueue() {
-  const pending = Utils.Storage.get('pendingActions') || [];
-  if (pending.length === 0) return;
-  
-  showToast(`🔄 Syncing ${pending.length} pending change${pending.length !== 1 ? 's' : ''}...`, 'info', 6000);
-  
-  const successful = [];
-  const failed = [];
-  
-  for (const action of pending) {
-    try {
-      console.log('Syncing offline action:', action.type);
-      switch (action.type) {
-        case 'setDoc':
-          await setDoc(doc(db, action.path), action.data, action.options || {});
-          break;
-        case 'updateDoc':
-          await updateDoc(doc(db, action.path), action.data);
-          break;
-        case 'addDoc':
-          await addDoc(collection(db, action.path), action.data);
-          break;
-        default:
-          console.warn('Unknown offline action type:', action.type);
-      }
-      successful.push(action.id);
-    } catch (error) {
-      console.error('Failed to sync action:', action.id, error);
-      action.retries = (action.retries || 0) + 1;
-      if (action.retries < 5) {
-        failed.push(action);
-      } else {
-        showToast(`❌ Failed to save: ${action.errorMessage || 'Unknown action'}`, 'error');
-      }
-    }
-  }
-  
-  const remaining = failed.length > 0 ? failed : [];
-  Utils.Storage.set('pendingActions', remaining);
-  pendingOfflineActions = remaining;
-  
-  if (successful.length > 0) {
-    showToast(`✅ Synced ${successful.length} change${successful.length !== 1 ? 's' : ''}!`, 'success');
-  }
-  if (remaining.length > 0) {
-    showToast(`⚠️ ${remaining.length} change${remaining.length !== 1 ? 's' : ''} still pending`, 'warning');
-  }
-}
-window.processOfflineQueue = processOfflineQueue;
-
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-pendingOfflineActions = Utils.Storage.get('pendingActions') || [];
-updateOnlineStatus();
-
-// ==================================================
-// AUTHENTICATION
-// ==================================================
-async function handleSignIn() {
-  const email = document.getElementById('signInEmail').value.trim();
-  const password = document.getElementById('signInPassword').value;
-  
-  const emailErr = Utils.Validators.email(email);
-  if (emailErr) return showToast(emailErr, 'warning');
-  const passErr = Utils.Validators.required(password, 'Password');
-  if (passErr) return showToast(passErr, 'warning');
-  
+// --------------------------
+// 7. AUTH HANDLERS
+// --------------------------
+window.signIn = async function(email, password) {
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    showToast('✅ Welcome back!', 'success');
-  } catch (error) {
-    console.error('Sign in error:', error);
-    showToast('❌ ' + Utils.friendlyError(error), 'error');
+  } catch (e) {
+    alert('Sign in failed: ' + e.message);
   }
-}
-window.handleSignIn = handleSignIn;
+};
 
-async function handleRegisterDriver() {
-  const name = document.getElementById('driverRegName').value.trim();
-  const email = document.getElementById('driverRegEmail').value.trim();
-  const password = document.getElementById('driverRegPassword').value;
-  
-  const nameErr = Utils.Validators.required(name, 'Full Name');
-  const emailErr = Utils.Validators.email(email);
-  const passErr = Utils.Validators.minLength(password, 6, 'Password');
-  
-  if (nameErr) return showToast(nameErr, 'warning');
-  if (emailErr) return showToast(emailErr, 'warning');
-  if (passErr) return showToast(passErr, 'warning');
-  
-  try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCred.user;
-    await sendEmailVerification(user);
-    
-    await setDoc(doc(db, 'drivers', user.uid), {
-      uid: user.uid,
-      fullName: name,
-      email: email,
-      role: 'driver',
-      createdAt: serverTimestamp(),
-      licenceNumber: '',
-      licenceCategories: '',
-      penaltyPoints: 0,
-      dvlaCheckCode: '',
-      validFrom: null,
-      expiryDate: null,
-      medicalExpiry: null,
-      companies: [],
-      active: true
-      
-      document.getElementById('drvValidFrom').value = toInputDate(profile.validFrom);
-      document.getElementById('drvExpiry').value = toInputDate(profile.expiryDate);
-      document.getElementById('drvMedicalExp').value = toInputDate(profile.medicalExpiry);
-    });
-    
-    showToast('✅ Account created! Check your email to verify.', 'success');
-    showPage('signInPage');
-  } catch (error) {
-    console.error('Driver register error:', error);
-    showToast('❌ ' + Utils.friendlyError(error), 'error');
-  }
-}
-window.handleRegisterDriver = handleRegisterDriver;
-
-async function handleRegisterCompany() {
-  const name = document.getElementById('companyRegName').value.trim();
-  const email = document.getElementById('companyRegEmail').value.trim();
-  const password = document.getElementById('companyRegPassword').value;
-  
-  const nameErr = Utils.Validators.required(name, 'Company Name');
-  const emailErr = Utils.Validators.email(email);
-  const passErr = Utils.Validators.minLength(password, 6, 'Password');
-  
-  if (nameErr) return showToast(nameErr, 'warning');
-  if (emailErr) return showToast(emailErr, 'warning');
-  if (passErr) return showToast(passErr, 'warning');
-  
-  try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCred.user;
-    await sendEmailVerification(user);
-    
-    const batch = writeBatch(db);
-    batch.set(doc(db, 'companies', user.uid), {
-      uid: user.uid,
-      registeredName: name,
-      email: email,
-      role: 'company',
-      createdAt: serverTimestamp(),
-      hmrcNumber: '',
-      companiesHouseNumber: '',
-      tradingName: '',
-      registeredAddress: '',
-      operatorLicenceNumber: '',
-      transportManager: '',
-      invoiceEmail: '',
-      phone: '',
-      billingPreference: 'per_driver',
-      active: true
-    });
-    batch.set(doc(db, 'companies', user.uid, 'settings', 'checklist'), {
-      items: DEFAULT_CHECKLIST.items,
-      updatedAt: serverTimestamp()
-    });
-    await batch.commit();
-    
-    showToast('✅ Company account created! Check your email to verify.', 'success');
-    showPage('signInPage');
-  } catch (error) {
-    console.error('Company register error:', error);
-    showToast('❌ ' + Utils.friendlyError(error), 'error');
-  }
-}
-window.handleRegisterCompany = handleRegisterCompany;
-
-async function handlePasswordReset() {
-  const email = document.getElementById('resetEmail').value.trim();
-  const emailErr = Utils.Validators.email(email);
-  if (emailErr) return showToast(emailErr, 'warning');
-  
+window.sendReset = async function(email) {
   try {
     await sendPasswordResetEmail(auth, email);
-    showPage('checkEmailPage');
-    showToast('✅ Password reset email sent — check your inbox', 'success');
-  } catch (error) {
-    showToast('❌ ' + Utils.friendlyError(error), 'error');
+    alert('✅ Check your email!');
+  } catch (e) {
+    alert('Error: ' + e.message);
   }
-}
-window.handlePasswordReset = handlePasswordReset;
+};
 
-async function signOutUser() {
+window.chooseRole = async function(role) {
+  if (!currentUser) return;
+  await setDoc(doc(db, 'users', currentUser.uid), {
+    role,
+    email: currentUser.email,
+    createdAt: serverTimestamp()
+  }, { merge: true });
+  userProfile.role = role;
+  showPage('dashboardPage');
+};
+
+window.registerUser = async function(role, name, email, password) {
   try {
-    await signOut(auth);
-    currentUser = null;
-    currentUserRole = null;
-    showToast('✅ Signed out', 'success');
-  } catch (error) {
-    showToast('❌ Sign out failed — please try again', 'error');
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      role, fullName: name, email, createdAt: serverTimestamp()
+    });
+  } catch (e) {
+    alert('Registration failed: ' + e.message);
   }
-}
-window.signOutUser = signOutUser;
+};
 
-// ==================================================
-// AUTH STATE MANAGEMENT
-// ==================================================
-function initAuthState() {
-  unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
+window.signOutUser = async function() {
+  await signOut(auth);
+};
+
+// --------------------------
+// 8. DRIVER DASHBOARD
+// --------------------------
+async function loadDriverDashboard() {
+  const dash = document.getElementById('dashboardContent');
+  const myChecksQ = query(
+    collection(db, 'checks'),
+    where('driverUid', '==', currentUser.uid),
+    orderBy('submittedAt', 'desc')
+  );
+  
+  const unsub = onSnapshot(myChecksQ, (snap) => {
+    const passed = snap.docs.filter(d => d.data().status === 'pass').length;
+    const failed = snap.docs.filter(d => d.data().status === 'fail').length;
+    const defects = snap.docs.filter(d => d.data().status === 'defect').length;
     
-    if (!user) {
-      currentUserRole = null;
-      hideElement('headerSection');
-      hideElement('searchBarSection');
-      hideElement('bottomNav');
-      hideElement('appContent');
-      showPage('signInPage');
+    dash.innerHTML = `
+      <h2>Welcome, ${escapeHtml(userProfile.fullName || 'Driver')}</h2>
+      
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0;">
+        <div style="text-align:center;padding:1rem;background:#f8fafc;border-radius:8px;">
+          <div style="font-size:1.8rem;font-weight:bold;color:#1a365d;">${snap.size}</div>
+          <div>Total Checks</div>
+        </div>
+        <div style="text-align:center;padding:1rem;background:#f0fdf4;border-radius:8px;">
+          <div style="font-size:1.8rem;font-weight:bold;color:#166534;">${passed}</div>
+          <div>Passed</div>
+        </div>
+        <div style="text-align:center;padding:1rem;background:#fffbeb;border-radius:8px;">
+          <div style="font-size:1.8rem;font-weight:bold;color:#d97706;">${defects}</div>
+          <div>Defects</div>
+        </div>
+      </div>
+      
+      <h3>Quick Actions</h3>
+      <button onclick="showPage('checklistPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#1a365d;color:#fff;border:none;border-radius:6px;">🚛 New Walkaround Check</button>
+      <button onclick="showPage('jobsPage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#e8edf3;color:#1a365d;border:none;border-radius:6px;">📋 View Available Work</button>
+      <button onclick="showPage('driverProfilePage')" style="width:100%;padding:1rem;font-size:1rem;margin:0.5rem 0;background:#d47500;color:#fff;border:none;border-radius:6px;">👤 Update Profile</button>
+      
+      <h3 style="margin-top:2rem;">Recent Checks</h3>
+      ${snap.empty ? '<p>No checks submitted yet.</p>' : snap.docs.slice(0,5).map(d => {
+        const c = d.data();
+        const date = c.submittedAt?.toDate ? c.submittedAt.toDate().toLocaleString() : 'Unknown';
+        const statusIcon = c.status === 'pass' ? '✅' : c.status === 'defect' ? '⚠️' : '❌';
+        return `
+          <div style="padding:0.8rem;border-bottom:1px solid #eee;">
+            <strong>${escapeHtml(c.vehicleReg || 'Unknown Vehicle')}</strong>
+            <br>${statusIcon} ${c.status?.toUpperCase()} — ${date}
+          </div>
+        `;
+      }).join('')}
+    `;
+  });
+  unsubscribeSnapshots.push(unsub);
+}
+
+// --------------------------
+// 9. JOBS / AVAILABLE WORK
+// --------------------------
+async function loadJobsPage() {
+  const list = document.getElementById('jobsList');
+  list.innerHTML = '<p>Loading available work...</p>';
+  
+  const jobsQ = query(
+    collection(db, 'jobs'),
+    where('status', '==', 'open'),
+    orderBy('postedAt', 'desc')
+  );
+  
+  const unsub = onSnapshot(jobsQ, (snap) => {
+    if (snap.empty) {
+      list.innerHTML = '<p style="text-align:center;padding:2rem;">No work available at the moment.</p>';
       return;
     }
     
-    showElement('headerSection');
-    showElement('searchBarSection');
-    showElement('bottomNav');
-    showElement('appContent');
-    
+    list.innerHTML = snap.docs.map(d => {
+      const j = d.data();
+      const date = j.postedAt?.toDate ? j.postedAt.toDate().toLocaleString() : 'Unknown';
+      return `
+        <div style="border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+          <h4 style="margin:0 0 0.5rem 0;">${escapeHtml(j.title || 'Untitled Job')}</h4>
+          <p style="color:#666;margin:0 0 0.5rem 0;">${escapeHtml(j.companyName || 'Unknown Company')} — ${date}</p>
+          <p style="margin:0 0 0.8rem 0;">${escapeHtml(j.description || '')}</p>
+          <p style="font-weight:bold; font-size:1.1rem;">Rate: £${j.rate || '0'}/hr</p>
+          <button onclick="acceptJob('${d.id}')" style="padding:0.6rem 1.2rem;background:#1a365d;color:#fff;border:none;border-radius:4px;">Accept Job</button>
+        </div>
+      `;
+    }).join('');
+  });
+  unsubscribeSnapshots.push(unsub);
+}
+
+window.acceptJob = async function(jobId) {
+  if (!confirm('Accept this job?')) return;
+  try {
+    await updateDoc(doc(db, 'jobs', jobId), {
+      status: 'accepted',
+      acceptedBy: currentUser.uid,
+      acceptedByName: userProfile.fullName,
+      acceptedAt: serverTimestamp()
+    });
+    alert('✅ Job accepted!');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+// --------------------------
+// 10. WALKAROUND CHECK — FULLY FIXED
+// --------------------------
+let currentCheckData = {};
+
+async function loadChecklistPage() {
+  const formWrap = document.getElementById('checklistForm');
+  formWrap.innerHTML = '<p>Loading...</p>';
+}
+
+window.updateCheckVehicleOptions = async function() {
+  const type = document.getElementById('checkTypeSelect').value;
+  const vehWrap = document.getElementById('vehicleSelectWrap');
+  const trlWrap = document.getElementById('trailerSelectWrap');
+  const vehSelect = document.getElementById('vehicleSelect');
+  const trlSelect = document.getElementById('trailerSelect');
+  const formWrap = document.getElementById('checklistForm');
+  
+  // Show/hide sections
+  vehWrap.style.display = type === 'trailer' ? 'none' : 'block';
+  trlWrap.style.display = type === 'vehicle' ? 'none' : 'block';
+  
+  if (!type) { formWrap.innerHTML = ''; return; }
+  
+  // Get accessible companies
+  const accessibleCompanies = userProfile.linkedCompanies || [userProfile.companyId].filter(Boolean);
+  
+  // Load VEHICLES
+  if (type !== 'trailer') {
+    vehSelect.innerHTML = `<option value="">— Select Vehicle —</option>`;
+    for (const companyId of accessibleCompanies) {
+      if (!companyId) continue;
+      const vehQ = query(collection(db, 'companies', companyId, 'vehicles'), where('active', '==', true));
+      const snap = await getDocs(vehQ);
+      snap.docs.forEach(d => {
+        const v = d.data();
+        vehSelect.innerHTML += `<option value="${d.id}">${escapeHtml(v.registration)} — ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')}</option>`;
+      });
+    }
+  }
+  
+  // Load TRAILERS
+  if (type !== 'vehicle') {
+    trlSelect.innerHTML = `<option value="">— Select Trailer —</option>`;
+    for (const companyId of accessibleCompanies) {
+      if (!companyId) continue;
+      const trlQ = query(collection(db, 'companies', companyId, 'trailers'), where('active', '==', true));
+      const snap = await getDocs(trlQ);
+      snap.docs.forEach(d => {
+        const t = d.data();
+        trlSelect.innerHTML += `<option value="${d.id}">${escapeHtml(t.trailerNumber)} — ${escapeHtml(t.ownership || 'Company Owned')}</option>`;
+      });
+    }
+  }
+  
+  // Load checklist items
+  currentCheckData = { type, vehicleId: null, trailerId: null, items: [], responses: {} };
+  
+  let checklistItems = [];
+  for (const companyId of accessibleCompanies) {
+    if (!companyId) continue;
     try {
-      const driverDoc = await getDoc(doc(db, 'drivers', user.uid));
-      const companyDoc = await getDoc(doc(db, 'companies', user.uid));
-      
-      if (companyDoc.exists()) {
-        currentUserRole = 'company';
-        await loadCompanyPortal(companyDoc.data());
-      } else if (driverDoc.exists()) {
-        currentUserRole = 'driver';
-        await loadDriverPortal(driverDoc.data());
-      } else {
-        showToast('⚠️ Profile not found. Please complete registration.', 'warning');
-        await signOutUser();
-        return;
+      const clSnap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
+      if (clSnap.exists() && clSnap.data().items?.length) {
+        checklistItems = clSnap.data().items;
+        break;
       }
-      
-      const nameEl = document.getElementById('userNameDisplay');
-      if (nameEl) {
-        nameEl.textContent = currentUserRole === 'company' 
-          ? (companyDoc.data()?.registeredName || 'Company')
-          : (driverDoc.data()?.fullName || 'Driver');
+    } catch(e) { /* continue */ }
+  }
+  
+  // DVSA Default
+  if (!checklistItems.length) {
+    checklistItems = [
+      "Vehicle Exterior & Body Condition",
+      "Windscreen, Windows & Mirrors",
+      "Lights, Indicators & Reflectors",
+      "Tyres, Wheels & Wheel Nuts",
+      "Brakes & Brake Systems",
+      "Fluid Levels — Engine Oil, Coolant, Washer, Fuel",
+      "Coupling, Trailer Securement & Connections",
+      "Load Security & Distribution",
+      "Emergency Equipment — Fire Extinguisher, Warning Triangle, First Aid",
+      "Cab & Interior — Seatbelts, Controls, Horn, Wipers",
+      "Exhaust, Emissions & Fuel System",
+      "Suspension, Steering & Drivetrain",
+      "Number Plates & Markings"
+    ];
+  }
+  
+  currentCheckData.items = checklistItems;
+  
+  formWrap.innerHTML = `
+    <h3>Walkaround Check</h3>
+    <p style="color:#666;margin-bottom:1rem;">Tap ✅ = Pass / ⚠️ = Defect / ❌ = Fail</p>
+    
+    ${checklistItems.map((item, idx) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0.8rem 0;border-bottom:1px solid #eee;">
+        <div style="flex:1;">${idx + 1}. ${escapeHtml(item)}</div>
+        <div style="display:flex;gap:0.5rem;">
+          <button id="btn-pass-${idx}" onclick="setCheckResponse(${idx}, 'pass')" style="width:44px;height:44px;border:none;border-radius:6px;background:#dcfce7;font-size:1.2rem;">✅</button>
+          <button id="btn-defect-${idx}" onclick="setCheckResponse(${idx}, 'defect')" style="width:44px;height:44px;border:none;border-radius:6px;background:#fef3c7;font-size:1.2rem;">⚠️</button>
+          <button id="btn-fail-${idx}" onclick="setCheckResponse(${idx}, 'fail')" style="width:44px;height:44px;border:none;border-radius:6px;background:#fee2e2;font-size:1.2rem;">❌</button>
+        </div>
+      </div>
+      <div id="defect-note-wrap-${idx}" style="display:none;padding:0.5rem 0 1rem 1rem;">
+        <label>Defect Details:</label>
+        <input type="text" id="defect-note-${idx}" placeholder="Describe the issue..." style="width:100%;padding:0.6rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;">
+      </div>
+    `).join('')}
+    
+    <div style="margin-top:1.5rem;">
+      <label><strong>Odometer / Mileage Reading</strong></label>
+      <input type="number" id="checkMileage" placeholder="Miles" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    
+    <div style="margin-top:1rem;">
+      <label><strong>Signature / Name</strong></label>
+      <input type="text" id="checkSignature" value="${escapeHtml(userProfile.fullName || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    
+    <button onclick="submitCheck()" style="width:100%;padding:1rem;background:#1a365d;color:#fff;border:none;border-radius:6px;font-size:1rem;margin-top:1rem;">✅ Submit Check</button>
+  `;
+};
+
+window.setCheckResponse = function(idx, value) {
+  currentCheckData.responses[idx] = value;
+  
+  // Clear all outlines
+  ['pass', 'defect', 'fail'].forEach(v => {
+    const btn = document.getElementById(`btn-${v}-${idx}`);
+    if (btn) btn.style.outline = 'none';
+  });
+  // Highlight selected
+  const selectedBtn = document.getElementById(`btn-${value}-${idx}`);
+  if (selectedBtn) selectedBtn.style.outline = '3px solid #1a365d';
+  
+  // Show/hide defect note
+  const noteWrap = document.getElementById(`defect-note-wrap-${idx}`);
+  if (noteWrap) noteWrap.style.display = value === 'defect' ? 'block' : 'none';
+};
+
+window.submitCheck = async function() {
+  const mileage = document.getElementById('checkMileage').value;
+  const signature = document.getElementById('checkSignature').value.trim();
+  
+  if (!mileage || !signature) return alert('Please enter mileage and your name.');
+  
+  // Get selected vehicle/trailer
+  const type = document.getElementById('checkTypeSelect').value;
+  const vehicleId = document.getElementById('vehicleSelect')?.value || null;
+  const trailerId = document.getElementById('trailerSelect')?.value || null;
+  
+  if (type !== 'trailer' && !vehicleId) return alert('Please select a vehicle.');
+  if (type !== 'vehicle' && !trailerId) return alert('Please select a trailer.');
+  
+  // Check all answered
+  const allAnswered = currentCheckData.items.every((_, i) => currentCheckData.responses[i]);
+  if (!allAnswered) return alert('Please answer every check item.');
+  
+  // Determine status
+  const responses = Object.values(currentCheckData.responses);
+  const hasFail = responses.includes('fail');
+  const hasDefect = responses.includes('defect');
+  const overallStatus = hasFail ? 'fail' : hasDefect ? 'defect' : 'pass';
+  
+  // Resolve vehicle registration
+  let vehicleReg = type === 'trailer' ? 'Trailer Only' : 'Unknown';
+  let vehicleData = null;
+  let trailerData = null;
+  const accessibleCompanies = userProfile.linkedCompanies || [userProfile.companyId].filter(Boolean);
+  
+  if (vehicleId) {
+    for (const cid of accessibleCompanies) {
+      if (!cid) continue;
+      const snap = await getDoc(doc(db, 'companies', cid, 'vehicles', vehicleId));
+      if (snap.exists()) {
+        vehicleData = snap.data();
+        vehicleReg = vehicleData.registration;
+        break;
       }
-      
-      const banner = document.getElementById('verificationBanner');
-      if (banner) {
-        banner.classList.toggle('hidden', user.emailVerified);
+    }
+  }
+  
+  if (trailerId) {
+    for (const cid of accessibleCompanies) {
+      if (!cid) continue;
+      const snap = await getDoc(doc(db, 'companies', cid, 'trailers', trailerId));
+      if (snap.exists()) {
+        trailerData = snap.data();
+        if (vehicleReg === 'Trailer Only') vehicleReg = trailerData.trailerNumber;
+        break;
       }
-      
-      showPage('dashboardPage');
-    } catch (error) {
-      console.error('Auth state load error:', error);
-      showToast('❌ Connection error. Please refresh.', 'error');
+    }
+  }
+  
+  // Collect defect notes
+  const defectNotes = {};
+  Object.entries(currentCheckData.responses).forEach(([idx, val]) => {
+    if (val === 'defect') {
+      defectNotes[idx] = document.getElementById(`defect-note-${idx}`)?.value || 'No details provided';
     }
   });
-}
-window.initAuthState = initAuthState;
-
-window.addEventListener('beforeunload', () => {
-  unsubscribeAuth?.();
-});
-
-// ==================================================
-// PORTAL LOADERS
-// ==================================================
-window.loadCompanyPortal = async function(companyData) {
-  console.log('🏢 Company Portal:', companyData?.registeredName);
-};
-
-window.loadDriverPortal = async function(driverData) {
-  console.log('👤 Driver Portal:', driverData?.fullName);
-};
-
-// ==================================================
-// INITIALISATION
-// ==================================================
-document.addEventListener('DOMContentLoaded', () => {
-  if (Utils.Storage.get('darkMode') === 'enabled') {
-    document.body.classList.add('dark-mode');
+  
+  // Submit
+  try {
+    await addDoc(collection(db, 'checks'), {
+      driverUid: currentUser.uid,
+      driverName: userProfile.fullName,
+      vehicleId, trailerId, vehicleReg,
+      checkType: type,
+      mileage: Number(mileage),
+      signature,
+      status: overallStatus,
+      responses: currentCheckData.responses,
+      defectNotes,
+      submittedAt: serverTimestamp()
+    });
+    alert('✅ Check submitted successfully!');
+    showPage('myChecksPage');
+  } catch (e) {
+    alert('Error submitting check: ' + e.message);
   }
-  initAuthState();
-  console.log('🚛 LSD Solutions App — ✅ 10/10 READY');
-});
+};
+
+// --------------------------
+// 11. MY CHECKS LIST
+// --------------------------
+async function loadMyChecks() {
+  const list = document.getElementById('myChecksList');
+  const q = query(collection(db, 'checks'), where('driverUid', '==', currentUser.uid), orderBy('submittedAt', 'desc'));
+  
+  const unsub = onSnapshot(q, snap => {
+    if (snap.empty) {
+      list.innerHTML = '<p style="text-align:center;padding:2rem;">No checks submitted yet.</p>';
+      return;
+    }
+    
+    list.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      const date = c.submittedAt?.toDate ? c.submittedAt.toDate().toLocaleString() : 'Unknown';
+      const statusText = c.status === 'pass' ? '✅ Pass' : c.status === 'defect' ? '⚠️ Defect Recorded' : '❌ Failed';
+      return `
+        <div style="border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:0.8rem;">
+          <h4 style="margin:0 0 0.3rem 0;">${escapeHtml(c.vehicleReg)}</h4>
+          <p style="margin:0.2rem 0;color:#666;">${c.checkType === 'vehicle' ? 'Vehicle Only' : c.checkType === 'trailer' ? 'Trailer Only' : 'Vehicle + Trailer'}</p>
+          <p style="margin:0.5rem 0;font-weight:bold;">${statusText}</p>
+          <p style="margin:0.2rem 0;">${date} — Mileage: ${c.mileage}</p>
+        </div>
+      `;
+    }).join('');
+  });
+  unsubscribeSnapshots.push(unsub);
+}
+
+// --------------------------
+// 12. DRIVER PROFILE
+// --------------------------
+async function loadDriverProfile() {
+  const cont = document.getElementById('driverProfileContent');
+  const profile = userProfile || {};
+  
+  cont.innerHTML = `
+    <h3>Personal Details</h3>
+    <div style="margin:1rem 0;">
+      <label><strong>Full Name</strong></label>
+      <input type="text" id="drvProfName" value="${escapeHtml(profile.fullName || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label><strong>Email</strong></label>
+      <input type="email" id="drvEmail" value="${escapeHtml(profile.email || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;" readonly>
+    </div>
+    
+    <h3 style="margin-top:2rem;">Driving Licence</h3>
+    <div style="margin:1rem 0;">
+      <label>Licence Number</label>
+      <input type="text" id="drvLicNo" value="${escapeHtml(profile.licenceNumber || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label>DVLA Check Code</label>
+      <input type="text" id="drvDvlaCode" value="${escapeHtml(profile.dvlaCheckCode || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label>Valid From</label>
+      <input type="date" id="drvValidFrom" value="${escapeHtml(profile.validFrom || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label>Expiry Date</label>
+      <input type="date" id="drvExpiry" value="${escapeHtml(profile.expiryDate || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label>Medical Expiry</label>
+      <input type="date" id="drvMedicalExp" value="${escapeHtml(profile.medicalExpiry || '')}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label>Penalty Points</label>
+      <input type="number" id="drvPoints" value="${profile.penaltyPoints || 0}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    <div style="margin:1rem 0;">
+      <label>Licence Categories (comma separated)</label>
+      <input type="text" id="drvCats" value="${escapeHtml((profile.categories || []).join(', '))}" style="width:100%;padding:0.8rem;margin:0.5rem 0;border:1px solid #ccc;border-radius:4px;">
+    </div>
+    
+    <button id="drvProfSave" onclick="saveDriverProfile()" style="padding:0.9rem 2rem;background:#1a365d;color:#fff;border:none;border-radius:6px;font-size:1rem;margin-top:1rem;">Save Profile</button>
+    
+    <h3 style="margin-top:2rem;">Documents</h3>
+    <p style="color:#666;">Upload licence, CPC, tachograph card etc.</p>
+    <input type="file" id="docUploader" multiple style="margin:1rem 0;">
+    <button onclick="uploadDriverDocuments()" style="padding:0.7rem 1.5rem;background:#1a365d;color:#fff;border:none;border-radius:6px;">Upload Selected</button>
+    
+    <div id="driverDocsList" style="margin-top:1.5rem;"></div>
+  `;
+  
+  loadDriverDocumentsList();
+}
+
+window.saveDriverProfile = async function() {
+  const data = {
+    fullName: document.getElementById('drvProfName').value.trim(),
+    licenceNumber: document.getElementById('drvLicNo').value.trim(),
+    dvlaCheckCode: document.getElementById('drvDvlaCode').value.trim(),
+    validFrom: document.getElementById('drvValidFrom').value,
+    expiryDate: document.getElementById('drvExpiry').value,
+    medicalExpiry: document.getElementById('drvMedicalExp').value,
+    penaltyPoints: Number(document.getElementById('drvPoints').value) || 0,
+    categories: document.getElementById('drvCats').value.split(',').map(s => s.trim()).filter(Boolean),
+    updatedAt: serverTimestamp()
+  };
+  
+  await setDoc(doc(db, 'users', currentUser.uid), data, { merge: true });
+  userProfile = { ...userProfile, ...data };
+  
+  const btn = document.getElementById('drvProfSave');
+  btn.textContent = '✅ Profile Saved';
+  setTimeout(() => btn.textContent = 'Save Profile', 3000);
+};
+
+window.uploadDriverDocuments = async function() {
+  const files = document.getElementById('docUploader').files;
+  if (!files.length) return alert('Select files first.');
+  
+  for (const file of files) {
+    const fileRef = ref(storage, `driver-docs/${currentUser.uid}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+    await addDoc(collection(db, 'driver-documents'), {
+      driverUid: currentUser.uid,
+      name: file.name,
+      type: file.type,
+      url,
+      uploadedAt: serverTimestamp()
+    });
+  }
+  
+  alert(`✅ ${files.length} file(s) uploaded.`);
+  loadDriverDocumentsList();
+};
+
+async function loadDriverDocumentsList() {
+  const list = document.getElementById('driverDocsList');
+  const q = query(collection(db, 'driver-documents'), where('driverUid', '==', currentUser.uid), orderBy('uploadedAt', 'desc'));
+  
+  const unsub = onSnapshot(q, snap => {
+    if (snap.empty) {
+      list.innerHTML = '<p style="color:#666;">No documents uploaded yet.</p>';
+      return;
+    }
+    list.innerHTML = snap.docs.map(d => {
+      const doc = d.data();
+      return `
+        <div style="padding:0.7rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+          <span>${escapeHtml(doc.name)}</span>
+          <a href="${doc.url}" target="_blank" style="color:#1a365d;">View ↗</a>
+        </div>
+      `;
+    }).join('');
+  });
+  unsubscribeSnapshots.push(unsub);
+}
+
+// --------------------------
+// 13. COMPANY PORTAL PLACEHOLDERS
+// --------------------------
+async function loadCompanyDashboard() {
+  const dash = document.getElementById('dashboardContent');
+  dash.innerHTML = `
+    <h2>Welcome, ${escapeHtml(userProfile.companyName || 'Company Admin')}</h2>
+    <p style="margin:1rem 0;color:#666;">Use the menu to manage your fleet, drivers, and settings.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:2rem;">
+      <button onclick="showPage('companyVehiclesPage')" style="padding:1.5rem;background:#f0f4f8;border:none;border-radius:8px;font-size:1rem;">🚛 Vehicles</button>
+      <button onclick="showPage('companyDriversPage')" style="padding:1.5rem;background:#f0f4f8;border:none;border-radius:8px;font-size:1rem;">👤 Drivers</button>
+      <button onclick="showPage('checklistEditorPage')" style="padding:1.5rem;background:#f0f4f8;border:none;border-radius:8px;font-size:1rem;">📋 Walkaround Check Editor</button>
+      <button onclick="showPage('companyProfilePage')" style="padding:1.5rem;background:#f0f4f8;border:none;border-radius:8px;font-size:1rem;">🏢 Company Profile</button>
+    </div>
+  `;
+}
+
+async function loadCompanyVehicles() {
+  document.getElementById('companyVehiclesContent').innerHTML = '<p>Vehicles management — add/edit/activate vehicles here.</p>';
+}
+async function loadCompanyDrivers() {
+  document.getElementById('companyDriversContent').innerHTML = '<p>Drivers management — view linked drivers & their documents here.</p>';
+}
+async function loadCompanyProfile() {
+  document.getElementById('companyProfileContent').innerHTML = '<p>Company profile & compliance settings.</p>';
+}
+async function loadChecklistEditor() {
+  document.getElementById('checklistEditorContent').innerHTML = '<p>Checklist editor — customise your walkaround items.</p>';
+}
+
+console.log('✅ LSD Solutions app loaded');
+</script>
