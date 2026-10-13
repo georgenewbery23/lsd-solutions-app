@@ -429,7 +429,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, serverTimestamp, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
   const firebaseConfig = {
@@ -714,34 +714,38 @@
   // =====================================================
   // WALKAROUND CHECKS
   // =====================================================
-  async function loadWalkaroundChecks() {
+    async function loadWalkaroundChecks() {
     const list = document.getElementById('walkaroundChecksList');
     if (!list || !selectedCompanyId) {
       if (list) list.innerHTML = '<p>Select a company first.</p>';
       return;
     }
     try {
-            const structSnap = await getDoc(doc(db, 'companies', selectedCompanyId, 'settings', 'checklist'));
-      let items = checkStructure; // editedChecks = [
-  "Vehicle Exterior — Body, panels, mirrors, markings",
-  "Windscreen & Windows — Condition, wipers, washers, mirrors",
-  "Lights & Indicators — All working, lenses clean, correct colour",
-  "Tyres & Wheels — Pressure, tread depth (min 1.6mm), condition, security",
-  "Brakes — Service brake, parking brake, air pressure build-up",
-  "Steering — Free play, fluid level, no leaks",
-  "Suspension — Springs, shock absorbers, mounting points",
-  "Fluid Levels — Engine oil, coolant, screen wash, fuel/water leaks",
-  "Coupling & Trailer Securement — Fifth wheel, air lines, electrics, breakaway",
-  "Load Security — Straps, chains, sheeted, weight distribution",
-    "Emergency Equipment — Fire extinguisher, warning triangle, first aid, wheel chocks",
-  "Cab & Interior — Controls, seatbelts, tachograph, handbrake, doors secure"
-];
+      const structSnap = await getDoc(doc(db, 'companies', selectedCompanyId, 'settings', 'checklist'));
+      
+      // ✅ DVSA COMPLIANT DEFAULT LIST
+      let items = [
+        "Vehicle Exterior — Body, panels, mirrors, markings",
+        "Windscreen & Windows — Condition, wipers, washers, mirrors",
+        "Lights & Indicators — All working, lenses clean, correct colour",
+        "Tyres & Wheels — Pressure, tread depth (min 1.6mm), condition, security",
+        "Brakes — Service brake, parking brake, air pressure build-up",
+        "Steering — Free play, fluid level, no leaks",
+        "Suspension — Springs, shock absorbers, mounting points",
+        "Fluid Levels — Engine oil, coolant, screen wash, fuel/water leaks",
+        "Coupling & Trailer Securement — Fifth wheel, air lines, electrics, breakaway",
+        "Load Security — Straps, chains, sheeted, weight distribution",
+        "Emergency Equipment — Fire extinguisher, warning triangle, first aid, wheel chocks",
+        "Cab & Interior — Controls, seatbelts, tachograph, handbrake, doors secure"
+      ];
+      
       if (structSnap.exists) {
         const data = structSnap.data();
         if (data && data.items && Array.isArray(data.items) && data.items.length > 0) {
           items = data.items;
         }
       }
+      
       list.innerHTML = items.map((name, i) => `
         <div style="padding:10px 0; border-bottom:1px solid #eee;">
           <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
@@ -751,6 +755,7 @@
           </label>
         </div>`).join('');
     } catch (err) {
+      console.error('Checks load error:', err);
       list.innerHTML = '<p>Error loading checks.</p>';
     }
   }
