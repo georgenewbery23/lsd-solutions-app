@@ -761,6 +761,18 @@ async function loadCompanyDashboard() {
       <button class="btn primary" onclick="showPage('company-work-page'); loadCompanyWork();">
         📋 Posted Work
       </button>
+      <button class="btn primary" style="width: 100%;" onclick="showPage('vehicles-page'); loadVehicles();">
+  🚚 Vehicle Management
+</button>
+<button class="btn primary" style="width: 100%;" onclick="showPage('trailers-page'); loadTrailers();">
+  🚛 Trailer Management
+</button>
+<button class="btn primary" style="width: 100%;" onclick="showPage('service-logs-page'); loadServiceLogsPage();">
+  🔧 Service Logs
+</button>
+<button class="btn primary" style="width: 100%;" onclick="showPage('reports-page'); loadExpiryAlerts();">
+  📊 Reports & Alerts
+</button>
       <button class="btn primary" onclick="showPage('company-drivers-page'); loadCompanyDrivers();">
         👥 Employed Drivers
       </button>
