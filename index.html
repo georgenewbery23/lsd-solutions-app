@@ -216,45 +216,59 @@
           </div>
           
           <!-- SIGN IN FORM -->
-          <form id="signin-form" onsubmit="handleSignIn(event)">
-            <div class="form-group">
-              <label>Email Address</label>
-              <input type="email" id="signin-email" required>
-            </div>
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="signin-password" required>
-            </div>
-            <div class="form-actions" style="justify-content:stretch">
-              <button type="submit" class="btn primary" style="width:100%">Sign In</button>
-            </div>
-          </form>
-          
-          <!-- REGISTER FORM -->
-          <form id="register-form" onsubmit="handleRegister(event)" style="display:none">
-            <div class="form-group">
-              <label>Full Name</label>
-              <input type="text" id="register-name" required>
-            </div>
-            <div class="form-group">
-              <label>Email Address</label>
-              <input type="email" id="register-email" required>
-            </div>
-            <div class="form-group">
-              <label>Password</label>
-              <input type="password" id="register-password" required>
-            </div>
-            <div class="form-group">
-              <label>Account Type</label>
-              <select id="register-role">
-                <option value="driver">👤 Driver</option>
-                <option value="company">🏢 Company</option>
-              </select>
-            </div>
-            <div class="form-actions" style="justify-content:stretch">
-              <button type="submit" class="btn primary" style="width:100%">Create Account</button>
-            </div>
-          </form>
+<form id="signin-form" style="display:block;">
+  <div class="form-group">
+    <label for="signin-email">Email Address</label>
+    <input type="email" id="signin-email" name="signin-email" required>
+  </div>
+  <div class="form-group">
+    <label for="signin-password">Password</label>
+    <input type="password" id="signin-password" name="signin-password" required>
+  </div>
+  <button type="button" class="btn primary" onclick="signIn()">🔐 Sign In</button>
+</form>
+
+<!-- REGISTER DRIVER -->
+<form id="register-driver-form">
+  <div class="form-group">
+    <label for="register-driver-name">Full Name</label>
+    <input type="text" id="register-driver-name" name="register-driver-name" required>
+  </div>
+  <div class="form-group">
+    <label for="register-driver-email">Email Address</label>
+    <input type="email" id="register-driver-email" name="register-driver-email" required>
+  </div>
+  <div class="form-group">
+    <label for="register-driver-password">Password</label>
+    <input type="password" id="register-driver-password" name="register-driver-password" required>
+  </div>
+  <div class="form-group">
+    <label for="register-driver-confirm">Confirm Password</label>
+    <input type="password" id="register-driver-confirm" name="register-driver-confirm" required>
+  </div>
+  <button type="button" class="btn primary" onclick="register('driver')">✅ Register as Driver</button>
+</form>
+
+<!-- REGISTER COMPANY -->
+<form id="register-company-form">
+  <div class="form-group">
+    <label for="register-company-name">Company Name</label>
+    <input type="text" id="register-company-name" name="register-company-name" required>
+  </div>
+  <div class="form-group">
+    <label for="register-company-email">Email Address</label>
+    <input type="email" id="register-company-email" name="register-company-email" required>
+  </div>
+  <div class="form-group">
+    <label for="register-company-password">Password</label>
+    <input type="password" id="register-company-password" name="register-company-password" required>
+  </div>
+  <div class="form-group">
+    <label for="register-company-confirm">Confirm Password</label>
+    <input type="password" id="register-company-confirm" name="register-company-confirm" required>
+  </div>
+  <button type="button" class="btn primary" onclick="register('company')">✅ Register as Company</button>
+</form>
           
           <p style="margin-top:16px">
             <a href="#" onclick="showPage('reset-page');return false" style="color:var(--primary)">Forgot password?</a>
