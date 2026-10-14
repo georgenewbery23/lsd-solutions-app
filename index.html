@@ -1974,31 +1974,33 @@
     // ==============================================
     let checklistItems = [];
 
-    async function renderChecklistEditor() {
-      const companyId = currentUser.uid;
-      const editor = document.getElementById('checklistEditorContent');
-      
-      const docSnap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
-      
-      if (!docSnap.exists() || !docSnap.data().items) {
-        checklistItems = [
-          "Vehicle Exterior & Body Condition — no damage, secure panels",
-          "Windscreen, Windows & Mirrors — clean, no cracks, properly secured",
-          "Lights & Indicators — all working, lenses clean and intact",
-          "Tyres & Wheels — pressure correct, tread depth legal, no damage, wheel nuts secure",
-          "Brakes — sufficient fluid, no leaks, brake pedal firm, handbrake holds vehicle",
-          "Fluid Levels — engine oil, coolant, washer fluid at correct levels",
-          "Coupling & Trailer Securement — fifth wheel, legs, air lines, electrical connections secure",
-          "Load Security — load properly secured, straps/chains in good condition",
-          "Emergency Equipment — fire extinguisher, warning triangle, first aid kit present & valid",
-          "Cab & Interior — mirrors adjusted, controls clear, seats secure, paperwork complete"
-        ];
-      } else {
-        checklistItems = docSnap.data().items;
-      }
-      
-      renderChecklistUI();
-    }
+   async function renderChecklistEditor() {
+  const companyId = currentUser.uid;
+  const editor = document.getElementById('checklistEditorContent');
+  
+  const docSnap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
+  
+  // ✅ Load EXISTING items first
+  if (docSnap.exists() && docSnap.data().items && docSnap.data().items.length > 0) {
+    checklistItems = docSnap.data().items;
+  } else {
+    // No saved checklist — use DVSA defaults
+    checklistItems = [
+      "Vehicle Exterior & Body Condition — no damage, secure panels",
+      "Windscreen, Windows & Mirrors — clean, no cracks, properly secured",
+      "Lights & Indicators — all working, lenses clean and intact",
+      "Tyres & Wheels — pressure correct, tread depth legal, no damage, wheel nuts secure",
+      "Brakes — sufficient fluid, no leaks, brake pedal firm, handbrake holds vehicle",
+      "Fluid Levels — engine oil, coolant, washer fluid at correct levels",
+      "Coupling & Trailer Securement — fifth wheel, legs, air lines, electrical connections secure",
+      "Load Security — load properly secured, straps/chains in good condition",
+      "Emergency Equipment — fire extinguisher, warning triangle, first aid kit present & valid",
+      "Cab & Interior — mirrors adjusted, controls clear, seats secure, paperwork complete"
+    ];
+  }
+  
+  renderChecklistUI();
+}
 
     function renderChecklistUI() {
       const editor = document.getElementById('checklistEditorContent');
