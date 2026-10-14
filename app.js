@@ -15,7 +15,7 @@ import {
 import { 
   getFirestore, doc, setDoc, getDoc, collection, query, where, 
   getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, 
-  writeBatch, increment 
+  writeBatch, increment
 } from "firebase/firestore";
 import { 
   getStorage, ref, uploadBytes, getDownloadURL, deleteObject 
@@ -292,18 +292,14 @@ async function loadUserProfile() {
 window.showPage = function(pageName) {
   currentPage = pageName;
   
-  // Hide all pages
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   
-  // Show requested page
   const page = document.getElementById(`page-${pageName}`);
   if (page) page.style.display = 'block';
   
-  // Update navigation
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll(`[data-page="${pageName}"]`).forEach(btn => btn.classList.add('active'));
   
-  // Load page-specific data
   if (pageName === 'checklist-editor' && userProfile?.role === 'company') {
     loadChecklistEditor();
   } else if (pageName === 'vehicles' && userProfile?.role === 'company') {
@@ -326,7 +322,6 @@ window.logoutUser = async function() {
   showToast('Signed out successfully');
 };
 
-// Make globally available
 window.escapeHtml = escapeHtml;
 // ==========================================================
 // LSD Solutions — app.js Section 2
@@ -547,8 +542,8 @@ function renderVehicleCard(vehicle) {
   const isTrailer = vehicle.type === 'trailer';
   const mainId = isTrailer ? vehicle.trailerNumber : vehicle.registration;
   const subtitle = isTrailer 
-    ? `${vehicle.make || ''} ${vehicle.model || ''} • ${vehicle.owner || 'Company Owned'}`
-    : `${vehicle.make || ''} ${vehicle.model || ''} • ${vehicle.taxDue ? 'Tax: ' + formatDate(vehicle.taxDue).split(' ')[1] + ' ' + formatDate(vehicle.taxDue).split(' ')[2] : ''}`;
+    ? `${vehicle.make || ''} • ${vehicle.owner || 'Company Owned'}`
+    : `${vehicle.make || ''} ${vehicle.model || ''}`;
   
   return `
     <div style="border:1px solid #e5e7eb;border-radius:6px;padding:1rem;background:#fff;">
@@ -684,7 +679,7 @@ window.toggleVehicleActive = async function(id, currentState) {
 };
 
 window.editVehicle = async function(id) {
-  alert('Edit functionality — extend as needed');
+  alert('✏️ Edit functionality — extend as needed');
 };
 
 // --------------------------
@@ -736,7 +731,7 @@ function renderDriversList(drivers) {
                 <strong style="font-size:1.05rem;">${escapeHtml(d.fullName || 'Unnamed Driver')}</strong>
                 <p style="margin:0.2rem 0;font-size:0.9em;color:#666;">${escapeHtml(d.email || '')}</p>
                 <p style="margin:0;font-size:0.85em;">
-                  � Licence: ${d.licenceNumber ? escapeHtml(d.licenceNumber) : 'Not recorded'}
+                  🪪 Licence: ${d.licenceNumber ? escapeHtml(d.licenceNumber) : 'Not recorded'}
                   ${d.licenceExpiry ? `• Expires: ${formatDate(d.licenceExpiry).split(' ')[1]} ${formatDate(d.licenceExpiry).split(' ')[2]}` : ''}
                 </p>
                 <p style="margin:0.3rem 0 0 0;font-size:0.8em;color:#666;">
@@ -752,7 +747,7 @@ function renderDriversList(drivers) {
           </div>
         `).join('')}
       </div>
-    ` : '<p style="color:#666;text-align:center;padding:2rem;">No drivers added yet. Invite or add drivers above.</p>'}
+    ` : '<p style="color:#666;text-align:center;padding:2rem;">No drivers added yet. Add drivers above.</p>'}
   `;
 }
 
@@ -780,13 +775,10 @@ window.showAddDriverForm = function() {
       <input type="text" id="new-driver-cats" placeholder="C+E, C, D1, etc." style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
       <label style="display:block;margin-bottom:0.5rem;font-weight:500;">DVLA Check Code</label>
-      <input type="text" id="new-driver-dvla" placeholder="123456ABC" style="width:100%;padding:0.6
-      // ==========================================================
-// LSD Solutions — app.js Section 3 (COMPLETE)
-// Driver Management, Defect Tracking, Driver Checks, Exports
-// ==========================================================
-
       <input type="text" id="new-driver-dvla" placeholder="123456ABC" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+      
+      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Valid From</label>
+      <input type="date" id="new-driver-validfrom" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
       <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Valid From</label>
       <input type="date" id="new-driver-validfrom" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
@@ -794,16 +786,16 @@ window.showAddDriverForm = function() {
       <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Expiry Date</label>
       <input type="date" id="new-driver-expiry" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Penalty Points</label>
-      <input type="number" id="new-driver-points" value="0" min="0" max="12" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">DVLA Penalty Points</label>
+      <input type="number" id="new-driver-points" placeholder="0" min="0" max="12" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
-      <h4 style="margin:1.5rem 0 1rem 0;">Medical & Contact</h4>
+      <h4 style="margin:1.5rem 0 1rem 0;">Medical & Compliance</h4>
       
       <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Medical Certificate Expiry</label>
       <input type="date" id="new-driver-medical" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
       <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Phone Number</label>
-      <input type="tel" id="new-driver-phone" placeholder="07xxx xxxxxx" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+      <input type="tel" id="new-driver-phone" placeholder="+44 7xxx xxxxxx" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
       <button onclick="saveNewDriver()" class="btn btn-primary" style="width:100%;margin-top:1rem;">💾 Save Driver</button>
     </div>
@@ -814,39 +806,37 @@ window.saveNewDriver = async function() {
   const fullName = document.getElementById('new-driver-name').value.trim();
   const email = document.getElementById('new-driver-email').value.trim();
   
-  if (!fullName || !email) {
-    return alert('⚠️ Name and email are required');
-  }
+  if (!fullName || !email) return alert('⚠️ Name and email are required');
   
   try {
     await addDoc(collection(db, 'companies', currentUser.uid, 'drivers'), {
       fullName,
       email,
-      phone: document.getElementById('new-driver-phone').value.trim(),
       licenceNumber: document.getElementById('new-driver-licence').value.trim().toUpperCase(),
       licenceCategories: document.getElementById('new-driver-cats').value.trim(),
       dvlaCheckCode: document.getElementById('new-driver-dvla').value.trim(),
-      licenceValidFrom: document.getElementById('new-driver-validfrom').valueAsDate 
+      validFrom: document.getElementById('new-driver-validfrom').valueAsDate 
         ? new Date(document.getElementById('new-driver-validfrom').value) : null,
       licenceExpiry: document.getElementById('new-driver-expiry').valueAsDate 
         ? new Date(document.getElementById('new-driver-expiry').value) : null,
       penaltyPoints: parseInt(document.getElementById('new-driver-points').value) || 0,
       medicalExpiry: document.getElementById('new-driver-medical').valueAsDate 
         ? new Date(document.getElementById('new-driver-medical').value) : null,
+      phone: document.getElementById('new-driver-phone').value.trim(),
       addedAt: new Date(),
-      addedBy: currentUser.uid
+      documents: []
     });
     
     showToast('✅ Driver added successfully');
     loadCompanyDrivers();
   } catch (err) {
     console.error('Error saving driver:', err);
-    alert('❌ Failed to save driver. Please try again.');
+    showToast('❌ Failed to add driver', 'error');
   }
 };
 
 window.removeDriver = async function(driverId, driverName) {
-  if (!confirm(`⚠️ Are you sure you want to remove ${driverName}? This cannot be undone.`)) return;
+  if (!confirm(`⚠️ Permanently remove ${driverName}? This cannot be undone.`)) return;
   
   try {
     await deleteDoc(doc(db, 'companies', currentUser.uid, 'drivers', driverId));
@@ -854,758 +844,665 @@ window.removeDriver = async function(driverId, driverName) {
     loadCompanyDrivers();
   } catch (err) {
     console.error('Error removing driver:', err);
-    alert('❌ Failed to remove driver.');
+    showToast('❌ Failed to remove driver', 'error');
   }
 };
 
-window.viewDriverDocs = function(driverId) {
-  alert('📄 Document viewer — extend to show uploaded documents from driver portal');
-};
-
-window.editDriver = function(driverId) {
+window.editDriver = async function(driverId) {
   alert('✏️ Edit driver — extend as needed');
 };
 
-// --------------------------
-// DEFECT MANAGEMENT — COMPANY PORTAL
-// --------------------------
-let allDefects = [];
-let currentDefectId = null;
+window.viewDriverDocs = function(driverId) {
+  showToast('📄 Documents viewer — extend as needed');
+};
+// ==========================================================
+// LSD Solutions — app.js Section 3
+// Defect Management, Company Profile, Driver Portal,
+// Walkaround Checks, Company Profile & Exports
+// ==========================================================
 
+// --------------------------
+// DEFECT MANAGEMENT
+// --------------------------
 async function loadDefectsList() {
-  const listEl = document.getElementById('defects-list');
-  const filterEl = document.getElementById('defect-filter-status');
-  if (!listEl || !filterEl) return;
+  const container = document.getElementById('defects-list');
+  if (!container || !currentUser) return;
   
-  listEl.innerHTML = '<p>Loading defects...</p>';
+  container.innerHTML = '<p>Loading defects...</p>';
   
   try {
-    const checksSnap = await getDocs(
-      collection(db, 'companies', currentUser.uid, 'completedChecks')
+    const defectsSnap = await getDocs(
+      query(
+        collection(db, 'defects'),
+        where('companyId', '==', currentUser.uid)
+      )
     );
     
-    allDefects = [];
-    
-    checksSnap.forEach(docSnap => {
-      const check = docSnap.data();
-      if (check.defects && Array.isArray(check.defects)) {
-        check.defects.forEach(defect => {
-          allDefects.push({
-            ...defect,
-            checkId: docSnap.id,
-            checkDate: check.completedAt?.toDate() || new Date()
-          });
-        });
-      }
+    let defects = [];
+    defectsSnap.forEach(doc => {
+      defects.push({ id: doc.id, ...doc.data() });
     });
     
-    allDefects.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
-    
-    const statusFilter = filterEl.value;
-    let filtered = allDefects;
-    if (statusFilter !== 'all') {
-      filtered = allDefects.filter(d => d.status === statusFilter);
-    }
-    
-    renderDefectsList(filtered);
+    defects.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
+    renderDefectsList(defects);
     
   } catch (err) {
     console.error('Error loading defects:', err);
-    listEl.innerHTML = '<p style="color:red;">❌ Could not load defects. Please refresh.</p>';
+    container.innerHTML = '<p style="color:red;">❌ Could not load defects.</p>';
   }
 }
 
 function renderDefectsList(defects) {
-  const listEl = document.getElementById('defects-list');
-  if (!listEl) return;
+  const container = document.getElementById('defects-list');
   
-  if (!defects.length) {
-    listEl.innerHTML = '<p style="color:#666;text-align:center;padding:2rem;">No defects found matching your filter.</p>';
+  if (defects.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:3rem;">
+        <h3>✅ No Reported Defects</h3>
+        <p style="color:#666;margin-top:0.5rem;">All vehicles and trailers operating within DVSA standards.</p>
+      </div>
+    `;
     return;
   }
   
-  listEl.innerHTML = defects.map(d => {
-    const statusInfo = Object.values(DEFECT_STATUS).find(s => s.value === d.status) || DEFECT_STATUS.REPORTED;
-    const severityColor = d.severity === 'DANGEROUS' ? '#b91c1c' 
-                        : d.severity === 'MAJOR' ? '#d97706' : '#d4af37';
+  const grouped = {
+    dangerous: defects.filter(d => d.severity === 'DANGEROUS'),
+    major: defects.filter(d => d.severity === 'MAJOR'),
+    minor: defects.filter(d => d.severity === 'MINOR'),
+    other: defects.filter(d => !['DANGEROUS','MAJOR','MINOR'].includes(d.severity))
+  };
+  
+  container.innerHTML = `
+    <div style="margin-bottom:1.5rem;">
+      <h3>⚠️ Defect Management</h3>
+      <p style="font-size:0.9em;color:#666;">${defects.length} total • 
+        <span style="color:#b91c1c;">${grouped.dangerous.length} Dangerous</span> • 
+        <span style="color:#d97706;">${grouped.major.length} Major</span> • 
+        <span style="color:#d4af37;">${grouped.minor.length} Minor</span>
+      </p>
+    </div>
     
-    return `
-      <div onclick="openDefect('${d.id}')" style="border:1px solid #e5e7eb;border-radius:6px;padding:1rem;margin-bottom:0.8rem;cursor-pointer;transition:all 0.2s;" 
-        onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-          <div>
-            <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:bold;background:${statusInfo.color}20;color:${statusInfo.color};">
-              ${statusInfo.label}
-            </span>
-            <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:bold;background:${severityColor}20;color:${severityColor};margin-left:6px;">
-              ${d.severity}
-            </span>
-            <h4 style="margin:0.5rem 0 0.3rem 0;">${escapeHtml(d.description || d.checkItem)}</h4>
-            <p style="margin:0;font-size:0.85em;color:#666;">
-              🚛 ${escapeHtml(d.vehicleReg || 'Unknown')} 
-              ${d.trailerNo ? `| 🚉 ${escapeHtml(d.trailerNo)}` : ''}
-              • Reported ${formatDate(d.reportedAt)}
-            </p>
+    ${['dangerous','major','minor','other'].map(severityKey => {
+      const list = grouped[severityKey];
+      if (!list.length) return '';
+      
+      const label = severityKey === 'dangerous' ? '⚠️ DANGEROUS — Immediate Action Required' :
+                    severityKey === 'major' ? '🔶 Major — Repair Before Further Use' :
+                    severityKey === 'minor' ? '🟡 Minor — Monitor / Rectify Soon' : '📋 Other Defects';
+      const color = severityKey === 'dangerous' ? '#b91c1c' :
+                    severityKey === 'major' ? '#d97706' :
+                    severityKey === 'minor' ? '#d4af37' : '#666';
+      
+      return `
+        <div style="margin-bottom:1.5rem;border-left:4px solid ${color};padding-left:1rem;">
+          <h4 style="color:${color};margin-bottom:0.5rem;">${label}</h4>
+          <div style="display:grid;gap:0.7rem;">
+            ${list.map(d => renderDefectCard(d)).join('')}
           </div>
-          <span style="font-family:monospace;font-size:0.75em;color:#999;">${d.id}</span>
         </div>
-      </div>
-    `;
-  }).join('');
+      `;
+    }).join('')}
+  `;
 }
 
-async function openDefect(defectId) {
-  currentDefectId = defectId;
-  const defect = allDefects.find(d => d.id === defectId);
-  if (!defect) return;
+function renderDefectCard(defect) {
+  const statusInfo = DEFECT_STATUS[defect.status?.toUpperCase()] || DEFECT_STATUS.REPORTED;
+  const severityInfo = DVSA_SEVERITY[defect.severity] || DVSA_SEVERITY.MINOR;
   
-  const modal = document.getElementById('defect-modal');
-  const content = document.getElementById('defect-modal-content');
-  const title = document.getElementById('defect-modal-title');
-  const ref = document.getElementById('defect-modal-ref');
-  
-  title.textContent = 'Defect Details';
-  ref.textContent = `Ref: ${defectId}`;
-  
-  const statusInfo = Object.values(DEFECT_STATUS).find(s => s.value === defect.status) || DEFECT_STATUS.REPORTED;
-  
-  content.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-      <div>
-        <label style="font-size:0.8rem;color:#666;">Vehicle / Trailer</label>
-        <p style="font-weight:500;">${escapeHtml(defect.vehicleReg || '—')} ${defect.trailerNo ? `/ ${escapeHtml(defect.trailerNo)}` : ''}</p>
+  return `
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <strong style="font-size:0.95rem;">${escapeHtml(defect.defectCode || defect.category || 'DEFECT')}</strong>
+          <p style="margin:0.25rem 0;">${escapeHtml(defect.description || 'No description')}</p>
+          <p style="margin:0;font-size:0.85em;color:#666;">
+            🚛 ${escapeHtml(defect.vehicleInfo || 'Unknown Vehicle')} • 
+            Reported: ${formatDate(defect.reportedAt)} • 
+            By: ${escapeHtml(defect.driverName || 'Unknown')}
+          </p>
+        </div>
+        <div style="text-align:right;">
+          <span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:0.8em;font-weight:bold;background:${statusInfo.color}20;color:${statusInfo.color};">
+            ${statusInfo.label}
+          </span>
+          <p style="margin:0.3rem 0 0 0;font-size:0.75em;color:${severityInfo.color};">
+            ${severityInfo.label}
+          </p>
+        </div>
       </div>
-      <div>
-        <label style="font-size:0.8rem;color:#666;">Reported</label>
-        <p style="font-weight:500;">${formatDate(defect.reportedAt)}</p>
-      </div>
-      <div>
-        <label style="font-size:0.8rem;color:#666;">Category</label>
-        <p style="font-weight:500;">${defect.category || '—'} — ${escapeHtml(defect.categoryName || 'Unknown')}</p>
-      </div>
-      <div>
-        <label style="font-size:0.8rem;color:#666;">Severity</label>
-        <p style="font-weight:bold;color:${defect.severity === 'DANGEROUS' ? '#b91c1c' : defect.severity === 'MAJOR' ? '#d97706' : '#d4af37'};">${defect.severity || 'MINOR'}</p>
-      </div>
-      <div>
-        <label style="font-size:0.8rem;color:#666;">Reported By</label>
-        <p style="font-weight:500;">${escapeHtml(defect.reportedBy || 'Unknown Driver')}</p>
-      </div>
-      <div>
-        <label style="font-size:0.8rem;color:#666;">Current Status</label>
-        <p style="font-weight:bold;color:${statusInfo.color};">${statusInfo.label}</p>
-      </div>
-    </div>
-    
-    <div style="margin-bottom:1rem;">
-      <label style="font-size:0.8rem;color:#666;">Description</label>
-      <p style="background:#f9fafb;padding:0.75rem;border-radius:4px;">${escapeHtml(defect.description || defect.checkItem)}</p>
-    </div>
-    
-    ${defect.code ? `
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:0.8rem;color:#666;">DVSA Code</label>
-        <p style="font-family:monospace;background:#eee;padding:0.5rem;border-radius:4px;display:inline-block;">${escapeHtml(defect.code)}</p>
-      </div>
-    ` : ''}
-    
-    <hr style="margin:1.5rem 0;border:none;border-top:1px solid #eee;" />
-    
-    <h4 style="margin-bottom:1rem;">Update Status</h4>
-    <select id="new-status-select" onchange="showStatusFields()" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
-      ${Object.values(DEFECT_STATUS).map(s => 
-        `<option value="${s.value}" ${defect.status === s.value ? 'selected' : ''}>${s.label}</option>`
-      ).join('')}
-    </select>
-    
-    <div id="status-fields-scheduled" style="display:none;margin-bottom:1rem;">
-      <label style="font-size:0.85rem;">Due Date</label>
-      <input type="date" id="defect-dueby" style="width:100%;padding:0.5rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;" 
-        value="${defect.dueBy ? new Date(defect.dueBy).toISOString().split('T')[0] : ''}" />
-    </div>
-    
-    <div id="status-fields-assign" style="display:none;margin-bottom:1rem;">
-      <label style="font-size:0.85rem;">Assign To / Notes</label>
-      <input type="text" id="defect-assign" placeholder="Name of person responsible" 
-        style="width:100%;padding:0.5rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;" 
-        value="${escapeHtml(defect.assignedTo || '')}" />
-    </div>
-    
-    <div style="margin-bottom:1rem;">
-      <label style="font-size:0.85rem;">Add Note / Action Taken</label>
-      <textarea id="defect-note" placeholder="Record any actions, repairs, or decisions here..." 
-        style="width:100%;padding:0.6rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;min-height:80px;"></textarea>
-    </div>
-    
-    <button onclick="updateDefectStatus()" class="btn btn-primary" style="width:100%;">💾 Update Status & Save Record</button>
-    
-    <div style="margin-top:1.5rem;">
-      <h4 style="margin-bottom:0.8rem;">📋 History</h4>
-      <div style="max-height:200px;overflow-y:auto;background:#f9fafb;padding:0.8rem;border-radius:4px;">
-        ${(defect.notes || []).length === 0 
-          ? '<p style="color:#888;font-size:0.9em;">No history recorded</p>'
-          : (defect.notes || []).map(n => `
-              <div style="border-left:2px solid #ddd;padding-left:0.75rem;margin-bottom:0.5rem;">
-                <p style="margin:0;font-size:0.9em;">${escapeHtml(n.text)}</p>
-                <p style="margin:0;font-size:0.75em;color:#666;">${escapeHtml(n.author || 'Unknown')} — ${formatDate(n.timestamp)}</p>
-              </div>
-            `).join('')
-        }
+      <div style="margin-top:0.7rem;display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="updateDefectStatus('${defect.id}', 'in_progress')" class="btn btn-sm">🔧 In Progress</button>
+        <button onclick="updateDefectStatus('${defect.id}', 'fixed')" class="btn btn-sm btn-green">✅ Mark Fixed</button>
+        <button onclick="updateDefectStatus('${defect.id}', 'verified')" class="btn btn-sm">✓ Verified</button>
       </div>
     </div>
   `;
-  
-  modal.style.display = 'flex';
 }
 
-window.showStatusFields = function() {
-  const status = document.getElementById('new-status-select').value;
-  const scheduledField = document.getElementById('status-fields-scheduled');
-  const assignField = document.getElementById('status-fields-assign');
-  if (scheduledField) scheduledField.style.display = status === 'scheduled' ? 'block' : 'none';
-  if (assignField) assignField.style.display = ['scheduled', 'in_progress'].includes(status) ? 'block' : 'none';
-};
-
-window.updateDefectStatus = async function() {
-  const newStatus = document.getElementById('new-status-select').value;
-  const noteText = document.getElementById('defect-note').value.trim();
-  const dueBy = document.getElementById('defect-dueby')?.value || null;
-  const assignedTo = document.getElementById('defect-assign')?.value?.trim() || null;
-  
-  if (!currentDefectId) return;
-  
-  const defect = allDefects.find(d => d.id === currentDefectId);
-  if (!defect) return;
-  
-  const newNote = {
-    text: noteText || `Status changed to: ${Object.values(DEFECT_STATUS).find(s => s.value === newStatus)?.label}`,
-    author: currentUser.displayName || 'Company User',
-    timestamp: new Date().toISOString()
-  };
-  
-  const updatedDefect = {
-    ...defect,
-    status: newStatus,
-    assignedTo: assignedTo || defect.assignedTo,
-    dueBy: dueBy ? new Date(dueBy).toISOString() : defect.dueBy,
-    notes: [...(defect.notes || []), newNote],
-    fixedAt: newStatus === 'fixed' ? new Date().toISOString() : defect.fixedAt,
-    fixedBy: newStatus === 'fixed' ? (currentUser.displayName || 'Company User') : defect.fixedBy,
-    verifiedAt: newStatus === 'verified' ? new Date().toISOString() : defect.verifiedAt,
-    verifiedBy: newStatus === 'verified' ? (currentUser.displayName || 'Company User') : defect.verifiedBy
-  };
-  
+window.updateDefectStatus = async function(defectId, newStatus) {
   try {
-    const checkRef = doc(db, 'companies', currentUser.uid, 'completedChecks', defect.checkId);
-    const checkSnap = await getDoc(checkRef);
-    
-    if (checkSnap.exists()) {
-      const checkData = checkSnap.data();
-      const defectIndex = checkData.defects.findIndex(d => d.id === currentDefectId);
-      
-      if (defectIndex !== -1) {
-        checkData.defects[defectIndex] = updatedDefect;
-        await setDoc(checkRef, checkData, { merge: false });
-      }
-    }
-    
-    showToast('✅ Defect record updated — compliant record saved');
-    closeDefectModal();
+    await updateDoc(doc(db, 'defects', defectId), {
+      status: newStatus,
+      updatedAt: new Date()
+    });
+    showToast('✅ Defect status updated');
     loadDefectsList();
-    
   } catch (err) {
     console.error('Error updating defect:', err);
-    alert('❌ Failed to update defect. Please try again.');
+    showToast('❌ Failed to update', 'error');
   }
-};
-
-window.closeDefectModal = function() {
-  const modal = document.getElementById('defect-modal');
-  if (modal) modal.style.display = 'none';
-  currentDefectId = null;
-};
-
-window.exportDefectReport = function() {
-  if (!allDefects.length) {
-    alert('No defects to export.');
-    return;
-  }
-  
-  const csvContent = [
-    ['Defect ID', 'Date Reported', 'Vehicle', 'Trailer', 'Category', 'DVSA Code', 'Description', 'Severity', 'Status', 'Reported By', 'Fixed Date', 'Verified Date'].join(','),
-    ...allDefects.map(d => [
-      d.id,
-      new Date(d.reportedAt).toLocaleDateString('en-GB'),
-      `"${(d.vehicleReg || '').replace(/"/g, '""')}"`,
-      `"${(d.trailerNo || '').replace(/"/g, '""')}"`,
-      `"${(d.categoryName || '').replace(/"/g, '""')}"`,
-      d.code || '',
-      `"${(d.description || '').replace(/"/g, '""')}"`,
-      d.severity || 'MINOR',
-      d.status || 'reported',
-      `"${(d.reportedBy || '').replace(/"/g, '""')}"`,
-      d.fixedAt ? new Date(d.fixedAt).toLocaleDateString('en-GB') : '',
-      d.verifiedAt ? new Date(d.verifiedAt).toLocaleDateString('en-GB') : ''
-    ].join(','))
-  ].join('\n');
-  
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `defect-report-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  showToast('✅ Defect report downloaded');
 };
 
 // --------------------------
-// DRIVER WALKAROUND CHECKS
-// --------------------------
-async function loadDriverCheckSelection() {
-  const vehicleSelect = document.getElementById('driver-vehicle-select');
-  const trailerSelect = document.getElementById('driver-trailer-select');
-  if (!vehicleSelect && !trailerSelect) return;
-  
-  try {
-    const accessibleCompanies = userProfile.linkedCompanies || [userProfile.companyId].filter(Boolean);
-    
-    for (const companyId of accessibleCompanies) {
-      const vehiclesSnap = await getDocs(
-        query(
-          collection(db, 'companies', companyId, 'vehicles'),
-          where('active', '==', true)
-        )
-      );
-      
-      vehiclesSnap.forEach(doc => {
-        const v = doc.data();
-        v.id = doc.id;
-        v.companyId = companyId;
-        
-        if (v.type === 'vehicle' && vehicleSelect) {
-          vehicleSelect.innerHTML += `<option value="${doc.id}">${escapeHtml(v.registration)} — ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')}</option>`;
-        } else if (v.type === 'trailer' && trailerSelect) {
-          trailerSelect.innerHTML += `<option value="${doc.id}">${escapeHtml(v.trailerNumber)} — ${escapeHtml(v.make || '')}</option>`;
-        }
-      });
-    }
-  } catch (err) {
-    console.error('Error loading vehicle options:', err);
-  }
-}
-
-window.updateCheckTypeOptions = function() {
-  const type = document.getElementById('check-type-select').value;
-  const vehicleWrap = document.getElementById('driver-vehicle-wrap');
-  const trailerWrap = document.getElementById('driver-trailer-wrap');
-  
-  if (vehicleWrap) vehicleWrap.style.display = (type === 'vehicle' || type === 'both') ? 'block' : 'none';
-  if (trailerWrap) trailerWrap.style.display = (type === 'trailer' || type === 'both') ? 'block' : 'none';
-};
-
-window.startWalkaroundCheck = async function() {
-  const type = document.getElementById('check-type-select').value;
-  const vehicleSelect = document.getElementById('driver-vehicle-select');
-  const trailerSelect = document.getElementById('driver-trailer-select');
-  
-  if (!type) return alert('⚠️ Please select what you are checking');
-  if ((type === 'vehicle' || type === 'both') && !vehicleSelect?.value) return alert('⚠️ Please select a vehicle');
-  if ((type === 'trailer' || type === 'both') && !trailerSelect?.value) return alert('⚠️ Please select a trailer');
-  
-  const vehicleId = (type === 'vehicle' || type === 'both') ? vehicleSelect.value : null;
-  const trailerId = (type === 'trailer' || type === 'both') ? trailerSelect.value : null;
-  
-  let vehicleReg = '', trailerNo = '';
-  if (vehicleId && vehicleSelect) vehicleReg = vehicleSelect.selectedOptions[0].text.split(' — ')[0];
-  if (trailerId && trailerSelect) trailerNo = trailerSelect.selectedOptions[0].text.split(' — ')[0];
-  
-  let checklistItems = [];
-  let useCustomChecklist = false;
-  const accessibleCompanies = userProfile.linkedCompanies || [userProfile.companyId].filter(Boolean);
-  
-  for (const companyId of accessibleCompanies) {
-    try {
-      const clSnap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
-      if (clSnap.exists() && clSnap.data().items?.length) {
-        const allItems = clSnap.data().items;
-        checklistItems = getFilteredChecklist(allItems, type);
-        useCustomChecklist = true;
-        break;
-      }
-    } catch(e) {}
-  }
-  
-  if (!useCustomChecklist) {
-    checklistItems = getFilteredChecklist(DEFAULT_CHECKLIST, type);
-  }
-  
-  if (!checklistItems.length) {
-    return alert('⚠️ No checklist items available for this selection. Please contact your company.');
-  }
-  
-  currentCheckData = {
-    type,
-    vehicleId,
-    trailerId,
-    vehicleReg,
-    trailerNo,
-    items: checklistItems,
-    responses: {},
-    defects: {},
-    startedAt: new Date(),
-    startedBy: currentUser.displayName || currentUser.email,
-    driverUid: currentUser.uid
-  };
-  
-  renderChecklistForm();
-};
-
-function renderChecklistForm() {
-  const formArea = document.getElementById('checklist-form-area');
-  if (!formArea || !currentCheckData) return;
-  
-  const typeLabels = {
-    vehicle: '🚛 Vehicle Only — DVSA Walkaround Check',
-    trailer: '🚉 Trailer Only — DVSA Walkaround Check',
-    both: '🚛 + 🚉 Vehicle & Trailer — Combined DVSA Walkaround Check'
-  };
-  
-  formArea.innerHTML = `
-    <div style="background:#e8edf3;border-left:4px solid #1a365d;padding:1rem;margin-bottom:1.5rem;border-radius:4px;">
-      <strong>${typeLabels[currentCheckData.type]}</strong><br>
-      ${currentCheckData.vehicleReg ? `<strong>Vehicle:</strong> ${escapeHtml(currentCheckData.vehicleReg)}` : ''}
-      ${currentCheckData.trailerNo ? ` | <strong>Trailer:</strong> ${escapeHtml(currentCheckData.trailerNo)}` : ''}
-      <br><small>Select ✅ if OK, ⚠️ for minor defect, ❌ for major/dangerous defect</small>
-    </div>
-    
-    <p style="color:#666;margin-bottom:1rem;">
-      ✅ No Defect &nbsp; ⚠️ Minor — Rectify at next service &nbsp; ❌ Major — DO NOT operate until repaired
-    </p>
-    
-    ${currentCheckData.items.map((item, idx) => `
-      <div style="padding:1rem 0;border-bottom:1px solid #eee;">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;">
-          <div style="flex:1;min-width:200px;">
-            <label style="font-weight:500;font-size:0.95rem;">${idx + 1}. ${escapeHtml(item.label)}</label>
-          </div>
-          <div style="display:flex;gap:0.4rem;">
-            <button type="button" id="check-btn-${idx}" onclick="setCheckResponse(${idx}, 'pass')"
-              style="width:44px;height:44px;border:none;border-radius:4px;font-size:1.1rem;cursor:pointer;background:transparent;">✅</button>
-            <button type="button" id="minor-btn-${idx}" onclick="setCheckResponse(${idx}, 'minor')"
-              style="width:44px;height:44px;border:none;border-radius:4px;font-size:1.1rem;cursor:pointer;background:transparent;">⚠️</button>
-            <button type="button" id="major-btn-${idx}" onclick="setCheckResponse(${idx}, 'major')"
-              style="width:44px;height:44px;border:none;border-radius:4px;font-size:1.1rem;cursor:pointer;background:transparent;">❌</button>
-          </div>
-        </div>
-        
-        <div id="defect-panel-${idx}" style="display:none;margin-top:0.8rem;padding:1rem;background:#fff9e6;border-radius:4px;border-left:3px solid #d4af37;">
-          <h4 style="margin:0 0 0.6rem 0;font-size:0.95rem;">📋 Report Defect</h4>
-          
-          <div style="margin-bottom:0.6rem;">
-            <label style="font-size:0.9rem;"><strong>DVSA Category</strong></label>
-            <select id="defect-cat-${idx}" onchange="loadDefectOptions(${idx})" style="width:100%;padding:0.5rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;">
-              <option value="">— Select Category —</option>
-              ${DVSA_DEFECT_CATEGORIES.map(c => `<option value="${c.id}">${c.id} — ${c.name}</option>`).join('')}
-            </select>
-          </div>
-          
-          <div style="margin-bottom:0.6rem;">
-            <label style="font-size:0.9rem;"><strong>Common Defect</strong></label>
-            <select id="defect-opt-${idx}" onchange="fillDefectDesc(${idx})" style="width:100%;padding:0.5rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;">
-              <option value="">— Select or describe below —</option>
-            </select>
-          </div>
-          
-          <div style="margin-bottom:0.6rem;">
-            <label style="font-size:0.9rem;"><strong>Description</strong></label>
-            <textarea id="defect-desc-${idx}" placeholder="Describe the defect..." 
-              style="width:100%;padding:0.5rem;margin-top:0.3rem;border:1px solid #ccc;border-radius:4px;min-height:60px;"></textarea>
-          </div>
-          
-          <div>
-            <label style="font-size:0.9rem;"><strong>Severity:</strong></label>
-            <span id="defect-sev-label-${idx}" style="font-weight:bold;color:#d4af37;">⚠️ Minor</span>
-          </div>
-        </div>
-      </div>
-    `).join('')}
-    
-    <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;">
-      <button onclick="submitCheckResult()" class="btn btn-primary" style="padding:0.8rem 1.5rem;font-size:1rem;">✅ Submit Check</button>
-      <button onclick="cancelCheck()" class="btn" style="padding:0.8rem 1.5rem;font-size:1rem;">Cancel</button>
-    </div>
-  `;
-}
-
-window.setCheckResponse = function(idx, status) {
-  currentCheckData.responses[idx] = status;
-  
-  document.getElementById(`check-btn-${idx}`).style.background = status === 'pass' ? '#bbf7d0' : 'transparent';
-  document.getElementById(`minor-btn-${idx}`).style.background = status === 'minor' ? '#fef3c7' : 'transparent';
-  document.getElementById(`major-btn-${idx}`).style.background = status === 'major' ? '#fee2e2' : 'transparent';
-  
-  const defectPanel = document.getElementById(`defect-panel-${idx}`);
-  if (status === 'pass') {
-    defectPanel.style.display = 'none';
-    delete currentCheckData.defects[idx];
-  } else {
-    defectPanel.style.display = 'block';
-    currentCheckData.defects[idx] = { severity: status };
-    const label = document.getElementById(`defect-sev-label-${idx}`);
-    if (status === 'minor') {
-      label.textContent = '⚠️ Minor';
-      label.style.color = '#d4af37';
-    } else {
-      label.textContent = '❌ MAJOR — Do Not Operate Until Repaired';
-      label.style.color = '#b91c1c';
-    }
-  }
-};
-
-window.loadDefectOptions = function(idx) {
-  const catId = document.getElementById(`defect-cat-${idx}`).value;
-  const select = document.getElementById(`defect-opt-${idx}`);
-  select.innerHTML = '<option value="">— Select defect —</option>';
-  
-  if (catId && DVSA_COMMON_DEFECTS[catId]) {
-    DVSA_COMMON_DEFECTS[catId].forEach(d => {
-      select.innerHTML += `<option value="${d.code}" data-text="${d.text}" data-sev="${d.severity}">
-        ${d.code} — ${d.text} (${d.severity})
-      </option>`;
-    });
-  }
-};
-
-window.fillDefectDesc = function(idx) {
-  const select = document.getElementById(`defect-opt-${idx}`);
-  const selected = select.selectedOptions[0];
-  if (selected && selected.dataset.text) {
-    document.getElementById(`defect-desc-${idx}`).value = selected.dataset.text;
-    currentCheckData.defects[idx].code = selected.value;
-    currentCheckData.defects[idx].description = selected.dataset.text;
-    currentCheckData.defects[idx].severity = selected.dataset.sev;
-  }
-};
-
-window.cancelCheck = function() {
-  if (confirm('Cancel this check? Progress will be lost.')) {
-    currentCheckData = null;
-    const formArea = document.getElementById('checklist-form-area');
-    if (formArea) formArea.innerHTML = '<p>Check cancelled.</p>';
-  }
-};
-
-window.submitCheckResult = async function() {
-  if (!currentCheckData) return;
-  
-  const unanswered = currentCheckData.items.find((_, i) => currentCheckData.responses[i] === undefined);
-  if (unanswered) return alert('⚠️ Please complete every item before submitting');
-  
-  const hasMajor = Object.values(currentCheckData.defects || {}).some(d => d.severity === 'major' || d.severity === 'DANGEROUS');
-  if (hasMajor && !confirm('⚠️ MAJOR/CRITICAL defects reported.\n\nVehicle/Trailer MUST NOT be used until repaired and signed off.\n\nSubmit check anyway?')) {
-    return;
-  }
-  
-  const defectsArray = Object.entries(currentCheckData.defects || {}).map(([idx, d]) => {
-    const catSelect = document.getElementById(`defect-cat-${idx}`);
-    const catId = catSelect?.value || '';
-    const catInfo = DVSA_DEFECT_CATEGORIES.find(c => c.id === catId);
-    
-    return {
-      id: generateDefectId(),
-      checkItem: currentCheckData.items[idx].label,
-      category: catId,
-      categoryName: catInfo?.name || 'Unknown',
-      code: d.code || '',
-      description: d.description || document.getElementById(`defect-desc-${idx}`)?.value?.trim() || 'Defect reported',
-      severity: d.severity === 'major' ? 'MAJOR' : d.severity === 'minor' ? 'MINOR' : d.severity || 'MINOR',
-      vehicleReg: currentCheckData.vehicleReg,
-      trailerNo: currentCheckData.trailerNo,
-      reportedBy: currentUser.displayName || currentUser.email,
-      reportedByUid: currentUser.uid,
-      reportedAt: new Date().toISOString(),
-      status: 'reported',
-      notes: []
-    };
-  });
-  
-  const accessibleCompanies = userProfile.linkedCompanies || [userProfile.companyId].filter(Boolean);
-  
-  for (const companyId of accessibleCompanies) {
-    try {
-      await addDoc(collection(db, 'companies', companyId, 'completedChecks'), {
-        type: currentCheckData.type,
-        vehicleId: currentCheckData.vehicleId,
-        trailerId: currentCheckData.trailerId,
-        vehicleReg: currentCheckData.vehicleReg,
-        trailerNo: currentCheckData.trailerNo,
-        startedAt: currentCheckData.startedAt.toISOString(),
-        completedAt: new Date().toISOString(),
-        completedBy: currentUser.displayName || currentUser.email,
-        completedByUid: currentUser.uid,
-        responses: currentCheckData.responses,
-        defects: defectsArray,
-        passed: defectsArray.length === 0
-      });
-    } catch (e) {
-      console.log('Could not save to company:', companyId);
-    }
-  }
-  
-  currentCheckData = null;
-  const formArea = document.getElementById('checklist-form-area');
-  if (formArea) {
-    formArea.innerHTML = `
-      <div style="background:#dcfce7;border:1px solid #16a34a;border-radius:6px;padding:2rem;text-align:center;">
-        <h3 style="color:#16a34a;margin:0 0 0.5rem 0;">✅ Check Submitted</h3>
-        <p>${defectsArray.length === 0 
-          ? 'No defects reported. Safe to operate.' 
-          : `${defectsArray.length} defect(s) recorded — logged for rectification`}</p>
-        <button onclick="showPage('driver-checks')" class="btn btn-primary" style="margin-top:1rem;">Start New Check</button>
-      </div>
-    `;
-  }
-  
-  showToast('✅ Check submitted — records saved');
-};
-
-// --------------------------
-// COMPANY PROFILE
+// COMPANY PROFILE — DVSA & TRAFFIC COMMISSIONER COMPLIANT
 // --------------------------
 async function loadCompanyProfile() {
   const container = document.getElementById('company-profile-content');
   if (!container || !currentUser) return;
   
-  container.innerHTML = '<p>Loading profile...</p>';
-  
   try {
-    const profileRef = doc(db, 'companies', currentUser.uid, 'profile', 'details');
+    const profileRef = doc(db, 'companies', currentUser.uid, 'settings', 'profile');
     const snap = await getDoc(profileRef);
-    
-    if (snap.exists()) {
-      const profile = snap.data();
-      renderCompanyProfileForm(profile);
-    } else {
-      renderCompanyProfileForm({});
-    }
+    const data = snap.exists() ? snap.data() : {};
+    renderCompanyProfileForm(data);
   } catch (err) {
     console.error('Error loading company profile:', err);
     renderCompanyProfileForm({});
   }
 }
 
-function renderCompanyProfileForm(profile) {
+function renderCompanyProfileForm(data) {
   const container = document.getElementById('company-profile-content');
-  if (!container) return;
   
   container.innerHTML = `
-    <h3>🏢 Company Profile — DVSA & Traffic Commissioner Compliance</h3>
-    <p style="font-size:0.9em;color:#666;margin-bottom:1.5rem;">This information appears on your check records, certificates and reports — keep it up to date.</p>
-    
-    <form id="company-profile-form" style="display:grid;gap:1.2rem;max-width:700px;">
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Registered Company Name *</label>
-        <input type="text" name="registeredName" value="${escapeHtml(profile.registeredName || '')}" required style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
+    <div style="max-width:700px;">
+      <h3 style="margin-bottom:1.5rem;">🏢 Company Profile</h3>
+      <p style="font-size:0.9em;color:#666;margin-bottom:1.5rem;">
+        This information is used for DVSA, Traffic Commissioner and legal compliance records.
+      </p>
+      
+      <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+        <h4 style="margin-bottom:1rem;font-size:1rem;">📋 Registered Details</h4>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Registered Company Name *</label>
+        <input type="text" id="cp-registered-name" value="${escapeHtml(data.registeredName || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" required />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Trading Name (if different)</label>
+        <input type="text" id="cp-trading-name" value="${escapeHtml(data.tradingName || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Companies House / HMRC Registered Number *</label>
+        <input type="text" id="cp-company-number" value="${escapeHtml(data.companyNumber || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" required />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Registered Office Address *</label>
+        <textarea id="cp-registered-address" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:80px;" required>${escapeHtml(data.registeredAddress || '')}</textarea>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Operational / Trading Address (if different)</label>
+        <textarea id="cp-trading-address" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(data.tradingAddress || '')}</textarea>
       </div>
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Trading Name (if different)</label>
-        <input type="text" name="tradingName" value="${escapeHtml(profile.tradingName || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
+      <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+        <h4 style="margin-bottom:1rem;font-size:1rem;">🚛 Operator Licence Details</h4>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Operator Licence Number *</label>
+        <input type="text" id="cp-licence-number" value="${escapeHtml(data.licenceNumber || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" required />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Licence Type</label>
+        <select id="cp-licence-type" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
+          <option value="" ${!data.licenceType ? 'selected' : ''}>Select...</option>
+          <option value="standard_national" ${data.licenceType === 'standard_national' ? 'selected' : ''}>Standard National</option>
+          <option value="standard_international" ${data.licenceType === 'standard_international' ? 'selected' : ''}>Standard International</option>
+          <option value="restricted" ${data.licenceType === 'restricted' ? 'selected' : ''}>Restricted</option>
+        </select>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Traffic Commissioner Area</label>
+        <select id="cp-tc-area" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
+          <option value="" ${!data.tcArea ? 'selected' : ''}>Select your area...</option>
+          <option value="north_east" ${data.tcArea === 'north_east' ? 'selected' : ''}>North East of England</option>
+          <option value="north_west" ${data.tcArea === 'north_west' ? 'selected' : ''}>North West of England</option>
+          <option value="west_midlands" ${data.tcArea === 'west_midlands' ? 'selected' : ''}>West Midlands</option>
+          <option value="east_midlands" ${data.tcArea === 'east_midlands' ? 'selected' : ''}>East Midlands</option>
+          <option value="south_east" ${data.tcArea === 'south_east' ? 'selected' : ''}>South East & London</option>
+          <option value="south_west" ${data.tcArea === 'south_west' ? 'selected' : ''}>South West of England</option>
+          <option value="wales" ${data.tcArea === 'wales' ? 'selected' : ''}>Wales</option>
+          <option value="scotland" ${data.tcArea === 'scotland' ? 'selected' : ''}>Scotland</option>
+        </select>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Authorised Operating Centres</label>
+        <textarea id="cp-operating-centres" placeholder="List all operating centres as shown on your licence"
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(data.operatingCentres || '')}</textarea>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Maximum Authorised Vehicles</label>
+        <input type="number" id="cp-max-vehicles" value="${data.maxVehicles || ''}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Maximum Authorised Trailers</label>
+        <input type="number" id="cp-max-trailers" value="${data.maxTrailers || ''}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       </div>
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">HMRC Company Registration Number</label>
-        <input type="text" name="companyNumber" value="${escapeHtml(profile.companyNumber || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
+      <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+        <h4 style="margin-bottom:1rem;font-size:1rem;">📧 Contact & Administration</h4>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Primary Contact Name</label>
+        <input type="text" id="cp-contact-name" value="${escapeHtml(data.contactName || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Company Email Address</label>
+        <input type="email" id="cp-email" value="${escapeHtml(data.email || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Telephone Number</label>
+        <input type="tel" id="cp-phone" value="${escapeHtml(data.phone || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Invoices To — Name / Department</label>
+        <input type="text" id="cp-invoice-contact" value="${escapeHtml(data.invoiceContact || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Invoices Email Address</label>
+        <input type="email" id="cp-invoice-email" value="${escapeHtml(data.invoiceEmail || '')}" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Invoices Postal Address</label>
+        <textarea id="cp-invoice-address" 
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:60px;">${escapeHtml(data.invoiceAddress || '')}</textarea>
+        
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Additional Notes / Compliance Info</label>
+        <textarea id="cp-notes" placeholder="Any additional regulatory information..."
+          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:60px;">${escapeHtml(data.notes || '')}</textarea>
       </div>
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Operator's Licence Number *</label>
-        <input type="text" name="licenceNumber" value="${escapeHtml(profile.licenceNumber || '')}" required style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Registered Office Address</label>
-        <textarea name="registeredAddress" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(profile.registeredAddress || '')}</textarea>
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Correspondence Address (if different)</label>
-        <textarea name="correspondenceAddress" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(profile.correspondenceAddress || '')}</textarea>
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Primary Contact Name</label>
-        <input type="text" name="contactName" value="${escapeHtml(profile.contactName || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Email Address — General Enquiries</label>
-        <input type="email" name="emailGeneral" value="${escapeHtml(profile.emailGeneral || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Email Address — Invoices & Accounts</label>
-        <input type="email" name="emailInvoices" value="${escapeHtml(profile.emailInvoices || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Telephone Number</label>
-        <input type="tel" name="telephone" value="${escapeHtml(profile.telephone || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Fleet Manager / Responsible Person</label>
-        <input type="text" name="fleetManager" value="${escapeHtml(profile.fleetManager || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Notes / Additional Information</label>
-        <textarea name="notes" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(profile.notes || '')}</textarea>
-      </div>
-      
-      <button type="button" onclick="saveCompanyProfile()" class="btn btn-primary" style="max-width:250px;">💾 Save Company Profile</button>
-    </form>
+      <button onclick="saveCompanyProfile()" class="btn btn-primary" style="width:100%;">💾 Save Company Profile</button>
+      <div id="profile-save-status" style="margin-top:12px;"></div>
+    </div>
   `;
 }
 
 window.saveCompanyProfile = async function() {
-  const form = document.getElementById('company-profile-form');
-  if (!form) return;
-  
-  const formData = new FormData(form);
-  const profileData = {
-    registeredName: formData.get('registeredName'),
-    tradingName: formData.get('tradingName'),
-    companyNumber: formData.get('companyNumber'),
-    licenceNumber: formData.get('licenceNumber'),
-    registeredAddress: formData.get('registeredAddress'),
-    correspondenceAddress: formData.get('correspondenceAddress'),
-    contactName: formData.get('contactName'),
-    emailGeneral: formData.get('emailGeneral'),
-    emailInvoices: formData.get('emailInvoices'),
-    telephone: formData.get('telephone'),
-    fleetManager: formData.get('fleetManager'),
-    notes: formData.get('notes'),
-    updatedAt: new Date()
-  };
-  
-  if (!profileData.registeredName || !profileData.licenceNumber) {
-    return alert('⚠️ Registered Name and Operator\'s Licence Number are required');
+  const required = ['cp-registered-name', 'cp-company-number', 'cp-registered-address', 'cp-licence-number'];
+  for (const id of required) {
+    if (!document.getElementById(id)?.value.trim()) {
+      return alert('⚠️ Please fill in all required * fields');
+    }
   }
+  
+  const status = document.getElementById('profile-save-status');
+  status.innerHTML = '<span style="color:#d47500;">⏳ Saving...</span>';
   
   try {
     await setDoc(
-      doc(db, 'companies', currentUser.uid, 'profile', 'details'),
-      profileData,
+      doc(db, 'companies', currentUser.uid, 'settings', 'profile'),
+      {
+        registeredName: document.getElementById('cp-registered-name').value.trim(),
+        tradingName: document.getElementById('cp-trading-name').value.trim(),
+        companyNumber: document.getElementById('cp-company-number').value.trim(),
+        registeredAddress: document.getElementById('cp-registered-address').value.trim(),
+        tradingAddress: document.getElementById('cp-trading-address').value.trim(),
+        licenceNumber: document.getElementById('cp-licence-number').value.trim(),
+        licenceType: document.getElementById('cp-licence-type').value,
+        tcArea: document.getElementById('cp-tc-area').value,
+        operatingCentres: document.getElementById('cp-operating-centres').value.trim(),
+        maxVehicles: parseInt(document.getElementById('cp-max-vehicles').value) || null,
+        maxTrailers: parseInt(document.getElementById('cp-max-trailers').value) || null,
+        contactName: document.getElementById('cp-contact-name').value.trim(),
+        email: document.getElementById('cp-email').value.trim(),
+        phone: document.getElementById('cp-phone').value.trim(),
+        invoiceContact: document.getElementById('cp-invoice-contact').value.trim(),
+        invoiceEmail: document.getElementById('cp-invoice-email').value.trim(),
+        invoiceAddress: document.getElementById('cp-invoice-address').value.trim(),
+        notes: document.getElementById('cp-notes').value.trim(),
+        updatedAt: new Date()
+      },
       { merge: true }
     );
-    showToast('✅ Company profile saved — compliant records updated');
+    
+    status.innerHTML = '<span style="color:green;">✅ Profile saved — DVSA compliant records updated</span>';
+    setTimeout(() => status.innerHTML = '', 4000);
+    showToast('✅ Company profile saved');
   } catch (err) {
-    console.error('Error saving profile:', err);
-    alert('❌ Failed to save profile. Please try again.');
+    status.innerHTML = '<span style="color:red;">❌ Save failed — check permissions</span>';
   }
+};
+
+// --------------------------
+// DRIVER PORTAL — WALKAROUND CHECKS
+// --------------------------
+async function loadDriverCheckSelection() {
+  const container = document.getElementById('driver-checks-content');
+  if (!container || !currentUser) return;
+  
+  container.innerHTML = '<p>Loading available vehicles...</p>';
+  
+  try {
+    // Load company vehicles accessible to this driver
+    const vehiclesSnap = await getDocs(
+      query(
+        collection(db, 'companyVehicles'),
+        where('active', '==', true)
+      )
+    );
+    
+    let vehicles = [];
+    vehiclesSnap.forEach(doc => {
+      vehicles.push({ id: doc.id, ...doc.data() });
+    });
+    
+    vehicles.sort((a, b) => {
+      const aId = a.registration || a.trailerNumber || '';
+      const bId = b.registration || b.trailerNumber || '';
+      return aId.localeCompare(bId);
+    });
+    
+    renderDriverCheckSelection(vehicles);
+    
+  } catch (err) {
+    console.error('Error loading vehicles:', err);
+    renderDriverCheckSelection([]);
+  }
+}
+
+function renderDriverCheckSelection(vehicles) {
+  const container = document.getElementById('driver-checks-content');
+  
+  const activeVehicles = vehicles.filter(v => v.active !== false);
+  const vehicleUnits = activeVehicles.filter(v => v.type === 'vehicle');
+  const trailers = activeVehicles.filter(v => v.type === 'trailer');
+  
+  container.innerHTML = `
+    <h3 style="margin-bottom:1rem;">🚛 Daily Walkaround Check</h3>
+    <p style="font-size:0.9em;color:#666;margin-bottom:1.5rem;">Select your vehicle and/or trailer to begin your pre-use inspection</p>
+    
+    ${activeVehicles.length === 0 ? `
+      <div style="background:#fff4e5;border:1px solid #d47500;border-radius:6px;padding:1rem;margin-bottom:1rem;">
+        <strong>⚠️ No vehicles available</strong>
+        <p style="margin:0.3rem 0 0 0;font-size:0.9em;">Please check with your company administrator that vehicles have been added and marked as active.</p>
+      </div>
+    ` : ''}
+    
+    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Select Vehicle (Truck/Unit)</label>
+      <select id="check-vehicle" style="width:100%;padding:0.7rem;border:1px solid #ccc;border-radius:4px;margin-bottom:1rem;">
+        <option value="">— No Vehicle —</option>
+        ${vehicleUnits.map(v => `
+          <option value="${v.id}" data-type="vehicle">
+            🚛 ${escapeHtml(v.registration)} — ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')}
+          </option>
+        `).join('')}
+      </select>
+      
+      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Select Trailer (optional)</label>
+      <select id="check-trailer" style="width:100%;padding:0.7rem;border:1px solid #ccc;border-radius:4px;margin-bottom:1rem;">
+        <option value="">— No Trailer —</option>
+        ${trailers.map(v => `
+          <option value="${v.id}" data-type="trailer">
+            🉐 ${escapeHtml(v.trailerNumber)} — ${escapeHtml(v.make || '')}
+          </option>
+        `).join('')}
+      </select>
+      
+      <button onclick="startWalkaroundCheck()" class="btn btn-primary" style="width:100%;font-size:1rem;padding:0.8rem;">
+        ▶️ Start Walkaround Check
+      </button>
+    </div>
+    
+    <div style="margin-top:2rem;">
+      <h4 style="margin-bottom:1rem;">📋 Recent Checks</h4>
+      <div id="recent-checks-list">
+        <p style="color:#666;font-style:italic;">Loading recent checks...</p>
+      </div>
+    </div>
+  `;
+  
+  loadRecentChecks();
+}
+
+async function startWalkaroundCheck() {
+  const vehicleSelect = document.getElementById('check-vehicle');
+  const trailerSelect = document.getElementById('check-trailer');
+  
+  const vehicleId = vehicleSelect.value;
+  const trailerId = trailerSelect.value;
+  
+  if (!vehicleId && !trailerId) {
+    return alert('⚠️ Please select at least a vehicle or a trailer to begin your check');
+  }
+  
+  let checkType;
+  if (vehicleId && trailerId) checkType = CHECK_BOTH;
+  else if (vehicleId) checkType = CHECK_VEHICLE;
+  else checkType = CHECK_TRAILER;
+  
+  currentCheckData = {
+    checkType,
+    vehicleId: vehicleId || null,
+    trailerId: trailerId || null,
+    startTime: new Date(),
+    items: {},
+    defects: []
+  };
+  
+  renderWalkaroundCheckForm();
+}
+
+async function renderWalkaroundCheckForm() {
+  const container = document.getElementById('driver-checks-content');
+  
+  // Load checklist from company settings
+  let checklistItems = DEFAULT_CHECKLIST;
+  try {
+    const companyId = userProfile.companyId;
+    if (companyId) {
+      const snap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
+      if (snap.exists() && snap.data().items) {
+        checklistItems = snap.data().items;
+      }
+    }
+  } catch (e) {
+    console.log('Using default checklist');
+  }
+  
+  const filteredItems = getFilteredChecklist(checklistItems, currentCheckData.checkType);
+  
+  const vehicleInfo = currentCheckData.vehicleId 
+    ? vehicleSelect.options[vehicleSelect.selectedIndex].text 
+    : 'No Vehicle';
+  const trailerInfo = currentCheckData.trailerId
+    ? trailerSelect.options[trailerSelect.selectedIndex].text
+    : 'No Trailer';
+  
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
+      <h3>📝 Daily Walkaround Check</h3>
+      <button onclick="loadDriverCheckSelection()" class="btn">← Change Vehicle</button>
+    </div>
+    
+    <div style="background:#e8edf3;padding:1rem;border-radius:6px;margin-bottom:1.5rem;">
+      <p style="margin:0.3rem 0;"><strong>Vehicle:</strong> ${escapeHtml(vehicleInfo)}</p>
+      <p style="margin:0.3rem 0;"><strong>Trailer:</strong> ${escapeHtml(trailerInfo)}</p>
+      <p style="margin:0.5rem 0 0 0;font-size:0.85em;color:#555;">
+        Started: ${new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'})}
+      </p>
+    </div>
+    
+    <form id="walkaround-form">
+      ${filteredItems.map((item, idx) => `
+        <div style="border-bottom:1px solid #eee;padding:1rem 0;${idx === 0 ? 'padding-top:0;' : ''}">
+          <p style="font-weight:500;margin-bottom:0.7rem;">${idx + 1}. ${escapeHtml(item.label)}</p>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+              <input type="radio" name="check-${item.id}" value="pass" required 
+                onchange="updateCheckItem('${item.id}', 'pass')" />
+              ✅ Satisfactory
+            </label>
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+              <input type="radio" name="check-${item.id}" value="fail" 
+                onchange="updateCheckItem('${item.id}', 'fail')" />
+              ❌ Unsatisfactory — Report Defect
+            </label>
+          </div>
+          
+          <div id="defect-section-${item.id}" style="display:none;margin-top:0.7rem;padding:0.7rem;background:#fff4e5;border-radius:4px;">
+            <label style="display:block;margin-bottom:0.4rem;font-size:0.9em;">Describe the issue:</label>
+            <textarea id="defect-text-${item.id}" rows="2" placeholder="Describe what is wrong..." 
+              style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;font-size:0.9em;"
+              oninput="updateCheckItem('${item.id}', 'fail')"></textarea>
+            
+            <label style="display:block;margin:0.7rem 0 0.4rem 0;font-size:0.9em;">Severity:</label>
+            <select id="defect-severity-${item.id}" onchange="updateCheckItem('${item.id}', 'fail')"
+              style="padding:0.4rem;border:1px solid #ccc;border-radius:4px;font-size:0.9em;">
+              <option value="MINOR">🟡 Minor — Rectify at next service</option>
+              <option value="MAJOR">🔶 Major — Repair before further use</option>
+              <option value="DANGEROUS">⚠️ DANGEROUS — Must not be driven</option>
+            </select>
+          </div>
+        </div>
+      `).join('')}
+      
+      <div style="margin-top:1.5rem;padding-top:1rem;border-top:2px solid #eee;">
+        <label style="display:block;margin-bottom:0.7rem;font-weight:500;">Additional Comments (optional)</label>
+        <textarea id="check-comments" rows="3" placeholder="Any other notes or observations..."
+          style="width:100%;padding:0.7rem;border:1px solid #ccc;border-radius:4px;"></textarea>
+        
+        <div style="margin-top:1.5rem;display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" onclick="loadDriverCheckSelection()" class="btn">Cancel</button>
+          <button type="button" onclick="submitWalkaroundCheck()" class="btn btn-primary">✅ Submit Check</button>
+        </div>
+      </div>
+    </form>
+  `;
+}
+
+window.updateCheckItem = function(itemId, status) {
+  const defectSection = document.getElementById(`defect-section-${itemId}`);
+  
+  if (status === 'fail') {
+    defectSection.style.display = 'block';
+    const desc = document.getElementById(`defect-text-${itemId}`)?.value?.trim();
+    const severity = document.getElementById(`defect-severity-${itemId}`)?.value;
+    
+    currentCheckData.items[itemId] = {
+      status: 'fail',
+      description: desc || 'Defect reported but not described',
+      severity: severity || 'MAJOR'
+    };
+  } else {
+    defectSection.style.display = 'none';
+    currentCheckData.items[itemId] = { status: 'pass' };
+  }
+};
+
+window.submitWalkaroundCheck = async function() {
+  if (!confirm('⚠️ Please confirm you have checked all items. Once submitted it cannot be edited.\n\nSigning this confirms the vehicle/trailer is safe to operate or defects have been correctly reported.')) {
+    return;
+  }
+  
+  const endTime = new Date();
+  const checkDuration = Math.round((endTime - currentCheckData.startTime) / 60000);
+  
+  const hasFailures = Object.values(currentCheckData.items).some(i => i.status === 'fail');
+  const overallResult = hasFailures ? 'unsatisfactory' : 'satisfactory';
+  
+  try {
+    const checkRef = await addDoc(collection(db, 'walkaroundChecks'), {
+      driverId: currentUser.uid,
+      driverName: userProfile.fullName || currentUser.email,
+      companyId: userProfile.companyId || null,
+      vehicleId: currentCheckData.vehicleId,
+      trailerId: currentCheckData.trailerId,
+      checkType: currentCheckData.checkType,
+      startTime: currentCheckData.startTime,
+      endTime: endTime,
+      durationMinutes: checkDuration,
+      items: currentCheckData.items,
+      overallResult,
+      comments: document.getElementById('check-comments')?.value?.trim() || '',
+      signedAt: new Date()
+    });
+    
+    // Create defect records for failures
+    const batch = writeBatch(db);
+    for (const [itemId, result] of Object.entries(currentCheckData.items)) {
+      if (result.status === 'fail') {
+        batch.set(doc(collection(db, 'defects')), {
+          checkId: checkRef.id,
+          driverId: currentUser.uid,
+          driverName: userProfile.fullName || currentUser.email,
+          companyId: userProfile.companyId || null,
+          vehicleId: currentCheckData.vehicleId,
+          trailerId: currentCheckData.trailerId,
+          category: itemId,
+          description: result.description,
+          severity: result.severity,
+          status: 'reported',
+          reportedAt: new Date()
+        });
+      }
+    }
+    await batch.commit();
+    
+    showToast('✅ Check submitted — records saved');
+    currentCheckData = null;
+    loadDriverCheckSelection();
+    
+  } catch (err) {
+    console.error('Error submitting check:', err);
+    showToast('❌ Failed to submit check', 'error');
+  }
+};
+
+async function loadRecentChecks() {
+  const container = document.getElementById('recent-checks-list');
+  if (!container || !currentUser) return;
+  
+  try {
+    const checksSnap = await getDocs(
+      query(
+        collection(db, 'walkaroundChecks'),
+        where('driverId', '==', currentUser.uid)
+      )
+    );
+    
+    let checks = [];
+    checksSnap.forEach(doc => {
+      checks.push({ id: doc.id, ...doc.data() });
+    });
+    
+    checks.sort((a, b) => new Date(b.signedAt) - new Date(a.signedAt));
+    checks = checks.slice(0, 5);
+    
+    if (checks.length === 0) {
+      container.innerHTML = '<p style="color:#888;font-style:italic;">No checks completed yet.</p>';
+      return;
+    }
+    
+    container.innerHTML = checks.map(check => {
+      const isOk = check.overallResult === 'satisfactory';
+      return `
+        <div style="padding:0.7rem 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <span style="font-weight:500;">${isOk ? '✅ Satisfactory' : '❌ Defects Reported'}</span>
+            <p style="margin:0.2rem 0 0 0;font-size:0.85em;color:#666;">
+              ${formatDate(check.signedAt)}
+            </p>
+          </div>
+          <button onclick="viewCheckReceipt('${check.id}')" class="btn btn-sm">📄 View</button>
+        </div>
+      `;
+    }).join('');
+    
+  } catch (err) {
+    container.innerHTML = '<p style="color:#888;font-style:italic;">Could not load recent checks.</p>';
+  }
+}
+
+window.viewCheckReceipt = function(checkId) {
+  showToast('📄 Receipt viewer — extend as needed');
 };
 
 // --------------------------
@@ -1615,316 +1512,269 @@ async function loadDriverProfile() {
   const container = document.getElementById('driver-profile-content');
   if (!container || !currentUser) return;
   
-  container.innerHTML = '<p>Loading profile...</p>';
+  container.innerHTML = '<p>Loading your profile...</p>';
   
   try {
-    const profileRef = doc(db, 'driverProfiles', currentUser.uid);
+    const profileRef = doc(db, 'userProfiles', currentUser.uid);
     const snap = await getDoc(profileRef);
-    
-    if (snap.exists()) {
-      const profile = snap.data();
-      renderDriverProfileForm(profile);
-    } else {
-      renderDriverProfileForm({});
-    }
+    const data = snap.exists() ? snap.data() : {};
+    renderDriverProfileForm(data);
   } catch (err) {
-    console.error('Error loading driver profile:', err);
+    console.error('Error loading profile:', err);
     renderDriverProfileForm({});
   }
 }
 
-function renderDriverProfileForm(profile) {
+function renderDriverProfileForm(data) {
   const container = document.getElementById('driver-profile-content');
-  if (!container) return;
   
   container.innerHTML = `
-    <h3>👤 My Profile & Documents</h3>
-    <p style="font-size:0.9em;color:#666;margin-bottom:1.5rem;">Keep your details and documents up to date for compliance.</p>
+    <h3 style="margin-bottom:1.5rem;">👤 My Profile & Documents</h3>
     
-    <form id="driver-profile-form" style="display:grid;gap:1.2rem;max-width:700px;">
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Full Name</label>
-        <input type="text" name="fullName" value="${escapeHtml(profile.fullName || currentUser.displayName || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
+    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+      <h4 style="margin-bottom:1rem;font-size:1rem;">Personal Details</h4>
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Email Address</label>
-        <input type="email" name="email" value="${escapeHtml(profile.email || currentUser.email || '')}" readonly style="padding:0.6rem;border:1px solid #ddd;background:#f5f5f5;border-radius:4px;" />
-      </div>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Full Name</label>
+      <input type="text" id="dp-fullname" value="${escapeHtml(data.fullName || currentUser?.displayName || '')}" 
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Phone Number</label>
-        <input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Email Address</label>
+      <input type="email" value="${escapeHtml(currentUser?.email || '')}" disabled
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ddd;background:#f5f5f5;border-radius:4px;color:#666;" />
       
-      <h4 style="margin-top:1rem;">Driving Licence</h4>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Phone Number</label>
+      <input type="tel" id="dp-phone" value="${escapeHtml(data.phone || '')}" 
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+    </div>
+    
+    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+      <h4 style="margin-bottom:1rem;font-size:1rem;">🚛 Driving Licence</h4>
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Licence Number</label>
-        <input type="text" name="licenceNumber" value="${escapeHtml(profile.licenceNumber || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;text-transform:uppercase;" />
-      </div>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Licence Number</label>
+      <input type="text" id="dp-licence-number" value="${escapeHtml(data.licenceNumber || '')}" 
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;text-transform:uppercase;" />
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Licence Categories (e.g. C+E, C, D1)</label>
-        <input type="text" name="licenceCategories" value="${escapeHtml(profile.licenceCategories || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Licence Categories</label>
+      <input type="text" id="dp-licence-cats" value="${escapeHtml(data.licenceCategories || '')}" 
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" 
+        placeholder="e.g. C+E, C, D1" />
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">DVLA Check Code</label>
-        <input type="text" name="dvlaCheckCode" value="${escapeHtml(profile.dvlaCheckCode || '')}" style="padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">DVLA Check Code</label>
+      <input type="text" id="dp-dvla-code" value="${escapeHtml(data.dvlaCheckCode || '')}" 
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
-      <div style="display:grid;gap:0.5rem;grid-template-columns:1fr 1fr;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
         <div>
-          <label style="font-weight:500;">Valid From</label>
-          <input type="date" name="licenceValidFrom" value="${profile.licenceValidFrom ? new Date(profile.licenceValidFrom).toISOString().split('T')[0] : ''}" style="width:100%;padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
+          <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Valid From</label>
+          <input type="date" id="dp-valid-from" value="${data.validFrom ? new Date(data.validFrom.seconds * 1000).toISOString().split('T')[0] : ''}" 
+            style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
         </div>
         <div>
-          <label style="font-weight:500;">Expiry Date</label>
-          <input type="date" name="licenceExpiry" value="${profile.licenceExpiry ? new Date(profile.licenceExpiry).toISOString().split('T')[0] : ''}" style="width:100%;padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
+          <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Expiry Date</label>
+          <input type="date" id="dp-expiry" value="${data.licenceExpiry ? new Date(data.licenceExpiry.seconds * 1000).toISOString().split('T')[0] : ''}" 
+            style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
         </div>
       </div>
       
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Penalty Points</label>
-        <input type="number" name="penaltyPoints" value="${profile.penaltyPoints || 0}" min="0" max="12" style="width:100px;padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Penalty Points</label>
+      <input type="number" id="dp-points" value="${data.penaltyPoints || 0}" min="0" max="12"
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
       
-      <h4 style="margin-top:1rem;">Medical Certificate</h4>
-      
-      <div style="display:grid;gap:0.5rem;">
-        <label style="font-weight:500;">Lorry Medical (D4) Expiry Date</label>
-        <input type="date" name
-                <input type="date" name="medicalExpiry" value="${profile.medicalExpiry ? new Date(profile.medicalExpiry).toISOString().split('T')[0] : ''}" style="width:100%;padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <h4 style="margin-top:1rem;">📁 Upload Documents</h4>
-      
-      <div style="background:#f9fafb;padding:1rem;border-radius:6px;border:1px dashed #ccc;">
-        <p style="margin:0 0 0.8rem 0;font-size:0.9em;color:#666;">Upload copies of your licence, D4 medical, CPC card, and any other certificates. These are automatically shared with your linked companies.</p>
-        
-        <div style="display:grid;gap:0.8rem;margin-bottom:1rem;">
-          <div>
-            <label style="display:block;font-size:0.85rem;font-weight:500;margin-bottom:0.3rem;">Driving Licence (front)</label>
-            <input type="file" id="doc-licence-front" accept="image/*,.pdf" style="width:100%;font-size:0.85rem;" />
-          </div>
-          <div>
-            <label style="display:block;font-size:0.85rem;font-weight:500;margin-bottom:0.3rem;">Driving Licence (back)</label>
-            <input type="file" id="doc-licence-back" accept="image/*,.pdf" style="width:100%;font-size:0.85rem;" />
-          </div>
-          <div>
-            <label style="display:block;font-size:0.85rem;font-weight:500;margin-bottom:0.3rem;">D4 Medical Certificate</label>
-            <input type="file" id="doc-medical" accept="image/*,.pdf" style="width:100%;font-size:0.85rem;" />
-          </div>
-          <div>
-            <label style="display:block;font-size:0.85rem;font-weight:500;margin-bottom:0.3rem;">CPC Qualification Card</label>
-            <input type="file" id="doc-cpc" accept="image/*,.pdf" style="width:100%;font-size:0.85rem;" />
-          </div>
-          <div>
-            <label style="display:block;font-size:0.85rem;font-weight:500;margin-bottom:0.3rem;">Other Document / Certificate</label>
-            <input type="file" id="doc-other" accept="image/*,.pdf" style="width:100%;font-size:0.85rem;" />
-          </div>
-        </div>
-        
-        <button type="button" onclick="uploadDriverDocuments()" class="btn" style="font-size:0.9rem;">📤 Upload Selected Files</button>
-      </div>
-      
-      <button type="button" onclick="saveDriverProfile()" class="btn btn-primary" style="max-width:250px;margin-top:1rem;">💾 Save Profile</button>
-    </form>
+      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">D4 Medical Certificate Expiry</label>
+      <input type="date" id="dp-medical-expiry" value="${data.medicalExpiry ? new Date(data.medicalExpiry.seconds * 1000).toISOString().split('T')[0] : ''}" 
+        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+    </div>
     
-    <div id="upload-status" style="margin-top:1rem;"></div>
-    
-    <div style="margin-top:2rem;">
-      <h4>📋 Your Uploaded Documents</h4>
-      <div id="docs-list" style="margin-top:0.8rem;">
-        <p style="color:#888;font-size:0.9em;">No documents uploaded yet.</p>
+    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
+      <h4 style="margin-bottom:1rem;font-size:1rem;">📁 My Documents</h4>
+      <p style="font-size:0.85em;color:#666;margin-bottom:1rem;">Upload documents for your company to view. All files are stored securely.</p>
+      
+      <div id="docs-upload-area">
+        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Select File to Upload</label>
+        <input type="file" id="doc-upload" accept=".pdf,.jpg,.jpeg,.png" 
+          style="width:100%;padding:0.5rem;margin-bottom:0.7rem;" />
+        <button onclick="uploadDriverDocument()" class="btn btn-sm">📤 Upload Document</button>
+      </div>
+      
+      <div id="docs-list" style="margin-top:1.5rem;">
+        <p style="color:#888;font-style:italic;font-size:0.9em;">Loading your documents...</p>
       </div>
     </div>
+    
+    <button onclick="saveDriverProfile()" class="btn btn-primary" style="width:100%;">💾 Save Profile</button>
+    <div id="dp-save-status" style="margin-top:12px;"></div>
   `;
   
-  loadDriverDocumentsList();
+  loadDriverDocuments();
 }
 
 window.saveDriverProfile = async function() {
-  const form = document.getElementById('driver-profile-form');
-  if (!form) return;
-  
-  const formData = new FormData(form);
-  
-  const profileData = {
-    fullName: formData.get('fullName')?.trim() || '',
-    phone: formData.get('phone')?.trim() || '',
-    licenceNumber: formData.get('licenceNumber')?.trim().toUpperCase() || '',
-    licenceCategories: formData.get('licenceCategories')?.trim() || '',
-    dvlaCheckCode: formData.get('dvlaCheckCode')?.trim() || '',
-    penaltyPoints: parseInt(formData.get('penaltyPoints')) || 0,
-    updatedAt: new Date()
-  };
-  
-  if (formData.get('licenceValidFrom')) {
-    profileData.licenceValidFrom = new Date(formData.get('licenceValidFrom'));
-  }
-  if (formData.get('licenceExpiry')) {
-    profileData.licenceExpiry = new Date(formData.get('licenceExpiry'));
-  }
-  if (formData.get('medicalExpiry')) {
-    profileData.medicalExpiry = new Date(formData.get('medicalExpiry'));
-  }
+  const status = document.getElementById('dp-save-status');
+  status.innerHTML = '<span style="color:#d47500;">⏳ Saving...</span>';
   
   try {
     await setDoc(
-      doc(db, 'driverProfiles', currentUser.uid),
-      profileData,
+      doc(db, 'userProfiles', currentUser.uid),
+      {
+        fullName: document.getElementById('dp-fullname').value.trim(),
+        phone: document.getElementById('dp-phone').value.trim(),
+        licenceNumber: document.getElementById('dp-licence-number').value.trim().toUpperCase(),
+        licenceCategories: document.getElementById('dp-licence-cats').value.trim(),
+        dvlaCheckCode: document.getElementById('dp-dvla-code').value.trim(),
+        validFrom: document.getElementById('dp-valid-from').valueAsDate 
+          ? new Date(document.getElementById('dp-valid-from').value) : null,
+        licenceExpiry: document.getElementById('dp-expiry').valueAsDate 
+          ? new Date(document.getElementById('dp-expiry').value) : null,
+        penaltyPoints: parseInt(document.getElementById('dp-points').value) || 0,
+        medicalExpiry: document.getElementById('dp-medical-expiry').valueAsDate 
+          ? new Date(document.getElementById('dp-medical-expiry').value) : null,
+        updatedAt: new Date()
+      },
       { merge: true }
     );
     
-    if (currentUser.displayName !== profileData.fullName) {
-      await updateProfile(currentUser, { displayName: profileData.fullName });
-    }
-    
-    showToast('✅ Profile saved successfully');
-    
+    status.innerHTML = '<span style="color:green;">✅ Profile saved</span>';
+    setTimeout(() => status.innerHTML = '', 4000);
+    showToast('✅ Profile updated successfully');
   } catch (err) {
-    console.error('Error saving driver profile:', err);
-    alert('❌ Failed to save profile. Please try again.');
+    status.innerHTML = '<span style="color:red;">❌ Save failed</span>';
   }
 };
 
-async function loadDriverDocumentsList() {
-  const listEl = document.getElementById('docs-list');
-  if (!listEl || !currentUser) return;
+async function loadDriverDocuments() {
+  const container = document.getElementById('docs-list');
+  if (!container || !currentUser) return;
   
   try {
-    const docsSnap = await getDoc(doc(db, 'driverProfiles', currentUser.uid));
-    if (docsSnap.exists()) {
-      const data = docsSnap.data();
-      const docs = data.documents || [];
-      
-      if (docs.length === 0) {
-        listEl.innerHTML = '<p style="color:#888;font-size:0.9em;">No documents uploaded yet.</p>';
-        return;
-      }
-      
-      listEl.innerHTML = docs.map((d, i) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;background:#f9fafb;border-radius:4px;margin-bottom:0.5rem;">
-          <div>
-            <strong style="font-size:0.9rem;">${escapeHtml(d.name)}</strong>
-            <p style="margin:0.2rem 0 0 0;font-size:0.8em;color:#666;">
-              Uploaded: ${formatDate(d.uploadedAt)}
-            </p>
-          </div>
-          <div>
-            <a href="${escapeHtml(d.url)}" target="_blank" class="btn btn-sm" style="text-decoration:none;">View</a>
-            <button onclick="deleteDriverDocument('${d.id}')" class="btn btn-sm btn-red">Delete</button>
-          </div>
-        </div>
-      `).join('');
+    const docsSnap = await getDocs(
+      collection(db, 'userProfiles', currentUser.uid, 'documents')
+    );
+    
+    let docs = [];
+    docsSnap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    
+    docs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+    
+    if (docs.length === 0) {
+      container.innerHTML = '<p style="color:#888;font-style:italic;font-size:0.9em;">No documents uploaded yet.</p>';
+      return;
     }
+    
+    container.innerHTML = `
+      <h5 style="margin-bottom:0.7rem;font-size:0.9em;">Uploaded Documents (${docs.length})</h5>
+      <div style="display:grid;gap:0.5rem;">
+        ${docs.map(d => `
+          <div style="padding:0.6rem;background:#fff;border:1px solid #eee;border-radius:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <p style="margin:0;font-size:0.9em;"><strong>${escapeHtml(d.name || 'Document')}</strong></p>
+              <p style="margin:0.1rem 0 0 0;font-size:0.8em;color:#666;">
+                ${formatDate(d.uploadedAt)} • ${(d.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+            <div>
+              <a href="${escapeHtml(d.url || '#')}" target="_blank" class="btn btn-sm">👁 View</a>
+              <button onclick="deleteDriverDoc('${d.id}')" class="btn btn-sm btn-red">🗑 Delete</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    
   } catch (err) {
-    console.error('Error loading documents:', err);
+    container.innerHTML = '<p style="color:red;font-size:0.9em;">❌ Could not load documents.</p>';
   }
 }
 
-window.uploadDriverDocuments = async function() {
-  const statusEl = document.getElementById('upload-status');
-  if (!statusEl) return;
+window.uploadDriverDocument = async function() {
+  const fileInput = document.getElementById('doc-upload');
+  const file = fileInput?.files?.[0];
   
-  const fileInputs = [
-    { el: document.getElementById('doc-licence-front'), type: 'licence-front', name: 'Driving Licence (Front)' },
-    { el: document.getElementById('doc-licence-back'), type: 'licence-back', name: 'Driving Licence (Back)' },
-    { el: document.getElementById('doc-medical'), type: 'medical', name: 'D4 Medical Certificate' },
-    { el: document.getElementById('doc-cpc'), type: 'cpc', name: 'CPC Qualification Card' },
-    { el: document.getElementById('doc-other'), type: 'other', name: 'Other Document' }
-  ];
+  if (!file) return alert('⚠️ Please select a file first');
   
-  const filesToUpload = fileInputs.filter(f => f.el?.files?.length > 0);
-  
-  if (filesToUpload.length === 0) {
-    alert('⚠️ Please select at least one file to upload.');
-    return;
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    return alert('⚠️ Only PDF, JPG and PNG files are allowed');
   }
   
-  statusEl.innerHTML = '<p style="color:#d4af37;">⏳ Uploading files...</p>';
-  
   try {
-    const profileRef = doc(db, 'driverProfiles', currentUser.uid);
-    const profileSnap = await getDoc(profileRef);
-    const existingDocs = profileSnap.exists() ? (profileSnap.data().documents || []) : [];
+    const fileId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+    const storageRef = ref(storage, `driverDocs/${currentUser.uid}/${fileId}`);
     
-    const newDocs = [...existingDocs];
+    showToast('⏳ Uploading...');
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
     
-    for (const item of filesToUpload) {
-      const file = item.el.files[0];
-      const fileId = `doc-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const fileExt = file.name.split('.').pop();
-      const storagePath = `driver-documents/${currentUser.uid}/${fileId}.${fileExt}`;
-      
-      const storageRef = ref(storage, storagePath);
-      await uploadBytes(storageRef, file);
-      const downloadUrl = await getDownloadURL(storageRef);
-      
-      newDocs.push({
-        id: fileId,
-        type: item.type,
-        name: item.name,
-        originalName: file.name,
-        url: downloadUrl,
-        path: storagePath,
-        size: file.size,
-        uploadedAt: new Date().toISOString()
-      });
-    }
+    await addDoc(collection(db, 'userProfiles', currentUser.uid, 'documents'), {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      url: url,
+      storagePath: `driverDocs/${currentUser.uid}/${fileId}`,
+      uploadedAt: new Date()
+    });
     
-    await setDoc(profileRef, { documents: newDocs }, { merge: true });
-    
-    statusEl.innerHTML = '<p style="color:#16a34a;">✅ All files uploaded successfully</p>';
-    showToast('✅ Documents uploaded');
-    
-    fileInputs.forEach(f => { if (f.el) f.el.value = ''; });
-    
-    loadDriverDocumentsList();
+    showToast('✅ Document uploaded');
+    fileInput.value = '';
+    loadDriverDocuments();
     
   } catch (err) {
     console.error('Upload error:', err);
-    statusEl.innerHTML = '<p style="color:#dc2626;">❌ Upload failed. Please try again.</p>';
+    showToast('❌ Upload failed', 'error');
   }
 };
 
-window.deleteDriverDocument = async function(docId) {
-  if (!confirm('⚠️ Delete this document? Companies will no longer have access to it.')) return;
+window.deleteDriverDoc = async function(docId) {
+  if (!confirm('⚠️ Permanently delete this document? This cannot be undone.')) return;
   
   try {
-    const profileRef = doc(db, 'driverProfiles', currentUser.uid);
-    const profileSnap = await getDoc(profileRef);
+    const docRef = doc(db, 'userProfiles', currentUser.uid, 'documents', docId);
+    const snap = await getDoc(docRef);
+    const data = snap.data();
     
-    if (profileSnap.exists()) {
-      const data = profileSnap.data();
-      const docToDelete = data.documents?.find(d => d.id === docId);
-      
-      if (docToDelete?.path) {
-        const fileRef = ref(storage, docToDelete.path);
-        await deleteObject(fileRef);
-      }
-      
-      const updatedDocs = (data.documents || []).filter(d => d.id !== docId);
-      await updateDoc(profileRef, { documents: updatedDocs });
-      
-      showToast('✅ Document deleted');
-      loadDriverDocumentsList();
+    if (data?.storagePath) {
+      await deleteObject(ref(storage, data.storagePath));
     }
+    
+    await deleteDoc(docRef);
+    showToast('✅ Document deleted');
+    loadDriverDocuments();
+    
   } catch (err) {
-    console.error('Error deleting document:', err);
-    alert('❌ Failed to delete document.');
+    console.error('Delete error:', err);
+    showToast('❌ Delete failed', 'error');
   }
 };
 
 // --------------------------
-// UTILITY: GLOBAL ERROR HANDLING
+// INITIALISATION & READY
 // --------------------------
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error('App Error:', message, 'at', source + ':' + lineno + ':' + colno);
-  return false;
-};
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ LSD Solutions App Loaded — DVSA Compliant System');
+});
 
-console.log('%c✅ LSD Solutions — app.js Loaded & Ready', 'color: #1a365d; font-weight: bold; font-size: 14px;');
-console.log('%cDVSA Compliant Walkaround Check System', 'color: #d4af37;');
+// Expose globally
+window.loadDriverCheckSelection = loadDriverCheckSelection;
+window.loadRecentChecks = loadRecentChecks;
+window.renderWalkaroundCheckForm = renderWalkaroundCheckForm;
+window.loadDriverProfile = loadDriverProfile;
+window.loadCompanyProfile = loadCompanyProfile;
+window.loadChecklistEditor = loadChecklistEditor;
+window.loadVehiclesList = loadVehiclesList;
+window.loadCompanyDrivers = loadCompanyDrivers;
+window.loadDefectsList = loadDefectsList;
+window.DEFAULT_CHECKLIST = DEFAULT_CHECKLIST;
+window.CHECK_VEHICLE = CHECK_VEHICLE;
+window.CHECK_TRAILER = CHECK_TRAILER;
+window.CHECK_BOTH = CHECK_BOTH;
+window.DVSA_DEFECT_CATEGORIES = DVSA_DEFECT_CATEGORIES;
+window.DVSA_SEVERITY = DVSA_SEVERITY;
+window.DVSA_COMMON_DEFECTS = DVSA_COMMON_DEFECTS;
+window.DEFECT_STATUS = DEFECT_STATUS;
+window.formatDate = formatDate;
+window.showToast = showToast;
+window.currentUser = () => currentUser;
+window.userProfile = () => userProfile;
+
+</script>
+</body>
+</html>
