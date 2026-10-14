@@ -682,6 +682,346 @@
         </div>
       </div>
     </div>
+        <!-- ====================================== -->
+    <!-- VEHICLE & TRAILER MANAGEMENT          -->
+    <!-- ====================================== -->
+    
+    <!-- Vehicle List Page -->
+    <div id="vehicles-page" class="page">
+      <div class="page-header">
+        <h2>🚚 Vehicle Management</h2>
+        <div>
+          <button class="btn primary" onclick="showAddVehicleForm()">➕ Add Vehicle</button>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+        </div>
+      </div>
+      <div id="vehicles-list" class="card">
+        <p class="text-muted">Loading vehicles...</p>
+      </div>
+    </div>
+
+    <!-- Add/Edit Vehicle Form -->
+    <div id="vehicle-form-page" class="page">
+      <div class="page-header">
+        <h2 id="vehicle-form-title">Add Vehicle</h2>
+        <button class="btn secondary" onclick="showPage('vehicles-page')">← Back</button>
+      </div>
+      <div class="card">
+        <form id="vehicle-form" onsubmit="saveVehicle(event)">
+          <input type="hidden" id="vehicle-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="veh-reg">Registration Number *</label>
+              <input type="text" id="veh-reg" required style="text-transform:uppercase">
+            </div>
+            <div class="form-group">
+              <label for="veh-type">Vehicle Type *</label>
+              <select id="veh-type" required>
+                <option value="">Select Type</option>
+                <option value="tractor">🚛 Tractor Unit</option>
+                <option value="rigid">🚚 Rigid Truck</option>
+                <option value="van">🚐 Van</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="veh-make">Make</label>
+              <input type="text" id="veh-make">
+            </div>
+            <div class="form-group">
+              <label for="veh-model">Model</label>
+              <input type="text" id="veh-model">
+            </div>
+            <div class="form-group">
+              <label for="veh-year">Year</label>
+              <input type="number" id="veh-year" min="1990" max="2030">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="veh-mot-expiry">MOT Expiry Date *</label>
+              <input type="date" id="veh-mot-expiry" required>
+            </div>
+            <div class="form-group">
+              <label for="veh-tax-expiry">Tax Expiry Date *</label>
+              <input type="date" id="veh-tax-expiry" required>
+            </div>
+            <div class="form-group">
+              <label for="veh-ins-expiry">Insurance Expiry Date *</label>
+              <input type="date" id="veh-ins-expiry" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="veh-status">Status</label>
+            <select id="veh-status">
+              <option value="active" selected>✅ Active</option>
+              <option value="maintenance">🔧 In Maintenance</option>
+              <option value="offroad">⛔ Off Road</option>
+              <option value="retired">📦 Retired</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="veh-notes">Notes</label>
+            <textarea id="veh-notes" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn secondary" onclick="showPage('vehicles-page')">Cancel</button>
+            <button type="submit" class="btn primary">💾 Save Vehicle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Trailer List Page -->
+    <div id="trailers-page" class="page">
+      <div class="page-header">
+        <h2>🚛 Trailer Management</h2>
+        <div>
+          <button class="btn primary" onclick="showAddTrailerForm()">➕ Add Trailer</button>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+        </div>
+      </div>
+      <div id="trailers-list" class="card">
+        <p class="text-muted">Loading trailers...</p>
+      </div>
+    </div>
+
+    <!-- Add/Edit Trailer Form -->
+    <div id="trailer-form-page" class="page">
+      <div class="page-header">
+        <h2 id="trailer-form-title">Add Trailer</h2>
+        <button class="btn secondary" onclick="showPage('trailers-page')">← Back</button>
+      </div>
+      <div class="card">
+        <form id="trailer-form" onsubmit="saveTrailer(event)">
+          <input type="hidden" id="trailer-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="trailer-reg">Registration / ID *</label>
+              <input type="text" id="trailer-reg" required style="text-transform:uppercase">
+            </div>
+            <div class="form-group">
+              <label for="trailer-type">Trailer Type *</label>
+              <select id="trailer-type" required>
+                <option value="">Select Type</option>
+                <option value="box">📦 Box / Van</option>
+                <option value="curtainside">🚪 Curtainside</option>
+                <option value="flatbed">📏 Flatbed</option>
+                <option value="refrigerated">❄️ Refrigerated</option>
+                <option value="tanker">🛢️ Tanker</option>
+                <option value="skeletal">🏗️ Skeletal</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="trailer-make">Make</label>
+              <input type="text" id="trailer-make">
+            </div>
+            <div class="form-group">
+              <label for="trailer-model">Model</label>
+              <input type="text" id="trailer-model">
+            </div>
+            <div class="form-group">
+              <label for="trailer-year">Year</label>
+              <input type="number" id="trailer-year" min="1990" max="2030">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="trailer-mot-expiry">Plating Certificate Expiry</label>
+              <input type="date" id="trailer-mot-expiry">
+            </div>
+            <div class="form-group">
+              <label for="trailer-ins-expiry">Insurance Expiry Date</label>
+              <input type="date" id="trailer-ins-expiry">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="trailer-max-weight">Max Load (kg)</label>
+            <input type="number" id="trailer-max-weight" min="0">
+          </div>
+          <div class="form-group">
+            <label for="trailer-status">Status</label>
+            <select id="trailer-status">
+              <option value="active" selected>✅ Active</option>
+              <option value="maintenance">🔧 In Maintenance</option>
+              <option value="offroad">⛔ Off Road</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="trailer-notes">Notes</label>
+            <textarea id="trailer-notes" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn secondary" onclick="showPage('trailers-page')">Cancel</button>
+            <button type="submit" class="btn primary">💾 Save Trailer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Service & Maintenance Logs Page -->
+    <div id="service-logs-page" class="page">
+      <div class="page-header">
+        <h2>🔧 Service & Maintenance</h2>
+        <div>
+          <button class="btn primary" onclick="showAddServiceForm()">➕ Record Service</button>
+          <button class="btn secondary" onclick="showPage('vehicles-page')">← Back</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <label>Select Vehicle/Trailer</label>
+          <select id="service-asset" onchange="loadServiceLogs()">
+            <option value="">-- Select an asset --</option>
+          </select>
+        </div>
+      </div>
+      <div id="service-logs-list" class="card">
+        <p class="text-muted">Select an asset to view service history...</p>
+      </div>
+    </div>
+
+    <!-- Add Service Record Form -->
+    <div id="service-form-page" class="page">
+      <div class="page-header">
+        <h2 id="service-form-title">Record Service</h2>
+        <button class="btn secondary" onclick="showPage('service-logs-page')">← Back</button>
+      </div>
+      <div class="card">
+        <form id="service-form" onsubmit="saveServiceRecord(event)">
+          <input type="hidden" id="service-id">
+          <div class="form-group">
+            <label for="service-asset-ref">Asset (Vehicle/Trailer) *</label>
+            <input type="text" id="service-asset-ref" required placeholder="e.g. AB12 XYZ">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="service-date">Service Date *</label>
+              <input type="date" id="service-date" required>
+            </div>
+            <div class="form-group">
+              <label for="service-mileage">Mileage / Hours</label>
+              <input type="number" id="service-mileage" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="service-type">Service Type *</label>
+            <select id="service-type" required>
+              <option value="">Select Type</option>
+              <option value="routine">🔩 Routine Service</option>
+              <option value="repair">🔧 Repair</option>
+              <option value="mot">📋 MOT / Inspection</option>
+              <option value="tyres">🛞 Tyre Replacement</option>
+              <option value="brakes">🛑 Brakes</option>
+              <option value="other">📝 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="service-description">Description of Work *</label>
+            <textarea id="service-description" rows="4" required placeholder="Details of work carried out..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="service-cost">Cost (£)</label>
+              <input type="number" id="service-cost" step="0.01" min="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label for="service-next-due">Next Service Due</label>
+              <input type="date" id="service-next-due">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="service-provider">Service Provider / Garage</label>
+            <input type="text" id="service-provider" placeholder="Name of garage or mechanic">
+          </div>
+          <div class="form-group">
+            <label for="service-status">Status</label>
+            <select id="service-status">
+              <option value="completed" selected>✅ Completed</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="in-progress">🔄 In Progress</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn secondary" onclick="showPage('service-logs-page')">Cancel</button>
+            <button type="submit" class="btn primary">💾 Save Record</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Reports & PDF Export Page -->
+    <div id="reports-page" class="page">
+      <div class="page-header">
+        <h2>📊 Reports & Documents</h2>
+        <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+      </div>
+      
+      <div class="card">
+        <h3>📄 Generate PDF Reports</h3>
+        <p class="text-muted">Select a report type to download or print.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <button class="btn secondary" style="text-align: left;" onclick="generateVehicleReport()">
+            🚚 Vehicle Status Report
+          </button>
+          <button class="btn secondary" style="text-align: left;" onclick="generateTrailerReport()">
+            🚛 Trailer Status Report
+          </button>
+          <button class="btn secondary" style="text-align: left;" onclick="generateMaintenanceReport()">
+            🔧 Maintenance Summary
+          </button>
+          <button class="btn secondary" style="text-align: left;" onclick="generateExpiryReport()">
+            ⏰ Expiry Alerts Report
+          </button>
+          <button class="btn secondary" style="text-align: left;" onclick="generateChecklistReport()">
+            ✅ Walkaround Checklist Log
+          </button>
+          <button class="btn secondary" style="text-align: left;" onclick="generateDriverReport()">
+            👤 Driver Compliance Report
+          </button>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>📧 Email Notifications Settings</h3>
+        <form id="notification-settings-form" onsubmit="saveNotificationSettings(event)">
+          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+            <input type="checkbox" id="notify-mot" checked> MOT Expiry Reminders
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+            <input type="checkbox" id="notify-tax" checked> Tax Expiry Reminders
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+            <input type="checkbox" id="notify-insurance" checked> Insurance Expiry Reminders
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+            <input type="checkbox" id="notify-service" checked> Service Due Reminders
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+            <input type="checkbox" id="notify-checklist"> Daily Checklist Submissions
+          </label>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="notify-email">Send alerts to email:</label>
+            <input type="email" id="notify-email" placeholder="alerts@yourcompany.com">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">💾 Save Settings</button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="card">
+        <h3>⏰ Upcoming Expiry Alerts</h3>
+        <p class="text-muted">Items due for renewal within the next 30 days.</p>
+        <div id="expiry-alerts">
+          <p class="text-muted">Checking for upcoming expiries...</p>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Firebase SDK Imports -->
