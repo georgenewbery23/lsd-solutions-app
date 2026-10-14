@@ -60,6 +60,7 @@
     .btn.secondary { background: #e0e0e0; color: var(--text-dark); }
     .btn.small { padding: 6px 12px; font-size: 13px; }
     .btn.danger { background: var(--danger); color: white; }
+    .btn.accent { background: var(--accent); color: white; }
     
     /* Lists */
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
@@ -91,13 +92,20 @@
     
     /* Checklist */
     .checklist-category { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-    .category-header { background: var(--primary-light); padding: 10px 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .category-header { background: var(--primary-light); padding: 10px 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
     .category-body { padding: 14px; }
+    
+    /* Page visibility */
+    .page { display: none; }
+    .page.active { display: block; }
     
     /* Mobile Menu */
     #mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--primary); z-index: 150; padding-top: 60px; }
     #mobile-menu.open { display: block; }
     #mobile-menu a { display: block; color: white; padding: 14px 24px; font-size: 16px; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    
+    /* Auth Pages */
+    .auth-page { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
     
     /* Responsive */
     @media (max-width: 768px) {
@@ -125,268 +133,95 @@
       <span style="color:white;font-weight:600">🚛 LSD Solutions</span>
       <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
       <div class="nav-links" id="nav-links">
-        <a href="#" onclick="showPage('dashboard');return false;" id="nav-dashboard">Dashboard</a>
-        <a href="#" onclick="showPage('jobs');return false;" id="nav-jobs">Jobs</a>
-        <a href="#" onclick="showPage('driver-check');return false;" id="nav-check" style="display:none;">Walkaround Check</a>
-        <a href="#" onclick="showPage('vehicles');return false;" id="nav-vehicles" style="display:none;">Fleet</a>
-        <a href="#" onclick="showPage('drivers');return false;" id="nav-drivers" style="display:none;">Drivers</a>
-        <a href="#" onclick="showPage('checklist-editor');return false;" id="nav-checklist" style="display:none;">Checklists</a>
-        <a href="#" onclick="showPage('company-profile');return false;" id="nav-profile" style="display:none;">Company Profile</a>
-        <a href="#" onclick="showPage('profile');return false;" id="nav-my-profile">My Profile</a>
-        <a href="#" onclick="handleSignOut();return false;" id="nav-logout">Sign Out</a>
+        <a href="#" onclick="showPage('auth-page');return false;" id="nav-auth" style="display:block;">Sign In</a>
+        <a href="#" onclick="showPage('driver-portal-page');return false;" id="nav-driver" style="display:none;">Driver Portal</a>
+        <a href="#" onclick="showPage('company-portal-page');return false;" id="nav-company" style="display:none;">Company Portal</a>
+        <a href="#" onclick="showPage('reset-page');return false;" id="nav-reset" style="display:none;">Reset Password</a>
+        <a href="#" onclick="exportMyData();return false;" id="nav-export" style="display:none;">Export My Data</a>
+        <a href="#" onclick="handleSignOut();return false;" id="nav-logout" style="display:none;">Sign Out</a>
       </div>
     </div>
   </nav>
 
   <!-- Mobile Menu -->
   <div id="mobile-menu">
-    <a href="#" onclick="showPage('dashboard');toggleMobileMenu();return false;">Dashboard</a>
-    <a href="#" onclick="showPage('jobs');toggleMobileMenu();return false;">Jobs</a>
-    <a href="#" onclick="showPage('profile');toggleMobileMenu();return false;">My Profile</a>
-    <a href="#" onclick="handleSignOut();toggleMobileMenu();return false;">Sign Out</a>
+    <a href="#" onclick="showPage('auth-page');toggleMobileMenu();return false;">Sign In</a>
+    <a href="#" onclick="showPage('driver-portal-page');toggleMobileMenu();return false;" id="mob-nav-driver" style="display:none;">Driver Portal</a>
+    <a href="#" onclick="showPage('company-portal-page');toggleMobileMenu();return false;" id="mob-nav-company" style="display:none;">Company Portal</a>
+    <a href="#" onclick="exportMyData();toggleMobileMenu();return false;" id="mob-nav-export" style="display:none;">Export My Data</a>
+    <a href="#" onclick="handleSignOut();toggleMobileMenu();return false;" id="mob-nav-logout" style="display:none;">Sign Out</a>
   </div>
 
-  <!-- Main App Content -->
-  <main class="app-container" id="app">
-    <!-- Content loads here dynamically -->
-  </main>
-
-  <!-- Firebase SDK -->
-  <script type="importmap">
-  {
-    "imports": {
-      "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-      "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-      "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
-    }
-  }
-  </script>
-
-  <script type="module">
-    // ========== FIREBASE CONFIG — UPDATE WITH YOUR OWN ==========
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    // ========== INITIALIZE FIREBASE ==========
-    import { initializeApp } from 'firebase/app';
-    import { 
-      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      signOut, onAuthStateChanged, sendPasswordResetEmail
-    } from 'firebase/auth';
-    import { 
-      getFirestore, doc, setDoc, getDoc, updateDoc, addDoc, deleteDoc,
-      collection, query, where, orderBy, getDocs, runTransaction
-    } from 'firebase/firestore';
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // ========== GLOBAL STATE ==========
-    let currentUser = null;
-    let currentUserRole = null;
-    let currentPage = 'login';
-    let currentChecklistData = [];
-
-    // ========== DVSA DEFAULT CHECKLIST ==========
-    const DEFAULT_CHECKLIST_ITEMS = [
-      { category: "Vehicle Exterior", items: [
-        "Body — condition, secure, no sharp edges",
-        "Windscreen — clear, no damage, washers/wipers work",
-        "Mirrors — all present, clean, correctly adjusted",
-        "Lights & indicators — all working, lenses clean and intact",
-        "Number plates — secure, clean, correct, visible",
-        "Tyres — condition, pressure, tread depth above 1.6mm",
-        "Wheels — secure, no damage, no leaks",
-        "Wheel nuts — present and secure",
-        "Fuel caps — fitted and secure",
-        "Windows — intact, no cracks"
-      ]},
-      { category: "Vehicle Underside", items: [
-        "Exhaust — secure, no excessive smoke",
-        "Suspension — no leaks, no damage, components secure",
-        "Steering — no play, no fluid leaks",
-        "Brake lines & hoses — secure, no leaks or chafing"
-      ]},
-      { category: "Brakes & Systems", items: [
-        "Service brake — operates correctly",
-        "Secondary brake — operates correctly",
-        "Parking brake — holds vehicle on gradient",
-        "Brake fluid — correct level, no leaks",
-        "Air pressure — builds correctly, holds pressure",
-        "ABS warning lamp — not showing fault"
-      ]},
-      { category: "Fluid Levels & Engine", items: [
-        "Engine oil — correct level",
-        "Coolant — correct level",
-        "Screen wash — correct level",
-        "AdBlue — correct level (if fitted)",
-        "Engine bay — no fluid leaks, caps secure",
-        "Battery — secure, terminals clean"
-      ]},
-      { category: "Coupling & Trailer", items: [
-        "Fifth wheel — secure, lubricated, locking mechanism working",
-        "Air lines — connected correctly, no leaks, not chafing",
-        "Electrical connections — secure, all lights working",
-        "Breakaway cable — attached correctly",
-        "Trailer landing legs — fully raised and secured",
-        "Kingpin — secure and undamaged"
-      ]},
-      { category: "Load & Security", items: [
-        "Load — secure and appropriately distributed",
-        "Curtains / Doors — closed, secured, fasteners intact",
-        "Roof — secure if fitted",
-        "Tail lift — stowed correctly and secure",
-        "Hazard warning plates — displayed if applicable"
-      ]},
-      { category: "Emergency Equipment", items: [
-        "Fire extinguisher — present, accessible, in date",
-        "Warning triangle — present",
-        "First aid kit — present and complete",
-        "Wheel chocks — present",
-        "Spare bulbs — recommended"
-      ]},
-      { category: "Cab & Interior", items: [
-        "Seats & seatbelts — secure, operate correctly, no damage",
-        "Horns — working",
-        "Speedometer — working correctly",
-        "Tachograph — calibrated, working, chart/card in use",
-        "Handbrake warning — illuminates correctly",
-        "Oil pressure / warning lights — operating correctly",
-        "All controls — operate smoothly and correctly",
-        "Doors — open, close and secure properly"
-      ]}
-    ];
-
-    // ========== HELPER FUNCTIONS ==========
-    function setVal(id, val) {
-      const el = document.getElementById(id);
-      if (el && val !== undefined) el.value = val;
-    }
-    function getVal(id) {
-      const el = document.getElementById(id);
-      return el ? el.value : '';
-    }
-
-    // ========== EXPOSE GLOBALS ==========
-    window.showPage = showPage;
-    window.toggleMobileMenu = () => {
-      const m = document.getElementById('mobile-menu');
-      if (m) m.classList.toggle('open');
-    };
-    window.showToast = function(msg, type='success') {
-      const t = document.createElement('div');
-      t.className = `toast toast-${type}`;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => t.classList.add('show'), 10);
-      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 4000);
-    };
-    window.showModal = function(content) {
-      const b = document.createElement('div');
-      b.className = 'modal-backdrop';
-      b.id = 'modal-backdrop';
-      b.onclick = (e) => { if (e.target === b) closeModal(); };
-      b.innerHTML = `<div class="modal">${content}</div>`;
-      document.body.appendChild(b);
-    };
-    window.closeModal = function() {
-      const b = document.getElementById('modal-backdrop');
-      if (b) b.remove();
-    };
-    window.formatDate = function(d) {
-      if (!d) return '—';
-      const dt = d instanceof Date ? d : d.toDate ? d.toDate() : new Date(d);
-      return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-    };
-
-    // ========== PAGE RENDERERS ==========
-    function renderLoginPage() {
-      return `
-        <div class="card" style="max-width:420px;margin:40px auto;text-align:center">
-          <h2 style="margin-bottom:24px;color:var(--primary)">Sign In</h2>
-          <form onsubmit="handleSignIn(event)">
+  <main class="app-container">
+      <!-- ====================================== -->
+    <!-- AUTH PAGE — Sign In / Register         -->
+    <!-- ====================================== -->
+    <div id="auth-page" class="page">
+      <div class="auth-page">
+        <div class="card" style="max-width:420px;width:100%;margin:20px auto;text-align:center">
+          <h2 style="margin-bottom:24px;color:var(--primary)">Welcome Back</h2>
+          
+          <div id="auth-tabs" style="display:flex;margin-bottom:24px;border-bottom:1px solid var(--border)">
+            <button id="tab-signin" class="btn primary" style="flex:1;border-radius:4px 4px 0 0">Sign In</button>
+            <button id="tab-register" class="btn secondary" style="flex:1;border-radius:4px 4px 0 0">Register</button>
+          </div>
+          
+          <!-- SIGN IN FORM -->
+          <form id="signin-form" onsubmit="handleSignIn(event)">
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" id="login-email" required>
+              <input type="email" id="signin-email" required>
             </div>
             <div class="form-group">
               <label>Password</label>
-              <input type="password" id="login-password" required>
+              <input type="password" id="signin-password" required>
             </div>
             <div class="form-actions" style="justify-content:stretch">
               <button type="submit" class="btn primary" style="width:100%">Sign In</button>
             </div>
           </form>
-          <p style="margin-top:16px">
-            <a href="#" onclick="showPage('reset');return false" style="color:var(--primary)">Forgot password?</a>
-          </p>
-          <p style="margin-top:8px">Don't have an account? 
-            <a href="#" onclick="showPage('register');return false" style="color:var(--primary);font-weight:500">Register</a>
-          </p>
-        </div>
-      `;
-    }
-
-    function renderRegisterPage() {
-      return `
-        <div class="card" style="max-width:420px;margin:40px auto">
-          <h2 style="margin-bottom:24px;color:var(--primary);text-align:center">Register As</h2>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-            <button class="btn primary" style="padding:20px" onclick="showRegisterForm('driver')">
-              <div style="font-size:24px;margin-bottom:8px">👤</div>
-              <strong>Driver</strong><br>
-              <span style="font-size:12px;opacity:0.8">Find work & manage documents</span>
-            </button>
-            <button class="btn primary" style="padding:20px" onclick="showRegisterForm('company')">
-              <div style="font-size:24px;margin-bottom:8px">🏢</div>
-              <strong>Company</strong><br>
-              <span style="font-size:12px;opacity:0.8">Post work & manage fleet</span>
-            </button>
-          </div>
-          <p style="text-align:center"><a href="#" onclick="showPage('login');return false" style="color:var(--primary)">← Back to Sign In</a></p>
-        </div>
-      `;
-    }
-
-    window.showRegisterForm = function(role) {
-      const app = document.getElementById('app');
-      app.innerHTML = `
-        <div class="card" style="max-width:420px;margin:40px auto">
-          <h2 style="margin-bottom:24px;color:var(--primary);text-align:center">Register as ${role === 'driver' ? 'Driver' : 'Company'}</h2>
-          <form onsubmit="handleRegister(event, '${role}')">
+          
+          <!-- REGISTER FORM -->
+          <form id="register-form" onsubmit="handleRegister(event)" style="display:none">
             <div class="form-group">
               <label>Full Name</label>
-              <input type="text" id="reg-name" required>
+              <input type="text" id="register-name" required>
             </div>
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" id="reg-email" required>
+              <input type="email" id="register-email" required>
             </div>
             <div class="form-group">
               <label>Password</label>
-              <input type="password" id="reg-password" required>
+              <input type="password" id="register-password" required>
             </div>
-            <div class="form-actions">
-              <button type="button" class="btn secondary" onclick="showPage('register')">Back</button>
-              <button type="submit" class="btn primary">Create Account</button>
+            <div class="form-group">
+              <label>Account Type</label>
+              <select id="register-role">
+                <option value="driver">👤 Driver</option>
+                <option value="company">🏢 Company</option>
+              </select>
+            </div>
+            <div class="form-actions" style="justify-content:stretch">
+              <button type="submit" class="btn primary" style="width:100%">Create Account</button>
             </div>
           </form>
+          
+          <p style="margin-top:16px">
+            <a href="#" onclick="showPage('reset-page');return false" style="color:var(--primary)">Forgot password?</a>
+          </p>
         </div>
-      `;
-    };
+      </div>
+    </div>
 
-    function renderResetPage() {
-      return `
-        <div class="card" style="max-width:420px;margin:40px auto;text-align:center">
-          <h2 style="margin-bottom:24px;color:var(--primary)">Reset Your Password</h2>
-          <form onsubmit="handleResetPassword(event)">
+    <!-- ====================================== -->
+    <!-- RESET PASSWORD PAGE                    -->
+    <!-- ====================================== -->
+    <div id="reset-page" class="page">
+      <div class="auth-page">
+        <div class="card" style="max-width:420px;width:100%;margin:20px auto;text-align:center">
+          <h2 style="margin-bottom:24px;color:var(--primary)">Reset Password</h2>
+          <form onsubmit="resetPassword(event)">
             <div class="form-group">
               <label>Email Address</label>
               <input type="email" id="reset-email" required>
@@ -395,1261 +230,279 @@
               <button type="submit" class="btn primary" style="width:100%">Send Reset Link</button>
             </div>
           </form>
-          <p style="margin-top:16px"><a href="#" onclick="showPage('login');return false" style="color:var(--primary)">← Back to Sign In</a></p>
+          <p style="margin-top:16px"><a href="#" onclick="showPage('auth-page');return false" style="color:var(--primary)">← Back to Sign In</a></p>
         </div>
-      `;
-    }
+      </div>
+    </div>
 
-    function renderDashboardPage() {
-      const greeting = currentUser ? `Signed in as ${currentUser.email}` : '';
-      return `
-        <div class="page-header">
-          <h2>📊 Dashboard</h2>
-          <span class="text-sm">${greeting}</span>
-        </div>
-        
-        ${currentUserRole === 'company' ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px">
-            <div class="card" style="text-align:center">
-              <div style="font-size:32px">🚛</div>
-              <div style="font-size:24px;font-weight:700;color:var(--primary)" id="count-vehicles">0</div>
-              <div class="text-muted">Active Vehicles</div>
-            </div>
-            <div class="card" style="text-align:center">
-              <div style="font-size:32px">📦</div>
-              <div style="font-size:24px;font-weight:700;color:var(--primary)" id="count-trailers">0</div>
-              <div class="text-muted">Active Trailers</div>
-            </div>
-            <div class="card" style="text-align:center">
-              <div style="font-size:32px">👥</div>
-              <div style="font-size:24px;font-weight:700;color:var(--primary)" id="count-drivers">0</div>
-              <div class="text-muted">Linked Drivers</div>
-            </div>
-            <div class="card" style="text-align:center">
-              <div style="font-size:32px">✅</div>
-              <div style="font-size:24px;font-weight:700;color:var(--primary)">0</div>
-              <div class="text-muted">Checks This Week</div>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h3>Quick Actions</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:16px">
-              <button class="btn primary" onclick="showPage('vehicles')">🚛 Manage Fleet</button>
-              <button class="btn primary" onclick="showPage('drivers')">👥 Manage Drivers</button>
-              <button class="btn primary" onclick="showPage('checklist-editor')">📋 Edit Checklists</button>
-              <button class="btn primary" onclick="showPage('company-profile')">🏢 Company Profile</button>
-            </div>
-          </div>
-        ` : `
-          <div class="card">
-            <h3>Welcome 👋</h3>
-            <p class="text-muted">Ready for your next assignment? Here's what you can do:</p>
-            <ul style="margin:16px 0;padding-left:20px">
-              <li style="margin-bottom:8px">View available jobs from all companies</li>
-              <li style="margin-bottom:8px">Complete your daily walkaround checks</li>
-              <li style="margin-bottom:8px">Manage your profile and documents</li>
-            </ul>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:16px">
-              <button class="btn primary" onclick="showPage('jobs')">📋 View Jobs</button>
-              <button class="btn primary" onclick="showPage('driver-check')">✅ Start Check</button>
-              <button class="btn secondary" onclick="showPage('profile')">👤 My Profile</button>
-            </div>
-          </div>
-        `}
-      `;
-    }
-
-    function renderJobsPage() {
-      return `
-        <div class="page-header">
-          <h2>📋 Available Jobs</h2>
-        </div>
-        <div class="card">
-          <p class="text-muted">Jobs posted by companies will appear here. Filter options coming soon.</p>
-          <p style="text-align:center;padding:40px;color:var(--text-light)">No jobs available at the moment. Check back soon!</p>
-        </div>
-      `;
-    }
-
-    function renderProfilePage() {
-      return `
+    <!-- ====================================== -->
+    <!-- DRIVER PORTAL PAGE                      -->
+    <!-- ====================================== -->
+    <div id="driver-portal-page" class="page">
+      <div id="driver-dashboard"></div>
+      
+      <!-- Profile Page -->
+      <div id="driver-profile-page" style="display:none">
         <div class="page-header">
           <h2>👤 My Profile</h2>
+          <button class="btn secondary" onclick="showWalkaroundChecklist()">← Back</button>
         </div>
         <div class="card">
-          <h3>Account Details</h3>
-          <p><strong>Email:</strong> ${currentUser?.email || 'Not available'}</p>
-          <p><strong>Role:</strong> ${currentUserRole === 'driver' ? 'Driver' : 'Company Administrator'}</p>
-          <p><strong>Last Sign In:</strong> ${new Date().toLocaleString()}</p>
-        </div>
-        
-        ${currentUserRole === 'driver' ? `
-          <div class="card">
-            <h3>Driving Licence Details</h3>
-            <p class="text-muted">Complete your details to work with companies.</p>
-            <form onsubmit="saveDriverProfile(event)">
+          <form onsubmit="saveDriverProfile(event)">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profile-name" required>
+            </div>
+            <div class="form-row">
               <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="drv-fullname" value="${currentUser?.displayName || ''}">
+                <label>Email</label>
+                <input type="email" id="profile-email" readonly>
               </div>
               <div class="form-group">
-                <label>Driving Licence Number</label>
-                <input type="text" id="drv-licence">
+                <label>Phone</label>
+                <input type="tel" id="profile-phone">
               </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Licence Categories</label>
-                  <input type="text" id="drv-categories" placeholder="e.g. C, C+E, D1">
-                </div>
-                <div class="form-group">
-                  <label>Penalty Points</label>
-                  <input type="number" id="drv-points" value="0">
-                </div>
+            </div>
+            <div class="form-group">
+              <label>Driving Licence Number</label>
+              <input type="text" id="profile-licence-number">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Licence Valid From</label>
+                <input type="date" id="profile-valid-from">
               </div>
               <div class="form-group">
-                <label>DVLA Check Code</label>
-                <input type="text" id="drv-dvla-code">
+                <label>Licence Expiry Date</label>
+                <input type="date" id="profile-expiry-date">
               </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Licence Valid From</label>
-                  <input type="date" id="drv-valid-from">
-                </div>
-                <div class="form-group">
-                  <label>Licence Expiry Date</label>
-                  <input type="date" id="drv-expiry">
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Medical Certificate Expiry</label>
-                <input type="date" id="drv-medical">
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn primary">Save Profile</button>
-              </div>
-            </form>
-          </div>
-          
-          <div class="card">
-            <h3>Documents</h3>
-            <p class="text-muted">Upload your licence, insurance, and other documents here.</p>
-            <p style="text-align:center;padding:20px;color:var(--text-light)">Document uploads coming soon.</p>
-          </div>
-        ` : `
-          <div class="card">
-            <h3>Company Access</h3>
-            <p>Your company profile and settings are in the <a href="#" onclick="showPage('company-profile');return false" style="color:var(--primary)">Company Profile</a> section.</p>
-          </div>
-        `}
-      `;
-    }
-
-    function renderAccessDenied() {
-      return `
-        <div class="card" style="text-align:center;padding:40px">
-          <h2>⚠️ Access Denied</h2>
-          <p class="text-muted">You don't have permission to view this page.</p>
-          <button class="btn primary" onclick="showPage('dashboard')">Go to Dashboard</button>
+            </div>
+            <div class="form-group">
+              <label>Medical Certificate Expiry</label>
+              <input type="date" id="profile-medical-expiry">
+            </div>
+            <div class="form-group">
+              <label>Penalty Points</label>
+              <input type="number" id="profile-points" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea id="profile-notes" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn secondary" onclick="showPage('driver-portal-page')">Cancel</button>
+              <button type="submit" class="btn primary">Save Profile</button>
+            </div>
+          </form>
         </div>
-      `;
-    }
-
-    // ========== VEHICLE & TRAILER MANAGEMENT ==========
-    function renderVehiclesPage() {
-      if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
+      </div>
       
-      return `
+      <!-- Calendar Page -->
+      <div id="driver-calendar-page" style="display:none">
         <div class="page-header">
-          <h2>🚛 Fleet Management</h2>
-          <div style="display:flex;gap:8px">
-            <button class="btn primary" onclick="showAddVehicleModal()">+ Add Vehicle</button>
-            <button class="btn secondary" onclick="showAddTrailerModal()">+ Add Trailer</button>
-          </div>
+          <h2>📅 My Schedule</h2>
+          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
         </div>
-
-        <div class="card">
-          <h3>Vehicles</h3>
-          <div id="vehicles-list">
-            <p>Loading vehicles...</p>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Trailers</h3>
-          <div id="trailers-list">
-            <p>Loading trailers...</p>
-          </div>
-        </div>
-      `;
-    }
-
-    window.showAddVehicleModal = function() {
-      showModal(`
-        <h3>Add New Vehicle</h3>
-        <form onsubmit="saveVehicle(event)">
-          <div class="form-group">
-            <label>Registration Number *</label>
-            <input type="text" id="v-reg" required style="text-transform:uppercase">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Make *</label>
-              <input type="text" id="v-make" required>
-            </div>
-            <div class="form-group">
-              <label>Model *</label>
-              <input type="text" id="v-model" required>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Year</label>
-              <input type="number" id="v-year">
-            </div>
-            <div class="form-group">
-              <label>Type</label>
-              <select id="v-type">
-                <option value="HGV">HGV</option>
-                <option value="Rigid">Rigid</option>
-                <option value="Tractor Unit" selected>Tractor Unit</option>
-                <option value="Van">Van</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>MOT Expiry Date</label>
-              <input type="date" id="v-mot">
-            </div>
-            <div class="form-group">
-              <label>Last Service Date</label>
-              <input type="date" id="v-service">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Notes / VIN / Details</label>
-            <textarea id="v-notes" rows="2"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn primary">Save Vehicle</button>
-          </div>
-        </form>
-      `);
-    };
-
-    window.saveVehicle = async function(e, editId = null) {
-      e.preventDefault();
-      const data = {
-        companyId: currentUser.uid,
-        registration: document.getElementById('v-reg').value.toUpperCase(),
-        make: document.getElementById('v-make').value,
-        model: document.getElementById('v-model').value,
-        year: document.getElementById('v-year').value,
-        type: document.getElementById('v-type').value,
-        motExpiry: document.getElementById('v-mot').value ? new Date(document.getElementById('v-mot').value) : null,
-        lastService: document.getElementById('v-service').value ? new Date(document.getElementById('v-service').value) : null,
-        notes: document.getElementById('v-notes').value,
-        active: true,
-        updatedAt: new Date(),
-        createdAt: new Date()
-      };
-
-      try {
-        if (editId) {
-          const { createdAt, ...updateData } = data;
-          await updateDoc(doc(db, 'companyVehicles', editId), updateData);
-        } else {
-          await addDoc(collection(db, 'companyVehicles'), data);
-        }
-        closeModal();
-        loadVehicles();
-        showToast('Vehicle saved successfully! ✅');
-      } catch (err) {
-        console.error('Error saving vehicle:', err);
-        showToast('Error saving vehicle ❌', 'error');
-      }
-    };
-
-    window.showAddTrailerModal = function() {
-      showModal(`
-        <h3>Add New Trailer</h3>
-        <form onsubmit="saveTrailer(event)">
-          <div class="form-group">
-            <label>Trailer Number / ID *</label>
-            <input type="text" id="t-num" required>
-          </div>
-          <div class="form-group">
-            <label>Registration Number</label>
-            <input type="text" id="t-reg" style="text-transform:uppercase">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Type</label>
-              <select id="t-type">
-                <option value="Box">Box</option>
-                <option value="Curtainside" selected>Curtainside</option>
-                <option value="Refrigerated">Refrigerated</option>
-                <option value="Flatbed">Flatbed</option>
-                <option value="Tipper">Tipper</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Owner *</label>
-              <select id="t-owner">
-                <option value="Company" selected>Company Owned</option>
-                <option value="Hired">Hired / Leased</option>
-                <option value="Customer">Customer Owned</option>
-                <option value="Third Party">Third Party</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Owner Name (if not company)</label>
-            <input type="text" id="t-ownerName">
-          </div>
-          <div class="form-group">
-            <label>MOT / Plating Certificate Expiry</label>
-            <input type="date" id="t-mot">
-          </div>
-          <div class="form-group">
-            <label>Notes / ID Details</label>
-            <textarea id="t-notes" rows="2"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn primary">Save Trailer</button>
-          </div>
-        </form>
-      `);
-    };
-
-    window.saveTrailer = async function(e, editId = null) {
-      e.preventDefault();
-      const data = {
-        companyId: currentUser.uid,
-        trailerNumber: document.getElementById('t-num').value,
-        registration: document.getElementById('t-reg').value.toUpperCase(),
-        type: document.getElementById('t-type').value,
-        owner: document.getElementById('t-owner').value,
-        ownerName: document.getElementById('t-ownerName').value || '',
-        motExpiry: document.getElementById('t-mot').value ? new Date(document.getElementById('t-mot').value) : null,
-        notes: document.getElementById('t-notes').value,
-        active: true,
-        updatedAt: new Date(),
-        createdAt: new Date()
-      };
-
-      try {
-        if (editId) {
-          const { createdAt, ...updateData } = data;
-          await updateDoc(doc(db, 'companyTrailers', editId), updateData);
-        } else {
-          await addDoc(collection(db, 'companyTrailers'), data);
-        }
-        closeModal();
-        loadTrailers();
-        showToast('Trailer saved successfully! ✅');
-      } catch (err) {
-        console.error('Error saving trailer:', err);
-        showToast('Error saving trailer ❌', 'error');
-      }
-    };
-
-    window.toggleVehicleActive = async function(id, currentState) {
-      try {
-        await updateDoc(doc(db, 'companyVehicles', id), { active: !currentState, updatedAt: new Date() });
-        loadVehicles();
-        showToast('Vehicle status updated ✅');
-      } catch (err) {
-        showToast('Error updating status ❌', 'error');
-      }
-    };
-
-    window.toggleTrailerActive = async function(id, currentState) {
-      try {
-        await updateDoc(doc(db, 'companyTrailers', id), { active: !currentState, updatedAt: new Date() });
-        loadTrailers();
-        showToast('Trailer status updated ✅');
-      } catch (err) {
-        showToast('Error updating status ❌', 'error');
-      }
-    };
-
-    async function loadVehicles() {
-      if (!currentUser || currentUserRole !== 'company') return;
-      try {
-        const qry = query(
-          collection(db, 'companyVehicles'),
-          where('companyId', '==', currentUser.uid),
-          orderBy('registration')
-        );
-        const snapshot = await getDocs(qry);
-        const vehicles = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const container = document.getElementById('vehicles-list');
-        
-        if (!vehicles.length) {
-          container.innerHTML = '<p class="text-muted">No vehicles added yet. Click "Add Vehicle" to get started.</p>';
-        } else {
-          container.innerHTML = vehicles.map(v => `
-            <div class="list-item ${v.active !== false ? '' : 'inactive'}">
-              <div>
-                <strong>${v.make} ${v.model}</strong> — ${v.registration}
-                <div class="text-sm">${v.type || 'HGV'} ${v.year ? '• ' + v.year : ''} ${v.motExpiry ? '• MOT: ' + formatDate(v.motExpiry) : ''}</div>
-              </div>
-              <div class="item-actions">
-                <span class="badge ${v.active !== false ? 'badge-success' : 'badge-danger'}">${v.active !== false ? 'Active' : 'Inactive'}</span>
-                <button class="btn small danger" onclick="toggleVehicleActive('${v.id}', ${v.active !== false})">${v.active !== false ? 'Deactivate' : 'Activate'}</button>
-              </div>
-            </div>
-          `).join('');
-        }
-        
-        const countEl = document.getElementById('count-vehicles');
-        if (countEl) countEl.textContent = vehicles.filter(v => v.active !== false).length;
-      } catch (err) {
-        console.error('Error loading vehicles:', err);
-        document.getElementById('vehicles-list').innerHTML = '<p class="text-danger">Error loading vehicles. Check your Firestore permissions.</p>';
-      }
-    }
-
-    async function loadTrailers() {
-      if (!currentUser || currentUserRole !== 'company') return;
-      try {
-        const qry = query(
-          collection(db, 'companyTrailers'),
-          where('companyId', '==', currentUser.uid),
-          orderBy('trailerNumber')
-        );
-        const snapshot = await getDocs(qry);
-        const trailers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const container = document.getElementById('trailers-list');
-        
-        if (!trailers.length) {
-          container.innerHTML = '<p class="text-muted">No trailers added yet. Click "Add Trailer" to get started.</p>';
-        } else {
-          container.innerHTML = trailers.map(t => `
-            <div class="list-item ${t.active !== false ? '' : 'inactive'}">
-              <div>
-                <strong>${t.trailerNumber}</strong> — ${t.type || 'Trailer'}
-                <div class="text-sm">Owner: ${t.owner || 'Company'} ${t.registration ? '• ' + t.registration : ''} ${t.motExpiry ? '• MOT: ' + formatDate(t.motExpiry) : ''}</div>
-              </div>
-              <div class="item-actions">
-                <span class="badge ${t.active !== false ? 'badge-success' : 'badge-danger'}">${t.active !== false ? 'Active' : 'Inactive'}</span>
-                <button class="btn small danger" onclick="toggleTrailerActive('${t.id}', ${t.active !== false})">${t.active !== false ? 'Deactivate' : 'Activate'}</button>
-              </div>
-            </div>
-          `).join('');
-        }
-        
-        const countEl = document.getElementById('count-trailers');
-        if (countEl) countEl.textContent = trailers.filter(t => t.active !== false).length;
-      } catch (err) {
-        console.error('Error loading trailers:', err);
-        document.getElementById('trailers-list').innerHTML = '<p class="text-danger">Error loading trailers. Check your Firestore permissions.</p>';
-      }
-    }
-
-    // ========== DRIVER MANAGEMENT ==========
-    function renderDriversPage() {
-      if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
+        <div id="calendar-content"></div>
+      </div>
       
-      return `
+      <!-- Documents Page -->
+      <div id="driver-documents-page" style="display:none">
         <div class="page-header">
-          <h2>👥 Driver Management</h2>
+          <h2>📁 My Documents</h2>
+          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
         </div>
-
         <div class="card">
-          <p class="text-muted">Drivers who accept work from your company will appear here automatically. You can also view their licence details and documents.</p>
+          <form onsubmit="uploadDriverDocument(event)">
+            <div class="form-group">
+              <label>Document Name</label>
+              <input type="text" id="document-name" placeholder="e.g. Driving Licence" required>
+            </div>
+            <div class="form-group">
+              <label>Select File</label>
+              <input type="file" id="document-file" accept=".pdf,.jpg,.jpeg,.png" required>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn primary">📤 Upload Document</button>
+            </div>
+          </form>
         </div>
-
         <div class="card">
-          <h3>All Drivers</h3>
-          <div id="drivers-list">
-            <p>Loading drivers...</p>
+          <h3>Uploaded Documents</h3>
+          <div id="documents-list">
+            <p class="text-muted">Loading documents...</p>
           </div>
         </div>
-      `;
-    }
-
-    async function loadCompanyDrivers() {
-      if (!currentUser || currentUserRole !== 'company') return;
-      try {
-        const qry = query(
-          collection(db, 'companyMembers'),
-          where('companyId', '==', currentUser.uid)
-        );
-        const snapshot = await getDocs(qry);
-        
-        const drivers = [];
-        for (const docSnap of snapshot.docs) {
-          const data = docSnap.data();
-          let profile = { fullName: data.driverName || 'Unknown', email: data.driverEmail || '' };
-          
-          try {
-            const userRef = doc(db, 'users', data.driverId);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-              profile = { ...profile, ...userSnap.data() };
-            }
-          } catch (e) {}
-          
-          drivers.push({ id: docSnap.id, driverId: data.driverId, ...data, ...profile });
-        }
-        
-        const container = document.getElementById('drivers-list');
-        if (!drivers.length) {
-          container.innerHTML = '<p class="text-muted">No drivers linked to your company yet. When drivers accept work from you, they will appear here.</p>';
-        } else {
-          container.innerHTML = drivers.map(d => `
-            <div class="list-item">
-              <div>
-                <strong>${d.fullName || d.driverName || 'Unknown Driver'}</strong>
-                <div class="text-sm">${d.email || d.driverEmail || 'No email'}</div>
-                <div class="text-sm">
-                  Licence: ${d.licenceNumber || 'Not provided'}
-                  ${d.licenceExpiry ? `• Expires: ${formatDate(d.licenceExpiry)}` : ''}
-                  ${d.medicalExpiry ? `• Medical: ${formatDate(d.medicalExpiry)}` : ''}
-                </div>
-              </div>
-              <div class="item-actions">
-                <button class="btn small" onclick="viewDriverDocs('${d.driverId}')">📄 Documents</button>
-                <button class="btn small danger" onclick="removeDriver('${d.id}')">Remove</button>
-              </div>
-            </div>
-          `).join('');
-        }
-        
-        const countEl = document.getElementById('count-drivers');
-        if (countEl) countEl.textContent = drivers.length;
-      } catch (err) {
-        console.error('Error loading drivers:', err);
-        document.getElementById('drivers-list').innerHTML = '<p class="text-danger">Error loading drivers.</p>';
-      }
-    }
-
-    window.viewDriverDocs = async function(driverId) {
-      try {
-        const docRef = doc(db, 'users', driverId);
-        const snap = await getDoc(docRef);
-        if (!snap.exists()) throw new Error('Driver not found');
-        
-        const d = snap.data();
-        showModal(`
-          <h3>${d.fullName || 'Driver'} — Licence & Documents</h3>
-          <div style="margin-bottom:16px">
-            <p><strong>Driving Licence Number:</strong> ${d.licenceNumber || 'Not provided'}</p>
-            <p><strong>Licence Categories:</strong> ${d.licenceCategories || 'Not provided'}</p>
-            <p><strong>DVLA Check Code:</strong> ${d.dvlaCheckCode || 'Not provided'}</p>
-            <p><strong>Licence Valid From:</strong> ${d.licenceValidFrom ? formatDate(d.licenceValidFrom) : 'Not provided'}</p>
-            <p><strong>Licence Expiry:</strong> ${d.licenceExpiry ? formatDate(d.licenceExpiry) : 'Not provided'}</p>
-            <p><strong>Penalty Points:</strong> ${d.points ?? 0}</p>
-            <p><strong>Medical Certificate Expiry:</strong> ${d.medicalExpiry ? formatDate(d.medicalExpiry) : 'Not provided'}</p>
-            <hr style="margin:12px 0">
-            <p class="text-muted">Documents uploaded by the driver will appear here.</p>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn primary" onclick="closeModal()">Close</button>
-          </div>
-        `);
-      } catch (err) {
-        showToast('Could not load driver details ❌', 'error');
-      }
-    };
-
-    window.removeDriver = async function(memberId) {
-      if (!confirm('Remove this driver from your company? They will no longer see your jobs.')) return;
-      try {
-        await deleteDoc(doc(db, 'companyMembers', memberId));
-        loadCompanyDrivers();
-        showToast('Driver removed ✅');
-      } catch (err) {
-        showToast('Error removing driver ❌', 'error');
-      }
-    };
-
-    // ========== COMPANY PROFILE ==========
-    function renderCompanyProfilePage() {
-      if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
+      </div>
       
-      return `
-        <div class="page-header">
-          <h2>🏢 Company Profile</h2>
-        </div>
-
-        <form onsubmit="saveCompanyProfile(event)" class="card">
-          <h3 style="margin-bottom:16px">Company Information</h3>
-          
-          <div class="form-group">
-            <label>Registered Company Name *</label>
-            <input type="text" id="comp-registeredName" required>
-          </div>
-
-          <div class="form-group">
-            <label>Trading Name (if different)</label>
-            <input type="text" id="comp-tradingName">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Companies House / HMRC Number *</label>
-              <input type="text" id="comp-companyNumber" required>
-            </div>
-            <div class="form-group">
-              <label>Operator's Licence Number *</label>
-              <input type="text" id="comp-licenceNumber" required>
-            </div>
-          </div>
-
-          <h4 style="margin:20px 0 10px">Registered Address</h4>
-          <div class="form-group">
-            <label>Address Line 1 *</label>
-            <input type="text" id="comp-addr1" required>
-          </div>
-          <div class="form-group">
-            <label>Address Line 2</label>
-            <input type="text" id="comp-addr2">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Town / City *</label>
-              <input type="text" id="comp-city" required>
-            </div>
-            <div class="form-group">
-              <label>Postcode *</label>
-              <input type="text" id="comp-postcode" required>
-            </div>
-          </div>
-
-          <h4 style="margin:20px 0 10px">Contact Information</h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Main Contact Name</label>
-              <input type="text" id="comp-contactName">
-            </div>
-            <div class="form-group">
-              <label>Telephone</label>
-              <input type="tel" id="comp-phone">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Email Address (General)</label>
-            <input type="email" id="comp-email">
-          </div>
-          <div class="form-group">
-            <label>Invoicing Contact — Name & Department</label>
-            <input type="text" id="comp-invoiceContact" placeholder="e.g. Accounts Department">
-          </div>
-          <div class="form-group">
-            <label>Invoicing Email Address</label>
-            <input type="email" id="comp-invoiceEmail" placeholder="accounts@yourcompany.com">
-          </div>
-          <div class="form-group">
-            <label>Invoicing Telephone</label>
-            <input type="tel" id="comp-invoicePhone">
-          </div>
-
-          <h4 style="margin:20px 0 10px">Compliance</h4>
-          <div class="form-group">
-            <label>Traffic Commissioner Area</label>
-            <select id="comp-tcArea">
-              <option value="">Select...</option>
-              <option value="North East of England">North East of England</option>
-              <option value="North West of England">North West of England</option>
-              <option value="West Midlands">West Midlands</option>
-              <option value="East Midlands">East Midlands</option>
-              <option value="Eastern England">Eastern England</option>
-              <option value="South Eastern and Metropolitan">South Eastern and Metropolitan</option>
-              <option value="Western England">Western England</option>
-              <option value="Wales">Wales</option>
-              <option value="Scotland">Scotland</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Authorised Operating Centres</label>
-            <textarea id="comp-operatingCentres" rows="3" placeholder="List your operating centres here..."></textarea>
-          </div>
-          <div class="form-group">
-            <label>Transport Manager Name</label>
-            <input type="text" id="comp-transportManager">
-          </div>
-          <div class="form-group">
-            <label>Transport Manager CPC Expiry</label>
-            <input type="date" id="comp-tmExpiry">
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn primary">Save Company Profile</button>
-          </div>
-        </form>
-      `;
-    }
-
-    window.saveCompanyProfile = async function(e) {
-      e.preventDefault();
-      try {
-        const data = {
-          registeredName: getVal('comp-registeredName'),
-          tradingName: getVal('comp-tradingName'),
-          companyNumber: getVal('comp-companyNumber'),
-          operatorsLicenceNumber: getVal('comp-licenceNumber'),
-          address: {
-            line1: getVal('comp-addr1'),
-            line2: getVal('comp-addr2'),
-            city: getVal('comp-city'),
-            postcode: getVal('comp-postcode')
-          },
-          contactName: getVal('comp-contactName'),
-          telephone: getVal('comp-phone'),
-          email: getVal('comp-email'),
-          invoiceContact: getVal('comp-invoiceContact'),
-          invoiceEmail: getVal('comp-invoiceEmail'),
-          invoiceTelephone: getVal('comp-invoicePhone'),
-          tcArea: getVal('comp-tcArea'),
-          operatingCentres: getVal('comp-operatingCentres'),
-          transportManager: getVal('comp-transportManager'),
-          transportManagerExpiry: getVal('comp-tmExpiry') ? new Date(getVal('comp-tmExpiry')) : null,
-          updatedAt: new Date()
-        };
-
-        await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'profile'), data, { merge: true });
-        showToast('Company profile saved ✅');
-      } catch (err) {
-        console.error('Error saving profile:', err);
-        showToast('Error saving profile ❌', 'error');
-      }
-    };
-
-    async function loadCompanyProfileData() {
-      if (!currentUser || currentUserRole !== 'company') return;
-      try {
-        const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'profile'));
-        if (snap.exists()) {
-          const d = snap.data();
-          setVal('comp-registeredName', d.registeredName || '');
-          setVal('comp-tradingName', d.tradingName || '');
-          setVal('comp-companyNumber', d.companyNumber || '');
-          setVal('comp-licenceNumber', d.operatorsLicenceNumber || '');
-          setVal('comp-addr1', d.address?.line1 || '');
-          setVal('comp-addr2', d.address?.line2 || '');
-          setVal('comp-city', d.address?.city || '');
-          setVal('comp-postcode', d.address?.postcode || '');
-          setVal('comp-contactName', d.contactName || '');
-          setVal('comp-phone', d.telephone || '');
-          setVal('comp-email', d.email || '');
-          setVal('comp-invoiceContact', d.invoiceContact || '');
-          setVal('comp-invoiceEmail', d.invoiceEmail || '');
-          setVal('comp-invoicePhone', d.invoiceTelephone || '');
-          setVal('comp-tcArea', d.tcArea || '');
-          setVal('comp-operatingCentres', d.operatingCentres || '');
-          setVal('comp-transportManager', d.transportManager || '');
-          setVal('comp-tmExpiry', d.transportManagerExpiry ? new Date(d.transportManagerExpiry.toDate ? d.transportManagerExpiry.toDate() : d.transportManagerExpiry).toISOString().split('T')[0] : '');
-        }
-      } catch (err) {
-        console.log('No existing profile yet');
-      }
-    }
-
-    // ========== CHECKLIST EDITOR — DVSA COMPLIANT ==========
-    function renderChecklistEditorPage() {
-      if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
-      
-      return `
-        <div class="page-header">
-          <h2>📋 Walkaround Checklist Editor</h2>
-          <button class="btn primary" onclick="resetChecklist()">↺ Reset to DVSA Default</button>
-        </div>
-
-        <div class="card">
-          <p class="text-muted">Edit your daily walkaround checklists. These are based on DVSA guidelines — add, rename, reorder or remove items as needed.</p>
-        </div>
-
-        <div class="card">
-          <h3>Checklist Structure</h3>
-          <div id="checklist-editor-content">
-            <p>Loading checklist...</p>
-          </div>
-          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
-            <button class="btn secondary" onclick="addNewCategory()">+ Add Category</button>
-            <button class="btn primary" onclick="saveChecklist()">💾 Save Checklist</button>
-          </div>
-        </div>
-      `;
-    }
-
-    async function loadChecklistData() {
-      if (!currentUser || currentUserRole !== 'company') return;
-      try {
-        const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
-        if (snap.exists() && snap.data().items) {
-          currentChecklistData = snap.data().items;
-        } else {
-          currentChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
-        }
-      } catch (err) {
-        console.log('Using default checklist');
-        currentChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
-      }
-      renderChecklistEditor();
-    }
-
-    function renderChecklistEditor() {
-      const container = document.getElementById('checklist-editor-content');
-      if (!container) return;
-      
-      container.innerHTML = currentChecklistData.map((cat, catIdx) => `
-        <div class="checklist-category" data-cat="${catIdx}">
-          <div class="category-header" onclick="toggleCategory(${catIdx})">
-            <span>📁 ${cat.category}</span>
-            <span>▼</span>
-          </div>
-          <div class="category-body" id="cat-body-${catIdx}">
-            <div style="margin-bottom:12px">
-              <input type="text" value="${cat.category}" 
-                onchange="updateCategoryName(${catIdx}, this.value)"
-                style="font-weight:bold;font-size:16px;width:100%">
-            </div>
-            ${cat.items.map((item, itemIdx) => `
-              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px" class="check-item-row">
-                <span style="color:#999">•</span>
-                <input type="text" value="${item}" 
-                  onchange="updateCheckItem(${catIdx}, ${itemIdx}, this.value)"
-                  style="flex:1">
-                <button class="btn small danger" onclick="deleteCheckItem(${catIdx}, ${itemIdx})" 
-                  style="padding:2px 8px">✕</button>
-              </div>
-            `).join('')}
-            <button class="btn small secondary" onclick="addCheckItem(${catIdx})" style="margin-top:8px">+ Add Item</button>
-            <button class="btn small danger" onclick="deleteCategory(${catIdx})" style="margin-top:8px;float:right">Delete Category</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    window.toggleCategory = function(idx) {
-      const body = document.getElementById(`cat-body-${idx}`);
-      if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
-    };
-
-    window.updateCategoryName = function(idx, name) {
-      currentChecklistData[idx].category = name;
-    };
-
-    window.updateCheckItem = function(catIdx, itemIdx, value) {
-      currentChecklistData[catIdx].items[itemIdx] = value;
-    };
-
-    window.addCheckItem = function(catIdx) {
-      const val = prompt('Enter new check item:');
-      if (val && val.trim()) {
-        currentChecklistData[catIdx].items.push(val.trim());
-        renderChecklistEditor();
-      }
-    };
-
-    window.deleteCheckItem = function(catIdx, itemIdx) {
-      if (confirm('Delete this item?')) {
-        currentChecklistData[catIdx].items.splice(itemIdx, 1);
-        renderChecklistEditor();
-      }
-    };
-
-    window.addNewCategory = function() {
-      const name = prompt('Enter category name:');
-      if (name && name.trim()) {
-        currentChecklistData.push({ category: name.trim(), items: [] });
-        renderChecklistEditor();
-      }
-    };
-
-    window.deleteCategory = function(idx) {
-      if (confirm('Delete this entire category and all its items?')) {
-        currentChecklistData.splice(idx, 1);
-        renderChecklistEditor();
-      }
-    };
-
-    window.saveChecklist = async function() {
-      try {
-        await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
-          items: currentChecklistData,
-          updatedAt: new Date()
-        });
-        showToast('Checklist saved ✅');
-      } catch (err) {
-        showToast('Error saving checklist ❌', 'error');
-      }
-    };
-
-    window.resetChecklist = function() {
-      if (confirm('Reset to DVSA default checklist? Your custom changes will be lost.')) {
-        currentChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
-        renderChecklistEditor();
-        showToast('Reset to DVSA defaults ✅');
-      }
-    };
-
-    // ========== DRIVER WALKAROUND CHECK ==========
-    function renderDriverCheckPage() {
-      if (!currentUser) return renderAccessDenied();
-      
-      return `
+      <!-- Walkaround Checklist Page -->
+      <div id="driver-checklist-page" style="display:none">
         <div class="page-header">
           <h2>✅ Daily Walkaround Check</h2>
+          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
         </div>
-
         <div class="card">
-          <h3>Select Vehicle & Trailer</h3>
           <div class="form-row">
             <div class="form-group">
-              <label>Check Type</label>
-              <select id="check-type" onchange="updateCheckOptions()">
-                <option value="vehicle">Vehicle Only</option>
-                <option value="both">Vehicle + Trailer</option>
-                <option value="trailer">Trailer Only</option>
-              </select>
+              <label>Vehicle Registration *</label>
+              <input type="text" id="checklist-vehiclereg" placeholder="e.g. AB12 XYZ" required style="text-transform:uppercase">
             </div>
             <div class="form-group">
-              <label>Company</label>
-              <select id="check-company">
-                <option value="">Loading companies...</option>
-              </select>
+              <label>Current Mileage *</label>
+              <input type="number" id="checklist-mileage" placeholder="Miles" required>
             </div>
-          </div>
-          <div class="form-row" id="vehicle-select-row" style="display:block">
-            <div class="form-group">
-              <label>Vehicle</label>
-              <select id="check-vehicle">
-                <option value="">Select a company first</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row" id="trailer-select-row" style="display:none">
-            <div class="form-group">
-              <label>Trailer</label>
-              <select id="check-trailer">
-                <option value="">Select a company first</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Odometer Reading</label>
-            <input type="number" id="check-mileage" placeholder="Miles">
           </div>
         </div>
-
         <div class="card">
           <h3>Check Items</h3>
-          <p class="text-muted">Select ✅ Pass or ❌ Fail for each item. Add notes if required.</p>
-          <div id="driver-checklist-content">
+          <p class="text-muted">Select PASS or FAIL for each item. Add notes if reporting a defect.</p>
+          <form id="checklist-form" onsubmit="event.preventDefault()">
+            <!-- Checklist items rendered dynamically by app.js -->
             <p>Loading checklist...</p>
-          </div>
+          </form>
         </div>
-
         <div class="card">
-          <h3>Declaration & Signature</h3>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:8px;font-weight:normal">
-              <input type="checkbox" id="check-declare">
-              I certify that I have personally carried out this check and the details are correct.
-            </label>
-          </div>
-          <div class="form-group">
-            <label>Your Name (Sign-off)</label>
-            <input type="text" id="check-driver-name" placeholder="Enter your full name">
-          </div>
           <div class="form-actions">
-            <button class="btn primary" onclick="submitWalkaroundCheck()">✅ Submit Check</button>
+            <button class="btn secondary" onclick="showPage('driver-portal-page')">Cancel</button>
+            <button class="btn primary" onclick="submitChecklist()">✅ Submit Check</button>
           </div>
         </div>
-      `;
-    }
-
-    window.updateCheckOptions = function() {
-      const type = document.getElementById('check-type').value;
-      document.getElementById('vehicle-select-row').style.display = type === 'trailer' ? 'none' : 'block';
-      document.getElementById('trailer-select-row').style.display = type === 'vehicle' ? 'none' : 'block';
-    };
-
-    let driverCheckResults = {};
-
-    async function loadDriverChecklist() {
-      try {
-        let items = DEFAULT_CHECKLIST_ITEMS;
-        // Try to load company-specific checklist if a company is selected
-        const container = document.getElementById('driver-checklist-content');
-        if (!container) return;
-        
-        container.innerHTML = items.map((cat, catIdx) => `
-          <div class="checklist-category">
-            <div class="category-header">${cat.category}</div>
-            <div class="category-body">
-              ${cat.items.map((item, itemIdx) => {
-                const key = `${catIdx}-${itemIdx}`;
-                return `
-                  <div style="padding:8px 0;border-bottom:1px solid #eee">
-                    <div style="margin-bottom:6px">${item}</div>
-                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                      <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:normal">
-                        <input type="radio" name="check-${key}" value="pass" 
-                          onchange="setCheckResult('${key}', 'pass')"> ✅ Pass
-                      </label>
-                      <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:normal">
-                        <input type="radio" name="check-${key}" value="fail" 
-                          onchange="setCheckResult('${key}', 'fail')"> ❌ Fail
-                      </label>
-                      <input type="text" placeholder="Notes..." 
-                        id="note-${key}" style="flex:1;max-width:200px;padding:4px 8px;font-size:13px">
-                    </div>
-                  </div>
-                `;
-              }).join('')}
+      </div>
+    </div>
+        <!-- ====================================== -->
+    <!-- COMPANY PORTAL PAGE                    -->
+    <!-- ====================================== -->
+    <div id="company-portal-page" class="page">
+      <div id="company-dashboard"></div>
+      
+      <!-- Posted Work Page -->
+      <div id="posted-work-page" style="display:none">
+        <div class="page-header">
+          <h2>📋 Posted Work</h2>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+        </div>
+        <div id="posted-work-list">
+          <p class="text-muted">Loading jobs...</p>
+        </div>
+      </div>
+      
+      <!-- Post New Job Page -->
+      <div id="post-job-page" style="display:none">
+        <div class="page-header">
+          <h2>🚛 Post New Job</h2>
+          <button class="btn secondary" onclick="showPostedWork()">← Back</button>
+        </div>
+        <div class="card">
+          <form id="post-job-form" onsubmit="postNewJob(event)">
+            <div class="form-group">
+              <label>Job Title *</label>
+              <input type="text" id="job-title" placeholder="e.g. Glasgow — Manchester Return" required>
             </div>
-          </div>
-        `).join('');
-      } catch (err) {
-        console.error('Error loading checklist:', err);
-      }
+            <div class="form-row">
+              <div class="form-group">
+                <label>Location *</label>
+                <input type="text" id="job-location" placeholder="Pickup / Destination" required>
+              </div>
+              <div class="form-group">
+                <label>Date *</label>
+                <input type="date" id="job-date" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Rate (£) *</label>
+              <input type="number" id="job-rate" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+              <label>Description / Additional Info</label>
+              <textarea id="job-description" rows="4" placeholder="Vehicle type, load details, special instructions..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn secondary" onclick="showPostedWork()">Cancel</button>
+              <button type="submit" class="btn primary">🚛 Post Job</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Add Driver Page -->
+      <div id="add-driver-page" style="display:none">
+        <div class="page-header">
+          <h2>👤 Add Employed Driver</h2>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+        </div>
+        <div class="card">
+          <form id="add-driver-form" onsubmit="addEmployedDriver(event)">
+            <div class="form-group">
+              <label>Driver's Email Address *</label>
+              <input type="email" id="driver-email-input" required>
+            </div>
+            <div class="form-group">
+              <label>Driver's Full Name</label>
+              <input type="text" id="driver-name-input" placeholder="If not yet registered">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn primary">➕ Add Driver</button>
+            </div>
+            <div id="add-driver-result" style="margin-top:16px"></div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Checklist Editor Page -->
+      <div id="checklist-editor-page" style="display:none">
+        <div class="page-header">
+          <h2>✅ Checklist Editor</h2>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+        </div>
+        <div class="card">
+          <p class="text-muted">Customise your DVSA walkaround checklist. Changes apply to all drivers in your company.</p>
+        </div>
+        <div id="checklist-editor-content">
+          <p>Loading checklist...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Firebase SDK Imports -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
+      "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
     }
+  }
+  </script>
 
-    window.setCheckResult = function(key, value) {
-      driverCheckResults[key] = { result: value, note: document.getElementById(`note-${key}`)?.value || '' };
-    };
+  <!-- Main App Script -->
+  <script type="module" src="app.js"></script>
 
-    window.submitWalkaroundCheck = async function() {
-      const type = document.getElementById('check-type').value;
-      const companyId = document.getElementById('check-company').value;
-      const vehicleId = document.getElementById('check-vehicle').value;
-      const trailerId = document.getElementById('check-trailer').value;
-      const mileage = document.getElementById('check-mileage').value;
-      const driverName = document.getElementById('check-driver-name').value;
-      const declared = document.getElementById('check-declare').checked;
-
-      if (!driverName || !declared) {
-        showToast('Please enter your name and confirm the declaration ❌', 'error');
-        return;
-      }
-      if ((type !== 'trailer' && !vehicleId) || (type !== 'vehicle' && !trailerId)) {
-        showToast('Please select a vehicle/trailer ❌', 'error');
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, 'walkaroundChecks'), {
-          driverId: currentUser.uid,
-          driverName: driverName,
-          companyId: companyId,
-          checkType: type,
-          vehicleId: vehicleId || null,
-          trailerId: trailerId || null,
-          mileage: mileage || null,
-          results: driverCheckResults,
-          checkDate: new Date(),
-          submittedAt: new Date()
-        });
-        showToast('✅ Check submitted successfully!');
-        // Reset form
-        setTimeout(() => showPage('dashboard'), 1500);
-      } catch (err) {
-        console.error('Error submitting check:', err);
-        showToast('Error submitting check ❌', 'error');
-      }
-    };
-
-    // ========== AUTH HANDLERS ==========
-    window.handleSignIn = async function(e) {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
+  <!-- Auth Page Tab Switching -->
+  <script>
+    // Simple tab switching for auth page
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabSignin = document.getElementById('tab-signin');
+      const tabRegister = document.getElementById('tab-register');
+      const signinForm = document.getElementById('signin-form');
+      const registerForm = document.getElementById('register-form');
       
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        showToast('Welcome back! ✅');
-      } catch (err) {
-        showToast('Sign in failed: ' + err.message + ' ❌', 'error');
-      }
-    };
-
-    window.handleRegister = async function(e, role) {
-      e.preventDefault();
-      const name = document.getElementById('reg-name').value;
-      const email = document.getElementById('reg-email').value;
-      const password = document.getElementById('reg-password').value;
-      
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          fullName: name,
-          email: email,
-          role: role,
-          createdAt: new Date()
-        });
-        showToast('Account created! ✅');
-      } catch (err) {
-        showToast('Registration failed: ' + err.message + ' ❌', 'error');
-      }
-    };
-
-    window.handleResetPassword = async function(e) {
-      e.preventDefault();
-      const email = document.getElementById('reset-email').value;
-      try {
-        await sendPasswordResetEmail(auth, email);
-        showToast('Reset link sent! Check your email ✅');
-        setTimeout(() => showPage('login'), 2000);
-      } catch (err) {
-        showToast('Error: ' + err.message + ' ❌', 'error');
-      }
-    };
-
-    window.handleSignOut = async function() {
-      if (confirm('Sign out?')) {
-        await signOut(auth);
-        showToast('Signed out ✅');
-      }
-    };
-
-    window.saveDriverProfile = async function(e) {
-      e.preventDefault();
-      try {
-        const data = {
-          fullName: getVal('drv-fullname'),
-          licenceNumber: getVal('drv-licence').toUpperCase(),
-          licenceCategories: getVal('drv-categories'),
-          points: parseInt(getVal('drv-points')) || 0,
-          dvlaCheckCode: getVal('drv-dvla-code'),
-          licenceValidFrom: getVal('drv-valid-from') ? new Date(getVal('drv-valid-from')) : null,
-          licenceExpiry: getVal('drv-expiry') ? new Date(getVal('drv-expiry')) : null,
-          medicalExpiry: getVal('drv-medical') ? new Date(getVal('drv-medical')) : null,
-          updatedAt: new Date()
+      if (tabSignin && tabRegister) {
+        tabSignin.onclick = () => {
+          tabSignin.classList.remove('secondary'); tabSignin.classList.add('primary');
+          tabRegister.classList.remove('primary'); tabRegister.classList.add('secondary');
+          if(signinForm) signinForm.style.display = 'block';
+          if(registerForm) registerForm.style.display = 'none';
         };
-        await setDoc(doc(db, 'users', currentUser.uid), data, { merge: true });
-        showToast('Profile saved ✅');
-      } catch (err) {
-        showToast('Error saving profile ❌', 'error');
-      }
-    };
-
-    // ========== PAGE ROUTER ==========
-    async function showPage(page) {
-      currentPage = page;
-      const app = document.getElementById('app');
-      
-      // Update nav visibility
-      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-      
-      let html = '';
-      
-      switch(page) {
-        case 'login':
-          html = renderLoginPage();
-          break;
-        case 'register':
-          html = renderRegisterPage();
-          break;
-        case 'reset':
-          html = renderResetPage();
-          break;
-        case 'dashboard':
-          html = renderDashboardPage();
-          break;
-        case 'jobs':
-          html = renderJobsPage();
-          break;
-        case 'profile':
-          html = renderProfilePage();
-          break;
-        case 'vehicles':
-          html = renderVehiclesPage();
-          break;
-        case 'drivers':
-          html = renderDriversPage();
-          break;
-        case 'checklist-editor':
-          html = renderChecklistEditorPage();
-          break;
-        case 'company-profile':
-          html = renderCompanyProfilePage();
-          break;
-        case 'driver-check':
-          html = renderDriverCheckPage();
-          break;
-        default:
-          html = renderDashboardPage();
-      }
-      
-      app.innerHTML = html;
-      
-      // Load page-specific data
-      if (page === 'vehicles') {
-        loadVehicles();
-        loadTrailers();
-      }
-      if (page === 'drivers') {
-        loadCompanyDrivers();
-      }
-      if (page === 'checklist-editor') {
-        loadChecklistData();
-      }
-      if (page === 'company-profile') {
-        loadCompanyProfileData();
-      }
-      if (page === 'driver-check') {
-        loadDriverChecklist();
-      }
-    }
-
-    // ========== AUTH STATE CHANGE ==========
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      const protectedPages = ['dashboard', 'jobs', 'profile', 'vehicles', 'drivers', 'checklist-editor', 'company-profile', 'driver-check'];
-      
-      if (user) {
-        // Load user role
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (snap.exists()) {
-            currentUserRole = snap.data().role;
-          }
-        } catch (e) {
-          console.log('Could not load user role');
-        }
-        
-        // Show/hide nav items based on role
-        const companyLinks = ['nav-vehicles', 'nav-drivers', 'nav-checklist', 'nav-profile'];
-        const driverLinks = ['nav-check'];
-        
-        if (currentUserRole === 'company') {
-          companyLinks.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'block'; });
-          driverLinks.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
-        } else {
-          companyLinks.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
-          driverLinks.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'block'; });
-        }
-        
-        // Redirect to dashboard if on auth pages
-        if (['login', 'register', 'reset'].includes(currentPage)) {
-          showPage('dashboard');
-        } else {
-          showPage(currentPage);
-        }
-      } else {
-        // Hide protected pages
-        const allProtected = [...['nav-vehicles', 'nav-drivers', 'nav-checklist', 'nav-profile'], ...['nav-check']];
-        allProtected.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
-        
-        if (protectedPages.includes(currentPage)) {
-          showPage('login');
-        } else {
-          showPage(currentPage);
-        }
+        tabRegister.onclick = () => {
+          tabRegister.classList.remove('secondary'); tabRegister.classList.add('primary');
+          tabSignin.classList.remove('primary'); tabSignin.classList.add('secondary');
+          if(signinForm) signinForm.style.display = 'none';
+          if(registerForm) registerForm.style.display = 'block';
+        };
       }
     });
-
-    console.log('%c🚛 LSD Solutions App Loaded', 'font-weight:bold;font-size:16px;color:#1a365d');
-    console.log('Remember to update your Firebase config at the top of the script!');
   </script>
 </body>
 </html>
