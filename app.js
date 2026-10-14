@@ -148,7 +148,7 @@ window.register = async function (role) {
   const email = document.getElementById(`register-${role}-email`).value.trim();
   const password = document.getElementById(`register-${role}-password`).value;
   const confirm = document.getElementById(`register-${role}-confirm`).value;
-
+  
   if (!name || !email || !password) {
     alert('Please fill in all fields');
     return;
@@ -169,19 +169,21 @@ window.register = async function (role) {
   try {
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
-
+    
     // ✅ Send verification email
     await sendEmailVerification(user);
-
-    // ✅ Save to CORRECT collection matching auth state check
+    
+    // ✅ Save to CORRECT collection
     const collectionName = role === 'driver' ? 'drivers' : 'companies';
-   await setDoc(doc(db, collectionName, user.uid), {
-  name,
-  email: user.email,
-  role: accountType,
-  createdAt: serverTimestamp(),
-  companyId: null // ✅ ADDED — starts null, filled when company assigns you
-});
+    const accountType = role; // ✅ FIXED: Define accountType here
+    
+    await setDoc(doc(db, collectionName, user.uid), {
+      name,
+      email,
+      role: accountType,
+      companyId: null, // ✅ Added for consistency
+      createdAt: serverTimestamp()
+    });
 
     alert('✅ Account created! Please check your email to verify, then sign in.');
     showPage('auth-page');
@@ -190,7 +192,6 @@ window.register = async function (role) {
     alert('Registration failed: ' + err.message);
   }
 };
-
 window.signOut = async function () {
   await signOut(auth);
   showPage('auth-page');
