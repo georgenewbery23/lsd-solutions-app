@@ -1447,3 +1447,907 @@ console.log('✅ DVSA Checklist System Active');
 console.log('========================================');
 console.log('Version: 1.0 | Build: 2026-10-14');
 console.log('========================================');
+// ==================================================
+// 🚛 LSD SOLUTIONS — VEHICLE & TRAILER MANAGEMENT
+// PDF REPORTS • EMAIL NOTIFICATIONS • SERVICE LOGS
+// ==================================================
+
+// ==================================================
+// 🛠️ HELPER FUNCTIONS
+// ==================================================
+function formatDate(dateVal) {
+  if (!dateVal) return '—';
+  const d = dateVal.toDate ? dateVal.toDate() : new Date(dateVal);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatInputDate(dateVal) {
+  if (!dateVal) return '';
+  const d = dateVal.toDate ? dateVal.toDate() : new Date(dateVal);
+  return d.toISOString().split('T')[0];
+}
+
+function daysUntil(dateVal) {
+  if (!dateVal) return -999;
+  const d = dateVal.toDate ? dateVal.toDate() : new Date(dateVal);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    active: '✅ Active',
+    maintenance: '🔧 In Maintenance',
+    offroad: '⛔ Off Road',
+    retired: '📦 Retired',
+    completed: '✅ Completed',
+    pending: '⏳ Pending',
+    'in-progress': '🔄 In Progress'
+  };
+  return labels[status] || status;
+}
+
+function getTrailerTypeLabel(type) {
+  const labels = {
+    box: '📦 Box / Van',
+    curtainside: '🚪 Curtainside',
+    flatbed: '📏 Flatbed',
+    refrigerated: '❄️ Refrigerated',
+    tanker: '🛢️ Tanker',
+    skeletal: '🏗️ Skeletal'
+  };
+  return labels[type] || type;
+}
+
+function getServiceTypeLabel(type) {
+  const labels = {
+    routine: '🔩 Routine Service',
+    repair: '🔧 Repair',
+    mot: '📋 MOT / Inspection',
+    tyres: '🛞 Tyre Replacement',
+    brakes: '🛑 Brakes',
+    other: '📝 Other'
+  };
+  return labels[type] || type;
+}
+
+// ==================================================
+// 🚚 VEHICLE MANAGEMENT
+// ==================================================
+let currentVehicleId = null;
+let currentTrailerId = null;
+
+window.loadVehicles = async function() {
+  if (!currentUser) return;
+  const listEl = document.getElementById('vehicles-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<p class="text-muted">Loading vehicles...</p>';
+  
+  try {
+    const q = query(
+      collection(db, `companies/${currentUser.uid}/vehicles`),
+      orderBy('registration', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      listEl.innerHTML = '<p class="text-muted">No vehicles added yet. Click "Add Vehicle" to get started.</p>';
+      return;
+    }
+    
+    listEl.innerHTML = snapshot.docs.map(doc => {
+      const v = doc.data();
+      const motDays = daysUntil(v.motExpiry);
+      const taxDays = daysUntil(v.taxExpiry);
+      const insDays = daysUntil(v.insuranceExpiry);
+      
+      return `
+        <div class="list-item" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h4 style="margin: 0; font-size: 1.1rem;">${escapeHtml(v.registration)}</h4>
+              <p style="margin: 0.25rem 0; color: #666;">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${v.year || ''}</p>
+              <span class="badge ${v.status === 'active' ? 'badge-success' : v.status === 'maintenance' ? 'badge-warning' : 'badge-danger'}">
+                ${getStatusLabel(v.status)}
+              </span>
+            </div>
+            <div style="text-align: right;">
+              <p style="margin: 0.25rem 0; font-size: 0.9rem;">
+                MOT: ${formatDate(v.motExpiry)} ${motDays >= 0 && motDays <= 30 ? `<span style="color:red; font-weight:bold;">(${motDays}d)</span>` : ''}
+              </p>
+              <p style="margin: 0.25rem 0; font-size: 0.9rem;">
+                Tax: ${formatDate(v.taxExpiry)} ${taxDays >= 0 && taxDays <= 30 ? `<span style="color:red; font-weight:bold;">(${taxDays}d)</span>` : ''}
+              </p>
+              <p style="margin: 0.25rem 0; font-size: 0.9rem;">
+                Ins: ${formatDate(v.insuranceExpiry)} ${insDays >= 0 && insDays <= 30 ? `<span style="color:red; font-weight:bold;">(${insDays}d)</span>` : ''}
+              </p>
+            </div>
+          </div>
+          <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" 
+                    onclick="editVehicle('${doc.id}')">✏️ Edit</button>
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" 
+                    onclick="showServiceForAsset('${v.registration}', 'vehicle')">🔧 Service Log</button>
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" 
+                    onclick="exportVehiclePDF('${doc.id}')">📄 PDF</button>
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem; color: #b00;" 
+                    onclick="deleteVehicle('${doc.id}')">🗑️ Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Error loading vehicles:', error);
+    listEl.innerHTML = '<p style="color:red;">Error loading vehicles. Please refresh.</p>';
+  }
+};
+
+window.showAddVehicleForm = function() {
+  currentVehicleId = null;
+  const title = document.getElementById('vehicle-form-title');
+  const form = document.getElementById('vehicle-form');
+  const idField = document.getElementById('vehicle-id');
+  if (title) title.textContent = 'Add Vehicle';
+  if (form) form.reset();
+  if (idField) idField.value = '';
+  showPage('vehicle-form-page');
+};
+
+window.editVehicle = async function(id) {
+  currentVehicleId = id;
+  const docSnap = await getDoc(doc(db, `companies/${currentUser.uid}/vehicles/${id}`));
+  if (!docSnap.exists) return;
+  const v = docSnap.data();
+  
+  document.getElementById('vehicle-form-title').textContent = 'Edit Vehicle';
+  document.getElementById('vehicle-id').value = id;
+  document.getElementById('veh-reg').value = v.registration || '';
+  document.getElementById('veh-type').value = v.type || 'tractor';
+  document.getElementById('veh-make').value = v.make || '';
+  document.getElementById('veh-model').value = v.model || '';
+  document.getElementById('veh-year').value = v.year || '';
+  document.getElementById('veh-mot-expiry').value = formatInputDate(v.motExpiry);
+  document.getElementById('veh-tax-expiry').value = formatInputDate(v.taxExpiry);
+  document.getElementById('veh-ins-expiry').value = formatInputDate(v.insuranceExpiry);
+  document.getElementById('veh-status').value = v.status || 'active';
+  document.getElementById('veh-notes').value = v.notes || '';
+  
+  showPage('vehicle-form-page');
+};
+
+window.saveVehicle = async function(e) {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const vehicleData = {
+    companyId: currentUser.uid,
+    registration: document.getElementById('veh-reg').value.toUpperCase(),
+    type: document.getElementById('veh-type').value,
+    make: document.getElementById('veh-make').value,
+    model: document.getElementById('veh-model').value,
+    year: parseInt(document.getElementById('veh-year').value) || null,
+    motExpiry: new Date(document.getElementById('veh-mot-expiry').value),
+    taxExpiry: new Date(document.getElementById('veh-tax-expiry').value),
+    insuranceExpiry: new Date(document.getElementById('veh-ins-expiry').value),
+    status: document.getElementById('veh-status').value,
+    notes: document.getElementById('veh-notes').value,
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    if (currentVehicleId) {
+      await updateDoc(doc(db, `companies/${currentUser.uid}/vehicles/${currentVehicleId}`), vehicleData);
+    } else {
+      vehicleData.createdAt = serverTimestamp();
+      await addDoc(collection(db, `companies/${currentUser.uid}/vehicles`), vehicleData);
+    }
+    showPage('vehicles-page');
+    loadVehicles();
+  } catch (error) {
+    console.error('Error saving vehicle:', error);
+    alert('Error saving vehicle. Please try again.');
+  }
+};
+
+window.deleteVehicle = async function(id) {
+  if (!confirm('Are you sure you want to delete this vehicle?')) return;
+  try {
+    await deleteDoc(doc(db, `companies/${currentUser.uid}/vehicles/${id}`));
+    loadVehicles();
+  } catch (error) {
+    console.error('Error deleting vehicle:', error);
+    alert('Error deleting vehicle.');
+  }
+};
+
+// ==================================================
+// 🚛 TRAILER MANAGEMENT
+// ==================================================
+window.loadTrailers = async function() {
+  if (!currentUser) return;
+  const listEl = document.getElementById('trailers-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<p class="text-muted">Loading trailers...</p>';
+  
+  try {
+    const q = query(
+      collection(db, `companies/${currentUser.uid}/trailers`),
+      orderBy('identifier', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      listEl.innerHTML = '<p class="text-muted">No trailers added yet. Click "Add Trailer" to get started.</p>';
+      return;
+    }
+    
+    listEl.innerHTML = snapshot.docs.map(doc => {
+      const t = doc.data();
+      const platDays = daysUntil(t.platingExpiry);
+      const insDays = daysUntil(t.insuranceExpiry);
+      
+      return `
+        <div class="list-item" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h4 style="margin: 0; font-size: 1.1rem;">${escapeHtml(t.identifier)}</h4>
+              <p style="margin: 0.25rem 0; color: #666;">${escapeHtml(t.make || '')} ${escapeHtml(t.model || '')} — ${getTrailerTypeLabel(t.type)}</p>
+              <span class="badge ${t.status === 'active' ? 'badge-success' : 'badge-warning'}">
+                ${getStatusLabel(t.status)}
+              </span>
+            </div>
+            <div style="text-align: right;">
+              ${t.platingExpiry ? `<p style="margin: 0.25rem 0; font-size: 0.9rem;">Plating: ${formatDate(t.platingExpiry)} ${platDays >= 0 && platDays <= 30 ? `<span style="color:red; font-weight:bold;">(${platDays}d)</span>` : ''}</p>` : ''}
+              ${t.insuranceExpiry ? `<p style="margin: 0.25rem 0; font-size: 0.9rem;">Ins: ${formatDate(t.insuranceExpiry)} ${insDays >= 0 && insDays <= 30 ? `<span style="color:red; font-weight:bold;">(${insDays}d)</span>` : ''}</p>` : ''}
+              ${t.maxWeight ? `<p style="margin: 0.25rem 0; font-size: 0.9rem;">Max Load: ${t.maxWeight}kg</p>` : ''}
+            </div>
+          </div>
+          <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" 
+                    onclick="editTrailer('${doc.id}')">✏️ Edit</button>
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" 
+                    onclick="showServiceForAsset('${t.identifier}', 'trailer')">🔧 Service Log</button>
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" 
+                    onclick="exportTrailerPDF('${doc.id}')">📄 PDF</button>
+            <button class="btn secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem; color: #b00;" 
+                    onclick="deleteTrailer('${doc.id}')">🗑️ Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Error loading trailers:', error);
+    listEl.innerHTML = '<p style="color:red;">Error loading trailers.</p>';
+  }
+};
+
+window.showAddTrailerForm = function() {
+  currentTrailerId = null;
+  const title = document.getElementById('trailer-form-title');
+  const form = document.getElementById('trailer-form');
+  const idField = document.getElementById('trailer-id');
+  if (title) title.textContent = 'Add Trailer';
+  if (form) form.reset();
+  if (idField) idField.value = '';
+  showPage('trailer-form-page');
+};
+
+window.editTrailer = async function(id) {
+  currentTrailerId = id;
+  const docSnap = await getDoc(doc(db, `companies/${currentUser.uid}/trailers/${id}`));
+  if (!docSnap.exists) return;
+  const t = docSnap.data();
+  
+  document.getElementById('trailer-form-title').textContent = 'Edit Trailer';
+  document.getElementById('trailer-id').value = id;
+  document.getElementById('trailer-reg').value = t.identifier || '';
+  document.getElementById('trailer-type').value = t.type || 'box';
+  document.getElementById('trailer-make').value = t.make || '';
+  document.getElementById('trailer-model').value = t.model || '';
+  document.getElementById('trailer-year').value = t.year || '';
+  document.getElementById('trailer-mot-expiry').value = formatInputDate(t.platingExpiry);
+  document.getElementById('trailer-ins-expiry').value = formatInputDate(t.insuranceExpiry);
+  document.getElementById('trailer-max-weight').value = t.maxWeight || '';
+  document.getElementById('trailer-status').value = t.status || 'active';
+  document.getElementById('trailer-notes').value = t.notes || '';
+  
+  showPage('trailer-form-page');
+};
+
+window.saveTrailer = async function(e) {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const trailerData = {
+    companyId: currentUser.uid,
+    identifier: document.getElementById('trailer-reg').value.toUpperCase(),
+    type: document.getElementById('trailer-type').value,
+    make: document.getElementById('trailer-make').value,
+    model: document.getElementById('trailer-model').value,
+    year: parseInt(document.getElementById('trailer-year').value) || null,
+    platingExpiry: document.getElementById('trailer-mot-expiry').value ? new Date(document.getElementById('trailer-mot-expiry').value) : null,
+    insuranceExpiry: document.getElementById('trailer-ins-expiry').value ? new Date(document.getElementById('trailer-ins-expiry').value) : null,
+    maxWeight: parseInt(document.getElementById('trailer-max-weight').value) || null,
+    status: document.getElementById('trailer-status').value,
+    notes: document.getElementById('trailer-notes').value,
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    if (currentTrailerId) {
+      await updateDoc(doc(db, `companies/${currentUser.uid}/trailers/${currentTrailerId}`), trailerData);
+    } else {
+      trailerData.createdAt = serverTimestamp();
+      await addDoc(collection(db, `companies/${currentUser.uid}/trailers`), trailerData);
+    }
+    showPage('trailers-page');
+    loadTrailers();
+  } catch (error) {
+    console.error('Error saving trailer:', error);
+    alert('Error saving trailer. Please try again.');
+  }
+};
+
+window.deleteTrailer = async function(id) {
+  if (!confirm('Are you sure you want to delete this trailer?')) return;
+  try {
+    await deleteDoc(doc(db, `companies/${currentUser.uid}/trailers/${id}`));
+    loadTrailers();
+  } catch (error) {
+    console.error('Error deleting trailer:', error);
+    alert('Error deleting trailer.');
+  }
+};
+
+// ==================================================
+// 🔧 SERVICE & MAINTENANCE LOGS
+// ==================================================
+let currentServiceAssetRef = null;
+
+window.loadServiceLogsPage = async function() {
+  await populateAssetSelector();
+  const listEl = document.getElementById('service-logs-list');
+  if (listEl) listEl.innerHTML = '<p class="text-muted">Select an asset above to view history...</p>';
+};
+
+async function populateAssetSelector() {
+  const select = document.getElementById('service-asset');
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Select an asset --</option>';
+  
+  const vSnapshot = await getDocs(collection(db, `companies/${currentUser.uid}/vehicles`));
+  vSnapshot.forEach(doc => {
+    const v = doc.data();
+    select.innerHTML += `<option value="vehicle:${doc.id}">🚚 ${v.registration}</option>`;
+  });
+  
+  const tSnapshot = await getDocs(collection(db, `companies/${currentUser.uid}/trailers`));
+  tSnapshot.forEach(doc => {
+    const t = doc.data();
+    select.innerHTML += `<option value="trailer:${doc.id}">🚛 ${t.identifier}</option>`;
+  });
+}
+
+window.showServiceForAsset = function(assetRef, type) {
+  currentServiceAssetRef = { ref: assetRef, type };
+  showPage('service-logs-page');
+  const refField = document.getElementById('service-asset-ref');
+  if (refField) refField.value = assetRef;
+  loadServiceLogs();
+};
+
+window.loadServiceLogs = async function() {
+  const select = document.getElementById('service-asset');
+  const selectVal = select ? select.value : '';
+  const listEl = document.getElementById('service-logs-list');
+  
+  if (!selectVal || !listEl) {
+    if (listEl) listEl.innerHTML = '<p class="text-muted">Select an asset above to view history...</p>';
+    return;
+  }
+  
+  listEl.innerHTML = '<p class="text-muted">Loading history...</p>';
+  
+  try {
+    const q = query(
+      collection(db, `companies/${currentUser.uid}/serviceLogs`),
+      where('assetRef', '==', selectVal),
+      orderBy('serviceDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      listEl.innerHTML = '<p class="text-muted">No service records found for this asset.</p>';
+      return;
+    }
+    
+    listEl.innerHTML = snapshot.docs.map(doc => {
+      const s = doc.data();
+      return `
+        <div style="border: 1px solid #eee; padding: 0.75rem; margin: 0.5rem 0; border-radius: 4px;">
+          <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+            <strong>${formatDate(s.serviceDate)} — ${getServiceTypeLabel(s.type)}</strong>
+            <span class="badge ${s.status === 'completed' ? 'badge-success' : 'badge-warning'}">${s.status}</span>
+          </div>
+          <p style="margin: 0.5rem 0;">${escapeHtml(s.description)}</p>
+          <p style="margin: 0.25rem 0; font-size: 0.9rem; color: #666;">
+            ${s.mileage ? `Mileage: ${s.mileage}` : ''}
+            ${s.cost ? ` | Cost: £${s.cost.toFixed(2)}` : ''}
+            ${s.serviceProvider ? ` | ${escapeHtml(s.serviceProvider)}` : ''}
+          </p>
+          ${s.nextServiceDue ? `<p style="margin: 0.25rem 0; font-size: 0.85rem; color: #d47500;">🔔 Next due: ${formatDate(s.nextServiceDue)}</p>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Error loading service logs:', error);
+    if (listEl) listEl.innerHTML = '<p style="color:red;">Error loading service history.</p>';
+  }
+};
+
+window.showAddServiceForm = function() {
+  const title = document.getElementById('service-form-title');
+  const form = document.getElementById('service-form');
+  const idField = document.getElementById('service-id');
+  const refField = document.getElementById('service-asset-ref');
+  
+  if (title) title.textContent = 'Record Service';
+  if (form) form.reset();
+  if (idField) idField.value = '';
+  if (currentServiceAssetRef && refField) {
+    refField.value = currentServiceAssetRef.ref;
+  }
+  showPage('service-form-page');
+};
+
+window.saveServiceRecord = async function(e) {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const recordData = {
+    companyId: currentUser.uid,
+    assetRef: document.getElementById('service-asset-ref').value,
+    serviceDate: new Date(document.getElementById('service-date').value),
+    mileage: parseInt(document.getElementById('service-mileage').value) || null,
+    type: document.getElementById('service-type').value,
+    description: document.getElementById('service-description').value,
+    cost: parseFloat(document.getElementById('service-cost').value) || null,
+    nextServiceDue: document.getElementById('service-next-due').value ? new Date(document.getElementById('service-next-due').value) : null,
+    serviceProvider: document.getElementById('service-provider').value,
+    status: document.getElementById('service-status').value,
+    createdAt: serverTimestamp()
+  };
+  
+  try {
+    await addDoc(collection(db, `companies/${currentUser.uid}/serviceLogs`), recordData);
+    showPage('service-logs-page');
+    loadServiceLogs();
+  } catch (error) {
+    console.error('Error saving service record:', error);
+    alert('Error saving record. Please try again.');
+  }
+};
+
+// ==================================================
+// 📄 PDF REPORT GENERATION
+// ==================================================
+function generatePDFHTML(title, content) {
+  const today = new Date().toLocaleDateString('en-GB');
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title} — LSD Solutions</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; line-height: 1.4; }
+    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1a365d; padding-bottom: 10px; }
+    .header h1 { color: #1a365d; margin: 0; font-size: 20px; }
+    .header p { margin: 5px 0; color: #666; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 12px; }
+    th { background-color: #1a365d; color: white; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .alert { color: #d47500; font-weight: bold; }
+    .danger { color: #b00; font-weight: bold; }
+    .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc; text-align: center; font-size: 10px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>LSD Solutions — HGV & Logistics Services</h1>
+    <h2>${title}</h2>
+    <p>Generated: ${today}</p>
+  </div>
+  ${content}
+  <div class="footer">
+    © ${new Date().getFullYear()} LSD Solutions. DVSA Compliant Fleet Management System.
+  </div>
+</body>
+</html>
+  `;
+}
+
+function downloadPDF(filename, htmlContent) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('⚠️ Pop-up blocker prevented report from opening — please allow pop-ups for this site');
+    return;
+  }
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+  }, 250);
+}
+
+window.generateVehicleReport = async function() {
+  if (!currentUser) return;
+  const snapshot = await getDocs(collection(db, `companies/${currentUser.uid}/vehicles`));
+  
+  let rows = '';
+  snapshot.docs.forEach(doc => {
+    const v = doc.data();
+    const motDays = daysUntil(v.motExpiry);
+    const taxDays = daysUntil(v.taxExpiry);
+    const insDays = daysUntil(v.insuranceExpiry);
+    
+    rows += `
+      <tr>
+        <td><strong>${escapeHtml(v.registration)}</strong></td>
+        <td>${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')}</td>
+        <td>${getStatusLabel(v.status)}</td>
+        <td class="${motDays >= 0 && motDays <= 30 ? 'alert' : ''}">${formatDate(v.motExpiry)} ${motDays < 0 ? '<span class="danger">EXPIRED</span>' : ''}</td>
+        <td class="${taxDays >= 0 && taxDays <= 30 ? 'alert' : ''}">${formatDate(v.taxExpiry)} ${taxDays < 0 ? '<span class="danger">EXPIRED</span>' : ''}</td>
+        <td class="${insDays >= 0 && insDays <= 30 ? 'alert' : ''}">${formatDate(v.insuranceExpiry)} ${insDays < 0 ? '<span class="danger">EXPIRED</span>' : ''}</td>
+      </tr>
+    `;
+  });
+  
+  const content = `
+    <table>
+      <tr><th>Reg No</th><th>Make/Model</th><th>Status</th><th>MOT Expires</th><th>Tax Expires</th><th>Insurance Expires</th></tr>
+      ${rows || '<tr><td colspan="6" style="text-align:center;">No vehicles found</td></tr>'}
+    </table>
+  `;
+  
+  downloadPDF('Vehicle-Status-Report.pdf', generatePDFHTML('Vehicle Status Report', content));
+};
+
+window.generateTrailerReport = async function() {
+  if (!currentUser) return;
+  const snapshot = await getDocs(collection(db, `companies/${currentUser.uid}/trailers`));
+  
+  let rows = '';
+  snapshot.docs.forEach(doc => {
+    const t = doc.data();
+    const platDays = daysUntil(t.platingExpiry);
+    const insDays = daysUntil(t.insuranceExpiry);
+    
+    rows += `
+      <tr>
+        <td><strong>${escapeHtml(t.identifier)}</strong></td>
+        <td>${escapeHtml(t.make || '')} ${escapeHtml(t.model || '')}</td>
+        <td>${getTrailerTypeLabel(t.type)}</td>
+        <td>${getStatusLabel(t.status)}</td>
+        <td class="${platDays >= 0 && platDays <= 30 ? 'alert' : ''}">${t.platingExpiry ? formatDate(t.platingExpiry) : '—'} ${platDays < 0 ? '<span class="danger">EXPIRED</span>' : ''}</td>
+        <td class="${insDays >= 0 && insDays <= 30 ? 'alert' : ''}">${t.insuranceExpiry ? formatDate(t.insuranceExpiry) : '—'} ${insDays < 0 ? '<span class="danger">EXPIRED</span>' : ''}</td>
+      </tr>
+    `;
+  });
+  
+  const content = `
+    <table>
+      <tr><th>ID / Reg</th><th>Make/Model</th><th>Type</th><th>Status</th><th>Plating Cert</th><th>Insurance</th></tr>
+      ${rows || '<tr><td colspan="6" style="text-align:center;">No trailers found</td></tr>'}
+    </table>
+  `;
+  
+  downloadPDF('Trailer-Status-Report.pdf', generatePDFHTML('Trailer Status Report', content));
+};
+
+window.generateExpiryReport = async function() {
+  if (!currentUser) return;
+  const today = new Date();
+  const thirtyDays = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  
+  let rows = '';
+  
+  const vSnapshot = await getDocs(collection(db, `companies/${currentUser.uid}/vehicles`));
+  vSnapshot.docs.forEach(doc => {
+    const v = doc.data();
+    const items = [
+      { name: 'MOT', date: v.motExpiry },
+      { name: 'Tax', date: v.taxExpiry },
+      { name: 'Insurance', date: v.insuranceExpiry }
+    ];
+    items.forEach(item => {
+      if (!item.date) return;
+      const expiry = item.date.toDate ? item.date.toDate() : new Date(item.date);
+      if (expiry <= thirtyDays) {
+        const days = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+        rows += `
+          <tr>
+            <td>🚚 ${escapeHtml(v.registration)}</td>
+            <td>${item.name}</td>
+            <td>${formatDate(expiry)}</td>
+            <td class="${days < 0 ? 'danger' : days <= 7 ? 'alert' : ''}">
+              ${days < 0 ? `EXPIRED ${Math.abs(days)}d ago` : days === 0 ? 'TODAY' : `${days} days`}
+            </td>
+          </tr>
+        `;
+      }
+    });
+  });
+  
+  const tSnapshot = await getDocs(collection(db, `companies/${currentUser.uid}/trailers`));
+  tSnapshot.docs.forEach(doc => {
+    const t = doc.data();
+    const items = [
+      { name: 'Plating Cert', date: t.platingExpiry },
+      { name: 'Insurance', date: t.insuranceExpiry }
+    ];
+    items.forEach(item => {
+      if (!item.date) return;
+      const expiry = item.date.toDate ? item.date.toDate() : new Date(item.date);
+      if (expiry <= thirtyDays) {
+        const days = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+        rows += `
+          <tr>
+            <td>🚛 ${escapeHtml(t.identifier)}</td>
+            <td>${item.name}</td>
+            <td>${formatDate(expiry)}</td>
+            <td class="${days < 0 ? 'danger' : days <= 7 ? 'alert' : ''}">
+              ${days < 0 ? `EXPIRED ${Math.abs(days)}d ago` : days === 0 ? 'TODAY' : `${days} days`}
+            </td>
+          </tr>
+        `;
+      }
+    });
+  });
+  
+  const content = `
+    <p><strong>Showing items expiring within the next 30 days.</strong></p>
+    <table>
+      <tr><th>Asset</th><th>Document Type</th><th>Expiry Date</th><th>Status</th></tr>
+      ${rows || '<tr><td colspan="4" style="text-align:center; color:green;">✅ No items due for renewal within 30 days</td></tr>'}
+    </table>
+  `;
+  
+  downloadPDF('Expiry-Alerts-Report.pdf', generatePDFHTML('Expiry Alerts Report', content));
+};
+
+window.generateMaintenanceReport = async function() {
+  if (!currentUser) return;
+  const snapshot = await getDocs(query(
+    collection(db, `companies/${currentUser.uid}/serviceLogs`),
+    orderBy('serviceDate', 'desc'),
+    limit(100)
+  ));
+  
+  let totalCost = 0;
+  let rows = '';
+  snapshot.docs.forEach(doc => {
+    const s = doc.data();
+    totalCost += s.cost || 0;
+    rows += `
+      <tr>
+        <td>${formatDate(s.serviceDate)}</td>
+        <td>${escapeHtml(s.assetRef)}</td>
+        <td>${getServiceTypeLabel(s.type)}</td>
+        <td>${escapeHtml(s.description.substring(0, 40))}${s.description.length > 40 ? '...' : ''}</td>
+        <td>£${(s.cost || 0).toFixed(2)}</td>
+        <td>${s.serviceProvider ? escapeHtml(s.serviceProvider) : '—'}</td>
+      </tr>
+    `;
+  });
+  
+  const content = `
+    <p><strong>Total Recorded Cost: £${totalCost.toFixed(2)}</strong></p>
+    <table>
+      <tr><th>Date</th><th>Asset</th><th>Type</th><th>Description</th><th>Cost</th><th>Provider</th></tr>
+      ${rows || '<tr><td colspan="6" style="text-align:center;">No service records found</td></tr>'}
+    </table>
+  `;
+  
+  downloadPDF('Maintenance-Summary-Report.pdf', generatePDFHTML('Maintenance Summary Report', content));
+};
+
+window.generateChecklistReport = async function() {
+  if (!currentUser) return;
+  const snapshot = await getDocs(query(
+    collection(db, `companies/${currentUser.uid}/checklists`),
+    orderBy('submittedAt', 'desc'),
+    limit(100)
+  ));
+  
+  let defectCount = 0;
+  let rows = '';
+  snapshot.docs.forEach(doc => {
+    const c = doc.data();
+    if (c.hasDefects) defectCount++;
+    rows += `
+      <tr>
+        <td>${c.submittedAt ? formatDate(c.submittedAt) : '—'}</td>
+        <td>${escapeHtml(c.vehicleReg)}</td>
+        <td>${escapeHtml(c.driverName)}</td>
+        <td>${c.hasDefects ? '<span class="alert">⚠️ Defects</span>' : '<span style="color:green;">✅ Clear</span>'}</td>
+      </tr>
+    `;
+  });
+  
+  const content = `
+    <p><strong>Total Checks: ${snapshot.size} | With Defects: ${defectCount} | Clear: ${snapshot.size - defectCount}</strong></p>
+    <table>
+      <tr><th>Date</th><th>Vehicle</th><th>Driver</th><th>Status</th></tr>
+      ${rows || '<tr><td colspan="4" style="text-align:center;">No checklists submitted yet</td></tr>'}
+    </table>
+  `;
+  
+  downloadPDF('Checklist-Log-Report.pdf', generatePDFHTML('Walkaround Checklist Log Report', content));
+};
+
+window.generateDriverReport = async function() {
+  if (!currentUser) return;
+  
+  const driversSnap = await getDocs(collection(db, `companies/${currentUser.uid}/drivers`));
+  let rows = '';
+  
+  driversSnap.docs.forEach(doc => {
+    const d = doc.data();
+    rows += `
+      <tr>
+        <td><strong>${escapeHtml(d.fullName || d.email)}</strong></td>
+        <td>${escapeHtml(d.email)}</td>
+        <td>${d.status === 'active' ? '✅ Active' : '⏳ Inactive'}</td>
+        <td>${d.role === 'driver' ? '👤 Driver' : d.role}</td>
+      </tr>
+    `;
+  });
+  
+  const content = `
+    <table>
+      <tr><th>Name</th><th>Email</th><th>Status</th><th>Role</th></tr>
+      ${rows || '<tr><td colspan="4" style="text-align:center;">No drivers added yet</td></tr>'}
+    </table>
+  `;
+  
+  downloadPDF('Driver-Compliance-Report.pdf', generatePDFHTML('Driver Compliance Report', content));
+};
+
+window.loadExpiryAlerts = async function() {
+  if (!currentUser) return;
+  const container = document.getElementById('expiry-alerts');
+  if (!container) return;
+  
+  const today = new Date();
+  const thirtyDays = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  let alerts = [];
+  
+  const vSnap = await getDocs(collection(db, `companies/${currentUser.uid}/vehicles`));
+  vSnap.docs.forEach(doc => {
+    const v = doc.data();
+    [
+      { type: 'MOT', date: v.motExpiry, reg: v.registration },
+      { type: 'Tax', date: v.taxExpiry, reg: v.registration },
+      { type: 'Insurance', date: v.insuranceExpiry, reg: v.registration }
+    ].forEach(item => {
+      if (!item.date) return;
+      const expiry = item.date.toDate ? item.date.toDate() : new Date(item.date);
+      const days = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      if (expiry <= thirtyDays) {
+        alerts.push({ reg: item.reg, type: item.type, date: expiry, days });
+      }
+    });
+  });
+  
+  const tSnap = await getDocs(collection(db, `companies/${currentUser.uid}/trailers`));
+  tSnap.docs.forEach(doc => {
+    const t = doc.data();
+    [
+      { type: 'Plating Cert', date: t.platingExpiry, reg: t.identifier },
+      { type: 'Insurance', date: t.insuranceExpiry, reg: t.identifier }
+    ].forEach(item => {
+      if (!item.date) return;
+      const expiry = item.date.toDate ? item.date.toDate() : new Date(item.date);
+      const days = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      if (expiry <= thirtyDays) {
+        alerts.push({ reg: item.reg, type: item.type, date: expiry, days });
+      }
+    });
+  });
+  
+  alerts.sort((a, b) => a.days - b.days);
+  
+  if (alerts.length === 0) {
+    container.innerHTML = '<p style="color:green;">✅ No items due for renewal within the next 30 days.</p>';
+    return;
+  }
+  
+  container.innerHTML = alerts.map(a => `
+    <div style="padding: 0.5rem; margin: 0.25rem 0; border-radius: 4px; background: ${a.days < 0 ? '#ffebee' : a.days <= 7 ? '#fff3e0' : '#fff8e1'};">
+      <strong>${a.reg}</strong> — ${a.type}: ${formatDate(a.date)}
+      <span style="float:right; font-weight:bold; color:${a.days < 0 ? '#b00' : a.days <= 7 ? '#d47500' : '#888'}">
+        ${a.days < 0 ? `EXPIRED ${Math.abs(a.days)}d ago` : a.days === 0 ? 'TODAY' : `${a.days}d left`}
+      </span>
+    </div>
+  `).join('');
+};
+
+// ==================================================
+// ⚙️ NOTIFICATION SETTINGS
+// ==================================================
+window.saveNotificationSettings = async function(e) {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const settings = {
+    alertEmail: document.getElementById('notify-email')?.value || '',
+    notifyMot: document.getElementById('notify-mot')?.checked ?? true,
+    notifyTax: document.getElementById('notify-tax')?.checked ?? true,
+    notifyInsurance: document.getElementById('notify-insurance')?.checked ?? true,
+    notifyService: document.getElementById('notify-service')?.checked ?? true,
+    notifyChecklist: document.getElementById('notify-checklist')?.checked ?? false,
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    await setDoc(doc(db, `companies/${currentUser.uid}/settings/notifications`), settings, { merge: true });
+    alert('✅ Notification settings saved!');
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    alert('Error saving settings. Please try again.');
+  }
+};
+
+window.loadNotificationSettings = async function() {
+  if (!currentUser) return;
+  const docSnap = await getDoc(doc(db, `companies/${currentUser.uid}/settings/notifications`));
+  if (docSnap.exists()) {
+    const s = docSnap.data();
+    const emailField = document.getElementById('notify-email');
+    const motCheck = document.getElementById('notify-mot');
+    const taxCheck = document.getElementById('notify-tax');
+    const insCheck = document.getElementById('notify-insurance');
+    const serviceCheck = document.getElementById('notify-service');
+    const checkCheck = document.getElementById('notify-checklist');
+    
+    if (emailField) emailField.value = s.alertEmail || '';
+    if (motCheck) motCheck.checked = s.notifyMot !== false;
+    if (taxCheck) taxCheck.checked = s.notifyTax !== false;
+    if (insCheck) insCheck.checked = s.notifyInsurance !== false;
+    if (serviceCheck) serviceCheck.checked = s.notifyService !== false;
+    if (checkCheck) checkCheck.checked = s.notifyChecklist === true;
+  }
+};
+
+// ==================================================
+// 🔄 AUTO-LOAD DATA ON PAGE CHANGE
+// ==================================================
+const originalShowPage = window.showPage;
+window.showPage = function(pageId) {
+  if (originalShowPage) originalShowPage(pageId);
+  else console.log('Showing page:', pageId);
+  
+  switch(pageId) {
+    case 'vehicles-page':
+      if (currentUser) loadVehicles();
+      break;
+    case 'trailers-page':
+      if (currentUser) loadTrailers();
+      break;
+    case 'reports-page':
+      if (currentUser) {
+        loadExpiryAlerts();
+        loadNotificationSettings();
+      }
+      break;
+    case 'service-logs-page':
+      if (currentUser) loadServiceLogsPage();
+      break;
+  }
+};
+
+console.log('✅ All new features loaded: Vehicle & Trailer Management • PDF Reports • Service Logs • Email Notifications');
