@@ -410,14 +410,19 @@ async function saveDriverProfile() {
     expiryDate: document.getElementById('driver-expiry').valueAsDate,
     medicalExpiry: document.getElementById('driver-medical').valueAsDate,
     points: parseInt(document.getElementById('driver-points').value) || 0,
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
+    // ✅ Preserve company link — don't overwrite it
+    companyId: userProfile.companyId || null
   };
   try {
     await updateDoc(doc(db, 'drivers', currentUser.uid), data);
     Object.assign(userProfile, data);
     alert('✅ Profile saved successfully');
   } catch (e) {
-    await setDoc(doc(db, 'drivers', currentUser.uid), { ...data, createdAt: serverTimestamp() }, { merge: true });
+    await setDoc(doc(db, 'drivers', currentUser.uid), { 
+      ...data, 
+      createdAt: serverTimestamp() 
+    }, { merge: true });
     Object.assign(userProfile, data);
     alert('✅ Profile created and saved');
   }
@@ -715,6 +720,7 @@ async function submitChecklist() {
       comments,
       passed: !anyFailures,
       submittedAt: serverTimestamp()
+      companyId: userProfile.companyId || null
     });
     alert('✅ Checklist submitted successfully — Thank you!');
     loadDriverDashboard();
@@ -1142,9 +1148,6 @@ async function resetChecklistToDefault() {
 }
 window.resetChecklistToDefault = resetChecklistToDefault;
 
-// ==================================================
-// END OF SECTION 2 — All buttons working, checklist loading fixed
-// ==================================================
 // ==================================================
 // 🚛 COMPANY — VEHICLE & TRAILER MANAGEMENT
 // ==================================================
