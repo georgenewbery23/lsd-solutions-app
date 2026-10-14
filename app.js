@@ -1100,4 +1100,5 @@ window.saveCompanyProfile = saveCompanyProfile;
 window.updateBillingDisplay = updateBillingDisplay;
 
 console.log('✅ LSD Solutions — COMPLETE APP LOADED');
+
 </script>
