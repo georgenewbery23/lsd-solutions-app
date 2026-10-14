@@ -189,6 +189,180 @@ const Utils = {
 };
 
 // ==================================================
+// 🔔 TOAST NOTIFICATION SYSTEM
+// ==================================================
+window.showToast = function(message, type = 'info') {
+  // Remove existing toasts
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+
+  const colors = {
+    success: '#2e7d32',
+    warning: '#ed6c02',
+    error: '#d32f2f',
+    info: '#0288d1'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: ${colors[type] || colors.info};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 99999;
+    font-weight: 500;
+    max-width: 90%;
+    animation: slideIn 0.3s ease-out;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease-in forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+};
+
+// Add toast animations
+const toastStyle = document.createElement('style');
+toastStyle.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+if (!document.getElementById('toast-animations')) {
+  toastStyle.id = 'toast-animations';
+  document.head.appendChild(toastStyle);
+}
+
+// ==================================================
+// 🔐 AUTH HANDLERS
+// ==================================================
+window.handleSignIn = async function(event) {
+  event.preventDefault();
+
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+
+  if (!email || !password) {
+    showToast('Please enter email and password', 'warning');
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    // Auth state listener handles redirection
+  } catch (err) {
+    console.error('Sign in error:', err);
+    let msg = 'Sign in failed';
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      msg = 'Invalid email or password';
+    } else if (err.code === 'auth/too-many-requests') {
+      msg = 'Too many attempts — please try again later';
+    } else if (err.code === 'auth/invalid-email') {
+      msg = 'Please enter a valid email address';
+    }
+    showToast(msg, 'error');
+  }
+};
+
+window.handleRegister = async function(event) {
+  event.preventDefault();
+
+  const name = document.getElementById('register-name').value.trim();
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value;
+  const confirmPassword = document.getElementById('register-confirm-password').value;
+  const accountType = document.querySelector('input[name="account-type"]:checked')?.value;
+
+  if (!name || !email || !password || !confirmPassword || !accountType) {
+    showToast('Please fill all fields', 'warning');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match', 'warning');
+    return;
+  }
+
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters', 'warning');
+    return;
+  }
+
+  try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCred.user.uid;
+
+    if (accountType === 'company') {
+      await setDoc(doc(db, 'companies', uid), {
+        name,
+        email,
+        accountType: 'company',
+        createdAt: serverTimestamp()
+      });
+      // Install default DVSA checklist
+      await initialiseCompanyChecklist(uid);
+    } else {
+      await setDoc(doc(db, 'users', uid), {
+        name,
+        email,
+        accountType: 'driver',
+        linked: false,
+        companyId: null,
+        createdAt: serverTimestamp()
+      });
+    }
+
+    showToast('✅ Account created successfully!', 'success');
+
+  } catch (err) {
+    console.error('Register error:', err);
+    let msg = 'Registration failed';
+    if (err.code === 'auth/email-already-in-use') {
+      msg = 'An account with this email already exists';
+    } else if (err.code === 'auth/invalid-email') {
+      msg = 'Please enter a valid email address';
+    }
+    showToast(msg, 'error');
+  }
+};
+
+window.handlePasswordReset = async function(event) {
+  event.preventDefault();
+  const email = document.getElementById('reset-email').value.trim();
+
+  if (!email) {
+    showToast('Please enter your email address', 'warning');
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showToast('✅ Reset link sent — check your email', 'success');
+    showPage('auth-pages');
+    // Switch to sign-in tab
+    document.querySelector('[data-auth-tab="signin"]')?.classList.add('active');
+    document.querySelector('[data-auth-tab="register"]')?.classList.remove('active');
+    document.getElementById('signin-form').style.display = 'block';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('password-reset-form').style.display = 'none';
+  } catch (err) {
+    console.error('Reset error:', err);
+    showToast('Email not found or invalid', 'error');
+  }
+};
+
+// ==================================================
 // 📋 DVSA RETENTION SCHEDULE — OFFICIAL + 10%
 // ==================================================
 const RETENTION_RULES = {
