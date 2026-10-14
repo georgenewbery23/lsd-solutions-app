@@ -64,6 +64,23 @@
     .btn.small { padding: 6px 12px; font-size: 13px; }
     .btn.danger { background: var(--danger); color: white; }
     .btn.accent { background: var(--accent); color: white; }
+    .btn.full { width: 100%; }
+    
+    /* Auth Page — New Design */
+    .auth-container { min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .auth-card { width: 100%; max-width: 440px; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(26, 54, 93, 0.08); }
+    .auth-subtitle { color: #6b7280; font-size: 1rem; margin-bottom: 0.5rem; }
+    .auth-title { color: var(--primary); font-size: 2.5rem; font-weight: 700; margin: 0 0 2rem 0; line-height: 1.2; }
+    .auth-form-stack { margin-top: 1.5rem; }
+    .auth-options { display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+    .checkbox-label { display: flex; align-items: center; gap: 0.5rem; color: #4b5563; font-size: 0.95rem; cursor: pointer; }
+    .link-btn { background: none; border: none; color: var(--accent); font-size: 0.95rem; cursor: pointer; padding: 0; text-decoration: underline; }
+    .link-btn:hover { color: #b86500; }
+    .auth-divider { height: 1px; background: #e5e7eb; margin: 1.5rem 0; }
+    .auth-switch-text { text-align: center; color: #4b5563; margin: 0; }
+    .radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
+    .radio-label { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; transition: all 0.2s; flex: 1; justify-content: center; }
+    .radio-label:hover, .radio-label:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
     
     /* Lists */
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
@@ -145,9 +162,6 @@
     #mobile-menu.open { display: block; }
     #mobile-menu a { display: block; color: white; padding: 14px 24px; font-size: 16px; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
     
-    /* Auth Pages */
-    .auth-page { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
-    
     /* Responsive */
     @media (max-width: 768px) {
       .nav-links { display: none; }
@@ -156,6 +170,9 @@
       .page-header { flex-direction: column; align-items: flex-start; }
       .list-item { flex-direction: column; align-items: flex-start; }
       .item-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+      .auth-card { padding: 1.5rem; }
+      .auth-title { font-size: 2rem; }
+      .radio-group { flex-direction: column; }
     }
   </style>
 </head>
@@ -202,77 +219,95 @@
   </div>
 
   <main class="app-container">
-        <!-- ====================================== -->
+    <!-- ====================================== -->
     <!-- AUTH PAGE — Sign In / Register         -->
     <!-- ====================================== -->
     <div id="auth-page" class="page">
-      <div class="auth-page">
-        <div class="card" style="max-width:420px;width:100%;margin:20px auto;text-align:center">
-          <h2 style="margin-bottom:24px;color:var(--primary)">Welcome Back</h2>
+      <div class="auth-container">
+        <!-- SIGN IN FORM -->
+        <div id="signin-card" class="auth-card">
+          <p class="auth-subtitle">Please enter your details</p>
+          <h1 class="auth-title">Welcome back</h1>
           
-          <div id="auth-tabs" style="display:flex;margin-bottom:24px;border-bottom:1px solid var(--border)">
-            <button id="tab-signin" class="btn primary" style="flex:1;border-radius:4px 4px 0 0">Sign In</button>
-            <button id="tab-register" class="btn secondary" style="flex:1;border-radius:4px 4px 0 0">Register</button>
-          </div>
-          
-          <!-- SIGN IN FORM -->
-<form id="signin-form" style="display:block;">
-  <div class="form-group">
-    <label for="signin-email">Email Address</label>
-    <input type="email" id="signin-email" name="signin-email" required>
-  </div>
-  <div class="form-group">
-    <label for="signin-password">Password</label>
-    <input type="password" id="signin-password" name="signin-password" required>
-  </div>
-  <button type="button" class="btn primary" onclick="signIn()">🔐 Sign In</button>
-</form>
+          <form id="signin-form" class="auth-form-stack" onsubmit="handleSignInSubmit(event)">
+            <div class="form-group">
+              <label for="signin-email">Email address</label>
+              <input type="email" id="signin-email" name="signin-email" required placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+              <label for="signin-password">Password</label>
+              <input type="password" id="signin-password" name="signin-password" required placeholder="Enter your password">
+            </div>
+            
+            <div class="auth-options">
+              <label class="checkbox-label">
+                <input type="checkbox" id="remember-me">
+                Remember for 30 days
+              </label>
+              <button type="button" class="link-btn" onclick="showPage('reset-page')">Forgot password?</button>
+            </div>
+            
+            <button type="submit" class="btn primary full">Sign In</button>
+            
+            <div class="auth-divider"></div>
+            
+            <p class="auth-switch-text">
+              Don't have an account? 
+              <button type="button" class="link-btn" onclick="showAuthPage('register')">Create an account</button>
+            </p>
+          </form>
+        </div>
 
-<!-- REGISTER DRIVER -->
-<form id="register-driver-form">
-  <div class="form-group">
-    <label for="register-driver-name">Full Name</label>
-    <input type="text" id="register-driver-name" name="register-driver-name" required>
-  </div>
-  <div class="form-group">
-    <label for="register-driver-email">Email Address</label>
-    <input type="email" id="register-driver-email" name="register-driver-email" required>
-  </div>
-  <div class="form-group">
-    <label for="register-driver-password">Password</label>
-    <input type="password" id="register-driver-password" name="register-driver-password" required>
-  </div>
-  <div class="form-group">
-    <label for="register-driver-confirm">Confirm Password</label>
-    <input type="password" id="register-driver-confirm" name="register-driver-confirm" required>
-  </div>
-  <button type="button" class="btn primary" onclick="register('driver')">✅ Register as Driver</button>
-</form>
-
-<!-- REGISTER COMPANY -->
-<form id="register-company-form">
-  <div class="form-group">
-    <label for="register-company-name">Company Name</label>
-    <input type="text" id="register-company-name" name="register-company-name" required>
-  </div>
-  <div class="form-group">
-    <label for="register-company-email">Email Address</label>
-    <input type="email" id="register-company-email" name="register-company-email" required>
-  </div>
-  <div class="form-group">
-    <label for="register-company-password">Password</label>
-    <input type="password" id="register-company-password" name="register-company-password" required>
-  </div>
-  <div class="form-group">
-    <label for="register-company-confirm">Confirm Password</label>
-    <input type="password" id="register-company-confirm" name="register-company-confirm" required>
-  </div>
-  <button type="button" class="btn primary" onclick="register('company')">✅ Register as Company</button>
-</form>
+        <!-- REGISTER FORM -->
+        <div id="register-card" class="auth-card" style="display: none;">
+          <p class="auth-subtitle">Join LSD Solutions</p>
+          <h1 class="auth-title">Create an account</h1>
           
-          <p style="margin-top:16px">
-            <a href="#" onclick="showPage('reset-page');return false" style="color:var(--primary)">Forgot password?</a>
-          </p>
+          <form id="register-form" class="auth-form-stack" onsubmit="handleRegisterSubmit(event)">
+            <div class="form-group">
+              <label for="register-name">Full Name</label>
+              <input type="text" id="register-name" name="register-name" required placeholder="Your full name">
+            </div>
+            
+            <div class="form-group">
+              <label for="register-email">Email address</label>
+              <input type="email" id="register-email" name="register-email" required placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+              <label for="register-password">Password</label>
+              <input type="password" id="register-password" name="register-password" required placeholder="At least 6 characters">
+            </div>
+            
+            <div class="form-group">
+              <label for="register-confirm">Confirm Password</label>
+              <input type="password" id="register-confirm" name="register-confirm" required placeholder="Re-enter your password">
+            </div>
+            
+            <div class="form-group">
+              <label>I am registering as a:</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="user-role" value="driver" required>
+                  <span>🚛 Driver</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="user-role" value="company" required>
+                  <span>🏢 Company</span>
+                </label>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn primary full">Create Account</button>
+            
+            <div class="auth-divider"></div>
+            
+            <p class="auth-switch-text">
+              Already have an account? 
+              <button type="button" class="link-btn" onclick="showAuthPage('signin')">Sign In</button>
+            </p>
+          </form>
         </div>
       </div>
     </div>
@@ -281,19 +316,23 @@
     <!-- RESET PASSWORD PAGE                    -->
     <!-- ====================================== -->
     <div id="reset-page" class="page">
-      <div class="auth-page">
-        <div class="card" style="max-width:420px;width:100%;margin:20px auto;text-align:center">
-          <h2 style="margin-bottom:24px;color:var(--primary)">Reset Password</h2>
-          <form onsubmit="resetPassword(event)">
+      <div class="auth-container">
+        <div class="auth-card">
+          <p class="auth-subtitle">Account Recovery</p>
+          <h1 class="auth-title">Reset Password</h1>
+          
+          <form onsubmit="handleResetSubmit(event)">
             <div class="form-group">
-              <label>Email Address</label>
-              <input type="email" id="reset-email" required>
+              <label for="reset-email">Email address</label>
+              <input type="email" id="reset-email" required placeholder="your@email.com">
             </div>
-            <div class="form-actions" style="justify-content:stretch">
-              <button type="submit" class="btn primary" style="width:100%">Send Reset Link</button>
-            </div>
+            <button type="submit" class="btn primary full">Send Reset Link</button>
           </form>
-          <p style="margin-top:16px"><a href="#" onclick="showPage('auth-page');return false" style="color:var(--primary)">← Back to Sign In</a></p>
+          
+          <div class="auth-divider"></div>
+          <p class="auth-switch-text">
+            <button type="button" class="link-btn" onclick="showAuthPage('signin')">← Back to Sign In</button>
+          </p>
         </div>
       </div>
     </div>
@@ -308,7 +347,6 @@
         </div>
         <p id="driver-greeting" class="text-muted">Loading...</p>
       </div>
-
       <!-- Driver Dashboard Buttons -->
       <div class="card">
         <h3>Quick Access</h3>
@@ -330,7 +368,6 @@
           </button>
         </div>
       </div>
-
       <!-- Driver Profile Page -->
       <div id="driver-profile-page" style="display:none">
         <div class="page-header">
@@ -386,7 +423,6 @@
           </form>
         </div>
       </div>
-
       <!-- Driver Calendar Page -->
       <div id="driver-calendar-page" style="display:none">
         <div class="page-header">
@@ -439,7 +475,6 @@
           </div>
         </div>
       </div>
-
       <!-- Driver Documents Page -->
       <div id="driver-documents-page" style="display:none">
         <div class="page-header">
@@ -468,7 +503,6 @@
           </div>
         </div>
       </div>
-
       <!-- Driver Checklist Page -->
       <div id="driver-checklist-page" style="display:none">
         <div class="page-header">
@@ -508,7 +542,6 @@
           </div>
         </div>
       </div>
-
       <!-- Driver Posted Work Page -->
       <div id="driver-work-page" style="display:none">
         <div class="page-header">
@@ -520,7 +553,8 @@
         </div>
       </div>
     </div>
-        <!-- ====================================== -->
+
+    <!-- ====================================== -->
     <!-- COMPANY PORTAL PAGE                    -->
     <!-- ====================================== -->
     <div id="company-portal-page" class="page">
@@ -530,7 +564,6 @@
         </div>
         <p id="company-greeting" class="text-muted">Loading...</p>
       </div>
-
       <!-- Company Dashboard Buttons -->
       <div class="card">
         <h3>Quick Access</h3>
@@ -564,7 +597,6 @@
           </button>
         </div>
       </div>
-
       <!-- Company Stats Cards -->
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
         <div class="card">
@@ -580,7 +612,6 @@
           </div>
         </div>
       </div>
-
       <!-- Posted Work Page -->
       <div id="posted-work-page" style="display:none">
         <div class="page-header">
@@ -591,7 +622,6 @@
           <p class="text-muted">Loading jobs...</p>
         </div>
       </div>
-
       <!-- Post New Job Page -->
       <div id="post-job-page" style="display:none">
         <div class="page-header">
@@ -635,7 +665,6 @@
           </form>
         </div>
       </div>
-
       <!-- Company Drivers Page -->
       <div id="company-drivers-page" style="display:none">
         <div class="page-header">
@@ -665,7 +694,6 @@
           </div>
         </div>
       </div>
-
       <!-- Checklist Editor Page -->
       <div id="checklist-editor-page" style="display:none">
         <div class="page-header">
@@ -701,7 +729,6 @@
           </div>
         </div>
       </div>
-
       <!-- Holiday Requests Page -->
       <div id="company-holidays-page" style="display:none">
         <div class="page-header">
@@ -716,7 +743,8 @@
         </div>
       </div>
     </div>
-        <!-- ====================================== -->
+
+    <!-- ====================================== -->
     <!-- VEHICLE & TRAILER MANAGEMENT          -->
     <!-- ====================================== -->
     
@@ -733,7 +761,6 @@
         <p class="text-muted">Loading vehicles...</p>
       </div>
     </div>
-
     <!-- Add/Edit Vehicle Form -->
     <div id="vehicle-form-page" class="page">
       <div class="page-header">
@@ -806,7 +833,6 @@
         </form>
       </div>
     </div>
-
     <!-- Trailer List Page -->
     <div id="trailers-page" class="page">
       <div class="page-header">
@@ -820,7 +846,6 @@
         <p class="text-muted">Loading trailers...</p>
       </div>
     </div>
-
     <!-- Add/Edit Trailer Form -->
     <div id="trailer-form-page" class="page">
       <div class="page-header">
@@ -895,14 +920,13 @@
         </form>
       </div>
     </div>
-
     <!-- Service & Maintenance Logs Page -->
     <div id="service-logs-page" class="page">
       <div class="page-header">
         <h2>🔧 Service & Maintenance</h2>
         <div>
           <button class="btn primary" onclick="showAddServiceForm()">➕ Record Service</button>
-          <button class="btn secondary" onclick="showPage('vehicles-page')">← Back</button>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
         </div>
       </div>
       <div class="card">
@@ -917,7 +941,6 @@
         <p class="text-muted">Select an asset to view service history...</p>
       </div>
     </div>
-
     <!-- Add Service Record Form -->
     <div id="service-form-page" class="page">
       <div class="page-header">
@@ -986,7 +1009,6 @@
         </form>
       </div>
     </div>
-
     <!-- Reports & PDF Export Page -->
     <div id="reports-page" class="page">
       <div class="page-header">
@@ -1057,6 +1079,7 @@
       </div>
     </div>
   </main>
+
   <!-- Firebase SDK Imports -->
   <script type="importmap">
   {
@@ -1074,30 +1097,19 @@
 
   <!-- Auth Page Tab Switching & Global Navigation -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const tabSignin = document.getElementById('tab-signin');
-      const tabRegister = document.getElementById('tab-register');
-      const signinForm = document.getElementById('signin-form');
-      const registerForm = document.getElementById('register-form');
-      
-      if (tabSignin && tabRegister) {
-        tabSignin.onclick = () => {
-          tabSignin.classList.remove('secondary'); tabSignin.classList.add('primary');
-          tabRegister.classList.remove('primary'); tabRegister.classList.add('secondary');
-          if(signinForm) signinForm.style.display = 'block';
-          if(registerForm) registerForm.style.display = 'none';
-        };
-        tabRegister.onclick = () => {
-          tabRegister.classList.remove('secondary'); tabRegister.classList.add('primary');
-          tabSignin.classList.remove('primary'); tabSignin.classList.add('secondary');
-          if(signinForm) signinForm.style.display = 'none';
-          if(registerForm) registerForm.style.display = 'block';
-        };
+    // Switch between Sign In / Register cards
+    function showAuthPage(mode) {
+      const signinCard = document.getElementById('signin-card');
+      const registerCard = document.getElementById('register-card');
+      if (mode === 'signin') {
+        signinCard.style.display = 'block';
+        registerCard.style.display = 'none';
+      } else {
+        signinCard.style.display = 'none';
+        registerCard.style.display = 'block';
       }
-      
-      // Show auth page by default
-      showPage('auth-page');
-    });
+    }
+    window.showAuthPage = showAuthPage;
 
     // Global page switching
     function showPage(pageId) {
@@ -1114,6 +1126,12 @@
       menu.classList.toggle('open');
     }
     window.toggleMobileMenu = toggleMobileMenu;
+
+    // Show auth page by default
+    document.addEventListener('DOMContentLoaded', () => {
+      showAuthPage('signin');
+    });
   </script>
 </body>
-</html>        
+</html>
+      
