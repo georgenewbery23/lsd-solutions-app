@@ -1099,6 +1099,47 @@ window.cancelJobPost = cancelJobPost;
 window.saveCompanyProfile = saveCompanyProfile;
 window.updateBillingDisplay = updateBillingDisplay;
 
+// ==============================================
+// MAKE ALL BUTTON FUNCTIONS ACCESSIBLE
+// ==============================================
+window.showAddVehicleForm = showAddVehicleForm;
+window.showAddTrailerForm = showAddTrailerForm;
+window.showAddDriverForm = showAddDriverForm;
+window.showPostJobForm = showPostJobForm;
+
+window.hideFleetForm = hideFleetForm;
+window.hideAddDriverForm = hideAddDriverForm;
+window.hideJobForm = hideJobForm;
+
+window.saveVehicle = saveVehicle;
+window.saveTrailer = saveTrailer;
+window.saveNewDriver = saveNewDriver;
+window.postNewJob = postNewJob;
+
+window.toggleVehicleActive = toggleVehicleActive;
+window.toggleTrailerActive = toggleTrailerActive;
+window.toggleDriverActive = toggleDriverActive;
+
+window.editVehicle = editVehicle;
+window.editTrailer = editTrailer;
+window.editDriver = editDriver;
+
+window.saveEditedVehicle = saveEditedVehicle;
+window.saveEditedTrailer = saveEditedTrailer;
+window.saveEditedDriver = saveEditedDriver;
+
+window.cancelJobPost = cancelJobPost;
+window.viewDriverDocs = viewDriverDocs;
+
+window.addCheckItem = addCheckItem;
+window.editCheckItem = editCheckItem;
+window.removeCheckItem = removeCheckItem;
+window.resetChecklist = resetChecklist;
+window.saveChecklist = saveChecklist;
+
+window.saveCompanyProfile = saveCompanyProfile;
+window.updateBillingDisplay = updateBillingDisplay;
+
 console.log('✅ LSD Solutions — COMPLETE APP LOADED');
 
 </script>
