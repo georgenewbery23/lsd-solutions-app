@@ -591,6 +591,22 @@ async function handleSignIn(event) {
 
 window.handleSignIn = handleSignIn;
 
+async function initialiseCompanyChecklist(companyId) {
+  const DEFAULT_CHECKLIST = {
+    name: 'DVSA Standard Walkaround Checklist',
+    version: '1.0',
+    updatedAt: serverTimestamp(),
+    items: [
+      { id: 'exterior-body', category: 'exterior', name: 'Body & Panels', description: 'Damage, loose panels, security fasteners', severity: 'major', required: true },
+      { id: 'exterior-wheels', category: 'wheels', name: 'Wheels & Tyres', description: 'Condition, pressure, tread depth, security', severity: 'major', required: true },
+      { id: 'brakes-system', category: 'brakes', name: 'Braking System', description: 'Air pressure, fluid levels, leaks, performance', severity: 'dangerous', required: true },
+      { id: 'lights-all', category: 'lights', name: 'All Lights & Indicators', description: 'Headlights, indicators, hazards, reflectors', severity: 'major', required: true },
+      { id: 'cab-safety', category: 'cab', name: 'Cab & Controls', description: 'Mirrors, wipers, horn, seatbelts, fire extinguisher', severity: 'major', required: true },
+      { id: 'docs-complete', category: 'documents', name: 'Documents On Board', description: 'Operator licence, insurance, discs, tacho charts', severity: 'major', required: true },
+      { id: 'trailer-coupling', category: 'trailer', name: 'Trailer Coupling & Security', description: 'Fifth wheel, kingpin, safety locks, cables', severity: 'dangerous', required: false }
+    ]
+  };
+
 async function handleRegister(event) {
   event.preventDefault();
   
@@ -653,22 +669,6 @@ async function handleRegister(event) {
 }
 
 window.handleRegister = handleRegister;
-
-async function initialiseCompanyChecklist(companyId) {
-  const DEFAULT_CHECKLIST = {
-    name: 'DVSA Standard Walkaround Checklist',
-    version: '1.0',
-    updatedAt: serverTimestamp(),
-    items: [
-      { id: 'exterior-body', category: 'exterior', name: 'Body & Panels', description: 'Damage, loose panels, security fasteners', severity: 'major', required: true },
-      { id: 'exterior-wheels', category: 'wheels', name: 'Wheels & Tyres', description: 'Condition, pressure, tread depth, security', severity: 'major', required: true },
-      { id: 'brakes-system', category: 'brakes', name: 'Braking System', description: 'Air pressure, fluid levels, leaks, performance', severity: 'dangerous', required: true },
-      { id: 'lights-all', category: 'lights', name: 'All Lights & Indicators', description: 'Headlights, indicators, hazards, reflectors', severity: 'major', required: true },
-      { id: 'cab-safety', category: 'cab', name: 'Cab & Controls', description: 'Mirrors, wipers, horn, seatbelts, fire extinguisher', severity: 'major', required: true },
-      { id: 'docs-complete', category: 'documents', name: 'Documents On Board', description: 'Operator licence, insurance, discs, tacho charts', severity: 'major', required: true },
-      { id: 'trailer-coupling', category: 'trailer', name: 'Trailer Coupling & Security', description: 'Fifth wheel, kingpin, safety locks, cables', severity: 'dangerous', required: false }
-    ]
-  };
   
   await setDoc(doc(db, 'companies', companyId, 'settings', 'checklist'), DEFAULT_CHECKLIST);
   console.log('✅ DVSA checklist installed for company:', companyId);
