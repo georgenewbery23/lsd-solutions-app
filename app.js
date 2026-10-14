@@ -1,1780 +1,2553 @@
-// ==========================================================
-// LSD Solutions — HGV & Logistics App
-// Complete System: Auth, Portals, DVSA Checks, Defect Tracking
-// Fully DVSA & Traffic Commissioner Compliant
-// ==========================================================
-
-// --------------------------
-// IMPORTS & CONFIGURATION
-// --------------------------
-import { initializeApp } from "firebase/app";
-import { 
-  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile
-} from "firebase/auth";
-import { 
-  getFirestore, doc, setDoc, getDoc, collection, query, where, 
-  getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, 
-  writeBatch, increment
-} from "firebase/firestore";
-import { 
-  getStorage, ref, uploadBytes, getDownloadURL, deleteObject 
-} from "firebase/storage";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD3QpD0Z8KzC9hXbY5mP7wQ8R9T0U1V2W3X4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2",
-  authDomain: "lsd-solutions.firebaseapp.com",
-  projectId: "lsd-solutions",
-  storageBucket: "lsd-solutions.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abc123def456ghi789jkl012"
-};
-
-// Initialise Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-// --------------------------
-// GLOBAL STATE
-// --------------------------
-let currentUser = null;
-let userProfile = null;
-let currentPage = 'login';
-let currentCheckData = null;
-
-// --------------------------
-// DVSA CHECKLIST CONSTANTS
-// --------------------------
-const CHECK_VEHICLE = 'vehicle';
-const CHECK_TRAILER = 'trailer';
-const CHECK_BOTH = 'both';
-
-// Default DVSA Compliant Checklist — these are "core" items
-const DEFAULT_CHECKLIST = [
-  { id: 'v1', label: 'Windscreen, Windows & Mirrors', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v2', label: 'Lights, Indicators & Reflectors — Front, Side & Rear', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v3', label: 'Tyres, Wheels & Wheel Nuts — Pressure, tread depth, condition & security', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v4', label: 'Brakes — Service brake, parking brake, air pressure & warning lights', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v5', label: 'Fluid Levels — Oil, coolant, screen wash; caps secure, no leaks', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v6', label: 'Vehicle Exterior & Bodywork — Doors, panels, mudguards & reflectors', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v7', label: 'Coupling Area — Fifth wheel, kingpin, airlines & electrical connections', appliesTo: CHECK_BOTH, isCoreDVSA: true },
-  { id: 'v8', label: 'Number Plates — Secure, clean & legible', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v9', label: 'Fuel System & Exhaust — No leaks, cap secure, exhaust intact, no excessive smoke', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v10', label: 'Cab & Interior — Seats, seatbelts, controls, horn & wipers', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v11', label: 'Emergency Equipment — Fire extinguisher, warning triangles & first aid kit present & in date', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 'v12', label: 'Documentation — Test certificate, insurance & operator licence documents', appliesTo: CHECK_VEHICLE, isCoreDVSA: true },
-  { id: 't1', label: 'Trailer Body & Structure — Panels, frame, doors, curtains & landing gear', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't2', label: 'Trailer Lights & Reflectors — All lamps working, lenses intact', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't3', label: 'Trailer Tyres & Wheels — Pressure, tread depth, condition & wheel nuts secure', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't4', label: 'Trailer Brakes — Service brake, parking brake/handbrake & breakaway cable', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't5', label: 'Coupling & Connections — Kingpin/drawbar, airlines, electrical cable & security', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't6', label: 'Load Security — Load secure, restraints intact, doors/curtains closed & locked', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't7', label: 'Trailer Identification — Registration plate, VIN & markings legible', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't8', label: 'Suspension & Underframe — Springs, axles, fixings & corrosion check', appliesTo: CHECK_TRAILER, isCoreDVSA: true },
-  { id: 't9', label: 'Wheeled Equipment — Spare wheel present & secured, chocks present', appliesTo: CHECK_TRAILER, isCoreDVSA: true }
-];
-
-// --------------------------
-// DVSA DEFECT CATEGORIES
-// --------------------------
-const DVSA_DEFECT_CATEGORIES = [
-  { id: '01', name: 'Brakes', description: 'Braking system performance, components, controls & warnings', enforcementRef: 'DVSA-EG-01' },
-  { id: '02', name: 'Wheels & Tyres', description: Wheel security, condition, tyres, pressure & tread depth', enforcementRef: 'DVSA-EG-02' },
-  { id: '03', name: 'Steering & Suspension', description: Steering mechanism, linkage, suspension arms, springs, shock absorbers', enforcementRef: 'DVSA-EG-03' },
-  { id: '04', name: 'Lights & Electrical', description: All lamps, indicators, reflectors, wiring, battery & controls', enforcementRef: 'DVSA-EG-04' },
-  { id: '05', name: 'Glass & Mirrors', description: Windscreen, windows, mirrors, wipers & washers', enforcementRef: 'DVSA-EG-05' },
-  { id: '06', name: 'Body & Structure', description: Panels, doors, security, condition, mudguards & reflectors', enforcementRef: 'DVSA-EG-06' },
-  { id: '07', name: 'Coupling & Connections', description: Fifth wheel, kingpin, drawbar, airlines, electrical cables', enforcementRef: 'DVSA-EG-07' },
-  { id: '08', name: 'Load & Cargo Security', description: Load restraint, distribution, curtain/door security, dangerous goods', enforcementRef: 'DVSA-EG-08' },
-  { id: '09', name: 'Exhaust & Emissions', description: Exhaust system condition, smoke levels, emissions equipment', enforcementRef: 'DVSA-EG-09' },
-  { id: '10', name: 'Fluids & Leaks', description: Oil, coolant, fuel, hydraulic fluid levels & leaks', enforcementRef: 'DVSA-EG-10' },
-  { id: '11', name: 'Emergency Equipment', description: Fire extinguisher, warning triangles, first aid kit, reflectors', enforcementRef: 'DVSA-EG-11' },
-  { id: '12', name: 'Documentation & Plates', description: Test certificate, insurance, operator licence, markings, VIN/plates', enforcementRef: 'DVSA-EG-12' },
-  { id: '13', name: 'Cab & Interior', description: Seats, seatbelts, controls, horn, instruments, condition', enforcementRef: 'DVSA-EG-13' },
-  { id: '14', name: 'Chassis & Underframe', description: Frame condition, corrosion, mounting brackets, underbody', enforcementRef: 'DVSA-EG-14' }
-];
-
-const DVSA_SEVERITY = {
-  MINOR: { level: 'minor', label: 'Minor', description: 'Does not affect safety — rectify at next service', actionRequired: 'None', tcRisk: 'Low', color: '#d4af37' },
-  MAJOR: { level: 'major', label: 'Major', description: 'Affects safety — rectify before further use', actionRequired: 'Do not use until repaired', tcRisk: 'Medium-High', color: '#d97706' },
-  DANGEROUS: { level: 'dangerous', label: '⚠️ DANGEROUS', description: 'Immediate risk — MUST NOT be driven', actionRequired: 'Prohibited — immediate repair required', tcRisk: 'Severe', color: '#b91c1c' }
-};
-
-const DVSA_COMMON_DEFECTS = {
-  '01': [
-    { code: 'B001', text: 'Brake pedal travel excessive', severity: 'MAJOR' },
-    { code: 'B002', text: 'Brake pedal spongy', severity: 'MAJOR' },
-    { code: 'B003', text: 'Fluid leak — braking system', severity: 'DANGEROUS' },
-    { code: 'B004', text: 'Handbrake does not hold', severity: 'DANGEROUS' },
-    { code: 'B005', text: 'Brake pad/shoe worn beyond limit', severity: 'MAJOR' },
-    { code: 'B006', text: 'Air pressure loss — system leak', severity: 'DANGEROUS' },
-    { code: 'B007', text: 'Brake warning lamp illuminated', severity: 'MAJOR' }
-  ],
-  '02': [
-    { code: 'T001', text: 'Tyre tread below legal limit (1.6mm)', severity: 'DANGEROUS' },
-    { code: 'T002', text: 'Cut, bulge or damage to tyre sidewall', severity: 'DANGEROUS' },
-    { code: 'T003', text: 'Incorrect tyre pressure', severity: 'MAJOR' },
-    { code: 'T004', text: 'Wheel nut missing or loose', severity: 'DANGEROUS' },
-    { code: 'T005', text: 'Tyre mismatch on same axle', severity: 'MAJOR' },
-    { code: 'T006', text: 'Spare tyre not secured', severity: 'MAJOR' }
-  ],
-  '03': [
-    { code: 'S001', text: 'Steering play excessive', severity: 'DANGEROUS' },
-    { code: 'S002', text: 'Power steering fluid leak', severity: 'MAJOR' },
-    { code: 'S003', text: 'Spring broken or mounting loose', severity: 'DANGEROUS' },
-    { code: 'S004', text: 'Shock absorber leaking or damaged', severity: 'MAJOR' },
-    { code: 'S005', text: 'Track rod end loose', severity: 'DANGEROUS' }
-  ],
-  '04': [
-    { code: 'L001', text: 'Headlight — one or both not working', severity: 'MAJOR' },
-    { code: 'L002', text: 'Indicator — not working or flashing incorrectly', severity: 'MAJOR' },
-    { code: 'L003', text: 'Brake light — not working', severity: 'MAJOR' },
-    { code: 'L004', text: 'Light lens cracked/missing', severity: 'MINOR' },
-    { code: 'L005', text: 'Battery insecure or leaking', severity: 'MAJOR' }
-  ],
-  '05': [
-    { code: 'G001', text: 'Windscreen chip/crack in driver\'s line of sight', severity: 'MAJOR' },
-    { code: 'G002', text: 'Windscreen wiper not clearing properly', severity: 'MAJOR' },
-    { code: 'G003', text: 'Mirror cracked/missing/adjustment faulty', severity: 'MAJOR' },
-    { code: 'G004', text: 'Washer fluid empty / jets blocked', severity: 'MINOR' }
-  ],
-  '06': [
-    { code: 'V001', text: 'Door insecure or will not latch', severity: 'MAJOR' },
-    { code: 'V002', text: 'Panel damage — sharp edge/obstruction', severity: 'MAJOR' },
-    { code: 'V003', text: 'Mudguard/mudflap missing/damaged', severity: 'MINOR' },
-    { code: 'V004', text: 'Body panel loose/missing', severity: 'MAJOR' },
-    { code: 'V005', text: 'Step/access ladder damaged', severity: 'MAJOR' }
-  ],
-  '07': [
-    { code: 'C001', text: 'Fifth wheel coupling loose/not locked', severity: 'DANGEROUS' },
-    { code: 'C002', text: 'Kingpin worn or damaged', severity: 'DANGEROUS' },
-    { code: 'C003', text: 'Air line damaged/leaking', severity: 'MAJOR' },
-    { code: 'C004', text: 'Electrical cable damaged/disconnected', severity: 'MAJOR' },
-    { code: 'C005', text: 'Trailer landing gear stuck/damaged', severity: 'MAJOR' }
-  ],
-  '08': [
-    { code: 'LD01', text: 'Load not secured / restraints missing', severity: 'DANGEROUS' },
-    { code: 'LD02', text: 'Curtain/door not closed/locked', severity: 'MAJOR' },
-    { code: 'LD03', text: 'Load overhanging incorrectly', severity: 'DANGEROUS' },
-    { code: 'LD04', text: 'Load weight distribution uneven', severity: 'MAJOR' },
-    { code: 'LD05', text: 'Securing strap damaged/unserviceable', severity: 'MAJOR' }
-  ],
-  '09': [
-    { code: 'E001', text: 'Exhaust smoke excessive', severity: 'MAJOR' },
-    { code: 'E002', text: 'Exhaust system leaking/damaged', severity: 'MAJOR' },
-    { code: 'E003', text: 'Exhaust blowing — toxic fumes into cab', severity: 'DANGEROUS' }
-  ],
-  '10': [
-    { code: 'F001', text: 'Engine oil level low', severity: 'MINOR' },
-    { code: 'F002', text: 'Coolant level low / leak', severity: 'MAJOR' },
-    { code: 'F003', text: 'Fuel leak — dripping', severity: 'DANGEROUS' },
-    { code: 'F004', text: 'Fluid leak — other than fuel/oil/coolant', severity: 'MAJOR' }
-  ],
-  '11': [
-    { code: 'EM01', text: 'Fire extinguisher missing/expired', severity: 'MAJOR' },
-    { code: 'EM02', text: 'Warning triangle missing', severity: 'MINOR' },
-    { code: 'EM03', text: 'First aid kit incomplete/expired', severity: 'MINOR' }
-  ],
-  '12': [
-    { code: 'D001', text: 'Test certificate expired/missing', severity: 'MAJOR' },
-    { code: 'D002', text: 'Operator\'s disc not displayed', severity: 'MAJOR' },
-    { code: 'D003', text: 'Registration plate illegible/missing', severity: 'MAJOR' },
-    { code: 'D004', text: 'VIN/plate obscured/unreadable', severity: 'MAJOR' }
-  ],
-  '13': [
-    { code: 'I001', text: 'Seatbelt damaged/inoperative', severity: 'DANGEROUS' },
-    { code: 'I002', text: 'Horn not working', severity: 'MAJOR' },
-    { code: 'I003', text: 'Instrument warning light on — unknown fault', severity: 'MAJOR' },
-    { code: 'I004', text: 'Mirror internal missing/damaged', severity: 'MINOR' }
-  ],
-  '14': [
-    { code: 'CH01', text: 'Chassis corrosion — structural', severity: 'DANGEROUS' },
-    { code: 'CH02', text: 'Mounting bracket cracked/broken', severity: 'MAJOR' }
-  ]
-};
-
-// --------------------------
-// DEFECT RECTIFICATION STATUS
-// --------------------------
-const DEFECT_STATUS = {
-  REPORTED: { value: 'reported', label: 'Reported', color: '#d4af37', desc: 'Driver has reported the issue' },
-  SCHEDULED: { value: 'scheduled', label: 'Scheduled', color: '#d47500', desc: 'Repair arranged' },
-  IN_PROGRESS: { value: 'in_progress', label: 'In Progress', color: '#e11d48', desc: 'Being repaired now' },
-  FIXED: { value: 'fixed', label: 'Fixed — Pending Check', color: '#2563eb', desc: 'Reported as fixed by mechanic' },
-  VERIFIED: { value: 'verified', label: '✅ Rectified', color: '#16a34a', desc: 'Checked & cleared by authorised person' },
-  CANCELLED: { value: 'cancelled', label: '❌ Withdrawn', color: '#6b7280', desc: 'Not a defect — closed' }
-};
-
-// --------------------------
-// HELPER FUNCTIONS
-// --------------------------
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function generateDefectId() {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `DEFECT-${timestamp}-${random}`;
-}
-
-function formatDate(dateVal) {
-  if (!dateVal) return '—';
-  try {
-    const d = typeof dateVal === 'string' ? new Date(dateVal) : 
-              dateVal.toDate ? dateVal.toDate() : new Date(dateVal);
-    return d.toLocaleDateString('en-GB', { 
-      day: '2-digit', month: 'short', year: 'numeric', 
-      hour: '2-digit', minute: '2-digit' 
-    });
-  } catch {
-    return '—';
-  }
-}
-
-function showToast(message, type = 'success') {
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    position: fixed; top: 20px; right: 20px; z-index: 9999;
-    padding: 12px 24px; border-radius: 6px; color: white; font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: opacity 0.3s;
-    background: ${type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#d4af37'};
-  `;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 300);
-  }, 4000);
-}
-
-function getFilteredChecklist(items, checkType) {
-  if (!items || !items.length) return [];
-  return items.filter(item => {
-    const appliesTo = item.appliesTo || CHECK_BOTH;
-    return checkType === appliesTo || appliesTo === CHECK_BOTH;
-  });
-}
-
-// --------------------------
-// AUTHENTICATION
-// --------------------------
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    await loadUserProfile();
-    showPage(userProfile?.role === 'company' ? 'company-dashboard' : 'driver-dashboard');
-  } else {
-    currentUser = null;
-    userProfile = null;
-    showPage('login');
-  }
-});
-
-async function loadUserProfile() {
-  try {
-    const profileRef = doc(db, 'userProfiles', currentUser.uid);
-    const snap = await getDoc(profileRef);
-    
-    if (snap.exists()) {
-      userProfile = snap.data();
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LSD Solutions — HGV & Logistics Services</title>
+  <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+    :root {
+      --primary: #1a365d;
+      --primary-light: #e8edf3;
+      --accent: #d47500;
+      --success: #2e7d32;
+      --danger: #c62828;
+      --warning: #ef6c00;
+      --text: #1f2937;
+      --text-light: #6b7280;
+      --border: #d1d5db;
+      --bg: #ffffff;
+      --card-bg: #f9fafb;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
     }
-  } catch (err) {
-    console.error('Profile load error:', err);
-  }
-}
-
-window.showPage = function(pageName) {
-  currentPage = pageName;
-  
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  
-  const page = document.getElementById(`page-${pageName}`);
-  if (page) page.style.display = 'block';
-  
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll(`[data-page="${pageName}"]`).forEach(btn => btn.classList.add('active'));
-  
-  if (pageName === 'checklist-editor' && userProfile?.role === 'company') {
-    loadChecklistEditor();
-  } else if (pageName === 'vehicles' && userProfile?.role === 'company') {
-    loadVehiclesList();
-  } else if (pageName === 'drivers' && userProfile?.role === 'company') {
-    loadCompanyDrivers();
-  } else if (pageName === 'defects' && userProfile?.role === 'company') {
-    loadDefectsList();
-  } else if (pageName === 'company-profile' && userProfile?.role === 'company') {
-    loadCompanyProfile();
-  } else if (pageName === 'driver-checks' && userProfile?.role === 'driver') {
-    loadDriverCheckSelection();
-  } else if (pageName === 'driver-profile' && userProfile?.role === 'driver') {
-    loadDriverProfile();
-  }
-};
-
-window.logoutUser = async function() {
-  await signOut(auth);
-  showToast('Signed out successfully');
-};
-
-window.escapeHtml = escapeHtml;
-// ==========================================================
-// LSD Solutions — app.js Section 2
-// Checklist Editor, Vehicle Management, Driver Management
-// ==========================================================
-
-// --------------------------
-// CHECKLIST EDITOR — COMPANY PORTAL
-// --------------------------
-async function loadChecklistEditor() {
-  if (!currentUser || userProfile?.role !== 'company') return;
-  
-  const checklistRef = doc(db, 'companies', currentUser.uid, 'settings', 'checklist');
-  
-  try {
-    const snap = await getDoc(checklistRef);
+    [data-theme="dark"] {
+      --primary: #2d4a77;
+      --primary-light: #1e293b;
+      --accent: #f59e0b;
+      --text: #f1f5f9;
+      --text-light: #94a3b8;
+      --border: #374151;
+      --bg: #111827;
+      --card-bg: #1f2937;
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
     
-    if (!snap.exists()) {
-      await setDoc(checklistRef, {
-        items: DEFAULT_CHECKLIST,
-        updatedAt: new Date(),
-        dvsaCompliant: true
-      });
-      console.log('✅ Default DVSA checklist created');
-      showToast('✅ Default DVSA checklist loaded');
-      renderChecklistEditor(DEFAULT_CHECKLIST);
-      return;
+    /* Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+    .page { display: none; padding: 1rem 0; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* Header */
+    .app-header { text-align: center; padding: 2rem 1rem; background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%); color: white; }
+    .logo { max-width: 140px; margin-bottom: 1rem; }
+    .app-header h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
+    .app-header h2 { font-size: 1.1rem; font-weight: 400; opacity: 0.9; margin-bottom: 0.3rem; }
+    .app-header p { font-size: 0.95rem; opacity: 0.8; }
+    
+    /* Navigation */
+    .nav-bar { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 100; padding: 0.75rem 0; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-weight: 700; color: var(--primary); text-decoration: none; font-size: 1.2rem; }
+    .nav-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-btn { background: transparent; border: none; color: var(--text); padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+    .nav-btn:hover, .nav-btn.active { background: var(--primary-light); color: var(--primary); }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+    
+    /* Mobile Menu */
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; color: var(--text); cursor: pointer; }
+    @media (max-width: 768px) {
+      .menu-toggle { display: block; }
+      .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; background: var(--bg); border: 1px solid var(--border); padding: 1rem; gap: 0.5rem; }
+      .nav-links.open { display: flex; }
     }
     
-    const data = snap.data();
-    const loadedItems = data.items?.length ? data.items : DEFAULT_CHECKLIST;
-    renderChecklistEditor(loadedItems);
+    /* Forms */
+    .card { background: var(--card-bg); border-radius: 10px; padding: 1.5rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
+    .card h3 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
+    input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: var(--bg); color: var(--text); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,54,93,0.15); }
+    .btn { padding: 0.75rem 1.25rem; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #152c4d; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover { background: #b86500; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .btn-full { width: 100%; }
     
-  } catch (err) {
-    console.error('Checklist load error:', err);
-    renderChecklistEditor(DEFAULT_CHECKLIST);
-  }
-}
+    /* Auth Pages */
+    .auth-container { max-width: 440px; margin: 2rem auto; padding: 0 1rem; }
+    .auth-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 0.75rem; background: none; border: none; font-size: 1rem; cursor: pointer; color: var(--text-light); }
+    .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); font-weight: 600; }
+    .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .role-card { padding: 1.5rem; text-align: center; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .role-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .role-card span { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    
+    /* Alerts & Banners */
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .alert-success { background: #e8f5e9; color: var(--success); }
+    .alert-error { background: #ffebee; color: var(--danger); }
+    .alert-warning { background: #fff8e1; color: var(--warning); }
+    .alert-info { background: var(--e3f2fd); color: #0277bd; }
+    .offline-banner { background: var(--warning); color: white; text-align: center; padding: 0.5rem; font-size: 0.9rem; position: sticky; top: 0; z-index: 200; display: none; }
+    .offline-banner.show { display: block; }
+    
+    /* Lists & Tables */
+    .list-item { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .list-item:last-child { border-bottom: none; }
+    .list-item h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .list-item p { font-size: 0.85rem; color: var(--text-light); }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-success { background: #e8f5e9; color: var(--success); }
+    .badge-danger { background: #ffebee; color: var(--danger); }
+    .badge-warning { background: #fff8e1; color: var(--warning); }
+    .badge-info { background: #e3f2fd; color: #0277bd; }
+    
+    /* Search */
+    .search-bar { margin-bottom: 1rem; position: relative; }
+    .search-bar input { padding-left: 2.5rem; }
+    .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+    
+    /* Quick Actions */
+    .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .quick-action-card { background: var(--card-bg); padding: 1.25rem; border-radius: 8px; text-align: center; cursor: pointer; box-shadow: var(--shadow); transition: all 0.2s; }
+    .quick-action-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .quick-action-card span { font-size: 1.8rem; display: block; margin-bottom: 0.5rem; }
+    .quick-action-card p { font-size: 0.85rem; color: var(--text-light); }
+    
+    /* Checklist */
+    .checklist-section { margin-bottom: 1.5rem; }
+    .check-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .check-item:last-child { border-bottom: none; }
+    .check-item input[type="checkbox"] { width: 1.2rem; height: 1.2rem; margin-top: 0.1rem; cursor: pointer; }
+    .check-item label { flex: 1; margin-bottom: 0; cursor: pointer; }
+    .check-item.fault label { color: var(--danger); }
+    .fault-note { margin-top: 0.5rem; padding: 0.5rem; background: #ffebee; border-radius: 4px; font-size: 0.85rem; }
+    .checklist-editor-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--bg); border-radius: 4px; margin-bottom: 0.5rem; }
+    .checklist-editor-item input { flex: 1; margin-bottom: 0; }
+    .drag-handle { cursor: grab; color: var(--text-light); }
+    .drag-handle:active { cursor: grabbing; }
+    
+    /* Profile */
+    .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .profile-item label { font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.1rem; }
+    .profile-item .value { font-size: 0.95rem; }
+    
+    /* Documents */
+    .doc-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--bg); border-radius: 6px; margin-bottom: 0.5rem; }
+    .doc-icon { font-size: 1.5rem; margin-right: 0.75rem; }
+    .doc-info { flex: 1; }
+    .doc-name { font-weight: 500; font-size: 0.9rem; }
+    .doc-date { font-size: 0.8rem; color: var(--text-light); }
+    
+    /* Invoices */
+    .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--primary); }
+    .invoice-number { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+    .invoice-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .invoice-table th, .invoice-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .invoice-table th { background: var(--primary-light); font-weight: 600; }
+    .invoice-total { text-align: right; font-size: 1.2rem; font-weight: 700; margin-top: 1rem; }
+    
+    /* Holiday */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; justify-content: flex-start; padding: 0.25rem; border-radius: 4px; font-size: 0.8rem; min-height: 50px; }
+    .calendar-day.today { border: 2px solid var(--primary); }
+    .calendar-day.weekend { background: var(--primary-light); }
+    .calendar-day.off { background: #ffebee; color: var(--danger); }
+    .calendar-day.holiday { background: #fff8e1; color: var(--warning); }
+    .calendar-day-number { font-weight: 600; }
+    
+    /* Utilities */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-muted { color: var(--text-light); }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .w-full { width: 100%; }
+    
+    @media print {
+      .no-print { display: none !important; }
+      .page { display: block !important; }
+    }
+    
+    /* Loading Spinner */
+    .loading { display: flex; justify-content: center; padding: 2rem; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <!-- Offline Banner -->
+  <div id="offlineBanner" class="offline-banner">⚠️ You are offline — changes will save when you reconnect</div>
 
-function renderChecklistEditor(items) {
-  const container = document.getElementById('checklist-editor');
-  if (!container) return;
-  
-  container.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-      <h3>📝 Walkaround Check List Editor</h3>
-      <span style="font-size:0.9em;color:green;">✅ DVSA Compliant — Core items protected</span>
+  <!-- Header -->
+  <header class="app-header no-print">
+    <img src="assets/lsd-logo.png" alt="LSD Solutions" class="logo" onerror="this.style.display='none'" />
+    <h1>LSD Solutions</h1>
+    <h2>HGV And Logistics Services</h2>
+    <p>For All Your Longhaul, Shunting And Delivery Needs</p>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav id="mainNav" class="nav-bar no-print hidden">
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo" onclick="showPage('dashboard'); return false;">🚛 LSD Solutions</a>
+      <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+      <div class="nav-links" id="navLinks">
+        <!-- Dynamic links inserted here -->
+      </div>
+      <div class="nav-right">
+        <button class="nav-btn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
+        <button class="nav-btn" id="userMenuBtn">👤 <span id="userNameShort"></span></button>
+        <button class="nav-btn btn-secondary" onclick="signOut()">Sign Out</button>
+      </div>
     </div>
-    <p style="margin-bottom:16px;color:#555;">Drag to reorder • Edit text • Set what each item applies to • Add or remove items</p>
-    <p style="font-size:0.85em;color:#d47500;margin-bottom:12px;">⚠️ <strong>Core DVSA items</strong> marked with 🔒 — deleting these may make your checklist non-compliant</p>
-    
-    <div id="checklist-items" style="gap:8px;display:flex;flex-direction:column;">
-      ${items.map((item, idx) => `
-        <div class="checklist-row" data-index="${idx}" data-is-core="${item.isCoreDVSA || false}" draggable="true" 
-          style="padding:12px;background:#fff;border:1px solid ${item.isCoreDVSA ? '#b91c1c' : '#ddd'};border-radius:6px;display:flex;flex-direction:column;gap:8px;">
-          
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="cursor:grab;color:#888;">⋮⋮</span>
-            <input type="text" class="checklist-label" value="${escapeHtml(item.label)}" 
-              style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:0.95em;" 
-              placeholder="Check item description" />
-            ${item.isCoreDVSA ? '<span title="Core DVSA requirement" style="color:#b91c1c;font-size:0.8em;">🔒 Core</span>' : ''}
-            <button class="btn btn-sm btn-red remove-item" data-index="${idx}" data-is-core="${item.isCoreDVSA}" title="Remove">✕</button>
+  </nav>
+
+  <main class="container">
+    <!-- AUTH PAGES -->
+    <div id="page-auth" class="page active">
+      <div class="auth-container">
+        <div id="authSignIn">
+          <h3 class="text-center mb-2">Sign In</h3>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="signInEmail" placeholder="you@example.com" />
           </div>
-          
-          <div style="display:flex;gap:10px;align-items:center;margin-left:28px;">
-            <label style="font-size:0.85em;color:#666;">Applies to:</label>
-            <select class="checklist-appliesto" data-index="${idx}" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:0.85em;">
-              <option value="vehicle" ${item.appliesTo === 'vehicle' ? 'selected' : ''}>🚛 Vehicle Only</option>
-              <option value="trailer" ${item.appliesTo === 'trailer' ? 'selected' : ''}>🚉 Trailer Only</option>
-              <option value="both" ${item.appliesTo === 'both' ? 'selected' : ''}>🚛 + 🚉 Both</option>
-            </select>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="signInPassword" placeholder="••••••••" />
           </div>
+          <button class="btn btn-primary btn-full" onclick="handleSignIn()">Sign In</button>
+          <p class="text-center mt-1">
+            <a href="#" onclick="showAuthPage('reset'); return false;">Reset Your Password</a>
+          </p>
+          <p class="text-center mt-2 text-muted">
+            Don't have an account? 
+            <a href="#" onclick="showAuthPage('register'); return false;">Register</a>
+          </p>
         </div>
-      `).join('')}
-    </div>
-    
-    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
-      <button id="add-check-item" class="btn btn-primary">+ Add New Check Item</button>
-      <button id="reset-checklist" class="btn">↩ Reset to DVSA Default</button>
-      <button id="save-checklist" class="btn btn-green">💾 Save Checklist</button>
-    </div>
-    <div id="checklist-save-status" style="margin-top:12px;"></div>
-  `;
-  
-  attachChecklistEditorEvents(items);
-}
 
-function attachChecklistEditorEvents(initialItems) {
-  let items = [...initialItems];
-  
-  document.getElementById('add-check-item')?.addEventListener('click', () => {
-    items.push({ 
-      label: 'New Check Item', 
-      appliesTo: CHECK_BOTH, 
-      isCoreDVSA: false 
-    });
-    renderChecklistEditor(items);
-  });
-  
-  document.getElementById('reset-checklist')?.addEventListener('click', () => {
-    if (confirm('⚠️ This will replace ALL items with the official DVSA default checklist.\n\nCustom items will be lost. Continue?')) {
-      items = [...DEFAULT_CHECKLIST];
-      renderChecklistEditor(items);
-      showToast('✅ Reset to official DVSA default checklist');
-    }
-  });
-  
-  document.querySelectorAll('.remove-item').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt(e.target.dataset.index);
-      const isCore = e.target.dataset.isCore === 'true';
-      
-      if (isCore) {
-        const confirmed = confirm(
-          '⚠️ IMPORTANT — DVSA COMPLIANCE WARNING\n\n' +
-          'This item is a core DVSA requirement. Removing it may mean your walkaround checks ' +
-          'no longer meet legal standards. The Traffic Commissioner may question incomplete records.\n\n' +
-          'Are you SURE you want to remove this item?'
-        );
-        if (!confirmed) return;
-      } else {
-        if (!confirm('Remove this check item?')) return;
-      }
-      
-      items.splice(idx, 1);
-      renderChecklistEditor(items);
-    });
-  });
-  
-  document.getElementById('save-checklist')?.addEventListener('click', async () => {
-    const labels = document.querySelectorAll('.checklist-label');
-    const applies = document.querySelectorAll('.checklist-appliesto');
-    
-    items = Array.from(labels).map((input, i) => ({
-      label: input.value.trim(),
-      appliesTo: applies[i].value,
-      isCoreDVSA: items[i]?.isCoreDVSA || false
-    })).filter(item => item.label);
-    
-    const status = document.getElementById('checklist-save-status');
-    status.innerHTML = '<span style="color:#d47500;">⏳ Saving...</span>';
-    
-    try {
-      await setDoc(
-        doc(db, 'companies', currentUser.uid, 'settings', 'checklist'),
-        { items, updatedAt: new Date(), dvsaCompliant: true },
-        { merge: false }
-      );
-      status.innerHTML = '<span style="color:green;">✅ Checklist saved — active for all drivers now</span>';
-      setTimeout(() => status.innerHTML = '', 4000);
-    } catch (err) {
-      status.innerHTML = '<span style="color:red;">❌ Save failed — check permissions</span>';
-    }
-  });
-}
-
-// --------------------------
-// VEHICLE MANAGEMENT — COMPANY PORTAL
-// --------------------------
-async function loadVehiclesList() {
-  const container = document.getElementById('vehicles-list');
-  if (!container || !currentUser) return;
-  
-  container.innerHTML = '<p>Loading vehicles...</p>';
-  
-  try {
-    const vehiclesSnap = await getDocs(
-      collection(db, 'companies', currentUser.uid, 'vehicles')
-    );
-    
-    let vehicles = [];
-    vehiclesSnap.forEach(doc => {
-      vehicles.push({ id: doc.id, ...doc.data() });
-    });
-    
-    vehicles.sort((a, b) => (a.registration || '').localeCompare(b.registration || ''));
-    renderVehiclesList(vehicles);
-    
-  } catch (err) {
-    console.error('Error loading vehicles:', err);
-    container.innerHTML = '<p style="color:red;">❌ Could not load vehicles.</p>';
-  }
-}
-
-function renderVehiclesList(vehicles) {
-  const container = document.getElementById('vehicles-list');
-  
-  const activeVehicles = vehicles.filter(v => v.active !== false);
-  const inactiveVehicles = vehicles.filter(v => v.active === false);
-  
-  container.innerHTML = `
-    <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-      <div>
-        <h3>🚛 Vehicles & Trailers</h3>
-        <p style="font-size:0.9em;color:#666;">${activeVehicles.length} Active • ${inactiveVehicles.length} Inactive</p>
-      </div>
-      <button onclick="showAddVehicleForm()" class="btn btn-primary">+ Add Vehicle/Trailer</button>
-    </div>
-    
-    ${activeVehicles.length > 0 ? `
-      <h4 style="margin:1rem 0 0.5rem 0;color:#16a34a;">✅ Active</h4>
-      <div style="display:grid;gap:0.8rem;margin-bottom:1.5rem;">
-        ${activeVehicles.map(v => renderVehicleCard(v)).join('')}
-      </div>
-    ` : '<p style="color:#666;">No active vehicles added yet.</p>'}
-    
-    ${inactiveVehicles.length > 0 ? `
-      <h4 style="margin:1.5rem 0 0.5rem 0;color:#888;">⏸️ Inactive</h4>
-      <div style="display:grid;gap:0.8rem;opacity:0.7;">
-        ${inactiveVehicles.map(v => renderVehicleCard(v)).join('')}
-      </div>
-    ` : ''}
-  `;
-}
-
-function renderVehicleCard(vehicle) {
-  const isTrailer = vehicle.type === 'trailer';
-  const mainId = isTrailer ? vehicle.trailerNumber : vehicle.registration;
-  const subtitle = isTrailer 
-    ? `${vehicle.make || ''} • ${vehicle.owner || 'Company Owned'}`
-    : `${vehicle.make || ''} ${vehicle.model || ''}`;
-  
-  return `
-    <div style="border:1px solid #e5e7eb;border-radius:6px;padding:1rem;background:#fff;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-          <strong style="font-size:1.1rem;">${isTrailer ? '🚉' : '🚛'} ${escapeHtml(mainId || 'Unnamed')}</strong>
-          <p style="margin:0.3rem 0 0 0;font-size:0.9em;color:#666;">${escapeHtml(subtitle)}</p>
+        <div id="authReset" class="hidden">
+          <h3 class="text-center mb-2">Reset Your Password</h3>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="resetEmail" placeholder="you@example.com" />
+          </div>
+          <button class="btn btn-primary btn-full" onclick="handlePasswordReset()">Send Reset Link</button>
+          <p class="text-center mt-2">
+            <a href="#" onclick="showAuthPage('signin'); return false;">← Back to Sign In</a>
+          </p>
         </div>
-        <div>
-          <button onclick="editVehicle('${vehicle.id}')" class="btn btn-sm">Edit</button>
-          <button onclick="toggleVehicleActive('${vehicle.id}', ${vehicle.active !== false})" class="btn btn-sm">
-            ${vehicle.active !== false ? '⏸️ Deactivate' : '✅ Activate'}
-          </button>
+
+        <div id="authCheckEmail" class="hidden text-center">
+          <span style="font-size:3rem;">📧</span>
+          <h3>Check Your Email</h3>
+          <p>We've sent a password reset link to your email address. It may take a few minutes to arrive.</p>
+          <button class="btn btn-secondary mt-2" onclick="showAuthPage('signin')">Back to Sign In</button>
         </div>
-      </div>
-    </div>
-  `;
-}
 
-window.showAddVehicleForm = function() {
-  const container = document.getElementById('vehicles-list');
-  container.innerHTML = `
-    <h3 style="margin-bottom:1rem;">Add New Vehicle/Trailer</h3>
-    <button onclick="loadVehiclesList()" class="btn" style="margin-bottom:1rem;">← Back to List</button>
-    
-    <div style="background:#f9fafb;padding:1.5rem;border-radius:6px;max-width:600px;">
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Type</label>
-      <select id="new-vh-type" onchange="toggleVehicleFormFields()" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
-        <option value="vehicle">🚛 Vehicle (Truck/Unit)</option>
-        <option value="trailer">🚉 Trailer</option>
-      </select>
-      
-      <div id="vehicle-fields">
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Registration Number *</label>
-        <input type="text" id="new-vh-reg" placeholder="e.g. AB12 CDE" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;text-transform:uppercase;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Make</label>
-        <input type="text" id="new-vh-make" placeholder="e.g. DAF, Scania" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Model</label>
-        <input type="text" id="new-vh-model" placeholder="e.g. XF, R Series" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">MOT Expiry Date</label>
-        <input type="date" id="new-vh-mot" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Tax Expiry Date</label>
-        <input type="date" id="new-vh-tax" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Notes</label>
-        <textarea id="new-vh-notes" placeholder="Any additional information..." style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:60px;"></textarea>
-      </div>
-      
-      <div id="trailer-fields" style="display:none;">
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Trailer Number/ID *</label>
-        <input type="text" id="new-tr-number" placeholder="e.g. TR12345" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Make/Type</label>
-        <input type="text" id="new-tr-make" placeholder="e.g. SDC, Curtainside" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Owner</label>
-        <select id="new-tr-owner" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
-          <option value="company">Company Owned</option>
-          <option value="hired">Hired/Leased</option>
-          <option value="customer">Customer Owned</option>
-          <option value="other">Other</option>
-        </select>
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Max Gross Weight (kg)</label>
-        <input type="number" id="new-tr-weight" placeholder="36000" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Notes</label>
-        <textarea id="new-tr-notes" placeholder="Any additional information..." style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:60px;"></textarea>
-      </div>
-      
-      <button onclick="saveNewVehicle()" class="btn btn-primary" style="width:100%;">💾 Save Vehicle</button>
-    </div>
-  `;
-};
-
-window.toggleVehicleFormFields = function() {
-  const type = document.getElementById('new-vh-type').value;
-  document.getElementById('vehicle-fields').style.display = type === 'vehicle' ? 'block' : 'none';
-  document.getElementById('trailer-fields').style.display = type === 'trailer' ? 'block' : 'none';
-};
-
-window.saveNewVehicle = async function() {
-  const type = document.getElementById('new-vh-type').value;
-  
-  if (type === 'vehicle') {
-    const registration = document.getElementById('new-vh-reg').value.trim().toUpperCase();
-    if (!registration) return alert('⚠️ Registration number is required');
-    
-    await addDoc(collection(db, 'companies', currentUser.uid, 'vehicles'), {
-      type: 'vehicle',
-      registration,
-      make: document.getElementById('new-vh-make').value.trim(),
-      model: document.getElementById('new-vh-model').value.trim(),
-      motExpiry: document.getElementById('new-vh-mot').valueAsDate ? new Date(document.getElementById('new-vh-mot').value) : null,
-      taxExpiry: document.getElementById('new-vh-tax').valueAsDate ? new Date(document.getElementById('new-vh-tax').value) : null,
-      notes: document.getElementById('new-vh-notes').value.trim(),
-      active: true,
-      createdAt: new Date()
-    });
-  } else {
-    const trailerNumber = document.getElementById('new-tr-number').value.trim();
-    if (!trailerNumber) return alert('⚠️ Trailer number is required');
-    
-    await addDoc(collection(db, 'companies', currentUser.uid, 'vehicles'), {
-      type: 'trailer',
-      trailerNumber,
-      make: document.getElementById('new-tr-make').value.trim(),
-      owner: document.getElementById('new-tr-owner').value,
-      maxWeight: parseInt(document.getElementById('new-tr-weight').value) || null,
-      notes: document.getElementById('new-tr-notes').value.trim(),
-      active: true,
-      createdAt: new Date()
-    });
-  }
-  
-  showToast('✅ Vehicle added successfully');
-  loadVehiclesList();
-};
-
-window.toggleVehicleActive = async function(id, currentState) {
-  if (!confirm(currentState ? 'Deactivate this vehicle? It will no longer appear in driver dropdowns.' : 'Reactivate this vehicle? It will appear in driver dropdowns again.')) return;
-  
-  await updateDoc(doc(db, 'companies', currentUser.uid, 'vehicles', id), {
-    active: !currentState
-  });
-  
-  showToast('Vehicle status updated');
-  loadVehiclesList();
-};
-
-window.editVehicle = async function(id) {
-  alert('✏️ Edit functionality — extend as needed');
-};
-
-// --------------------------
-// COMPANY DRIVERS MANAGEMENT
-// --------------------------
-async function loadCompanyDrivers() {
-  const container = document.getElementById('drivers-list');
-  if (!container || !currentUser) return;
-  
-  container.innerHTML = '<p>Loading drivers...</p>';
-  
-  try {
-    const driversSnap = await getDocs(
-      collection(db, 'companies', currentUser.uid, 'drivers')
-    );
-    
-    let drivers = [];
-    driversSnap.forEach(doc => {
-      drivers.push({ id: doc.id, ...doc.data() });
-    });
-    
-    drivers.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
-    renderDriversList(drivers);
-    
-  } catch (err) {
-    console.error('Error loading drivers:', err);
-    container.innerHTML = '<p style="color:red;">❌ Could not load drivers.</p>';
-  }
-}
-
-function renderDriversList(drivers) {
-  const container = document.getElementById('drivers-list');
-  
-  container.innerHTML = `
-    <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
-      <div>
-        <h3>👤 Driver Management</h3>
-        <p style="font-size:0.9em;color:#666;">${drivers.length} registered driver${drivers.length !== 1 ? 's' : ''}</p>
-      </div>
-      <button onclick="showAddDriverForm()" class="btn btn-primary">+ Add Driver</button>
-    </div>
-    
-    ${drivers.length > 0 ? `
-      <div style="display:grid;gap:0.8rem;">
-        ${drivers.map(d => `
-          <div style="border:1px solid #e5e7eb;border-radius:6px;padding:1rem;background:#fff;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-              <div>
-                <strong style="font-size:1.05rem;">${escapeHtml(d.fullName || 'Unnamed Driver')}</strong>
-                <p style="margin:0.2rem 0;font-size:0.9em;color:#666;">${escapeHtml(d.email || '')}</p>
-                <p style="margin:0;font-size:0.85em;">
-                  🪪 Licence: ${d.licenceNumber ? escapeHtml(d.licenceNumber) : 'Not recorded'}
-                  ${d.licenceExpiry ? `• Expires: ${formatDate(d.licenceExpiry).split(' ')[1]} ${formatDate(d.licenceExpiry).split(' ')[2]}` : ''}
-                </p>
-                <p style="margin:0.3rem 0 0 0;font-size:0.8em;color:#666;">
-                  Medical: ${d.medicalExpiry ? `Valid until ${formatDate(d.medicalExpiry).split(' ')[1]} ${formatDate(d.medicalExpiry).split(' ')[2]}` : 'Not recorded'}
-                </p>
-              </div>
-              <div>
-                <button onclick="viewDriverDocs('${d.id}')" class="btn btn-sm">📄 Docs</button>
-                <button onclick="editDriver('${d.id}')" class="btn btn-sm">Edit</button>
-                <button onclick="removeDriver('${d.id}', '${escapeHtml(d.fullName)}')" class="btn btn-sm btn-red">Remove</button>
-              </div>
+        <div id="authRegister" class="hidden">
+          <h3 class="text-center mb-2">Register As</h3>
+          <div class="role-selector">
+            <div class="role-card" id="roleDriver" onclick="selectRole('driver')">
+              <span>👤</span>
+              <strong>Driver</strong>
+              <p>Find work & manage documents</p>
+            </div>
+            <div class="role-card" id="roleCompany" onclick="selectRole('company')">
+              <span>🏢</span>
+              <strong>Company</strong>
+              <p>Post work & manage fleet</p>
             </div>
           </div>
-        `).join('')}
-      </div>
-    ` : '<p style="color:#666;text-align:center;padding:2rem;">No drivers added yet. Add drivers above.</p>'}
-  `;
-}
-
-window.showAddDriverForm = function() {
-  const container = document.getElementById('drivers-list');
-  container.innerHTML = `
-    <h3 style="margin-bottom:1rem;">Add New Driver</h3>
-    <button onclick="loadCompanyDrivers()" class="btn" style="margin-bottom:1rem;">← Back to List</button>
-    
-    <div style="background:#f9fafb;padding:1.5rem;border-radius:6px;max-width:600px;">
-      <h4 style="margin-bottom:1rem;">Personal Details</h4>
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Full Name *</label>
-      <input type="text" id="new-driver-name" placeholder="Full legal name" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Email Address *</label>
-      <input type="email" id="new-driver-email" placeholder="driver@email.com" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <h4 style="margin:1.5rem 0 1rem 0;">Driving Licence Details</h4>
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Number</label>
-      <input type="text" id="new-driver-licence" placeholder="e.g. SMITH123456AB9XY" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;text-transform:uppercase;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Categories</label>
-      <input type="text" id="new-driver-cats" placeholder="C+E, C, D1, etc." style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">DVLA Check Code</label>
-      <input type="text" id="new-driver-dvla" placeholder="123456ABC" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Valid From</label>
-      <input type="date" id="new-driver-validfrom" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Valid From</label>
-      <input type="date" id="new-driver-validfrom" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Licence Expiry Date</label>
-      <input type="date" id="new-driver-expiry" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">DVLA Penalty Points</label>
-      <input type="number" id="new-driver-points" placeholder="0" min="0" max="12" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <h4 style="margin:1.5rem 0 1rem 0;">Medical & Compliance</h4>
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Medical Certificate Expiry</label>
-      <input type="date" id="new-driver-medical" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Phone Number</label>
-      <input type="tel" id="new-driver-phone" placeholder="+44 7xxx xxxxxx" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <button onclick="saveNewDriver()" class="btn btn-primary" style="width:100%;margin-top:1rem;">💾 Save Driver</button>
-    </div>
-  `;
-};
-
-window.saveNewDriver = async function() {
-  const fullName = document.getElementById('new-driver-name').value.trim();
-  const email = document.getElementById('new-driver-email').value.trim();
-  
-  if (!fullName || !email) return alert('⚠️ Name and email are required');
-  
-  try {
-    await addDoc(collection(db, 'companies', currentUser.uid, 'drivers'), {
-      fullName,
-      email,
-      licenceNumber: document.getElementById('new-driver-licence').value.trim().toUpperCase(),
-      licenceCategories: document.getElementById('new-driver-cats').value.trim(),
-      dvlaCheckCode: document.getElementById('new-driver-dvla').value.trim(),
-      validFrom: document.getElementById('new-driver-validfrom').valueAsDate 
-        ? new Date(document.getElementById('new-driver-validfrom').value) : null,
-      licenceExpiry: document.getElementById('new-driver-expiry').valueAsDate 
-        ? new Date(document.getElementById('new-driver-expiry').value) : null,
-      penaltyPoints: parseInt(document.getElementById('new-driver-points').value) || 0,
-      medicalExpiry: document.getElementById('new-driver-medical').valueAsDate 
-        ? new Date(document.getElementById('new-driver-medical').value) : null,
-      phone: document.getElementById('new-driver-phone').value.trim(),
-      addedAt: new Date(),
-      documents: []
-    });
-    
-    showToast('✅ Driver added successfully');
-    loadCompanyDrivers();
-  } catch (err) {
-    console.error('Error saving driver:', err);
-    showToast('❌ Failed to add driver', 'error');
-  }
-};
-
-window.removeDriver = async function(driverId, driverName) {
-  if (!confirm(`⚠️ Permanently remove ${driverName}? This cannot be undone.`)) return;
-  
-  try {
-    await deleteDoc(doc(db, 'companies', currentUser.uid, 'drivers', driverId));
-    showToast('✅ Driver removed');
-    loadCompanyDrivers();
-  } catch (err) {
-    console.error('Error removing driver:', err);
-    showToast('❌ Failed to remove driver', 'error');
-  }
-};
-
-window.editDriver = async function(driverId) {
-  alert('✏️ Edit driver — extend as needed');
-};
-
-window.viewDriverDocs = function(driverId) {
-  showToast('📄 Documents viewer — extend as needed');
-};
-// ==========================================================
-// LSD Solutions — app.js Section 3
-// Defect Management, Company Profile, Driver Portal,
-// Walkaround Checks, Company Profile & Exports
-// ==========================================================
-
-// --------------------------
-// DEFECT MANAGEMENT
-// --------------------------
-async function loadDefectsList() {
-  const container = document.getElementById('defects-list');
-  if (!container || !currentUser) return;
-  
-  container.innerHTML = '<p>Loading defects...</p>';
-  
-  try {
-    const defectsSnap = await getDocs(
-      query(
-        collection(db, 'defects'),
-        where('companyId', '==', currentUser.uid)
-      )
-    );
-    
-    let defects = [];
-    defectsSnap.forEach(doc => {
-      defects.push({ id: doc.id, ...doc.data() });
-    });
-    
-    defects.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
-    renderDefectsList(defects);
-    
-  } catch (err) {
-    console.error('Error loading defects:', err);
-    container.innerHTML = '<p style="color:red;">❌ Could not load defects.</p>';
-  }
-}
-
-function renderDefectsList(defects) {
-  const container = document.getElementById('defects-list');
-  
-  if (defects.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center;padding:3rem;">
-        <h3>✅ No Reported Defects</h3>
-        <p style="color:#666;margin-top:0.5rem;">All vehicles and trailers operating within DVSA standards.</p>
-      </div>
-    `;
-    return;
-  }
-  
-  const grouped = {
-    dangerous: defects.filter(d => d.severity === 'DANGEROUS'),
-    major: defects.filter(d => d.severity === 'MAJOR'),
-    minor: defects.filter(d => d.severity === 'MINOR'),
-    other: defects.filter(d => !['DANGEROUS','MAJOR','MINOR'].includes(d.severity))
-  };
-  
-  container.innerHTML = `
-    <div style="margin-bottom:1.5rem;">
-      <h3>⚠️ Defect Management</h3>
-      <p style="font-size:0.9em;color:#666;">${defects.length} total • 
-        <span style="color:#b91c1c;">${grouped.dangerous.length} Dangerous</span> • 
-        <span style="color:#d97706;">${grouped.major.length} Major</span> • 
-        <span style="color:#d4af37;">${grouped.minor.length} Minor</span>
-      </p>
-    </div>
-    
-    ${['dangerous','major','minor','other'].map(severityKey => {
-      const list = grouped[severityKey];
-      if (!list.length) return '';
-      
-      const label = severityKey === 'dangerous' ? '⚠️ DANGEROUS — Immediate Action Required' :
-                    severityKey === 'major' ? '🔶 Major — Repair Before Further Use' :
-                    severityKey === 'minor' ? '🟡 Minor — Monitor / Rectify Soon' : '📋 Other Defects';
-      const color = severityKey === 'dangerous' ? '#b91c1c' :
-                    severityKey === 'major' ? '#d97706' :
-                    severityKey === 'minor' ? '#d4af37' : '#666';
-      
-      return `
-        <div style="margin-bottom:1.5rem;border-left:4px solid ${color};padding-left:1rem;">
-          <h4 style="color:${color};margin-bottom:0.5rem;">${label}</h4>
-          <div style="display:grid;gap:0.7rem;">
-            ${list.map(d => renderDefectCard(d)).join('')}
-          </div>
-        </div>
-      `;
-    }).join('')}
-  `;
-}
-
-function renderDefectCard(defect) {
-  const statusInfo = DEFECT_STATUS[defect.status?.toUpperCase()] || DEFECT_STATUS.REPORTED;
-  const severityInfo = DVSA_SEVERITY[defect.severity] || DVSA_SEVERITY.MINOR;
-  
-  return `
-    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:1rem;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-        <div>
-          <strong style="font-size:0.95rem;">${escapeHtml(defect.defectCode || defect.category || 'DEFECT')}</strong>
-          <p style="margin:0.25rem 0;">${escapeHtml(defect.description || 'No description')}</p>
-          <p style="margin:0;font-size:0.85em;color:#666;">
-            🚛 ${escapeHtml(defect.vehicleInfo || 'Unknown Vehicle')} • 
-            Reported: ${formatDate(defect.reportedAt)} • 
-            By: ${escapeHtml(defect.driverName || 'Unknown')}
-          </p>
-        </div>
-        <div style="text-align:right;">
-          <span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:0.8em;font-weight:bold;background:${statusInfo.color}20;color:${statusInfo.color};">
-            ${statusInfo.label}
-          </span>
-          <p style="margin:0.3rem 0 0 0;font-size:0.75em;color:${severityInfo.color};">
-            ${severityInfo.label}
-          </p>
-        </div>
-      </div>
-      <div style="margin-top:0.7rem;display:flex;gap:6px;flex-wrap:wrap;">
-        <button onclick="updateDefectStatus('${defect.id}', 'in_progress')" class="btn btn-sm">🔧 In Progress</button>
-        <button onclick="updateDefectStatus('${defect.id}', 'fixed')" class="btn btn-sm btn-green">✅ Mark Fixed</button>
-        <button onclick="updateDefectStatus('${defect.id}', 'verified')" class="btn btn-sm">✓ Verified</button>
-      </div>
-    </div>
-  `;
-}
-
-window.updateDefectStatus = async function(defectId, newStatus) {
-  try {
-    await updateDoc(doc(db, 'defects', defectId), {
-      status: newStatus,
-      updatedAt: new Date()
-    });
-    showToast('✅ Defect status updated');
-    loadDefectsList();
-  } catch (err) {
-    console.error('Error updating defect:', err);
-    showToast('❌ Failed to update', 'error');
-  }
-};
-
-// --------------------------
-// COMPANY PROFILE — DVSA & TRAFFIC COMMISSIONER COMPLIANT
-// --------------------------
-async function loadCompanyProfile() {
-  const container = document.getElementById('company-profile-content');
-  if (!container || !currentUser) return;
-  
-  try {
-    const profileRef = doc(db, 'companies', currentUser.uid, 'settings', 'profile');
-    const snap = await getDoc(profileRef);
-    const data = snap.exists() ? snap.data() : {};
-    renderCompanyProfileForm(data);
-  } catch (err) {
-    console.error('Error loading company profile:', err);
-    renderCompanyProfileForm({});
-  }
-}
-
-function renderCompanyProfileForm(data) {
-  const container = document.getElementById('company-profile-content');
-  
-  container.innerHTML = `
-    <div style="max-width:700px;">
-      <h3 style="margin-bottom:1.5rem;">🏢 Company Profile</h3>
-      <p style="font-size:0.9em;color:#666;margin-bottom:1.5rem;">
-        This information is used for DVSA, Traffic Commissioner and legal compliance records.
-      </p>
-      
-      <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-        <h4 style="margin-bottom:1rem;font-size:1rem;">📋 Registered Details</h4>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Registered Company Name *</label>
-        <input type="text" id="cp-registered-name" value="${escapeHtml(data.registeredName || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" required />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Trading Name (if different)</label>
-        <input type="text" id="cp-trading-name" value="${escapeHtml(data.tradingName || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Companies House / HMRC Registered Number *</label>
-        <input type="text" id="cp-company-number" value="${escapeHtml(data.companyNumber || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" required />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Registered Office Address *</label>
-        <textarea id="cp-registered-address" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:80px;" required>${escapeHtml(data.registeredAddress || '')}</textarea>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Operational / Trading Address (if different)</label>
-        <textarea id="cp-trading-address" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(data.tradingAddress || '')}</textarea>
-      </div>
-      
-      <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-        <h4 style="margin-bottom:1rem;font-size:1rem;">🚛 Operator Licence Details</h4>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Operator Licence Number *</label>
-        <input type="text" id="cp-licence-number" value="${escapeHtml(data.licenceNumber || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" required />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Licence Type</label>
-        <select id="cp-licence-type" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
-          <option value="" ${!data.licenceType ? 'selected' : ''}>Select...</option>
-          <option value="standard_national" ${data.licenceType === 'standard_national' ? 'selected' : ''}>Standard National</option>
-          <option value="standard_international" ${data.licenceType === 'standard_international' ? 'selected' : ''}>Standard International</option>
-          <option value="restricted" ${data.licenceType === 'restricted' ? 'selected' : ''}>Restricted</option>
-        </select>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Traffic Commissioner Area</label>
-        <select id="cp-tc-area" style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;">
-          <option value="" ${!data.tcArea ? 'selected' : ''}>Select your area...</option>
-          <option value="north_east" ${data.tcArea === 'north_east' ? 'selected' : ''}>North East of England</option>
-          <option value="north_west" ${data.tcArea === 'north_west' ? 'selected' : ''}>North West of England</option>
-          <option value="west_midlands" ${data.tcArea === 'west_midlands' ? 'selected' : ''}>West Midlands</option>
-          <option value="east_midlands" ${data.tcArea === 'east_midlands' ? 'selected' : ''}>East Midlands</option>
-          <option value="south_east" ${data.tcArea === 'south_east' ? 'selected' : ''}>South East & London</option>
-          <option value="south_west" ${data.tcArea === 'south_west' ? 'selected' : ''}>South West of England</option>
-          <option value="wales" ${data.tcArea === 'wales' ? 'selected' : ''}>Wales</option>
-          <option value="scotland" ${data.tcArea === 'scotland' ? 'selected' : ''}>Scotland</option>
-        </select>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Authorised Operating Centres</label>
-        <textarea id="cp-operating-centres" placeholder="List all operating centres as shown on your licence"
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:80px;">${escapeHtml(data.operatingCentres || '')}</textarea>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Maximum Authorised Vehicles</label>
-        <input type="number" id="cp-max-vehicles" value="${data.maxVehicles || ''}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Maximum Authorised Trailers</label>
-        <input type="number" id="cp-max-trailers" value="${data.maxTrailers || ''}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      </div>
-      
-      <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-        <h4 style="margin-bottom:1rem;font-size:1rem;">📧 Contact & Administration</h4>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Primary Contact Name</label>
-        <input type="text" id="cp-contact-name" value="${escapeHtml(data.contactName || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Company Email Address</label>
-        <input type="email" id="cp-email" value="${escapeHtml(data.email || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Telephone Number</label>
-        <input type="tel" id="cp-phone" value="${escapeHtml(data.phone || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Invoices To — Name / Department</label>
-        <input type="text" id="cp-invoice-contact" value="${escapeHtml(data.invoiceContact || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Invoices Email Address</label>
-        <input type="email" id="cp-invoice-email" value="${escapeHtml(data.invoiceEmail || '')}" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Invoices Postal Address</label>
-        <textarea id="cp-invoice-address" 
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:60px;">${escapeHtml(data.invoiceAddress || '')}</textarea>
-        
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Additional Notes / Compliance Info</label>
-        <textarea id="cp-notes" placeholder="Any additional regulatory information..."
-          style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;min-height:60px;">${escapeHtml(data.notes || '')}</textarea>
-      </div>
-      
-      <button onclick="saveCompanyProfile()" class="btn btn-primary" style="width:100%;">💾 Save Company Profile</button>
-      <div id="profile-save-status" style="margin-top:12px;"></div>
-    </div>
-  `;
-}
-
-window.saveCompanyProfile = async function() {
-  const required = ['cp-registered-name', 'cp-company-number', 'cp-registered-address', 'cp-licence-number'];
-  for (const id of required) {
-    if (!document.getElementById(id)?.value.trim()) {
-      return alert('⚠️ Please fill in all required * fields');
-    }
-  }
-  
-  const status = document.getElementById('profile-save-status');
-  status.innerHTML = '<span style="color:#d47500;">⏳ Saving...</span>';
-  
-  try {
-    await setDoc(
-      doc(db, 'companies', currentUser.uid, 'settings', 'profile'),
-      {
-        registeredName: document.getElementById('cp-registered-name').value.trim(),
-        tradingName: document.getElementById('cp-trading-name').value.trim(),
-        companyNumber: document.getElementById('cp-company-number').value.trim(),
-        registeredAddress: document.getElementById('cp-registered-address').value.trim(),
-        tradingAddress: document.getElementById('cp-trading-address').value.trim(),
-        licenceNumber: document.getElementById('cp-licence-number').value.trim(),
-        licenceType: document.getElementById('cp-licence-type').value,
-        tcArea: document.getElementById('cp-tc-area').value,
-        operatingCentres: document.getElementById('cp-operating-centres').value.trim(),
-        maxVehicles: parseInt(document.getElementById('cp-max-vehicles').value) || null,
-        maxTrailers: parseInt(document.getElementById('cp-max-trailers').value) || null,
-        contactName: document.getElementById('cp-contact-name').value.trim(),
-        email: document.getElementById('cp-email').value.trim(),
-        phone: document.getElementById('cp-phone').value.trim(),
-        invoiceContact: document.getElementById('cp-invoice-contact').value.trim(),
-        invoiceEmail: document.getElementById('cp-invoice-email').value.trim(),
-        invoiceAddress: document.getElementById('cp-invoice-address').value.trim(),
-        notes: document.getElementById('cp-notes').value.trim(),
-        updatedAt: new Date()
-      },
-      { merge: true }
-    );
-    
-    status.innerHTML = '<span style="color:green;">✅ Profile saved — DVSA compliant records updated</span>';
-    setTimeout(() => status.innerHTML = '', 4000);
-    showToast('✅ Company profile saved');
-  } catch (err) {
-    status.innerHTML = '<span style="color:red;">❌ Save failed — check permissions</span>';
-  }
-};
-
-// --------------------------
-// DRIVER PORTAL — WALKAROUND CHECKS
-// --------------------------
-async function loadDriverCheckSelection() {
-  const container = document.getElementById('driver-checks-content');
-  if (!container || !currentUser) return;
-  
-  container.innerHTML = '<p>Loading available vehicles...</p>';
-  
-  try {
-    // Load company vehicles accessible to this driver
-    const vehiclesSnap = await getDocs(
-      query(
-        collection(db, 'companyVehicles'),
-        where('active', '==', true)
-      )
-    );
-    
-    let vehicles = [];
-    vehiclesSnap.forEach(doc => {
-      vehicles.push({ id: doc.id, ...doc.data() });
-    });
-    
-    vehicles.sort((a, b) => {
-      const aId = a.registration || a.trailerNumber || '';
-      const bId = b.registration || b.trailerNumber || '';
-      return aId.localeCompare(bId);
-    });
-    
-    renderDriverCheckSelection(vehicles);
-    
-  } catch (err) {
-    console.error('Error loading vehicles:', err);
-    renderDriverCheckSelection([]);
-  }
-}
-
-function renderDriverCheckSelection(vehicles) {
-  const container = document.getElementById('driver-checks-content');
-  
-  const activeVehicles = vehicles.filter(v => v.active !== false);
-  const vehicleUnits = activeVehicles.filter(v => v.type === 'vehicle');
-  const trailers = activeVehicles.filter(v => v.type === 'trailer');
-  
-  container.innerHTML = `
-    <h3 style="margin-bottom:1rem;">🚛 Daily Walkaround Check</h3>
-    <p style="font-size:0.9em;color:#666;margin-bottom:1.5rem;">Select your vehicle and/or trailer to begin your pre-use inspection</p>
-    
-    ${activeVehicles.length === 0 ? `
-      <div style="background:#fff4e5;border:1px solid #d47500;border-radius:6px;padding:1rem;margin-bottom:1rem;">
-        <strong>⚠️ No vehicles available</strong>
-        <p style="margin:0.3rem 0 0 0;font-size:0.9em;">Please check with your company administrator that vehicles have been added and marked as active.</p>
-      </div>
-    ` : ''}
-    
-    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Select Vehicle (Truck/Unit)</label>
-      <select id="check-vehicle" style="width:100%;padding:0.7rem;border:1px solid #ccc;border-radius:4px;margin-bottom:1rem;">
-        <option value="">— No Vehicle —</option>
-        ${vehicleUnits.map(v => `
-          <option value="${v.id}" data-type="vehicle">
-            🚛 ${escapeHtml(v.registration)} — ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')}
-          </option>
-        `).join('')}
-      </select>
-      
-      <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Select Trailer (optional)</label>
-      <select id="check-trailer" style="width:100%;padding:0.7rem;border:1px solid #ccc;border-radius:4px;margin-bottom:1rem;">
-        <option value="">— No Trailer —</option>
-        ${trailers.map(v => `
-          <option value="${v.id}" data-type="trailer">
-            🉐 ${escapeHtml(v.trailerNumber)} — ${escapeHtml(v.make || '')}
-          </option>
-        `).join('')}
-      </select>
-      
-      <button onclick="startWalkaroundCheck()" class="btn btn-primary" style="width:100%;font-size:1rem;padding:0.8rem;">
-        ▶️ Start Walkaround Check
-      </button>
-    </div>
-    
-    <div style="margin-top:2rem;">
-      <h4 style="margin-bottom:1rem;">📋 Recent Checks</h4>
-      <div id="recent-checks-list">
-        <p style="color:#666;font-style:italic;">Loading recent checks...</p>
-      </div>
-    </div>
-  `;
-  
-  loadRecentChecks();
-}
-
-async function startWalkaroundCheck() {
-  const vehicleSelect = document.getElementById('check-vehicle');
-  const trailerSelect = document.getElementById('check-trailer');
-  
-  const vehicleId = vehicleSelect.value;
-  const trailerId = trailerSelect.value;
-  
-  if (!vehicleId && !trailerId) {
-    return alert('⚠️ Please select at least a vehicle or a trailer to begin your check');
-  }
-  
-  let checkType;
-  if (vehicleId && trailerId) checkType = CHECK_BOTH;
-  else if (vehicleId) checkType = CHECK_VEHICLE;
-  else checkType = CHECK_TRAILER;
-  
-  currentCheckData = {
-    checkType,
-    vehicleId: vehicleId || null,
-    trailerId: trailerId || null,
-    startTime: new Date(),
-    items: {},
-    defects: []
-  };
-  
-  renderWalkaroundCheckForm();
-}
-
-async function renderWalkaroundCheckForm() {
-  const container = document.getElementById('driver-checks-content');
-  
-  // Load checklist from company settings
-  let checklistItems = DEFAULT_CHECKLIST;
-  try {
-    const companyId = userProfile.companyId;
-    if (companyId) {
-      const snap = await getDoc(doc(db, 'companies', companyId, 'settings', 'checklist'));
-      if (snap.exists() && snap.data().items) {
-        checklistItems = snap.data().items;
-      }
-    }
-  } catch (e) {
-    console.log('Using default checklist');
-  }
-  
-  const filteredItems = getFilteredChecklist(checklistItems, currentCheckData.checkType);
-  
-  const vehicleInfo = currentCheckData.vehicleId 
-    ? vehicleSelect.options[vehicleSelect.selectedIndex].text 
-    : 'No Vehicle';
-  const trailerInfo = currentCheckData.trailerId
-    ? trailerSelect.options[trailerSelect.selectedIndex].text
-    : 'No Trailer';
-  
-  container.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
-      <h3>📝 Daily Walkaround Check</h3>
-      <button onclick="loadDriverCheckSelection()" class="btn">← Change Vehicle</button>
-    </div>
-    
-    <div style="background:#e8edf3;padding:1rem;border-radius:6px;margin-bottom:1.5rem;">
-      <p style="margin:0.3rem 0;"><strong>Vehicle:</strong> ${escapeHtml(vehicleInfo)}</p>
-      <p style="margin:0.3rem 0;"><strong>Trailer:</strong> ${escapeHtml(trailerInfo)}</p>
-      <p style="margin:0.5rem 0 0 0;font-size:0.85em;color:#555;">
-        Started: ${new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'})}
-      </p>
-    </div>
-    
-    <form id="walkaround-form">
-      ${filteredItems.map((item, idx) => `
-        <div style="border-bottom:1px solid #eee;padding:1rem 0;${idx === 0 ? 'padding-top:0;' : ''}">
-          <p style="font-weight:500;margin-bottom:0.7rem;">${idx + 1}. ${escapeHtml(item.label)}</p>
-          <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
-              <input type="radio" name="check-${item.id}" value="pass" required 
-                onchange="updateCheckItem('${item.id}', 'pass')" />
-              ✅ Satisfactory
-            </label>
-            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
-              <input type="radio" name="check-${item.id}" value="fail" 
-                onchange="updateCheckItem('${item.id}', 'fail')" />
-              ❌ Unsatisfactory — Report Defect
-            </label>
-          </div>
-          
-          <div id="defect-section-${item.id}" style="display:none;margin-top:0.7rem;padding:0.7rem;background:#fff4e5;border-radius:4px;">
-            <label style="display:block;margin-bottom:0.4rem;font-size:0.9em;">Describe the issue:</label>
-            <textarea id="defect-text-${item.id}" rows="2" placeholder="Describe what is wrong..." 
-              style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;font-size:0.9em;"
-              oninput="updateCheckItem('${item.id}', 'fail')"></textarea>
-            
-            <label style="display:block;margin:0.7rem 0 0.4rem 0;font-size:0.9em;">Severity:</label>
-            <select id="defect-severity-${item.id}" onchange="updateCheckItem('${item.id}', 'fail')"
-              style="padding:0.4rem;border:1px solid #ccc;border-radius:4px;font-size:0.9em;">
-              <option value="MINOR">🟡 Minor — Rectify at next service</option>
-              <option value="MAJOR">🔶 Major — Repair before further use</option>
-              <option value="DANGEROUS">⚠️ DANGEROUS — Must not be driven</option>
-            </select>
-          </div>
-        </div>
-      `).join('')}
-      
-      <div style="margin-top:1.5rem;padding-top:1rem;border-top:2px solid #eee;">
-        <label style="display:block;margin-bottom:0.7rem;font-weight:500;">Additional Comments (optional)</label>
-        <textarea id="check-comments" rows="3" placeholder="Any other notes or observations..."
-          style="width:100%;padding:0.7rem;border:1px solid #ccc;border-radius:4px;"></textarea>
-        
-        <div style="margin-top:1.5rem;display:flex;gap:10px;flex-wrap:wrap;">
-          <button type="button" onclick="loadDriverCheckSelection()" class="btn">Cancel</button>
-          <button type="button" onclick="submitWalkaroundCheck()" class="btn btn-primary">✅ Submit Check</button>
-        </div>
-      </div>
-    </form>
-  `;
-}
-
-window.updateCheckItem = function(itemId, status) {
-  const defectSection = document.getElementById(`defect-section-${itemId}`);
-  
-  if (status === 'fail') {
-    defectSection.style.display = 'block';
-    const desc = document.getElementById(`defect-text-${itemId}`)?.value?.trim();
-    const severity = document.getElementById(`defect-severity-${itemId}`)?.value;
-    
-    currentCheckData.items[itemId] = {
-      status: 'fail',
-      description: desc || 'Defect reported but not described',
-      severity: severity || 'MAJOR'
-    };
-  } else {
-    defectSection.style.display = 'none';
-    currentCheckData.items[itemId] = { status: 'pass' };
-  }
-};
-
-window.submitWalkaroundCheck = async function() {
-  if (!confirm('⚠️ Please confirm you have checked all items. Once submitted it cannot be edited.\n\nSigning this confirms the vehicle/trailer is safe to operate or defects have been correctly reported.')) {
-    return;
-  }
-  
-  const endTime = new Date();
-  const checkDuration = Math.round((endTime - currentCheckData.startTime) / 60000);
-  
-  const hasFailures = Object.values(currentCheckData.items).some(i => i.status === 'fail');
-  const overallResult = hasFailures ? 'unsatisfactory' : 'satisfactory';
-  
-  try {
-    const checkRef = await addDoc(collection(db, 'walkaroundChecks'), {
-      driverId: currentUser.uid,
-      driverName: userProfile.fullName || currentUser.email,
-      companyId: userProfile.companyId || null,
-      vehicleId: currentCheckData.vehicleId,
-      trailerId: currentCheckData.trailerId,
-      checkType: currentCheckData.checkType,
-      startTime: currentCheckData.startTime,
-      endTime: endTime,
-      durationMinutes: checkDuration,
-      items: currentCheckData.items,
-      overallResult,
-      comments: document.getElementById('check-comments')?.value?.trim() || '',
-      signedAt: new Date()
-    });
-    
-    // Create defect records for failures
-    const batch = writeBatch(db);
-    for (const [itemId, result] of Object.entries(currentCheckData.items)) {
-      if (result.status === 'fail') {
-        batch.set(doc(collection(db, 'defects')), {
-          checkId: checkRef.id,
-          driverId: currentUser.uid,
-          driverName: userProfile.fullName || currentUser.email,
-          companyId: userProfile.companyId || null,
-          vehicleId: currentCheckData.vehicleId,
-          trailerId: currentCheckData.trailerId,
-          category: itemId,
-          description: result.description,
-          severity: result.severity,
-          status: 'reported',
-          reportedAt: new Date()
-        });
-      }
-    }
-    await batch.commit();
-    
-    showToast('✅ Check submitted — records saved');
-    currentCheckData = null;
-    loadDriverCheckSelection();
-    
-  } catch (err) {
-    console.error('Error submitting check:', err);
-    showToast('❌ Failed to submit check', 'error');
-  }
-};
-
-async function loadRecentChecks() {
-  const container = document.getElementById('recent-checks-list');
-  if (!container || !currentUser) return;
-  
-  try {
-    const checksSnap = await getDocs(
-      query(
-        collection(db, 'walkaroundChecks'),
-        where('driverId', '==', currentUser.uid)
-      )
-    );
-    
-    let checks = [];
-    checksSnap.forEach(doc => {
-      checks.push({ id: doc.id, ...doc.data() });
-    });
-    
-    checks.sort((a, b) => new Date(b.signedAt) - new Date(a.signedAt));
-    checks = checks.slice(0, 5);
-    
-    if (checks.length === 0) {
-      container.innerHTML = '<p style="color:#888;font-style:italic;">No checks completed yet.</p>';
-      return;
-    }
-    
-    container.innerHTML = checks.map(check => {
-      const isOk = check.overallResult === 'satisfactory';
-      return `
-        <div style="padding:0.7rem 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <div>
-            <span style="font-weight:500;">${isOk ? '✅ Satisfactory' : '❌ Defects Reported'}</span>
-            <p style="margin:0.2rem 0 0 0;font-size:0.85em;color:#666;">
-              ${formatDate(check.signedAt)}
+          <div id="registerForm" class="hidden">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="regName" placeholder="Your full name" />
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="regEmail" placeholder="you@example.com" />
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="regPassword" placeholder="Min. 6 characters" />
+            </div>
+            <button class="btn btn-primary btn-full" onclick="handleRegister()">Create Account</button>
+            <p class="text-center mt-2">
+              <a href="#" onclick="showAuthPage('signin'); return false;">← Back to Sign In</a>
             </p>
           </div>
-          <button onclick="viewCheckReceipt('${check.id}')" class="btn btn-sm">📄 View</button>
         </div>
-      `;
-    }).join('');
-    
-  } catch (err) {
-    container.innerHTML = '<p style="color:#888;font-style:italic;">Could not load recent checks.</p>';
-  }
-}
-
-window.viewCheckReceipt = function(checkId) {
-  showToast('📄 Receipt viewer — extend as needed');
-};
-
-// --------------------------
-// DRIVER PROFILE & DOCUMENTS
-// --------------------------
-async function loadDriverProfile() {
-  const container = document.getElementById('driver-profile-content');
-  if (!container || !currentUser) return;
-  
-  container.innerHTML = '<p>Loading your profile...</p>';
-  
-  try {
-    const profileRef = doc(db, 'userProfiles', currentUser.uid);
-    const snap = await getDoc(profileRef);
-    const data = snap.exists() ? snap.data() : {};
-    renderDriverProfileForm(data);
-  } catch (err) {
-    console.error('Error loading profile:', err);
-    renderDriverProfileForm({});
-  }
-}
-
-function renderDriverProfileForm(data) {
-  const container = document.getElementById('driver-profile-content');
-  
-  container.innerHTML = `
-    <h3 style="margin-bottom:1.5rem;">👤 My Profile & Documents</h3>
-    
-    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-      <h4 style="margin-bottom:1rem;font-size:1rem;">Personal Details</h4>
-      
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Full Name</label>
-      <input type="text" id="dp-fullname" value="${escapeHtml(data.fullName || currentUser?.displayName || '')}" 
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Email Address</label>
-      <input type="email" value="${escapeHtml(currentUser?.email || '')}" disabled
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ddd;background:#f5f5f5;border-radius:4px;color:#666;" />
-      
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Phone Number</label>
-      <input type="tel" id="dp-phone" value="${escapeHtml(data.phone || '')}" 
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+      </div>
     </div>
-    
-    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-      <h4 style="margin-bottom:1rem;font-size:1rem;">🚛 Driving Licence</h4>
+
+    <!-- DRIVER PAGES -->
+    <div id="page-dashboard" class="page">
+      <h2>Welcome, <span id="dashboardName"></span> 👋</h2>
+      <p class="text-muted" id="dashboardRole"></p>
       
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Licence Number</label>
-      <input type="text" id="dp-licence-number" value="${escapeHtml(data.licenceNumber || '')}" 
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;text-transform:uppercase;" />
+      ${showPushPrompt()}
+      ${renderVerificationBanner()}
+      ${renderSearchBar()}
+      ${renderQuickActions()}
       
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Licence Categories</label>
-      <input type="text" id="dp-licence-cats" value="${escapeHtml(data.licenceCategories || '')}" 
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" 
-        placeholder="e.g. C+E, C, D1" />
-      
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">DVLA Check Code</label>
-      <input type="text" id="dp-dvla-code" value="${escapeHtml(data.dvlaCheckCode || '')}" 
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-        <div>
-          <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Valid From</label>
-          <input type="date" id="dp-valid-from" value="${data.validFrom ? new Date(data.validFrom.seconds * 1000).toISOString().split('T')[0] : ''}" 
-            style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+      <div id="recentActivity" class="card">
+        <h3>Recent Activity</h3>
+        <p class="text-muted text-center py-2">Loading...</p>
+      </div>
+    </div>
+
+    <div id="page-jobs" class="page">
+      <h2>Available Work</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>Filter by:</label>
+          <select id="jobFilter" onchange="loadJobs()">
+            <option value="all">All Jobs</option>
+            <option value="longhaul">Long Haul</option>
+            <option value="shunting">Shunting</option>
+            <option value="local">Local Delivery</option>
+          </select>
         </div>
-        <div>
-          <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Expiry Date</label>
-          <input type="date" id="dp-expiry" value="${data.licenceExpiry ? new Date(data.licenceExpiry.seconds * 1000).toISOString().split('T')[0] : ''}" 
-            style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
+      </div>
+      <div id="jobsList">
+        <p class="text-muted text-center">Loading jobs...</p>
+      </div>
+    </div>
+
+    <div id="page-checklist" class="page">
+      <h2>Vehicle Walkaround Check</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>Check Type</label>
+          <select id="checkType" onchange="updateCheckType()">
+            <option value="vehicle">Vehicle Only</option>
+            <option value="both">Vehicle & Trailer</option>
+            <option value="trailer">Trailer Only</option>
+          </select>
+        </div>
+        <div class="form-group" id="vehicleSelectGroup">
+          <label>Vehicle</label>
+          <select id="selectedVehicle">
+            <option value="">-- Select Vehicle --</option>
+          </select>
+        </div>
+        <div class="form-group hidden" id="trailerSelectGroup">
+          <label>Trailer</label>
+          <select id="selectedTrailer">
+            <option value="">-- Select Trailer --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date & Time</label>
+          <input type="datetime-local" id="checkDateTime" />
         </div>
       </div>
       
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Penalty Points</label>
-      <input type="number" id="dp-points" value="${data.penaltyPoints || 0}" min="0" max="12"
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-      
-      <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">D4 Medical Certificate Expiry</label>
-      <input type="date" id="dp-medical-expiry" value="${data.medicalExpiry ? new Date(data.medicalExpiry.seconds * 1000).toISOString().split('T')[0] : ''}" 
-        style="width:100%;padding:0.6rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:4px;" />
-    </div>
-    
-    <div style="background:#f9fafb;padding:1.25rem;border-radius:6px;margin-bottom:1.5rem;">
-      <h4 style="margin-bottom:1rem;font-size:1rem;">📁 My Documents</h4>
-      <p style="font-size:0.85em;color:#666;margin-bottom:1rem;">Upload documents for your company to view. All files are stored securely.</p>
-      
-      <div id="docs-upload-area">
-        <label style="display:block;margin-bottom:0.4rem;font-weight:500;font-size:0.9em;">Select File to Upload</label>
-        <input type="file" id="doc-upload" accept=".pdf,.jpg,.jpeg,.png" 
-          style="width:100%;padding:0.5rem;margin-bottom:0.7rem;" />
-        <button onclick="uploadDriverDocument()" class="btn btn-sm">📤 Upload Document</button>
+      <div class="card">
+        <h3>DVSA Walkaround Checklist</h3>
+        <div id="checklistItems">
+          <p class="text-muted">Loading checklist...</p>
+        </div>
       </div>
       
-      <div id="docs-list" style="margin-top:1.5rem;">
-        <p style="color:#888;font-style:italic;font-size:0.9em;">Loading your documents...</p>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="resetChecklist()">Clear</button>
+        <button class="btn btn-primary" onclick="submitChecklist()">Submit Check</button>
       </div>
     </div>
-    
-    <button onclick="saveDriverProfile()" class="btn btn-primary" style="width:100%;">💾 Save Profile</button>
-    <div id="dp-save-status" style="margin-top:12px;"></div>
-  `;
-  
-  loadDriverDocuments();
-}
 
-window.saveDriverProfile = async function() {
-  const status = document.getElementById('dp-save-status');
-  status.innerHTML = '<span style="color:#d47500;">⏳ Saving...</span>';
-  
-  try {
-    await setDoc(
-      doc(db, 'userProfiles', currentUser.uid),
-      {
-        fullName: document.getElementById('dp-fullname').value.trim(),
-        phone: document.getElementById('dp-phone').value.trim(),
-        licenceNumber: document.getElementById('dp-licence-number').value.trim().toUpperCase(),
-        licenceCategories: document.getElementById('dp-licence-cats').value.trim(),
-        dvlaCheckCode: document.getElementById('dp-dvla-code').value.trim(),
-        validFrom: document.getElementById('dp-valid-from').valueAsDate 
-          ? new Date(document.getElementById('dp-valid-from').value) : null,
-        licenceExpiry: document.getElementById('dp-expiry').valueAsDate 
-          ? new Date(document.getElementById('dp-expiry').value) : null,
-        penaltyPoints: parseInt(document.getElementById('dp-points').value) || 0,
-        medicalExpiry: document.getElementById('dp-medical-expiry').valueAsDate 
-          ? new Date(document.getElementById('dp-medical-expiry').value) : null,
-        updatedAt: new Date()
-      },
-      { merge: true }
-    );
-    
-    status.innerHTML = '<span style="color:green;">✅ Profile saved</span>';
-    setTimeout(() => status.innerHTML = '', 4000);
-    showToast('✅ Profile updated successfully');
-  } catch (err) {
-    status.innerHTML = '<span style="color:red;">❌ Save failed</span>';
-  }
-};
+    <div id="page-documents" class="page">
+      <h2>My Documents</h2>
+      <div class="btn-group mb-2">
+        <button class="btn btn-primary" onclick="uploadDocument()">📤 Upload Document</button>
+        <button class="btn btn-secondary" onclick="downloadAllDocuments()">⬇️ Download All</button>
+      </div>
+      <div id="documentsList">
+        <p class="text-muted text-center">No documents uploaded yet.</p>
+      </div>
+    </div>
 
-async function loadDriverDocuments() {
-  const container = document.getElementById('docs-list');
-  if (!container || !currentUser) return;
-  
-  try {
-    const docsSnap = await getDocs(
-      collection(db, 'userProfiles', currentUser.uid, 'documents')
-    );
-    
-    let docs = [];
-    docsSnap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-    
-    docs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-    
-    if (docs.length === 0) {
-      container.innerHTML = '<p style="color:#888;font-style:italic;font-size:0.9em;">No documents uploaded yet.</p>';
-      return;
-    }
-    
-    container.innerHTML = `
-      <h5 style="margin-bottom:0.7rem;font-size:0.9em;">Uploaded Documents (${docs.length})</h5>
-      <div style="display:grid;gap:0.5rem;">
-        ${docs.map(d => `
-          <div style="padding:0.6rem;background:#fff;border:1px solid #eee;border-radius:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <div>
-              <p style="margin:0;font-size:0.9em;"><strong>${escapeHtml(d.name || 'Document')}</strong></p>
-              <p style="margin:0.1rem 0 0 0;font-size:0.8em;color:#666;">
-                ${formatDate(d.uploadedAt)} • ${(d.size / 1024).toFixed(1)} KB
-              </p>
-            </div>
-            <div>
-              <a href="${escapeHtml(d.url || '#')}" target="_blank" class="btn btn-sm">👁 View</a>
-              <button onclick="deleteDriverDoc('${d.id}')" class="btn btn-sm btn-red">🗑 Delete</button>
-            </div>
+    <div id="page-driver-profile" class="page">
+      <h2>My Profile</h2>
+      <div class="card">
+        <h3>Personal Details</h3>
+        <div class="profile-grid">
+          <div class="profile-item">
+            <label>Full Name</label>
+            <div class="value" id="profileName">-</div>
           </div>
-        `).join('')}
+          <div class="profile-item">
+            <label>Email</label>
+            <div class="value" id="profileEmail">-</div>
+          </div>
+          <div class="profile-item">
+            <label>Role</label>
+            <div class="value" id="profileRole">-</div>
+          </div>
+        </div>
       </div>
-    `;
-    
-  } catch (err) {
-    container.innerHTML = '<p style="color:red;font-size:0.9em;">❌ Could not load documents.</p>';
-  }
-}
+      <div class="card">
+        <h3>Driving Licence Details</h3>
+        <div class="profile-grid">
+          <div class="profile-item">
+            <label>Licence Number</label>
+            <div class="value" id="licenceNumber">-</div>
+          </div>
+          <div class="profile-item">
+            <label>Categories</label>
+            <div class="value" id="licenceCategories">-</div>
+          </div>
+          <div class="profile-item">
+            <label>DVLA Check Code</label>
+            <div class="value" id="dvlaCode">-</div>
+          </div>
+          <div class="profile-item">
+            <label>Points</label>
+            <div class="value" id="licencePoints">None</div>
+          </div>
+          <div class="profile-item">
+            <label>Valid From</label>
+            <div class="value" id="licenceValidFrom">-</div>
+          </div>
+          <div class="profile-item">
+            <label>Expiry Date</label>
+            <div class="value" id="licenceExpiry">-</div>
+          </div>
+          <div class="profile-item">
+            <label>Medical Expiry</label>
+            <div class="value" id="medicalExpiry">-</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm mt-1" onclick="editDriverProfile()">Edit Details</button>
+      </div>
+      <div class="card">
+        <h3>Data Management</h3>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="exportMyData()">📄 Download My Data</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteAccount()">Delete Account</button>
+        </div>
+      </div>
+    </div>
 
-window.uploadDriverDocument = async function() {
-  const fileInput = document.getElementById('doc-upload');
-  const file = fileInput?.files?.[0];
-  
-  if (!file) return alert('⚠️ Please select a file first');
-  
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) {
-    return alert('⚠️ Only PDF, JPG and PNG files are allowed');
-  }
-  
-  try {
-    const fileId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-    const storageRef = ref(storage, `driverDocs/${currentUser.uid}/${fileId}`);
+    <div id="page-holidays" class="page">
+      <h2>Holiday & Leave</h2>
+      <div class="card">
+        <h3 id="calendarMonth">Month Year</h3>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="btn-group mt-2">
+          <button class="btn btn-secondary" onclick="prevMonth()">← Prev</button>
+          <button class="btn btn-primary" onclick="requestHoliday()">Request Holiday</button>
+          <button class="btn btn-secondary" onclick="nextMonth()">Next →</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>My Requests</h3>
+        <div id="holidayRequests">
+          <p class="text-muted">No requests yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPANY PAGES -->
+    <div id="page-company-dashboard" class="page">
+      <h2>Company Portal</h2>
+      <p class="text-muted">Welcome back, <span id="companyName"></span></p>
+      
+      ${renderQuickActions()}
+      
+      <div class="card">
+        <h3>This Week</h3>
+        <div class="profile-grid">
+          <div class="profile-item">
+            <label>Active Drivers</label>
+            <div class="value" id="statDrivers">0</div>
+          </div>
+          <div class="profile-item">
+            <label>Vehicles</label>
+            <div class="value" id="statVehicles">0</div>
+          </div>
+          <div class="profile-item">
+            <label>Jobs Posted</label>
+            <div class="value" id="statJobs">0</div>
+          </div>
+          <div class="profile-item">
+            <label>Checks Completed</label>
+            <div class="value" id="statChecks">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-company-profile" class="page">
+      <h2>Company Profile & Compliance</h2>
+      <div class="card">
+        <h3>Company Information</h3>
+        <div class="form-group">
+          <label>Registered Company Name *</label>
+          <input type="text" id="compRegName" placeholder="Ltd / PLC etc." />
+        </div>
+        <div class="form-group">
+          <label>HMRC Company Registration Number</label>
+          <input type="text" id="compHrrc" placeholder="e.g. CRN12345678" />
+        </div>
+        <div class="form-group">
+          <label>Registered Address *</label>
+          <textarea id="compRegAddress" rows="3" placeholder="Full registered address"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Trading Name (if different)</label>
+          <input type="text" id="compTradingName" placeholder="Trading as..." />
+        </div>
+        <div class="form-group">
+          <label>Operator's Licence Number *</label>
+          <input type="text" id="compLicenceNo" placeholder="e.g. OB1234567" />
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>Contact Information</h3>
+        <div class="form-group">
+          <label>Main Contact Name</label>
+          <input type="text" id="compContactName" />
+        </div>
+        <div class="form-group">
+          <label>Telephone Number</label>
+          <input type="tel" id="compPhone" />
+        </div>
+        <div class="form-group">
+          <label>Email Address — General</label>
+          <input type="email" id="compEmail" />
+        </div>
+        <div class="form-group">
+          <label>Email Address — Invoicing Department</label>
+          <input type="email" id="compInvoiceEmail" />
+        </div>
+        <div class="form-group">
+          <label>DVSA & Compliance Contact Name</label>
+          <input type="text" id="compComplianceContact" />
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>Billing Preferences</h3>
+        <div class="form-group">
+          <label>Invoice Generation</label>
+          <select id="billingPreference">
+            <option value="per-billing-period">Per Billing Period — Show all drivers on one invoice</option>
+            <option value="per-driver">Per Driver — Separate invoice for each driver</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="saveCompanyProfile()">Save Company Profile</button>
+      </div>
+    </div>
+
+    <div id="page-company-drivers" class="page">
+      <h2>Driver Management</h2>
+      <div class="btn-group mb-2">
+        <button class="btn btn-primary" onclick="showAddDriverModal()">+ Add Employed Driver</button>
+        <input type="text" placeholder="Search drivers..." id="driverSearch" 
+               style="max-width:250px; margin-left:auto;" oninput="filterDrivers()" />
+      </div>
+      <div class="card">
+        <div id="companyDriversList">
+          <p class="text-muted">Loading drivers...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-company-vehicles" class="page">
+      <h2>Fleet Management</h2>
+      <div class="btn-group mb-2">
+        <button class="btn btn-primary" onclick="showAddVehicleModal()">+ Add Vehicle</button>
+        <button class="btn btn-accent" onclick="showAddTrailerModal()">+ Add Trailer</button>
+      </div>
+      
+      <div class="card">
+        <h3>Vehicles</h3>
+        <div id="companyVehiclesList">
+          <p class="text-muted">No vehicles added yet.</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3>Trailers</h3>
+        <div id="companyTrailersList">
+          <p class="text-muted">No trailers added yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-checklist-editor" class="page">
+      <h2>Walkaround Checklist Editor</h2>
+      <p class="text-muted mb-2">Customise your DVSA-compliant walkaround checklist. Drag items to reorder.</p>
+      <div class="card">
+        <div id="checklistEditorContainer">
+          <div id="checklistEditorList"></div>
+          <div class="mt-2">
+            <input type="text" id="newCheckItem" placeholder="Add new check item..." />
+            <button class="btn btn-primary btn-sm mt-1" onclick="addCheckItem()">+ Add Item</button>
+          </div>
+          <div class="btn-group mt-3">
+            <button class="btn btn-secondary" onclick="resetChecklistToDefault()">↩️ Reset to DVSA Default</button>
+            <button class="btn btn-primary" onclick="saveChecklist()">Save Checklist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-company-checks" class="page">
+      <h2>Submitted Walkaround Checks</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>Filter by Status</label>
+          <select id="checkStatusFilter" onchange="loadCompanyChecks()">
+            <option value="all">All Checks</option>
+            <option value="pass">No Defects</option>
+            <option value="fault">Defects Reported</option>
+            <option value="resolved">Defects Resolved</option>
+          </select>
+        </div>
+      </div>
+      <div id="companyChecksList">
+        <p class="text-muted text-center">Loading checks...</p>
+      </div>
+    </div>
+
+    <div id="page-invoices" class="page">
+      <h2>Invoices & Billing</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>Billing Period</label>
+          <input type="week" id="invoiceWeek" onchange="generateInvoices()" />
+        </div>
+      </div>
+      <div id="invoicesOutput"></div>
+    </div>
+
+    <div id="page-company-holidays" class="page">
+      <h2>Holiday Requests</h2>
+      <div class="card">
+        <h3>All Requests</h3>
+        <div id="allHolidayRequests">
+          <p class="text-muted">No requests yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modalOverlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;">
+      <div id="modalContent" style="background:var(--bg);border-radius:10px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem;">
+        <div id="modalBody"></div>
+        <div class="btn-group mt-3">
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FIREBASE IMPORTS -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, Timestamp, onSnapshot, deleteDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, listAll, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzP1QzK5sZb4XzXzXzXzXzXzXzXzXzXzXzX",
+      authDomain: "lsd-solutions.firebaseapp.com",
+      projectId: "lsd-solutions",
+      storageBucket: "lsd-solutions.appspot.com",
+      messagingSenderId: "123456789012",
+      appId: "1:123456789012:web:abc123def456ghi789jkl01"
+    };
+
+    // Initialise Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Make available globally
+    window.firebaseServices = { auth, db, storage, getDoc, setDoc, doc, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, increment, ref, uploadBytes, getDownloadURL, listAll, deleteObject };
+  </script>
+
+  <script>
+    // ==========================================
+    // GLOBAL STATE & CONSTANTS
+    // ==========================================
+    let currentUser = null;
+    let currentUserData = null;
+    let selectedRole = null;
+    let currentPage = 'auth';
+    let currentMonth = new Date();
     
-    showToast('⏳ Uploading...');
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    
-    await addDoc(collection(db, 'userProfiles', currentUser.uid, 'documents'), {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: url,
-      storagePath: `driverDocs/${currentUser.uid}/${fileId}`,
-      uploadedAt: new Date()
+    const INVOICE_PREFIX = "LSDsa";
+    const DEFAULT_CHECKLIST = {
+      items: [
+        "1. Cab — Doors, mirrors, windows, steps and handholds secure and free from damage",
+        "2. Windscreen and windows — clean, no cracks or chips, wipers and washers work correctly",
+        "3. Mirrors — all present, clean, adjusted and secure",
+        "4. Lights — all work correctly, lenses clean and undamaged",
+        "5. Markings and plates — registration plates, markings and discs correct and legible",
+        "6. Tyres and wheels — condition, pressure, security and no cuts/damage",
+        "7. Brakes — no air/hydraulic leaks, pressure/build-up normal, warning devices work",
+        "8. Suspension — springs, shackles and mountings secure, no damage or leaks",
+        "9. Exhaust system — no leaks, securely mounted, no excessive smoke",
+        "10. Fuel system — no leaks, cap secure, lines undamaged",
+        "11. Load security — load secure, sheeted if required, no items loose",
+        "12. Coupling and connections — fifth wheel, drawbar, air/electrical lines secure",
+        "13. Trailer — doors, lights, tyres, coupling, markings and load secure",
+        "14. Emergency equipment — fire extinguisher, warning triangle, first aid kit present",
+        "15. Documentation — all required documents in vehicle and up to date",
+        "16. General condition — no obvious damage or defects reported previously"
+      ],
+      updatedAt: new Date()
+    };
+
+    // ==========================================
+    // OFFLINE / ONLINE DETECTION
+    // ==========================================
+    window.addEventListener('online', () => {
+      document.getElementById('offlineBanner').classList.remove('show');
     });
-    
-    showToast('✅ Document uploaded');
-    fileInput.value = '';
-    loadDriverDocuments();
-    
-  } catch (err) {
-    console.error('Upload error:', err);
-    showToast('❌ Upload failed', 'error');
-  }
-};
-
-window.deleteDriverDoc = async function(docId) {
-  if (!confirm('⚠️ Permanently delete this document? This cannot be undone.')) return;
-  
-  try {
-    const docRef = doc(db, 'userProfiles', currentUser.uid, 'documents', docId);
-    const snap = await getDoc(docRef);
-    const data = snap.data();
-    
-    if (data?.storagePath) {
-      await deleteObject(ref(storage, data.storagePath));
+    window.addEventListener('offline', () => {
+      document.getElementById('offlineBanner').classList.add('show');
+    });
+    if (!navigator.onLine) {
+      document.getElementById('offlineBanner').classList.add('show');
     }
-    
-    await deleteDoc(docRef);
-    showToast('✅ Document deleted');
-    loadDriverDocuments();
-    
-  } catch (err) {
-    console.error('Delete error:', err);
-    showToast('❌ Delete failed', 'error');
-  }
-};
 
-// --------------------------
-// INITIALISATION & READY
-// --------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ LSD Solutions App Loaded — DVSA Compliant System');
-});
+    // ==========================================
+    // THEME MANAGEMENT
+    // ==========================================
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
 
-// Expose globally
-window.loadDriverCheckSelection = loadDriverCheckSelection;
-window.loadRecentChecks = loadRecentChecks;
-window.renderWalkaroundCheckForm = renderWalkaroundCheckForm;
-window.loadDriverProfile = loadDriverProfile;
-window.loadCompanyProfile = loadCompanyProfile;
-window.loadChecklistEditor = loadChecklistEditor;
-window.loadVehiclesList = loadVehiclesList;
-window.loadCompanyDrivers = loadCompanyDrivers;
-window.loadDefectsList = loadDefectsList;
-window.DEFAULT_CHECKLIST = DEFAULT_CHECKLIST;
-window.CHECK_VEHICLE = CHECK_VEHICLE;
-window.CHECK_TRAILER = CHECK_TRAILER;
-window.CHECK_BOTH = CHECK_BOTH;
-window.DVSA_DEFECT_CATEGORIES = DVSA_DEFECT_CATEGORIES;
-window.DVSA_SEVERITY = DVSA_SEVERITY;
-window.DVSA_COMMON_DEFECTS = DVSA_COMMON_DEFECTS;
-window.DEFECT_STATUS = DEFECT_STATUS;
-window.formatDate = formatDate;
-window.showToast = showToast;
-window.currentUser = () => currentUser;
-window.userProfile = () => userProfile;
+    // ==========================================
+    // NAVIGATION HELPERS
+    // ==========================================
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
 
-</script>
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      currentPage = pageId;
+      
+      if (typeof window.loadPageData === 'function') {
+        window.loadPageData(pageId);
+      }
+      
+      document.getElementById('navLinks').classList.remove('open');
+      window.scrollTo(0, 0);
+    }
+    window.showPage = showPage;
+
+    function showAuthPage(page) {
+      document.getElementById('authSignIn').classList.add('hidden');
+      document.getElementById('authReset').classList.add('hidden');
+      document.getElementById('authCheckEmail').classList.add('hidden');
+      document.getElementById('authRegister').classList.add('hidden');
+      
+      if (page === 'signin') document.getElementById('authSignIn').classList.remove('hidden');
+      else if (page === 'reset') document.getElementById('authReset').classList.remove('hidden');
+      else if (page === 'checkemail') document.getElementById('authCheckEmail').classList.remove('hidden');
+      else if (page === 'register') {
+        document.getElementById('authRegister').classList.remove('hidden');
+        selectedRole = null;
+        document.getElementById('registerForm').classList.add('hidden');
+        document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      }
+    }
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('role' + role.charAt(0).toUpperCase() + role.slice(1)).classList.add('selected');
+      document.getElementById('registerForm').classList.remove('hidden');
+    }
+
+    // ==========================================
+    // MODAL HELPERS
+    // ==========================================
+    function showModal(content, confirmText = 'Confirm', onConfirm = () => {}) {
+      document.getElementById('modalBody').innerHTML = content;
+      document.getElementById('modalConfirmBtn').textContent = confirmText;
+      document.getElementById('modalOverlay').classList.remove('hidden');
+      document.getElementById('modalConfirmBtn').onclick = () => {
+        onConfirm();
+        closeModal();
+      };
+    }
+    window.showModal = showModal;
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    }
+    window.closeModal = closeModal;
+
+    // ==========================================
+    // NOTIFICATIONS
+    // ==========================================
+    function showAlert(message, type = 'info') {
+      const colours = {
+        success: '#e8f5e9',
+        error: '#ffebee',
+        warning: '#fff8e1',
+        info: '#e3f2fd'
+      };
+      const el = document.createElement('div');
+      el.style.cssText = `position:fixed;top:1rem;right:1rem;background:${colours[type]};padding:1rem 1.5rem;border-radius:6px;z-index:1000;max-width:350px;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+      el.textContent = message;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+    window.showAlert = showAlert;
+
+    // ==========================================
+    // PUSH NOTIFICATIONS
+    // ==========================================
+    function showPushPrompt() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        return `<div class="alert alert-info">🔔 <span>Enable push notifications for job alerts & check reminders</span> <button class="btn btn-sm btn-primary" onclick="requestNotificationPermission()">Enable</button></div>`;
+      }
+      return '';
+    }
+    window.showPushPrompt = showPushPrompt;
+
+    function requestNotificationPermission() {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') showAlert('Notifications enabled!', 'success');
+      });
+    }
+    window.requestNotificationPermission = requestNotificationPermission;
+
+    function renderVerificationBanner() {
+      if (currentUser && !currentUser.emailVerified) {
+        return `<div class="alert alert-warning">📧 Please verify your email address. <button class="btn btn-sm btn-secondary" onclick="resendVerificationEmail()">Resend</button></div>`;
+      }
+      return '';
+    }
+    window.renderVerificationBanner = renderVerificationBanner;
+
+    function renderSearchBar() {
+      return `<div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search everywhere..." id="globalSearch" oninput="handleGlobalSearch(this.value)" /></div>`;
+    }
+    window.renderSearchBar = renderSearchBar;
+
+    function renderQuickActions() {
+      const actions = currentUserData?.role === 'company' ? [
+        { icon: '➕', label: 'Post Job', page: 'jobs' },
+        { icon: '🚛', label: 'Vehicles', page: 'company-vehicles' },
+        { icon: '📋', label: 'Checks', page: 'company-checks' },
+        { icon: '📄', label: 'Invoices', page: 'invoices' }
+      ] : [
+        { icon: '📋', label: 'Start Check', page: 'checklist' },
+        { icon: '📄', label: 'Documents', page: 'documents' },
+        { icon: '📅', label: 'Holiday', page: 'holidays' },
+        { icon: '👤', label: 'Profile', page: 'driver-profile' }
+      ];
+      
+      return `<div class="quick-actions">${actions.map(a => 
+        `<div class="quick-action-card" onclick="showPage('${a.page}')"><span>${a.icon}</span><p>${a.label}</p></div>`
+      ).join('')}</div>`;
+    }
+    window.renderQuickActions = renderQuickActions;
+
+    function handleGlobalSearch(query) {
+      console.log('Search:', query);
+    }
+    window.handleGlobalSearch = handleGlobalSearch;
+
+    // ==========================================
+    // AUTHENTICATION
+    // ==========================================
+    async function handleSignIn() {
+      const email = document.getElementById('signInEmail').value;
+      const password = document.getElementById('signInPassword').value;
+      try {
+        const { signInWithEmailAndPassword } = firebaseServices;
+        await signInWithEmailAndPassword(auth, email, password);
+        showAlert('Welcome back!', 'success');
+      } catch (err) {
+                showAlert('Sign in failed: ' + err.message, 'error');
+      }
+    }
+    window.handleSignIn = handleSignIn;
+
+    async function handlePasswordReset() {
+      const email = document.getElementById('resetEmail').value;
+      try {
+        const { sendPasswordResetEmail } = firebaseServices;
+        await sendPasswordResetEmail(auth, email);
+        showAuthPage('checkemail');
+      } catch (err) {
+        showAlert('Error sending reset email: ' + err.message, 'error');
+      }
+    }
+    window.handlePasswordReset = handlePasswordReset;
+
+    async function handleRegister() {
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      
+      if (!selectedRole) {
+        showAlert('Please select account type', 'warning');
+        return;
+      }
+      
+      try {
+        const { createUserWithEmailAndPassword, updateProfile } = firebaseServices;
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(user, { displayName: name });
+        
+        // Create user profile in Firestore
+        const { setDoc, doc, Timestamp } = firebaseServices;
+        await setDoc(doc(db, 'users', user.uid), {
+          name,
+          email,
+          role: selectedRole,
+          createdAt: Timestamp.now()
+        });
+        
+        // Initialise company checklist if company account
+        if (selectedRole === 'company') {
+          await setDoc(doc(db, 'companies', user.uid, 'settings', 'checklist'), {
+            items: DEFAULT_CHECKLIST.items,
+            updatedAt: Timestamp.now()
+          });
+        }
+        
+        showAlert('Account created successfully! ✅', 'success');
+      } catch (err) {
+        showAlert('Registration failed: ' + err.message, 'error');
+      }
+    }
+    window.handleRegister = handleRegister;
+
+    async function resendVerificationEmail() {
+      if (currentUser && !currentUser.emailVerified) {
+        const { sendEmailVerification } = firebaseServices;
+        await sendEmailVerification(currentUser);
+        showAlert('Verification email sent! 📧', 'success');
+      }
+    }
+    window.resendVerificationEmail = resendVerificationEmail;
+
+    function signOut() {
+      const { signOut } = firebaseServices;
+      signOut(auth).then(() => {
+        currentUser = null;
+        currentUserData = null;
+        showPage('auth');
+        document.getElementById('mainNav').classList.add('hidden');
+        showAlert('Signed out', 'info');
+      });
+    }
+    window.signOut = signOut;
+
+    // ==========================================
+    // AUTH STATE MANAGEMENT
+    // ==========================================
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        await loadUserProfile(user.uid);
+        showPage('dashboard');
+        document.getElementById('mainNav').classList.remove('hidden');
+        updateNavigation();
+      } else {
+        currentUser = null;
+        currentUserData = null;
+        showPage('auth');
+        document.getElementById('mainNav').classList.add('hidden');
+      }
+    });
+
+    async function loadUserProfile(uid) {
+      try {
+        const { getDoc, doc } = firebaseServices;
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+          currentUserData = snap.data();
+          
+          // Update UI with user info
+          document.getElementById('dashboardName').textContent = currentUserData.name;
+          document.getElementById('dashboardRole').textContent = 
+            currentUserData.role === 'company' ? 'Company Administrator' : 'Driver';
+          document.getElementById('userNameShort').textContent = currentUserData.name.split(' ')[0];
+          
+          // Driver profile fields
+          if (currentUserData.role === 'driver') {
+            document.getElementById('profileName').textContent = currentUserData.name || '-';
+            document.getElementById('profileEmail').textContent = currentUser.email || '-';
+            document.getElementById('profileRole').textContent = 'Driver';
+            document.getElementById('licenceNumber').textContent = currentUserData.licenceNumber || '-';
+            document.getElementById('licenceCategories').textContent = currentUserData.licenceCategories || '-';
+            document.getElementById('dvlaCode').textContent = currentUserData.dvlaCheckCode || '-';
+            document.getElementById('licencePoints').textContent = currentUserData.points || 'None';
+            document.getElementById('licenceValidFrom').textContent = 
+              currentUserData.licenceValidFrom ? new Date(currentUserData.licenceValidFrom).toLocaleDateString() : '-';
+            document.getElementById('licenceExpiry').textContent = 
+              currentUserData.licenceExpiry ? new Date(currentUserData.licenceExpiry).toLocaleDateString() : '-';
+            document.getElementById('medicalExpiry').textContent = 
+              currentUserData.medicalExpiry ? new Date(currentUserData.medicalExpiry).toLocaleDateString() : '-';
+          }
+          
+          // Load company profile if needed
+          if (currentUserData.role === 'company') {
+            loadCompanyProfile(uid);
+            ensureDefaultChecklist(uid);
+          }
+          
+        }
+      } catch (err) {
+        console.error('Profile load error:', err);
+      }
+    }
+
+    async function ensureDefaultChecklist(companyId) {
+      try {
+        const { getDoc, setDoc, doc, Timestamp } = firebaseServices;
+        const checklistRef = doc(db, 'companies', companyId, 'settings', 'checklist');
+        const snap = await getDoc(checklistRef);
+        
+        if (!snap.exists() || !snap.data().items || snap.data().items.length === 0) {
+          await setDoc(checklistRef, {
+            items: DEFAULT_CHECKLIST.items,
+            updatedAt: Timestamp.now()
+          });
+          console.log('✅ DVSA default checklist installed');
+        }
+      } catch (err) {
+        console.error('Error setting default checklist:', err);
+      }
+    }
+
+    function updateNavigation() {
+      const navLinks = document.getElementById('navLinks');
+      let links = '';
+      
+      if (currentUserData?.role === 'company') {
+        links = `
+          <button class="nav-btn" onclick="showPage('company-dashboard')">Dashboard</button>
+          <button class="nav-btn" onclick="showPage('company-drivers')">Drivers</button>
+          <button class="nav-btn" onclick="showPage('company-vehicles')">Fleet</button>
+          <button class="nav-btn" onclick="showPage('checklist-editor')">Checklist</button>
+          <button class="nav-btn" onclick="showPage('company-checks')">Checks</button>
+          <button class="nav-btn" onclick="showPage('company-profile')">Profile</button>
+          <button class="nav-btn" onclick="showPage('invoices')">Invoices</button>
+          <button class="nav-btn" onclick="showPage('company-holidays')">Holidays</button>
+        `;
+      } else {
+        links = `
+          <button class="nav-btn" onclick="showPage('dashboard')">Dashboard</button>
+          <button class="nav-btn" onclick="showPage('jobs')">Work</button>
+          <button class="nav-btn" onclick="showPage('checklist')">Walkaround</button>
+          <button class="nav-btn" onclick="showPage('documents')">Documents</button>
+          <button class="nav-btn" onclick="showPage('holidays')">Holiday</button>
+          <button class="nav-btn" onclick="showPage('driver-profile')">Profile</button>
+        `;
+      }
+      navLinks.innerHTML = links;
+    }
+
+    // ==========================================
+    // COMPANY PROFILE
+    // ==========================================
+    async function loadCompanyProfile(companyId) {
+      try {
+        const { getDoc, doc } = firebaseServices;
+        const snap = await getDoc(doc(db, 'companies', companyId, 'profile', 'info'));
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById('companyName').textContent = data.tradingName || data.registeredName || 'Your Company';
+          
+          document.getElementById('compRegName').value = data.registeredName || '';
+          document.getElementById('compHrrc').value = data.hmrcNumber || '';
+          document.getElementById('compRegAddress').value = data.registeredAddress || '';
+          document.getElementById('compTradingName').value = data.tradingName || '';
+          document.getElementById('compLicenceNo').value = data.operatorLicence || '';
+          document.getElementById('compContactName').value = data.contactName || '';
+          document.getElementById('compPhone').value = data.phone || '';
+          document.getElementById('compEmail').value = data.email || '';
+          document.getElementById('compInvoiceEmail').value = data.invoiceEmail || '';
+          document.getElementById('compComplianceContact').value = data.complianceContact || '';
+          document.getElementById('billingPreference').value = data.billingPreference || 'per-billing-period';
+        }
+      } catch (err) {
+        console.error('Error loading company profile:', err);
+      }
+    }
+    window.loadCompanyProfile = loadCompanyProfile;
+
+    async function saveCompanyProfile() {
+      try {
+        const { setDoc, doc, Timestamp } = firebaseServices;
+        await setDoc(doc(db, 'companies', currentUser.uid, 'profile', 'info'), {
+          registeredName: document.getElementById('compRegName').value,
+          hmrcNumber: document.getElementById('compHrrc').value,
+          registeredAddress: document.getElementById('compRegAddress').value,
+          tradingName: document.getElementById('compTradingName').value,
+          operatorLicence: document.getElementById('compLicenceNo').value,
+          contactName: document.getElementById('compContactName').value,
+          phone: document.getElementById('compPhone').value,
+          email: document.getElementById('compEmail').value,
+          invoiceEmail: document.getElementById('compInvoiceEmail').value,
+          complianceContact: document.getElementById('compComplianceContact').value,
+          billingPreference: document.getElementById('billingPreference').value,
+          updatedAt: Timestamp.now()
+        });
+        showAlert('Company profile saved ✅', 'success');
+        document.getElementById('companyName').textContent = 
+          document.getElementById('compTradingName').value || document.getElementById('compRegName').value || 'Your Company';
+      } catch (err) {
+        showAlert('Error saving profile: ' + err.message, 'error');
+      }
+    }
+    window.saveCompanyProfile = saveCompanyProfile;
+
+    // ==========================================
+    // VEHICLE & TRAILER MANAGEMENT
+    // ==========================================
+    async function loadCompanyVehicles() {
+      if (!currentUser || currentUserData?.role !== 'company') return;
+      
+      try {
+        const { getDocs, collection, query, where } = firebaseServices;
+        const vehiclesRef = collection(db, 'companyVehicles');
+        const q = query(vehiclesRef, where('companyId', '==', currentUser.uid));
+        const snapshot = await getDocs(q);
+        
+        const container = document.getElementById('companyVehiclesList');
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-muted">No vehicles added yet.</p>';
+          return;
+        }
+        
+        container.innerHTML = snapshot.docs.map(doc => {
+          const v = doc.data();
+          return `
+            <div class="list-item">
+              <div>
+                <h4>${v.make} ${v.model} — ${v.registration}</h4>
+                <p>Type: ${v.type || 'HGV'} | Status: 
+                  <span class="badge ${v.active ? 'badge-success' : 'badge-danger'}">${v.active ? 'Active' : 'Inactive'}</span>
+                </p>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-secondary" onclick="toggleVehicleActive('${doc.id}', ${!v.active})">
+                  ${v.active ? 'Deactivate' : 'Activate'}
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteVehicle('${doc.id}')">Remove</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Error loading vehicles:', err);
+      }
+      
+      loadCompanyTrailers();
+    }
+    window.loadCompanyVehicles = loadCompanyVehicles;
+
+    async function loadCompanyTrailers() {
+      if (!currentUser || currentUserData?.role !== 'company') return;
+      
+      try {
+        const { getDocs, collection, query, where } = firebaseServices;
+        const trailersRef = collection(db, 'companyTrailers');
+        const q = query(trailersRef, where('companyId', '==', currentUser.uid));
+        const snapshot = await getDocs(q);
+        
+        const container = document.getElementById('companyTrailersList');
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-muted">No trailers added yet.</p>';
+          return;
+        }
+        
+        container.innerHTML = snapshot.docs.map(doc => {
+          const t = doc.data();
+          return `
+            <div class="list-item">
+              <div>
+                <h4>Trailer: ${t.trailerNumber}</h4>
+                <p>Owner: ${t.owner || ' LSD Solutions'} | Status: 
+                  <span class="badge ${t.active ? 'badge-success' : 'badge-danger'}">${t.active ? 'Active' : 'Inactive'}</span>
+                </p>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-secondary" onclick="toggleTrailerActive('${doc.id}', ${!t.active})">
+                  ${t.active ? 'Deactivate' : 'Activate'}
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteTrailer('${doc.id}')">Remove</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Error loading trailers:', err);
+      }
+    }
+    window.loadCompanyTrailers = loadCompanyTrailers;
+
+    function showAddVehicleModal() {
+      showModal(`
+        <h3>Add New Vehicle</h3>
+        <div class="form-group">
+          <label>Make</label>
+          <input type="text" id="vMake" placeholder="e.g. Volvo, Scania" />
+        </div>
+        <div class="form-group">
+          <label>Model</label>
+          <input type="text" id="vModel" placeholder="e.g. FH, R Series" />
+        </div>
+        <div class="form-group">
+          <label>Registration Number *</label>
+          <input type="text" id="vReg" placeholder="AB12 CDE" required />
+        </div>
+        <div class="form-group">
+          <label>Vehicle Type</label>
+          <select id="vType">
+            <option value="HGV">HGV Tractor Unit</option>
+            <option value="rigid">Rigid Vehicle</option>
+            <option value="van">Van</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>VIN / Chassis Number</label>
+          <input type="text" id="vVin" placeholder="17 character VIN" />
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <input type="number" id="vYear" placeholder="2024" />
+        </div>
+      `, 'Add Vehicle', async () => {
+        const make = document.getElementById('vMake').value;
+        const model = document.getElementById('vModel').value;
+        const reg = document.getElementById('vReg').value;
+        const type = document.getElementById('vType').value;
+        const vin = document.getElementById('vVin').value;
+        const year = document.getElementById('vYear').value;
+        
+        if (!reg) { showAlert('Registration is required', 'warning'); return; }
+        
+        const { addDoc, collection, Timestamp } = firebaseServices;
+        await addDoc(collection(db, 'companyVehicles'), {
+          companyId: currentUser.uid,
+          make, model, registration: reg.toUpperCase(), type, vin, year,
+          active: true,
+          createdAt: Timestamp.now()
+        });
+        showAlert('Vehicle added ✅', 'success');
+        loadCompanyVehicles();
+      });
+    }
+    window.showAddVehicleModal = showAddVehicleModal;
+
+    function showAddTrailerModal() {
+      showModal(`
+        <h3>Add New Trailer</h3>
+        <div class="form-group">
+          <label>Trailer Number / ID *</label>
+          <input type="text" id="tNumber" placeholder="e.g. T123" required />
+        </div>
+        <div class="form-group">
+          <label>Registration Number</label>
+          <input type="text" id="tReg" placeholder="AB12 CDE" />
+        </div>
+        <div class="form-group">
+          <label>Trailer Type</label>
+          <select id="tType">
+            <option value="box">Box / Dry Van</option>
+            <option value="curtainside">Curtainside</option>
+            <option value="fridge">Refrigerated</option>
+            <option value="flatbed">Flatbed</option>
+            <option value="skeletal">Skeletal</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Owner</label>
+          <input type="text" id="tOwner" placeholder="Your company name" />
+        </div>
+        <div class="form-group">
+          <label>VIN / Chassis Number</label>
+          <input type="text" id="tVin" placeholder="17 character VIN" />
+        </div>
+      `, 'Add Trailer', async () => {
+        const number = document.getElementById('tNumber').value;
+        const reg = document.getElementById('tReg').value;
+        const type = document.getElementById('tType').value;
+        const owner = document.getElementById('tOwner').value || 'LSD Solutions';
+        const vin = document.getElementById('tVin').value;
+        
+        if (!number) { showAlert('Trailer number is required', 'warning'); return; }
+        
+        const { addDoc, collection, Timestamp } = firebaseServices;
+        await addDoc(collection(db, 'companyTrailers'), {
+          companyId: currentUser.uid,
+          trailerNumber: number,
+          registration: reg ? reg.toUpperCase() : '',
+          type, owner, vin,
+          active: true,
+          createdAt: Timestamp.now()
+        });
+        showAlert('Trailer added ✅', 'success');
+        loadCompanyVehicles();
+      });
+    }
+    window.showAddTrailerModal = showAddTrailerModal;
+
+    async function toggleVehicleActive(id, active) {
+      const { updateDoc, doc } = firebaseServices;
+      await updateDoc(doc(db, 'companyVehicles', id), { active });
+      showAlert(active ? 'Vehicle activated' : 'Vehicle deactivated', 'info');
+      loadCompanyVehicles();
+    }
+    window.toggleVehicleActive = toggleVehicleActive;
+
+    async function toggleTrailerActive(id, active) {
+      const { updateDoc, doc } = firebaseServices;
+      await updateDoc(doc(db, 'companyTrailers', id), { active });
+      showAlert(active ? 'Trailer activated' : 'Trailer deactivated', 'info');
+      loadCompanyVehicles();
+    }
+    window.toggleTrailerActive = toggleTrailerActive;
+
+    async function deleteVehicle(id) {
+      if (!confirm('Remove this vehicle? This cannot be undone.')) return;
+      const { deleteDoc, doc } = firebaseServices;
+      await deleteDoc(doc(db, 'companyVehicles', id));
+      showAlert('Vehicle removed', 'info');
+      loadCompanyVehicles();
+    }
+    window.deleteVehicle = deleteVehicle;
+
+    async function deleteTrailer(id) {
+      if (!confirm('Remove this trailer? This cannot be undone.')) return;
+      const { deleteDoc, doc } = firebaseServices;
+      await deleteDoc(doc(db, 'companyTrailers', id));
+      showAlert('Trailer removed', 'info');
+      loadCompanyVehicles();
+    }
+    window.deleteTrailer = deleteTrailer;
+
+    // ==========================================
+    // CHECKLIST EDITOR
+    // ==========================================
+    let checklistItems = [];
+
+    async function loadChecklistEditor() {
+      if (!currentUser || currentUserData?.role !== 'company') return;
+      
+      try {
+        const { getDoc, doc } = firebaseServices;
+        const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
+        if (snap.exists() && snap.data().items) {
+          checklistItems = snap.data().items;
+        } else {
+          checklistItems = [...DEFAULT_CHECKLIST.items];
+        }
+      } catch (err) {
+        checklistItems = [...DEFAULT_CHECKLIST.items];
+      }
+      
+      renderChecklistEditor();
+    }
+    window.loadChecklistEditor = loadChecklistEditor;
+
+    function renderChecklistEditor() {
+      const container = document.getElementById('checklistEditorList');
+      container.innerHTML = checklistItems.map((item, index) => `
+        <div class="checklist-editor-item" data-index="${index}">
+          <span class="drag-handle">⋮⋮</span>
+          <input type="text" value="${item.replace(/"/g, '&quot;')}" 
+                 onchange="updateCheckItem(${index}, this.value)" />
+          <button class="btn btn-sm btn-danger" onclick="removeCheckItem(${index})">✕</button>
+        </div>
+      `).join('');
+    }
+    window.renderChecklistEditor = renderChecklistEditor;
+
+    function updateCheckItem(index, value) {
+      checklistItems[index] = value;
+    }
+    window.updateCheckItem = updateCheckItem;
+
+    function addCheckItem() {
+      const input = document.getElementById('newCheckItem');
+      const value = input.value.trim();
+      if (value) {
+        checklistItems.push(value);
+        input.value = '';
+        renderChecklistEditor();
+      }
+    }
+    window.addCheckItem = addCheckItem;
+
+    function removeCheckItem(index) {
+      checklistItems.splice(index, 1);
+      renderChecklistEditor();
+    }
+    window.removeCheckItem = removeCheckItem;
+
+    async function saveChecklist() {
+      try {
+        const { setDoc, doc, Timestamp } = firebaseServices;
+        await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
+          items: checklistItems,
+          updatedAt: Timestamp.now()
+        });
+        showAlert('Checklist saved ✅', 'success');
+      } catch (err) {
+        showAlert('Error saving checklist: ' + err.message, 'error');
+      }
+    }
+    window.saveChecklist = saveChecklist;
+
+    function resetChecklistToDefault() {
+      if (confirm('Reset to DVSA default? Your custom changes will be lost.')) {
+        checklistItems = [...DEFAULT_CHECKLIST.items];
+        renderChecklistEditor();
+        showAlert('Restored to DVSA default', 'info');
+      }
+    }
+    window.resetChecklistToDefault = resetChecklistToDefault;
+
+    // ==========================================
+    // DRIVER WALKAROUND CHECK
+    // ==========================================
+    let currentChecklist = [];
+    let checkResponses = {};
+    let checkFaults = {};
+
+    async function loadChecklist() {
+      // Set default date/time to now
+      const now = new Date();
+      const localDateTime = now.toISOString().slice(0, 16);
+      document.getElementById('checkDateTime').value = localDateTime;
+      
+      // Load vehicles & trailers for dropdowns
+      loadVehicleOptions();
+      
+      // Load checklist items
+      try {
+        const { getDoc, doc } = firebaseServices;
+        let items = DEFAULT_CHECKLIST.items;
+        
+        // If driver belongs to a company, use their custom checklist
+        if (currentUserData?.companyId) {
+          const snap = await getDoc(doc(db, 'companies', currentUserData.companyId, 'settings', 'checklist'));
+          if (snap.exists() && snap.data().items) {
+            items = snap.data().items;
+          }
+        }
+        currentChecklist = items;
+        checkResponses = {};
+        checkFaults = {};
+        renderChecklistItems();
+      } catch (err) {
+        currentChecklist = [...DEFAULT_CHECKLIST.items];
+        renderChecklistItems();
+      }
+    }
+    window.loadChecklist = loadChecklist;
+
+    async function loadVehicleOptions() {
+      const vehicleSelect = document.getElementById('selectedVehicle');
+      const trailerSelect = document.getElementById('selectedTrailer');
+      
+      vehicleSelect.innerHTML = '<option value="">-- Select Vehicle --</option>';
+      trailerSelect.innerHTML = '<option value="">-- Select Trailer --</option>';
+      
+      // If driver has company association, load their vehicles
+      if (currentUserData?.companyId) {
+        const { getDocs, collection, query, where } = firebaseServices;
+        
+        // Load vehicles
+        try {
+          const vq = query(collection(db, 'companyVehicles'), 
+                           where('companyId', '==', currentUserData.companyId),
+                           where('active', '==', true));
+          const vSnap = await getDocs(vq);
+          vSnap.forEach(d => {
+            const v = d.data();
+            vehicleSelect.innerHTML += `<option value="${d.id}">${v.make} ${v.model} — ${v.registration}</option>`;
+          });
+        } catch (e) { console.error('Error loading vehicles:', e); }
+        
+        // Load trailers
+        try {
+          const tq = query(collection(db, 'companyTrailers'), 
+                           where('companyId', '==', currentUserData.companyId),
+                           where('active', '==', true));
+          const tSnap = await getDocs(tq);
+          tSnap.forEach(d => {
+            const t = d.data();
+            trailerSelect.innerHTML += `<option value="${d.id}">${t.trailerNumber} — ${t.registration || 'No Reg'}</option>`;
+          });
+        } catch (e) { console.error('Error loading trailers:', e); }
+      }
+    }
+    window.loadVehicleOptions = loadVehicleOptions;
+
+    function updateCheckType() {
+      const type = document.getElementById('checkType').value;
+      document.getElementById('vehicleSelectGroup').classList.toggle('hidden', type === 'trailer');
+      document.getElementById('trailerSelectGroup').classList.toggle('hidden', type === 'vehicle');
+    }
+    window.updateCheckType = updateCheckType;
+
+    function renderChecklistItems() {
+      const container = document.getElementById('checklistItems');
+      container.innerHTML = currentChecklist.map((item, index) => `
+        <div class="check-item" id="check-item-${index}">
+          <input type="checkbox" id="check-${index}" onchange="toggleCheckItem(${index}, this.checked)" />
+          <label for="check-${index}">${item}</label>
+          <button class="btn btn-sm btn-secondary" style="margin-left:auto" id="fault-btn-${index}" 
+                  onclick="toggleFaultNote(${index})">⚠️ Fault</button>
+        </div>
+        <div id="fault-note-${index}" class="fault-note hidden">
+          <label>Describe the fault:</label>
+          <textarea id="fault-text-${index}" rows="2" placeholder="Describe the issue..."></textarea>
+        </div>
+      `).join('');
+    }
+    window.renderChecklistItems = renderChecklistItems;
+
+    function toggleCheckItem(index, checked) {
+      checkResponses[index] = checked;
+    }
+    window.toggleCheckItem = toggleCheckItem;
+
+    function toggleFaultNote(index) {
+      const note = document.getElementById(`fault-note-${index}`);
+      note.classList.toggle('hidden');
+      checkFaults[index] = !note.classList.contains('hidden');
+    }
+    window.toggleFaultNote = toggleFaultNote;
+
+    function resetChecklist() {
+      checkResponses = {};
+      checkFaults = {};
+      renderChecklistItems();
+      document.getElementById('checkDateTime').value = '';
+      document.getElementById('selectedVehicle').value = '';
+      document.getElementById('selectedTrailer').value = '';
+    }
+    window.resetChecklist = resetChecklist;
+
+    async function submitChecklist() {
+      const checkType = document.getElementById('checkType').value;
+      const vehicleId = document.getElementById('selectedVehicle').value;
+      const trailerId = document.getElementById('selectedTrailer').value;
+      const checkDate = document.getElementById('checkDateTime').value;
+      
+      if (!checkDate) {
+        showAlert('Please enter date and time', 'warning');
+        return;
+      }
+      if (checkType !== 'trailer' && !vehicleId) {
+        showAlert('Please select a vehicle', 'warning');
+        return;
+      }
+      if (checkType !== 'vehicle' && !trailerId) {
+        showAlert('Please select a trailer', 'warning');
+        return;
+      }
+      
+      // Build responses
+      const responses = currentChecklist.map((item, i) => ({
+        item,
+        passed: !!checkResponses[i],
+        hasFault: !!checkFaults[i],
+        faultNote: checkFaults[i] ? document.getElementById(`fault-text-${i}`)?.value || '' : ''
+      }));
+      
+      const hasDefects = responses.some(r => r.hasFault);
+      
+      try {
+        const { addDoc, collection, Timestamp } = firebaseServices;
+        await addDoc(collection(db, 'walkaroundChecks'), {
+          driverId: currentUser.uid,
+          driverName: currentUserData.name,
+          companyId: currentUserData.companyId || null,
+          checkType,
+          vehicleId: vehicleId || null,
+          trailerId: trailerId || null,
+          checkDate: new Date(checkDate),
+          responses,
+          hasDefects,
+          status: hasDefects ? 'fault' : 'pass',
+          submittedAt: Timestamp.now()
+        });
+        
+        showAlert('Check submitted successfully ✅', 'success');
+        resetChecklist();
+      } catch (err) {
+        showAlert('Error submitting check: ' + err.message, 'error');
+      }
+    }
+    window.submitChecklist = submitChecklist;
+
+    // ==========================================
+    // COMPANY — VIEW SUBMITTED CHECKS
+    // ==========================================
+    async function loadCompanyChecks() {
+      if (!currentUser || currentUserData?.role !== 'company') return;
+      
+      const statusFilter = document.getElementById('checkStatusFilter')?.value || 'all';
+      
+      try {
+        const { getDocs, collection, query, where, orderBy } = firebaseServices;
+        let q = query(collection(db, 'walkaroundChecks'), 
+                      where('companyId', '==', currentUser.uid),
+                      orderBy('submittedAt', 'desc'));
+        
+        const snapshot = await getDocs(q);
+        const container = document.getElementById('companyChecksList');
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-muted text-center">No checks submitted yet.</p>';
+          return;
+        }
+        
+        let checks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        if (statusFilter !== 'all') {
+          checks = checks.filter(c => c.status === statusFilter);
+        }
+        
+        container.innerHTML = checks.map(check => {
+          const date = check.checkDate?.toDate ? check.checkDate.toDate() : new Date(check.checkDate);
+          return `
+            <div class="card">
+              <div class="list-item" style="border-bottom:1px solid var(--border);padding-bottom:0.5rem;">
+                <div>
+                  <h4>${check.driverName || 'Unknown Driver'}</h4>
+                  <p>${date.toLocaleString()} — ${check.checkType === 'vehicle' ? '🚛 Vehicle Only' : 
+                     check.checkType === 'trailer' ? '📦 Trailer Only' : '🚛📦 Vehicle & Trailer'}</p>
+                </div>
+                <span class="badge ${check.status === 'pass' ? 'badge-success' : 
+                     check.status === 'fault' ? 'badge-warning' : 'badge-info'}">
+                  ${check.status === 'pass' ? '✅ No Defects' : 
+                    check.status === 'fault' ? '⚠️ Defects Reported' : 'ℹ️ Resolved'}
+                </span>
+              </div>
+              <div style="margin-top:0.75rem;">
+                <strong>Check Items:</strong>
+                ${check.responses.map(r => 
+                  `<div style="font-size:0.85rem;padding:0.25rem 0;${r.hasFault ? 'color:var(--danger)' : ''}">
+                    ${r.passed ? '✅' : '⬜'} ${r.item}
+                    ${r.hasFault ? `<br><em>Fault: ${r.faultNote || 'Not described'}</em>` : ''}
+                  </div>`
+                ).join('')}
+              </div>
+              ${check.status === 'fault' ? `
+                <button class="btn btn-sm btn-success mt-2" onclick="markCheckResolved('${check.id}')">
+                  ✅ Mark Defects Resolved
+                </button>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        document.getElementById('companyChecksList').innerHTML = 
+          `<p class="text-muted text-center">Error loading checks: ${err.message}</p>`;
+      }
+    }
+    window.loadCompanyChecks = loadCompanyChecks;
+
+    async function markCheckResolved(checkId) {
+      const { updateDoc, doc } = firebaseServices;
+      await updateDoc(doc(db, 'walkaroundChecks', checkId), { status: 'resolved', resolvedAt: new Date() });
+      showAlert('Marked as resolved ✅', 'success');
+      loadCompanyChecks();
+    }
+    window.markCheckResolved = markCheckResolved;
+
+    // ==========================================
+    // DRIVER MANAGEMENT — COMPANY PORTAL
+    // ==========================================
+    let allCompanyDrivers = [];
+
+    async function loadCompanyDrivers() {
+      if (!currentUser || currentUserData?.role !== 'company') return;
+      
+      try {
+        const { getDocs, collection, query, where, Timestamp } = firebaseServices;
+        
+        // Load drivers linked to this company
+        const q = query(collection(db, 'users'), 
+                        where('associatedCompanies', 'array-contains', currentUser.uid));
+        const snapshot = await getDocs(q);
+        
+        allCompanyDrivers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderCompanyDrivers(allCompanyDrivers);
+      } catch (err) {
+        console.error('Error loading drivers:', err);
+        document.getElementById('companyDriversList').innerHTML = 
+          '<p class="text-muted">Error loading drivers.</p>';
+      }
+    }
+    window.loadCompanyDrivers = loadCompanyDrivers;
+
+    function renderCompanyDrivers(drivers) {
+      const container = document.getElementById('companyDriversList');
+      
+      if (drivers.length === 0) {
+        container.innerHTML = '<p class="text-muted">No drivers added yet. Drivers will appear here once they accept work from your company.</p>';
+        return;
+      }
+      
+      container.innerHTML = drivers.map(d => `
+        <div class="list-item">
+          <div>
+            <h4>${d.name || 'Unknown'}</h4>
+            <p>${d.email || ''} | Licence: ${d.licenceNumber || 'Not provided'}</p>
+            <p class="text-muted" style="font-size:0.8rem;">
+              Categories: ${d.licenceCategories || '—'} | Points: ${d.points || '0'}
+            </p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-secondary" onclick="viewDriverDetails('${d.id}')">View</button>
+            <button class="btn btn-sm btn-danger" onclick="removeDriverFromCompany('${d.id}')">Remove</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    window.renderCompanyDrivers = renderCompanyDrivers;
+
+    function filterDrivers() {
+      const query = document.getElementById('driverSearch').value.toLowerCase();
+      const filtered = allCompanyDrivers.filter(d => 
+        (d.name || '').toLowerCase().includes(query) ||
+        (d.email || '').toLowerCase().includes(query) ||
+        (d.licenceNumber || '').toLowerCase().includes(query)
+      );
+      renderCompanyDrivers(filtered);
+    }
+    window.filterDrivers = filterDrivers;
+
+    function showAddDriverModal() {
+      showModal(`
+        <h3>Add Employed Driver</h3>
+        <p class="text-muted">Enter the driver's email address. If they already have an account, they will be linked to your company.</p>
+        <div class="form-group">
+          <label>Driver's Email Address</label>
+          <input type="email" id="newDriverEmail" placeholder="driver@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Weekly Hours Limit (optional)</label>
+          <input type="number" id="driverHoursLimit" placeholder="40" />
+        </div>
+      `, 'Add Driver', async () => {
+        const email = document.getElementById('newDriverEmail').value.toLowerCase().trim();
+        const hoursLimit = document.getElementById('driverHoursLimit').value;
+        
+        if (!email) { showAlert('Email is required', 'warning'); return; }
+        
+        const { getDocs, collection, query, where, updateDoc, doc, arrayUnion } = firebaseServices;
+        const q = query(collection(db, 'users'), where('email', '==', email));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+          showAlert('No driver found with that email. Ask them to register first.', 'warning');
+          return;
+        }
+        
+        const driverDoc = snap.docs[0];
+        await updateDoc(doc(db, 'users', driverDoc.id), {
+          associatedCompanies: arrayUnion(currentUser.uid),
+          [`companyData.${currentUser.uid}.hoursLimit`]: hoursLimit || null
+        });
+        
+        showAlert('Driver linked to your company ✅', 'success');
+        loadCompanyDrivers();
+      });
+    }
+    window.showAddDriverModal = showAddDriverModal;
+
+    async function viewDriverDetails(driverId) {
+      const driver = allCompanyDrivers.find(d => d.id === driverId);
+      if (!driver) return;
+      
+      showModal(`
+        <h3>${driver.name || 'Driver Details'}</h3>
+        <div class="profile-grid">
+          <div class="profile-item"><label>Email</label><div class="value">${driver.email || '-'}</div></div>
+          <div class="profile-item"><label>Licence Number</label><div class="value">${driver.licenceNumber || '-'}</div></div>
+          <div class="profile-item"><label>Categories</label><div class="value">${driver.licenceCategories || '-'}</div></div>
+          <div class="profile-item"><label>DVLA Check Code</label><div class="value">${driver.dvlaCheckCode || '-'}</div></div>
+          <div class="profile-item"><label>Points</label><div class="value">${driver.points || 'None'}</div></div>
+          <div class="profile-item"><label>Licence Expiry</label><div class="value">
+            ${driver.licenceExpiry ? new Date(driver.licenceExpiry).toLocaleDateString() : '-'}
+          </div></div>
+          <div class="profile-item"><label>Medical Expiry</label><div class="value">
+            ${driver.medicalExpiry ? new Date(driver.medicalExpiry).toLocaleDateString() : '-'}
+          </div></div>
+        </div>
+        <h4 style="margin-top:1rem;">Uploaded Documents</h4>
+        <div id="driverDocs-${driverId}" class="text-muted">Loading...</div>
+      `, 'Close', () => {});
+      
+      // Load documents
+      const listEl = document.getElementById(`driverDocs-${driverId}`);
+      try {
+        const { getDocs, collection, query, where } = firebaseServices;
+        const q = query(collection(db, 'documents'), where('driverId', '==', driverId));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+          listEl.innerHTML = '<p>No documents uploaded yet.</p>';
+        } else {
+          listEl.innerHTML = snap.docs.map(d => {
+            const doc = d.data();
+            return `
+              <div class="doc-item">
+                <span class="doc-icon">📄</span>
+                <div class="doc-info">
+                  <div class="doc-name">${doc.name || 'Document'}</div>
+                  <div class="doc-date">${doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : ''}</div>
+                </div>
+                ${doc.url ? `<a href="${doc.url}" target="_blank" class="btn btn-sm btn-secondary">View</a>` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (e) {
+        listEl.innerHTML = '<p>Could not load documents.</p>';
+      }
+    }
+    window.viewDriverDetails = viewDriverDetails;
+
+    async function removeDriverFromCompany(driverId) {
+      if (!confirm('Remove this driver from your company? They will no longer see your jobs.')) return;
+      
+      const { updateDoc, doc, arrayRemove } = firebaseServices;
+      await updateDoc(doc(db, 'users', driverId), {
+        associatedCompanies: arrayRemove(currentUser.uid)
+      });
+      
+      showAlert('Driver removed', 'info');
+      loadCompanyDrivers();
+    }
+    window.removeDriverFromCompany = removeDriverFromCompany;
+
+    // ==========================================
+    // HOLIDAY MANAGEMENT
+    // ==========================================
+    function renderCalendar() {
+      const container = document.getElementById('calendarGrid');
+      const monthLabel = document.getElementById('calendarMonth');
+      
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      
+      monthLabel.textContent = new Date(year, month).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      
+      let html = '';
+      
+      // Empty cells before first day
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-day"></div>';
+      }
+      
+      // Days of month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        
+        html += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}">
+            <span class="calendar-day-number">${day}</span>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
+    window.renderCalendar = renderCalendar;
+
+    function prevMonth() {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      renderCalendar();
+    }
+    window.prevMonth = prevMonth;
+
+    function nextMonth() {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      renderCalendar();
+    }
+    window.nextMonth = nextMonth;
+
+    function requestHoliday() {
+      showModal(`
+        <h3>Request Holiday / Leave</h3>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="holidayStart" />
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" id="holidayEnd" />
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <textarea id="holidayNotes" rows="2" placeholder="Reason or comment..."></textarea>
+        </div>
+      `, 'Submit Request', async () => {
+        const start = document.getElementById('holidayStart').value;
+        const end = document.getElementById('holidayEnd').value;
+        const notes = document.getElementById('holidayNotes').value;
+        
+        if (!start || !end) {
+          showAlert('Please select dates', 'warning');
+          return;
+        }
+        
+        const { addDoc, collection, Timestamp } = firebaseServices;
+        await addDoc(collection(db, 'holidayRequests'), {
+          driverId: currentUser.uid,
+          driverName: currentUserData.name,
+          companyId: currentUserData.companyId || null,
+          startDate: new Date(start),
+          endDate: new Date(end),
+          notes,
+          status: 'pending',
+          submittedAt: Timestamp.now()
+        });
+        
+        showAlert('Request submitted ✅', 'success');
+        closeModal();
+      });
+    }
+    window.requestHoliday = requestHoliday;
+
+    async function loadHolidayRequests() {
+      if (!currentUser) return;
+      
+      const container = document.getElementById('holidayRequests') || document.getElementById('allHolidayRequests');
+      const isCompany = currentUserData?.role === 'company';
+      
+      try {
+        const { getDocs, collection, query, where, orderBy } = firebaseServices;
+        let q;
+        
+        if (isCompany) {
+          q = query(collection(db, 'holidayRequests'), 
+                    where('companyId', '==', currentUser.uid),
+                    orderBy('submittedAt', 'desc'));
+        } else {
+          q = query(collection(db, 'holidayRequests'), 
+                    where('driverId', '==', currentUser.uid),
+                    orderBy('submittedAt', 'desc'));
+        }
+        
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          if (container) container.innerHTML = '<p class="text-muted">No requests yet.</p>';
+          return;
+        }
+        
+        if (container) container.innerHTML = snapshot.docs.map(doc => {
+          const r = doc.data();
+          const start = r.startDate?.toDate ? r.startDate.toDate() : new Date(r.startDate);
+          const end = r.endDate?.toDate ? r.endDate.toDate() : new Date(r.endDate);
+          
+          const statusBadge = r.status === 'pending' ? 'badge-warning' :
+                              r.status === 'approved' ? 'badge-success' : 'badge-danger';
+          
+          return `
+            <div class="list-item">
+              <div>
+                <h4>${r.driverName || 'Unknown Driver'}</h4>
+                <p>${start.toLocaleDateString()} — ${end.toLocaleDateString()}</p>
+                ${r.notes ? `<p class="text-muted" style="font-size:0.85rem;">${r.notes}</p>` : ''}
+              </div>
+              <span class="badge ${statusBadge}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
+              ${isCompany && r.status === 'pending' ? `
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-success" onclick="approveHoliday('${doc.id}')">✓ Approve</button>
+                  <button class="btn btn-sm btn-danger" onclick="rejectHoliday('${doc.id}')">✕ Reject</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        if (container) container.innerHTML = `<p class="text-muted">Error loading requests.</p>`;
+      }
+    }
+    window.loadHolidayRequests = loadHolidayRequests;
+
+    async function approveHoliday(id) {
+      const { updateDoc, doc } = firebaseServices;
+      await updateDoc(doc(db, 'holidayRequests', id), { status: 'approved', reviewedAt: new Date() });
+      showAlert('Request approved ✅', 'success');
+      loadHolidayRequests();
+    }
+    window.approveHoliday = approveHoliday;
+
+    async function rejectHoliday(id) {
+      const { updateDoc, doc } = firebaseServices;
+      await updateDoc(doc(db, 'holidayRequests', id), { status: 'rejected', reviewedAt: new Date() });
+      showAlert('Request rejected', 'info');
+      loadHolidayRequests();
+    }
+    window.rejectHoliday = rejectHoliday;
+
+    // ==========================================
+    // INVOICING
+    // ==========================================
+    let invoiceCounter = 1;
+
+    async function generateInvoices() {
+      const week = document.getElementById('invoiceWeek').value;
+      if (!week) {
+        showAlert('Select a billing period', 'warning');
+        return;
+      }
+      
+      const pref = currentUserData?.billingPreference || 'per-billing-period';
+      const output = document.getElementById('invoicesOutput');
+      
+      output.innerHTML = `<p class="text-muted text-center">Generating invoices for week ${week}...</p>`;
+      
+      try {
+        const { getDocs, collection, query, where, orderBy } = firebaseServices;
+        
+        // Get all completed work for this week
+        const q = query(collection(db, 'workRecords'), 
+                        where('companyId', '==', currentUser.uid),
+                        where('week', '==', week),
+                        orderBy('driverName'));
+        
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          output.innerHTML = '<p class="text-muted text-center">No work records found for this week.</p>';
+          return;
+        }
+        
+        const workByDriver = {};
+        snapshot.docs.forEach(doc => {
+          const rec = doc.data();
+          if (!workByDriver[rec.driverId]) {
+            workByDriver[rec.driverId] = { name: rec.driverName, items: [], totalHours: 0 };
+          }
+          workByDriver[rec.driverId].items.push(rec);
+          workByDriver[rec.driver('
+          ByDriver[rec.driverId].totalHours += rec.hours || 0;
+        });
+        
+        output.innerHTML = '';
+        
+        if (pref === 'per-driver') {
+          // Separate invoice per driver
+          Object.keys(workByDriver).forEach(driverId => {
+            const data = workByDriver[driverId];
+            const invoiceNumber = `${INVOICE_PREFIX}${String(invoiceCounter++).padStart(6, '0')}`;
+            
+            output.innerHTML += `
+              <div class="card">
+                <div class="invoice-header">
+                  <div>
+                    <h3>Invoice</h3>
+                    <p class="invoice-number">${invoiceNumber}</p>
+                  </div>
+                  <div style="text-align:right;">
+                    <p><strong>LSD Solutions</strong></p>
+                    <p>For All Your Longhaul, Shunting And Delivery Needs</p>
+                    <p>Week: ${week}</p>
+                    <p>Date: ${new Date().toLocaleDateString('en-GB')}</p>
+                  </div>
+                </div>
+                <p><strong>Driver:</strong> ${data.name}</p>
+                <table class="invoice-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Job / Description</th>
+                      <th>Hours</th>
+                      <th>Rate (£)</th>
+                      <th>Total (£)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.items.map(item => {
+                      const total = (item.hours || 0) * (item.rate || 0);
+                      return `
+                        <tr>
+                          <td>${item.date ? new Date(item.date.toDate()).toLocaleDateString('en-GB') : '-'}</td>
+                          <td>${item.description || 'Work completed'}</td>
+                          <td>${item.hours || 0}</td>
+                          <td>${(item.rate || 0).toFixed(2)}</td>
+                          <td>${total.toFixed(2)}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+                <div class="invoice-total">
+                  Total Hours: ${data.totalHours} — Total Amount: £${data.items.reduce((sum, i) => sum + ((i.hours || 0) * (i.rate || 0)), 0).toFixed(2)}
+                </div>
+                <div class="btn-group mt-2 no-print">
+                  <button class="btn btn-secondary" onclick="window.print()">🖨️ Print / Save PDF</button>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          // One invoice per billing period — all drivers listed
+          const invoiceNumber = `${INVOICE_PREFIX}${String(invoiceCounter++).padStart(6, '0')}`;
+          output.innerHTML += `
+            <div class="card">
+              <div class="invoice-header">
+                <div>
+                  <h3>Invoice</h3>
+                  <p class="invoice-number">${invoiceNumber}</p>
+                </div>
+                <div style="text-align:right;">
+                  <p><strong>LSD Solutions</strong></p>
+                  <p>For All Your Longhaul, Shunting And Delivery Needs</p>
+                  <p>Week: ${week}</p>
+                  <p>Date: ${new Date().toLocaleDateString('en-GB')}</p>
+                </div>
+              </div>
+              <table class="invoice-table">
+                <thead>
+                  <tr>
+                    <th>Driver Name</th>
+                    <th>Total Hours</th>
+                    <th>Details</th>
+                    <th>Amount (£)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Object.keys(workByDriver).map(driverId => {
+                    const d = workByDriver[driverId];
+                    const total = d.items.reduce((sum, i) => sum + ((i.hours || 0) * (i.rate || 0)), 0);
+                    return `
+                      <tr>
+                        <td><strong>${d.name}</strong></td>
+                        <td>${d.totalHours}</td>
+                        <td>${d.items.length} work record(s)</td>
+                        <td>${total.toFixed(2)}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              <div class="invoice-total">
+                Total for Week ${week}: £${Object.values(workByDriver).reduce((sum, d) => 
+                  sum + d.items.reduce((s, i) => s + ((i.hours || 0) * (i.rate || 0)), 0), 0
+                ).toFixed(2)}
+              </div>
+              <div class="btn-group mt-2 no-print">
+                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print / Save PDF</button>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        output.innerHTML = `<p class="text-muted text-center text-danger">Error generating invoices: ${err.message}</p>`;
+      }
+    }
+    window.generateInvoices = generateInvoices;
+
+    // ==========================================
+    // DOCUMENTS — DRIVER PORTAL
+    // ==========================================
+    async function loadDocuments() {
+      if (!currentUser) return;
+      
+      const container = document.getElementById('documentsList');
+      container.innerHTML = '<p class="text-muted">Loading documents...</p>';
+      
+      try {
+        const { getDocs, collection, query, where } = firebaseServices;
+        const q = query(collection(db, 'documents'), where('driverId', '==', currentUser.uid));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-muted text-center">No documents uploaded yet.</p>';
+          return;
+        }
+        
+        container.innerHTML = snapshot.docs.map(doc => {
+          const d = doc.data();
+          return `
+            <div class="doc-item">
+              <div style="display:flex;align-items:center;">
+                <span class="doc-icon">📄</span>
+                <div class="doc-info">
+                  <div class="doc-name">${d.name || 'Document'}</div>
+                  <div class="doc-date">
+                    Uploaded: ${d.uploadedAt ? new Date(d.uploadedAt.toDate()).toLocaleDateString('en-GB') : 'Unknown'}
+                  </div>
+                </div>
+              </div>
+              <div class="btn-group">
+                ${d.url ? `<a href="${d.url}" target="_blank" class="btn btn-sm btn-secondary">View</a>` : ''}
+                <button class="btn btn-sm btn-danger" onclick="deleteDocument('${doc.id}', '${d.name || ''}')">Delete</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<p class="text-muted text-center">Error loading documents: ${err.message}</p>`;
+      }
+    }
+    window.loadDocuments = loadDocuments;
+
+    function uploadDocument() {
+      showModal(`
+        <h3>Upload Document</h3>
+        <div class="form-group">
+          <label>Document Name / Type</label>
+          <input type="text" id="docName" placeholder="e.g. Driving Licence, CPC Card, Insurance..." />
+        </div>
+        <div class="form-group">
+          <label>Select File</label>
+          <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+        </div>
+        <p class="text-muted" style="font-size:0.85rem;">PDF, JPG, PNG, DOC — Max 10MB</p>
+      `, 'Upload', async () => {
+        const name = document.getElementById('docName').value.trim();
+        const file = document.getElementById('docFile').files[0];
+        
+        if (!name || !file) {
+          showAlert('Please enter a name and select a file', 'warning');
+          return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+          showAlert('File too large. Max 10MB.', 'warning');
+          return;
+        }
+        
+        try {
+          const { ref, uploadBytes, getDownloadURL, addDoc, collection, Timestamp } = firebaseServices;
+          const fileRef = ref(storage, `documents/${currentUser.uid}/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(fileRef, file);
+          const url = await getDownloadURL(snapshot.ref);
+          
+          await addDoc(collection(db, 'documents'), {
+            driverId: currentUser.uid,
+            name,
+            fileName: file.name,
+            type: file.type,
+            size: file.size,
+            url,
+            uploadedAt: Timestamp.now()
+          });
+          
+          showAlert('Document uploaded ✅', 'success');
+          loadDocuments();
+        } catch (err) {
+          showAlert('Upload failed: ' + err.message, 'error');
+        }
+      });
+    }
+    window.uploadDocument = uploadDocument;
+
+    async function deleteDocument(docId, docName) {
+      if (!confirm(`Delete "${docName}"? This cannot be undone.`)) return;
+      
+      try {
+        const { deleteDoc, doc } = firebaseServices;
+        await deleteDoc(doc(db, 'documents', docId));
+        showAlert('Document deleted', 'info');
+        loadDocuments();
+      } catch (err) {
+        showAlert('Delete failed: ' + err.message, 'error');
+      }
+    }
+    window.deleteDocument = deleteDocument;
+
+    async function downloadAllDocuments() {
+      showAlert('Select documents to download — coming soon!', 'info');
+    }
+    window.downloadAllDocuments = downloadAllDocuments;
+
+    async function exportMyData() {
+      if (!currentUser) return;
+      
+      try {
+        const { getDocs, collection, query, where, getDoc, doc } = firebaseServices;
+        const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        
+        const docsSnap = await getDocs(query(collection(db, 'documents'), where('driverId', '==', currentUser.uid)));
+        const documents = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        const checksSnap = await getDocs(query(collection(db, 'walkaroundChecks'), where('driverId', '==', currentUser.uid)));
+        const checks = checksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        const holidaySnap = await getDocs(query(collection(db, 'holidayRequests'), where('driverId', '==', currentUser.uid)));
+        const holidays = holidaySnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        const exportData = {
+          exportedAt: new Date().toISOString(),
+          user: userData,
+          documents,
+          walkaroundChecks: checks,
+          holidayRequests: holidays
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lssdrivers-data-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        showAlert('Data downloaded ✅', 'success');
+      } catch (err) {
+        showAlert('Export failed: ' + err.message, 'error');
+      }
+    }
+    window.exportMyData = exportMyData;
+
+    function editDriverProfile() {
+      showModal(`
+        <h3>Update Licence & Profile Details</h3>
+        <div class="form-group">
+          <label>Driving Licence Number</label>
+          <input type="text" id="edit_licenceNumber" value="${currentUserData?.licenceNumber || ''}" />
+        </div>
+        <div class="form-group">
+          <label>Licence Categories (e.g. C, C+E, D1)</label>
+          <input type="text" id="edit_licenceCategories" value="${currentUserData?.licenceCategories || ''}" />
+        </div>
+        <div class="form-group">
+          <label>DVLA Check Code</label>
+          <input type="text" id="edit_dvlaCheckCode" value="${currentUserData?.dvlaCheckCode || ''}" />
+        </div>
+        <div class="form-group">
+          <label>Penalty Points</label>
+          <input type="number" id="edit_points" value="${currentUserData?.points || 0}" min="0" max="12" />
+        </div>
+        <div class="form-group">
+          <label>Licence Valid From</label>
+          <input type="date" id="edit_licenceValidFrom" value="${currentUserData?.licenceValidFrom ? new Date(currentUserData.licenceValidFrom).toISOString().slice(0,10) : ''}" />
+        </div>
+        <div class="form-group">
+          <label>Licence Expiry Date</label>
+          <input type="date" id="edit_licenceExpiry" value="${currentUserData?.licenceExpiry ? new Date(currentUserData.licenceExpiry).toISOString().slice(0,10) : ''}" />
+        </div>
+        <div class="form-group">
+          <label>Driver's Medical Certificate Expiry</label>
+          <input type="date" id="edit_medicalExpiry" value="${currentUserData?.medicalExpiry ? new Date(currentUserData.medicalExpiry).toISOString().slice(0,10) : ''}" />
+        </div>
+      `, 'Save Changes', async () => {
+        try {
+          const { updateDoc, doc } = firebaseServices;
+          await updateDoc(doc(db, 'users', currentUser.uid), {
+            licenceNumber: document.getElementById('edit_licenceNumber').value.toUpperCase(),
+            licenceCategories: document.getElementById('edit_licenceCategories').value.toUpperCase(),
+            dvlaCheckCode: document.getElementById('edit_dvlaCheckCode').value,
+            points: parseInt(document.getElementById('edit_points').value) || 0,
+            licenceValidFrom: document.getElementById('edit_licenceValidFrom').value ? 
+              new Date(document.getElementById('edit_licenceValidFrom').value) : null,
+            licenceExpiry: document.getElementById('edit_licenceExpiry').value ? 
+              new Date(document.getElementById('edit_licenceExpiry').value) : null,
+            medicalExpiry: document.getElementById('edit_medicalExpiry').value ? 
+              new Date(document.getElementById('edit_medicalExpiry').value) : null
+          });
+          showAlert('Profile updated ✅', 'success');
+          closeModal();
+          loadUserProfile(currentUser.uid);
+        } catch (err) {
+          showAlert('Error saving: ' + err.message, 'error');
+        }
+      });
+    }
+    window.editDriverProfile = editDriverProfile;
+
+    function confirmDeleteAccount() {
+      if (confirm('⚠️ Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be removed.')) {
+        if (confirm('Last chance — permanently delete my account and all data?')) {
+          const { deleteUser } = firebaseServices;
+          deleteUser(auth.currentUser).then(() => {
+            showAlert('Account deleted', 'info');
+          }).catch(err => {
+            showAlert('Error: ' + err.message, 'error');
+          });
+        }
+      }
+    }
+    window.confirmDeleteAccount = confirmDeleteAccount;
+
+    // ==========================================
+    // PAGE LOAD DATA HANDLER
+    // ==========================================
+    window.loadPageData = async function(pageId) {
+      switch(pageId) {
+        case 'dashboard':
+          // Dashboard quick stats loaded via quick actions
+          break;
+        case 'jobs':
+          loadJobs();
+          break;
+        case 'checklist':
+          loadChecklist();
+          break;
+        case 'documents':
+          loadDocuments();
+          break;
+        case 'holidays':
+          renderCalendar();
+          loadHolidayRequests();
+          break;
+        case 'company-dashboard':
+          updateCompanyStats();
+          break;
+        case 'company-drivers':
+          loadCompanyDrivers();
+          break;
+        case 'company-vehicles':
+          loadCompanyVehicles();
+          break;
+        case 'checklist-editor':
+          loadChecklistEditor();
+          break;
+        case 'company-checks':
+          loadCompanyChecks();
+          break;
+        case 'company-holidays':
+          loadHolidayRequests();
+          break;
+        case 'invoices':
+          // Set default week to current week
+          const now = new Date();
+          const day = now.getDay();
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+          document.getElementById('invoiceWeek').value = monday.toISOString().slice(0,10);
+          break;
+      }
+    };
+
+    async function loadJobs() {
+      const container = document.getElementById('jobsList');
+      container.innerHTML = '<p class="text-muted">Loading available work...</p>';
+      
+      try {
+        const { getDocs, collection, query, orderBy, where } = firebaseServices;
+        const q = query(collection(db, 'jobs'), where('status', '==', 'open'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-muted text-center">No jobs available right now. Check back soon!</p>';
+          return;
+        }
+        
+        container.innerHTML = snapshot.docs.map(doc => {
+          const job = doc.data();
+          return `
+            <div class="card">
+              <h3>${job.title || 'Job Opportunity'}</h3>
+              <p><strong>Company:</strong> ${job.companyName || 'LSD Solutions'}</p>
+              <p><strong>Type:</strong> ${job.jobType || 'General'}</p>
+              <p><strong>Date:</strong> ${job.date ? new Date(job.date.toDate()).toLocaleDateString('en-GB') : 'Flexible'}</p>
+              <p><strong>Rate:</strong> £${(job.rate || 0).toFixed(2)} / hr</p>
+              <p>${job.description || ''}</p>
+              <button class="btn btn-primary btn-sm mt-1">Accept Job</button>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<p class="text-muted text-center">Error loading jobs: ${err.message}</p>`;
+      }
+    }
+    window.loadJobs = loadJobs;
+
+    async function updateCompanyStats() {
+      if (!currentUser || currentUserData?.role !== 'company') return;
+      
+      try {
+        const { getDocs, collection, query, where } = firebaseServices;
+        
+        const driverQ = query(collection(db, 'users'), where('associatedCompanies', 'array-contains', currentUser.uid));
+        const driverSnap = await getDocs(driverQ);
+        document.getElementById('statDrivers').textContent = driverSnap.size;
+        
+        const vehQ = query(collection(db, 'companyVehicles'), where('companyId', '==', currentUser.uid), where('active', '==', true));
+        const vehSnap = await getDocs(vehQ);
+        document.getElementById('statVehicles').textContent = vehSnap.size;
+        
+        const jobQ = query(collection(db, 'jobs'), where('companyId', '==', currentUser.uid));
+        const jobSnap = await getDocs(jobQ);
+        document.getElementById('statJobs').textContent = jobSnap.size;
+        
+        const checkQ = query(collection(db, 'walkaroundChecks'), where('companyId', '==', currentUser.uid));
+        const checkSnap = await getDocs(checkQ);
+        document.getElementById('statChecks').textContent = checkSnap.size;
+      } catch (err) {
+        console.error('Error updating stats:', err);
+      }
+    }
+    window.updateCompanyStats = updateCompanyStats;
+
+    // Initialise week picker for invoices
+    document.addEventListener('DOMContentLoaded', () => {
+      const weekInput = document.getElementById('invoiceWeek');
+      if (weekInput) {
+        const now = new Date();
+        const day = now.getDay();
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+        weekInput.value = monday.toISOString().slice(0,10);
+      }
+    });
+  </script>
+
 </body>
 </html>
+        
+        
