@@ -5,898 +5,764 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LSD Solutions — HGV & Logistics Services</title>
   <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
-  <link rel="icon" type="image/png" href="./assets/favicon.png" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <style>
-    /* ======================================
-       GLOBAL STYLES
-       ====================================== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
       --primary: #1a365d;
       --primary-light: #e8edf3;
-      --accent: #d4af37;
-      --accent-dark: #b8860b;
+      --accent: #d47500;
+      --accent-light: #fff4e5;
       --success: #2e7d32;
       --danger: #c62828;
-      --text-dark: #333;
-      --text-light: #666;
-      --bg-light: #f8f9fa;
-      --border: #ddd;
+      --warning: #ef6c00;
+      --grey-100: #f5f5f5;
+      --grey-200: #e0e0e0;
+      --grey-300: #bdbdbd;
+      --text-dark: #263238;
+      --text-light: #546e7a;
       --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+      --radius: 8px;
     }
+    body { background: #f8fafc; color: var(--text-dark); line-height: 1.6; min-height: 100vh; }
     
-    body { background: var(--bg-light); color: var(--text-dark); min-height: 100vh; }
-    .app-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-    
-    /* Header & Branding */
-    .site-header { text-align: center; padding: 24px 16px; background: white; box-shadow: var(--shadow); margin-bottom: 24px; }
-    .logo { max-width: 120px; margin-bottom: 12px; }
-    .site-title { font-size: 28px; color: var(--primary); font-weight: 700; }
-    .site-subtitle { font-size: 18px; color: var(--accent); margin-top: 4px; }
-    .site-tagline { font-size: 14px; color: var(--text-light); margin-top: 4px; font-style: italic; }
-    
-    /* Navigation */
-    .nav-bar { background: var(--primary); padding: 12px 0; position: sticky; top: 0; z-index: 100; }
-    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; }
-    .nav-links { display: flex; gap: 16px; flex-wrap: wrap; }
-    .nav-links a { color: white; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: background 0.2s; }
-    .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.15); }
-    .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-    
-    /* Cards & Layout */
-    .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-    .page-header h2 { color: var(--primary); font-size: 22px; }
-    
-    /* Forms */
-    .form-group { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-dark); }
-    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 15px; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .form-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; flex-wrap: wrap; }
-    
-    /* Buttons */
-    .btn { padding: 10px 20px; border: none; border-radius: 4px; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; text-decoration: none; display: inline-block; text-align: center; }
-    .btn:hover { opacity: 0.9; }
-    .btn.primary { background: var(--primary); color: white; }
-    .btn.secondary { background: #e0e0e0; color: var(--text-dark); }
-    .btn.small { padding: 6px 12px; font-size: 13px; }
-    .btn.danger { background: var(--danger); color: white; }
-    .btn.accent { background: var(--accent); color: white; }
-    .btn.full { width: 100%; }
-    
-    /* Auth Page — New Design */
-    .auth-container { min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
-    .auth-card { width: 100%; max-width: 440px; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(26, 54, 93, 0.08); }
-    .auth-subtitle { color: #6b7280; font-size: 1rem; margin-bottom: 0.5rem; }
-    .auth-title { color: var(--primary); font-size: 2.5rem; font-weight: 700; margin: 0 0 2rem 0; line-height: 1.2; }
-    .auth-form-stack { margin-top: 1.5rem; }
-    .auth-options { display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
-    .checkbox-label { display: flex; align-items: center; gap: 0.5rem; color: #4b5563; font-size: 0.95rem; cursor: pointer; }
-    .link-btn { background: none; border: none; color: var(--accent); font-size: 0.95rem; cursor: pointer; padding: 0; text-decoration: underline; }
-    .link-btn:hover { color: #b86500; }
-    .auth-divider { height: 1px; background: #e5e7eb; margin: 1.5rem 0; }
-    .auth-switch-text { text-align: center; color: #4b5563; margin: 0; }
-    .radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
-    .radio-label { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; transition: all 0.2s; flex: 1; justify-content: center; }
-    .radio-label:hover, .radio-label:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
-    
-    /* Lists */
-    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
-    .list-item:last-child { border-bottom: none; }
-    .list-item.inactive { opacity: 0.6; }
-    .item-actions { display: flex; gap: 8px; align-items: center; }
-    
-    /* Badges */
-    .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-    .badge-success { background: #e8f5e9; color: var(--success); }
-    .badge-danger { background: #ffebee; color: var(--danger); }
-    
-    /* Text Utilities */
-    .text-muted { color: var(--text-light); font-size: 14px; }
-    .text-sm { font-size: 13px; color: var(--text-light); }
-    .text-danger { color: var(--danger); }
-    .text-center { text-align: center; }
-    
-    /* Modal */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal { background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
-    .modal h3 { margin-bottom: 16px; color: var(--primary); }
-    
-    /* Toast */
-    .toast { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 6px; color: white; font-weight: 500; z-index: 2000; opacity: 0; transform: translateY(-10px); transition: all 0.3s; }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.success { background: var(--success); }
-    .toast.error { background: var(--danger); }
-    
-    /* Calendar Styles */
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .calendar-header button { padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 0.5rem; }
-    .calendar-weekdays span { text-align: center; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-    .calendar-day { 
-      padding: 0.75rem 0.25rem; 
-      text-align: center; 
-      border-radius: 4px; 
-      background: var(--primary-light); 
-      min-height: 56px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .calendar-day:hover { filter: brightness(0.95); }
-    .calendar-day.today { background: var(--accent); color: white; font-weight: bold; }
-    .calendar-day.empty { background: transparent; cursor: default; }
-    
-    /* Calendar Status Colors */
-    .status-undefined { background: #f0f0f0; }
-    .status-available { background: #d4edda; color: #155724; }
-    .status-pending { background: #fff3cd; color: #856404; }
-    .status-booked { background: #cce5ff; color: #004085; }
-    .status-unavailable { background: #f8d7da; color: #721c24; }
-    .status-pending-approval { background: #fff3cd; color: #856404; }
-    .status-holiday-approved { background: #d4edda; color: #155724; }
-    .status-holiday-rejected { background: #f8d7da; color: #721c24; }
-    
-    /* Calendar Legend */
-    .calendar-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
-    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 13px; }
-    .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-    
-    /* Checklist */
-    .checklist-category { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-    .category-header { background: var(--primary-light); padding: 10px 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-    .category-body { padding: 14px; }
-    
-    /* Page visibility */
-    .page { display: none; }
+    /* Page Visibility */
+    .page { display: none; padding: 1rem; max-width: 1200px; margin: 0 auto; }
     .page.active { display: block; }
     
-    /* Mobile Menu */
-    #mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--primary); z-index: 150; padding-top: 60px; }
-    #mobile-menu.open { display: block; }
-    #mobile-menu a { display: block; color: white; padding: 14px 24px; font-size: 16px; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    /* Auth Pages */
+    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; background: linear-gradient(135deg, var(--primary) 0%, #2c5292 100%); }
+    .auth-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; max-width: 440px; overflow: hidden; }
+    .auth-header { background: var(--primary); color: white; padding: 2rem; text-align: center; }
+    .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .auth-header p { opacity: 0.85; font-size: 0.95rem; }
+    .auth-tabs { display: flex; border-bottom: 1px solid var(--grey-200); }
+    .auth-tab { flex: 1; padding: 1rem; text-align: center; background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-light); }
+    .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); font-weight: 600; }
+    .auth-body { padding: 2rem; }
+    
+    /* Forms */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: var(--text-dark); }
+    input, select, textarea { width: 100%; padding: 0.75rem 0.85rem; border: 1px solid var(--grey-300); border-radius: var(--radius); font-size: 1rem; transition: border 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    button { cursor: pointer; font-size: 1rem; border-radius: var(--radius); font-weight: 500; transition: all 0.2s; }
+    .btn { padding: 0.75rem 1.25rem; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .btn.primary { background: var(--primary); color: white; }
+    .btn.primary:hover { background: #152c4d; }
+    .btn.secondary { background: white; color: var(--primary); border: 1px solid var(--primary); }
+    .btn.secondary:hover { background: var(--primary-light); }
+    .btn.accent { background: var(--accent); color: white; }
+    .btn.accent:hover { background: #b86500; }
+    .btn.success { background: var(--success); color: white; }
+    .btn.danger { background: var(--danger); color: white; }
+    .btn.small { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+    .btn.full { width: 100%; }
+    
+    /* Cards & Layout */
+    .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .page-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--grey-200); }
+    .page-header h2 { font-size: 1.4rem; color: var(--primary); }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--text-light); font-size: 0.9rem; }
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-warning { color: var(--warning); }
+    
+    /* Navigation */
+    .top-nav { background: var(--primary); color: white; padding: 0.75rem 1rem; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+    .top-nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .top-nav-brand { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .top-nav-links { display: flex; gap: 0.75rem; align-items: center; }
+    .top-nav-links button { background: none; color: white; border: none; padding: 0.5rem 0.75rem; font-size: 0.9rem; opacity: 0.85; }
+    .top-nav-links button:hover, .top-nav-links button.active { opacity: 1; background: rgba(255,255,255,0.1); }
+    
+    /* Dashboard */
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .dashboard-card { background: white; border-radius: var(--radius); padding: 1.5rem; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .dashboard-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .dashboard-card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .dashboard-card-title { font-weight: 600; margin-bottom: 0.25rem; }
+    .dashboard-card-desc { font-size: 0.85rem; color: var(--text-light); }
+    
+    /* Lists & Tables */
+    .list-item { padding: 1rem; border-bottom: 1px solid var(--grey-100); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; }
+    .list-item:last-child { border-bottom: none; }
+    .list-item-content { flex: 1; min-width: 200px; }
+    .list-item-title { font-weight: 600; margin-bottom: 0.2rem; }
+    .list-item-meta { font-size: 0.85rem; color: var(--text-light); }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge.success { background: #e8f5e9; color: var(--success); }
+    .badge.warning { background: #fff3e0; color: var(--warning); }
+    .badge.danger { background: #ffebee; color: var(--danger); }
+    .badge.info { background: var(--primary-light); color: var(--primary); }
+    
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: white; border-radius: var(--radius); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--grey-200); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .modal-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-light); }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--grey-200); display: flex; justify-content: flex-end; gap: 0.75rem; }
+    
+    /* Utilities */
+    .hidden { display: none !important; }
+    .loading { text-align: center; padding: 2rem; color: var(--text-light); }
+    .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid var(--grey-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-light); }
+    .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
     
     /* Responsive */
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .mobile-menu-btn { display: block; }
-      .form-row { grid-template-columns: 1fr; }
+    @media(max-width: 768px) {
       .page-header { flex-direction: column; align-items: flex-start; }
-      .list-item { flex-direction: column; align-items: flex-start; }
-      .item-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
-      .auth-card { padding: 1.5rem; }
-      .auth-title { font-size: 2rem; }
-      .radio-group { flex-direction: column; }
+      .top-nav-links { gap: 0.25rem; }
+      .top-nav-links button { padding: 0.4rem 0.5rem; font-size: 0.85rem; }
     }
   </style>
 </head>
 <body>
-  <!-- Site Header -->
-  <header class="site-header">
-    <img src="./assets/lsd-logo.png" alt="LSD Solutions" class="logo" onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<span style=&quot;font-size:2rem;&quot;>🚛</span>')">
-    <h1 class="site-title">LSD Solutions</h1>
-    <p class="site-subtitle">HGV & Logistics Services</p>
-    <p class="site-tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
-  </header>
 
-  <!-- Navigation -->
-  <nav class="nav-bar">
-    <div class="nav-inner">
-      <span style="color:white;font-weight:600">🚛 LSD Solutions</span>
-      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-      <div class="nav-links" id="nav-links">
-        <a href="#" onclick="showPage('auth-page');return false;" id="nav-auth">Sign In</a>
-        <a href="#" onclick="showPage('driver-portal-page');return false;" id="nav-driver" style="display:none;">Driver Portal</a>
-        <a href="#" onclick="showPage('company-portal-page');return false;" id="nav-company" style="display:none;">Company Portal</a>
-        <a href="#" onclick="showPage('vehicles-page');return false;" id="nav-vehicles" style="display:none;">Vehicles</a>
-        <a href="#" onclick="showPage('trailers-page');return false;" id="nav-trailers" style="display:none;">Trailers</a>
-        <a href="#" onclick="showPage('service-logs-page');return false;" id="nav-service" style="display:none;">Service Logs</a>
-        <a href="#" onclick="showPage('reports-page');return false;" id="nav-reports" style="display:none;">Reports</a>
-        <a href="#" onclick="showPage('reset-page');return false;" id="nav-reset" style="display:none;">Reset Password</a>
-        <a href="#" onclick="exportMyData();return false;" id="nav-export" style="display:none;">Export My Data</a>
-        <a href="#" onclick="handleSignOut();return false;" id="nav-logout" style="display:none;">Sign Out</a>
+  <!-- ============================================== -->
+  <!-- AUTH PAGE (Sign In / Register)                 -->
+  <!-- ============================================== -->
+  <div id="auth-page" class="page active">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1>🚛 LSD Solutions</h1>
+          <p>HGV & Logistics Portal</p>
+        </div>
+        
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" id="signin-tab" onclick="showAuthPage('signin')">Sign In</button>
+          <button type="button" class="auth-tab" id="register-tab" onclick="showAuthPage('register')">Register</button>
+        </div>
+        
+        <div class="auth-body">
+          <!-- Sign In Form -->
+          <div id="signin-card">
+            <form onsubmit="handleSignIn(event)">
+              <div class="form-group">
+                <label for="signin-email">Email Address</label>
+                <input type="email" id="signin-email" name="signin-email" required autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="signin-password">Password</label>
+                <input type="password" id="signin-password" name="signin-password" required autocomplete="current-password">
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn primary full">Sign In</button>
+              </div>
+              <p class="text-center text-muted" style="margin-top: 1rem;">
+                <a href="#" onclick="showPasswordReset()" style="color: var(--primary);">Forgot password?</a>
+              </p>
+            </form>
+          </div>
+          
+          <!-- Register Form -->
+          <div id="register-card" style="display: none;">
+            <form onsubmit="handleRegister(event)">
+              <div class="form-group">
+                <label for="register-name">Full Name</label>
+                <input type="text" id="register-name" name="register-name" required autocomplete="name">
+              </div>
+              <div class="form-group">
+                <label for="register-email">Email Address</label>
+                <input type="email" id="register-email" name="register-email" required autocomplete="email">
+              </div>
+              <div class="form-group">
+                <label for="register-password">Create Password</label>
+                <input type="password" id="register-password" name="register-password" required autocomplete="new-password" minlength="6">
+              </div>
+              <div class="form-group">
+                <label>Account Type</label>
+                <select id="register-role" required>
+                  <option value="">Select your role</option>
+                  <option value="company">🏢 Company / Fleet Manager</option>
+                  <option value="driver">👤 HGV Driver</option>
+                </select>
+              </div>
+              <div class="form-group" id="company-name-group" style="display: none;">
+                <label for="register-company">Company Name</label>
+                <input type="text" id="register-company" name="register-company">
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn primary full">Create Account</button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Password Reset -->
+          <div id="reset-card" style="display: none;">
+            <form onsubmit="handlePasswordReset(event)">
+              <p style="margin-bottom: 1rem;">Enter your email address and we'll send you a link to reset your password.</p>
+              <div class="form-group">
+                <label for="reset-email">Email Address</label>
+                <input type="email" id="reset-email" name="reset-email" required autocomplete="email">
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn primary full">Send Reset Link</button>
+              </div>
+              <p class="text-center text-muted" style="margin-top: 1rem;">
+                <a href="#" onclick="showAuthPage('signin')" style="color: var(--primary);">← Back to Sign In</a>
+              </p>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
-  </nav>
-
-  <!-- Mobile Menu -->
-  <div id="mobile-menu">
-    <a href="#" onclick="showPage('auth-page');toggleMobileMenu();return false;">Sign In</a>
-    <a href="#" onclick="showPage('driver-portal-page');toggleMobileMenu();return false;" id="mob-nav-driver" style="display:none;">Driver Portal</a>
-    <a href="#" onclick="showPage('company-portal-page');toggleMobileMenu();return false;" id="mob-nav-company" style="display:none;">Company Portal</a>
-    <a href="#" onclick="showPage('vehicles-page');toggleMobileMenu();return false;" id="mob-nav-vehicles" style="display:none;">🚚 Vehicles</a>
-    <a href="#" onclick="showPage('trailers-page');toggleMobileMenu();return false;" id="mob-nav-trailers" style="display:none;">🚛 Trailers</a>
-    <a href="#" onclick="showPage('service-logs-page');toggleMobileMenu();return false;" id="mob-nav-service" style="display:none;">🔧 Service Logs</a>
-    <a href="#" onclick="showPage('reports-page');toggleMobileMenu();return false;" id="mob-nav-reports" style="display:none;">📊 Reports</a>
-    <a href="#" onclick="exportMyData();toggleMobileMenu();return false;" id="mob-nav-export" style="display:none;">Export My Data</a>
-    <a href="#" onclick="handleSignOut();toggleMobileMenu();return false;" id="mob-nav-logout" style="display:none;">Sign Out</a>
   </div>
 
-  <main class="app-container">
-    <!-- ====================================== -->
-    <!-- AUTH PAGE — Sign In / Register         -->
-    <!-- ====================================== -->
-    <div id="auth-page" class="page">
-      <div class="auth-container">
-        <!-- SIGN IN FORM -->
-        <div id="signin-card" class="auth-card">
-          <p class="auth-subtitle">Please enter your details</p>
-          <h1 class="auth-title">Welcome back</h1>
-          
-          <form id="signin-form" class="auth-form-stack" onsubmit="handleSignInSubmit(event)">
-            <div class="form-group">
-              <label for="signin-email">Email address</label>
-              <input type="email" id="signin-email" name="signin-email" required placeholder="your@email.com">
-            </div>
-            
-            <div class="form-group">
-              <label for="signin-password">Password</label>
-              <input type="password" id="signin-password" name="signin-password" required placeholder="Enter your password">
-            </div>
-            
-            <div class="auth-options">
-              <label class="checkbox-label">
-                <input type="checkbox" id="remember-me">
-                Remember for 30 days
-              </label>
-              <button type="button" class="link-btn" onclick="showPage('reset-page')">Forgot password?</button>
-            </div>
-            
-            <button type="submit" class="btn primary full">Sign In</button>
-            
-            <div class="auth-divider"></div>
-            
-            <p class="auth-switch-text">
-              Don't have an account? 
-              <button type="button" class="link-btn" onclick="showAuthPage('register')">Create an account</button>
-            </p>
-          </form>
-        </div>
-
-        <!-- REGISTER FORM -->
-        <div id="register-card" class="auth-card" style="display: none;">
-          <p class="auth-subtitle">Join LSD Solutions</p>
-          <h1 class="auth-title">Create an account</h1>
-          
-          <form id="register-form" class="auth-form-stack" onsubmit="handleRegisterSubmit(event)">
-            <div class="form-group">
-              <label for="register-name">Full Name</label>
-              <input type="text" id="register-name" name="register-name" required placeholder="Your full name">
-            </div>
-            
-            <div class="form-group">
-              <label for="register-email">Email address</label>
-              <input type="email" id="register-email" name="register-email" required placeholder="your@email.com">
-            </div>
-            
-            <div class="form-group">
-              <label for="register-password">Password</label>
-              <input type="password" id="register-password" name="register-password" required placeholder="At least 6 characters">
-            </div>
-            
-            <div class="form-group">
-              <label for="register-confirm">Confirm Password</label>
-              <input type="password" id="register-confirm" name="register-confirm" required placeholder="Re-enter your password">
-            </div>
-            
-            <div class="form-group">
-              <label>I am registering as a:</label>
-              <div class="radio-group">
-                <label class="radio-label">
-                  <input type="radio" name="user-role" value="driver" required>
-                  <span>🚛 Driver</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="user-role" value="company" required>
-                  <span>🏢 Company</span>
-                </label>
-              </div>
-            </div>
-            
-            <button type="submit" class="btn primary full">Create Account</button>
-            
-            <div class="auth-divider"></div>
-            
-            <p class="auth-switch-text">
-              Already have an account? 
-              <button type="button" class="link-btn" onclick="showAuthPage('signin')">Sign In</button>
-            </p>
-          </form>
-        </div>
+  <!-- ============================================== -->
+  <!-- COMPANY PORTAL — Navigation Bar                 -->
+  <!-- ============================================== -->
+  <div id="company-nav" class="top-nav hidden">
+    <div class="top-nav-inner">
+      <span class="top-nav-brand">🚛 LSD Solutions</span>
+      <div class="top-nav-links">
+        <button onclick="showPage('company-portal-page')" class="nav-btn" data-page="company-portal-page">Dashboard</button>
+        <button onclick="showPage('driver-management-page')" class="nav-btn" data-page="driver-management-page">Drivers</button>
+        <button onclick="showPage('jobs-page')" class="nav-btn" data-page="jobs-page">Jobs</button>
+        <button onclick="showPage('vehicles-page')" class="nav-btn" data-page="vehicles-page">Vehicles</button>
+        <button onclick="showPage('trailers-page')" class="nav-btn" data-page="trailers-page">Trailers</button>
+        <button onclick="showPage('invoices-page')" class="nav-btn" data-page="invoices-page">Invoices</button>
+        <button onclick="showPage('checklist-editor-page')" class="nav-btn" data-page="checklist-editor-page">Checklists</button>
+        <button onclick="showPage('company-settings-page')" class="nav-btn" data-page="company-settings-page">Settings</button>
+        <button onclick="handleSignOut()" style="color: #ffccbc;">Sign Out</button>
       </div>
     </div>
+  </div>
 
-    <!-- ====================================== -->
-    <!-- RESET PASSWORD PAGE                    -->
-    <!-- ====================================== -->
-    <div id="reset-page" class="page">
-      <div class="auth-container">
-        <div class="auth-card">
-          <p class="auth-subtitle">Account Recovery</p>
-          <h1 class="auth-title">Reset Password</h1>
-          
-          <form onsubmit="handleResetSubmit(event)">
-            <div class="form-group">
-              <label for="reset-email">Email address</label>
-              <input type="email" id="reset-email" required placeholder="your@email.com">
-            </div>
-            <button type="submit" class="btn primary full">Send Reset Link</button>
-          </form>
-          
-          <div class="auth-divider"></div>
-          <p class="auth-switch-text">
-            <button type="button" class="link-btn" onclick="showAuthPage('signin')">← Back to Sign In</button>
-          </p>
-        </div>
+  <!-- ============================================== -->
+  <!-- COMPANY PORTAL — Dashboard Page                 -->
+  <!-- ============================================== -->
+  <div id="company-portal-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>🏢 Company Dashboard</h2>
+        <p class="text-muted" id="company-greeting">Welcome back</p>
+      </div>
+      <div>
+        <span class="text-muted" id="current-date"></span>
       </div>
     </div>
-
-    <!-- ====================================== -->
-    <!-- DRIVER PORTAL PAGE                      -->
-    <!-- ====================================== -->
-    <div id="driver-portal-page" class="page">
-      <div class="card">
-        <div class="page-header">
-          <h2>🚛 Driver Portal</h2>
-        </div>
-        <p id="driver-greeting" class="text-muted">Loading...</p>
-      </div>
-      <!-- Driver Dashboard Buttons -->
-      <div class="card">
-        <h3>Quick Access</h3>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
-          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-profile-page'); loadDriverProfile();">
-            👤 My Profile
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-calendar-page'); loadDriverCalendar();">
-            📅 My Calendar
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-documents-page'); loadDriverDocuments();">
-            📁 My Documents
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-checklist-page'); loadDriverChecklist();">
-            ✅ Walkaround Check
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-work-page'); loadDriverWork();">
-            📋 Posted Work
-          </button>
-        </div>
-      </div>
-      <!-- Driver Profile Page -->
-      <div id="driver-profile-page" style="display:none">
-        <div class="page-header">
-          <h2>👤 My Profile</h2>
-          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <form onsubmit="saveDriverProfile(event)">
-            <div class="form-group">
-              <label for="profile-name">Full Name</label>
-              <input type="text" id="profile-name" required>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="profile-email">Email</label>
-                <input type="email" id="profile-email" readonly>
-              </div>
-              <div class="form-group">
-                <label for="profile-phone">Phone Number</label>
-                <input type="tel" id="profile-phone">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="profile-licence-number">Driving Licence Number</label>
-              <input type="text" id="profile-licence-number">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="profile-valid-from">Licence Valid From</label>
-                <input type="date" id="profile-valid-from">
-              </div>
-              <div class="form-group">
-                <label for="profile-expiry-date">Licence Expiry Date</label>
-                <input type="date" id="profile-expiry-date">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="profile-medical-expiry">Medical Certificate Expiry</label>
-              <input type="date" id="profile-medical-expiry">
-            </div>
-            <div class="form-group">
-              <label for="profile-points">Penalty Points</label>
-              <input type="number" id="profile-points" value="0" min="0" max="12">
-            </div>
-            <div class="form-group">
-              <label for="profile-notes">Notes</label>
-              <textarea id="profile-notes" rows="3"></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn secondary" onclick="showPage('driver-portal-page')">Cancel</button>
-              <button type="submit" class="btn primary">💾 Save Profile</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <!-- Driver Calendar Page -->
-      <div id="driver-calendar-page" style="display:none">
-        <div class="page-header">
-          <h2>📅 My Schedule</h2>
-          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <div class="calendar-header">
-            <button onclick="changeMonth(-1)">◀ Prev</button>
-            <h3 id="calendar-month-year" style="margin:0">Month Year</h3>
-            <button onclick="changeMonth(1)">Next ▶</button>
-          </div>
-          <div class="calendar-weekdays">
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-          </div>
-          <div id="calendar-grid" class="calendar-grid"></div>
-          <div class="calendar-legend">
-            <span class="legend-item"><span class="legend-dot status-available"></span> Available</span>
-            <span class="legend-item"><span class="legend-dot status-pending"></span> Pending</span>
-            <span class="legend-item"><span class="legend-dot status-booked"></span> Booked</span>
-            <span class="legend-item"><span class="legend-dot status-unavailable"></span> Unavailable</span>
-          </div>
-        </div>
-        <div class="card">
-          <h3>📝 Holiday / Time-Off Request</h3>
-          <form onsubmit="submitHolidayRequest(event)">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Start Date *</label>
-                <input type="date" id="holiday-start" required>
-              </div>
-              <div class="form-group">
-                <label>End Date *</label>
-                <input type="date" id="holiday-end" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Notes (optional)</label>
-              <textarea id="holiday-notes" rows="2" placeholder="Reason or additional info..."></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn primary">🏖️ Submit Request</button>
-            </div>
-          </form>
-        </div>
-        <div class="card">
-          <h3>📋 My Requests</h3>
-          <div id="holiday-requests-list">
-            <p class="text-muted">Loading requests...</p>
-          </div>
-        </div>
-      </div>
-      <!-- Driver Documents Page -->
-      <div id="driver-documents-page" style="display:none">
-        <div class="page-header">
-          <h2>📁 My Documents</h2>
-          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <form onsubmit="uploadDriverDocument(event)">
-            <div class="form-group">
-              <label for="document-name">Document Name *</label>
-              <input type="text" id="document-name" placeholder="e.g. Driving Licence" required>
-            </div>
-            <div class="form-group">
-              <label for="document-file">Select File *</label>
-              <input type="file" id="document-file" accept=".pdf,.jpg,.jpeg,.png" required>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn primary">📤 Upload Document</button>
-            </div>
-          </form>
-        </div>
-        <div class="card">
-          <h3>Uploaded Documents</h3>
-          <div id="documents-list">
-            <p class="text-muted">No documents uploaded yet.</p>
-          </div>
-        </div>
-      </div>
-      <!-- Driver Checklist Page -->
-      <div id="driver-checklist-page" style="display:none">
-        <div class="page-header">
-          <h2>✅ Daily Walkaround Check</h2>
-          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="checklist-vehiclereg">Vehicle Registration *</label>
-              <input type="text" id="checklist-vehiclereg" placeholder="e.g. AB12 XYZ" required style="text-transform:uppercase">
-            </div>
-            <div class="form-group">
-              <label for="checklist-mileage">Current Mileage *</label>
-              <input type="number" id="checklist-mileage" placeholder="Miles" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="checklist-signature">Your Name / Signature *</label>
-            <input type="text" id="checklist-signature" placeholder="Enter your full name" required>
-          </div>
-        </div>
-        <div class="card">
-          <h3>Check Items</h3>
-          <p class="text-muted">Select PASS or FAIL for each item. Add notes if reporting a defect.</p>
-          <form id="checklist-form" onsubmit="event.preventDefault()">
-            <p>Loading checklist items...</p>
-          </form>
-          <div style="margin-top: 1.5rem;">
-            <button class="btn primary" onclick="submitChecklist()">✅ Submit Check</button>
-          </div>
-        </div>
-        <div class="card">
-          <h3>📋 Recent Checks</h3>
-          <div id="checklist-history">
-            <p class="text-muted">Loading history...</p>
-          </div>
-        </div>
-      </div>
-      <!-- Driver Posted Work Page -->
-      <div id="driver-work-page" style="display:none">
-        <div class="page-header">
-          <h2>📋 Posted Work</h2>
-          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
-        </div>
-        <div id="driver-work-list">
-          <p class="text-muted">Loading available jobs...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====================================== -->
-    <!-- COMPANY PORTAL PAGE                    -->
-    <!-- ====================================== -->
-    <div id="company-portal-page" class="page">
-      <div class="card">
-        <div class="page-header">
-          <h2>🏢 Company Portal</h2>
-        </div>
-        <p id="company-greeting" class="text-muted">Loading...</p>
-      </div>
-      <!-- Company Dashboard Buttons -->
-      <div class="card">
-        <h3>Quick Access</h3>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
-          <button class="btn primary" style="width: 100%;" onclick="showPage('posted-work-page'); loadCompanyWork();">
-            📋 Posted Work
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('company-drivers-page'); loadCompanyDrivers();">
-            👥 Employed Drivers
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('post-job-page');">
-            🚛 Post New Job
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('checklist-editor-page'); loadChecklistEditor();">
-            ✅ Checklist Editor
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('company-holidays-page'); loadHolidayRequests();">
-            🏖️ Holiday Requests
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('vehicles-page'); loadVehicles();">
-            🚚 Vehicles
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('trailers-page'); loadTrailers();">
-            🚛 Trailers
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('service-logs-page'); loadServiceLogsPage();">
-            🔧 Service Logs
-          </button>
-          <button class="btn primary" style="width: 100%;" onclick="showPage('reports-page'); loadExpiryAlerts();">
-            📊 Reports & Alerts
-          </button>
-        </div>
-      </div>
-      <!-- Company Stats Cards -->
-      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <div class="card">
-          <h3>📊 Quick Stats</h3>
-          <p><strong>Active Jobs:</strong> <span id="stat-jobs">0</span></p>
-          <p><strong>Employed Drivers:</strong> <span id="stat-drivers">0</span></p>
-          <p><strong>Checklists Today:</strong> <span id="stat-checklists">0</span></p>
-        </div>
-        <div class="card">
-          <h3>🕐 Recent Activity</h3>
-          <div id="company-activity">
-            <p class="text-muted">Loading...</p>
-          </div>
-        </div>
-      </div>
-      <!-- Posted Work Page -->
-      <div id="posted-work-page" style="display:none">
-        <div class="page-header">
-          <h2>📋 Posted Work</h2>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
-        </div>
-        <div id="posted-work-list">
-          <p class="text-muted">Loading jobs...</p>
-        </div>
-      </div>
-      <!-- Post New Job Page -->
-      <div id="post-job-page" style="display:none">
-        <div class="page-header">
-          <h2>🚛 Post New Job</h2>
-          <button class="btn secondary" onclick="showPage('posted-work-page'); loadCompanyWork();">← Back</button>
-        </div>
-        <div class="card">
-          <form id="post-job-form" onsubmit="postNewJob(event)">
-            <div class="form-group">
-              <label for="job-title">Job Title *</label>
-              <input type="text" id="job-title" placeholder="e.g. Glasgow — Manchester Return" required>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="job-from">From Location *</label>
-                <input type="text" id="job-from" placeholder="Pickup location" required>
-              </div>
-              <div class="form-group">
-                <label for="job-to">To Location *</label>
-                <input type="text" id="job-to" placeholder="Destination" required>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="job-date">Job Date *</label>
-                <input type="date" id="job-date" required>
-              </div>
-              <div class="form-group">
-                <label for="job-pay">Pay (£) *</label>
-                <input type="number" id="job-pay" step="0.01" min="0" placeholder="0.00" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="job-desc">Description / Additional Info</label>
-              <textarea id="job-desc" rows="4" placeholder="Vehicle type, load details, special instructions..."></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn secondary" onclick="showPage('company-portal-page')">Cancel</button>
-              <button type="submit" class="btn primary">🚛 Post Job</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <!-- Company Drivers Page -->
-      <div id="company-drivers-page" style="display:none">
-        <div class="page-header">
-          <h2>👥 Employed Drivers</h2>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <h3>Add New Driver</h3>
-          <form onsubmit="addEmployedDriver(event)">
-            <div class="form-group">
-              <label for="new-driver-name">Driver Name *</label>
-              <input type="text" id="new-driver-name" required>
-            </div>
-            <div class="form-group">
-              <label for="new-driver-email">Driver Email *</label>
-              <input type="email" id="new-driver-email" required>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn primary">➕ Add Driver</button>
-            </div>
-          </form>
-        </div>
-        <div class="card">
-          <h3>Current Drivers</h3>
-          <div id="drivers-list">
-            <p class="text-muted">No drivers added yet.</p>
-          </div>
-        </div>
-      </div>
-      <!-- Checklist Editor Page -->
-      <div id="checklist-editor-page" style="display:none">
-        <div class="page-header">
-          <h2>✅ Checklist Editor</h2>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <p class="text-muted">Customise your DVSA walkaround checklist. Changes apply to all drivers in your company.</p>
-        </div>
-        <div class="card">
-          <h3>Add New Check Item</h3>
-          <div class="form-group">
-            <label>Item Label</label>
-            <input type="text" id="new-item-label" placeholder="e.g. Fifth Wheel Operation">
-          </div>
-          <div class="form-group">
-            <label>Category</label>
-            <input type="text" id="new-item-category" placeholder="e.g. Trailer">
-          </div>
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
-            <input type="checkbox" id="new-item-required" checked> Required Item
-          </label>
-          <button class="btn primary" onclick="addChecklistItem()">➕ Add Item</button>
-        </div>
-        <div class="card">
-          <h3>Current Checklist Items</h3>
-          <div id="checklist-editor-list">
-            <p class="text-muted">Loading checklist...</p>
-          </div>
-          <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-            <button class="btn primary" onclick="saveChecklist()">💾 Save Changes</button>
-            <button class="btn secondary" onclick="resetChecklist()">↩️ Reset to DVSA Default</button>
-          </div>
-        </div>
-      </div>
-      <!-- Holiday Requests Page -->
-      <div id="company-holidays-page" style="display:none">
-        <div class="page-header">
-          <h2>🏖️ Holiday Requests</h2>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
-        </div>
-        <div class="card">
-          <p class="text-muted">Review and manage driver holiday & time-off requests.</p>
-          <div id="holiday-list">
-            <p class="text-muted">Loading requests...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====================================== -->
-    <!-- VEHICLE & TRAILER MANAGEMENT          -->
-    <!-- ====================================== -->
     
-    <!-- Vehicle List Page -->
-    <div id="vehicles-page" class="page">
-      <div class="page-header">
-        <h2>🚚 Vehicle Management</h2>
-        <div>
-          <button class="btn primary" onclick="showAddVehicleForm()">➕ Add Vehicle</button>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
-        </div>
+    <!-- Quick Stats -->
+    <div class="dashboard-grid">
+      <div class="dashboard-card" onclick="showPage('driver-management-page')">
+        <div class="dashboard-card-icon">👤</div>
+        <div class="dashboard-card-title" id="stat-drivers">0</div>
+        <div class="dashboard-card-desc">Employed Drivers</div>
       </div>
-      <div id="vehicles-list" class="card">
-        <p class="text-muted">Loading vehicles...</p>
+      <div class="dashboard-card" onclick="showPage('jobs-page')">
+        <div class="dashboard-card-icon">📋</div>
+        <div class="dashboard-card-title" id="stat-jobs">0</div>
+        <div class="dashboard-card-desc">Active Jobs</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('vehicles-page')">
+        <div class="dashboard-card-icon">🚚</div>
+        <div class="dashboard-card-title" id="stat-vehicles">0</div>
+        <div class="dashboard-card-desc">Vehicles</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('trailers-page')">
+        <div class="dashboard-card-icon">🚛</div>
+        <div class="dashboard-card-title" id="stat-trailers">0</div>
+        <div class="dashboard-card-desc">Trailers</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('invoices-page')">
+        <div class="dashboard-card-icon">💰</div>
+        <div class="dashboard-card-title" id="stat-invoices">£0.00</div>
+        <div class="dashboard-card-desc">Outstanding</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('jobs-page')">
+        <div class="dashboard-card-icon">✅</div>
+        <div class="dashboard-card-title" id="stat-completed">0</div>
+        <div class="dashboard-card-desc">Completed This Month</div>
       </div>
     </div>
-    <!-- Add/Edit Vehicle Form -->
-    <div id="vehicle-form-page" class="page">
-      <div class="page-header">
-        <h2 id="vehicle-form-title">Add Vehicle</h2>
-        <button class="btn secondary" onclick="showPage('vehicles-page')">← Back</button>
+    
+    <!-- Quick Actions -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3>⚡ Quick Actions</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem;">
+        <button class="btn primary" onclick="showPage('driver-form-page')">➕ Add New Driver</button>
+        <button class="btn accent" onclick="showPage('job-form-page')">➕ Post New Job</button>
+        <button class="btn secondary" onclick="showPage('vehicle-form-page')">🚚 Add Vehicle</button>
+        <button class="btn secondary" onclick="showPage('invoice-form-page')">📄 Create Invoice</button>
       </div>
-      <div class="card">
-        <form id="vehicle-form" onsubmit="saveVehicle(event)">
-          <input type="hidden" id="vehicle-id">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="veh-reg">Registration Number *</label>
-              <input type="text" id="veh-reg" required style="text-transform:uppercase">
-            </div>
-            <div class="form-group">
-              <label for="veh-type">Vehicle Type *</label>
-              <select id="veh-type" required>
-                <option value="">Select Type</option>
-                <option value="tractor">🚛 Tractor Unit</option>
-                <option value="rigid">🚚 Rigid Truck</option>
-                <option value="van">🚐 Van</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="veh-make">Make</label>
-              <input type="text" id="veh-make">
-            </div>
-            <div class="form-group">
-              <label for="veh-model">Model</label>
-              <input type="text" id="veh-model">
-            </div>
-            <div class="form-group">
-              <label for="veh-year">Year</label>
-              <input type="number" id="veh-year" min="1990" max="2030">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="veh-mot-expiry">MOT Expiry Date *</label>
-              <input type="date" id="veh-mot-expiry" required>
-            </div>
-            <div class="form-group">
-              <label for="veh-tax-expiry">Tax Expiry Date *</label>
-              <input type="date" id="veh-tax-expiry" required>
-            </div>
-            <div class="form-group">
-              <label for="veh-ins-expiry">Insurance Expiry Date *</label>
-              <input type="date" id="veh-ins-expiry" required>
-            </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3>📊 Recent Activity</h3>
+      <div id="recent-activity" style="margin-top: 1rem;">
+        <p class="text-muted">Loading recent activity...</p>
+      </div>
+    </div>
+    
+    <!-- Expiry Alerts -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3>⚠️ Expiry Alerts</h3>
+      <div id="dashboard-expiry-alerts" style="margin-top: 1rem;">
+        <p class="text-muted">Checking for upcoming expiries...</p>
+      </div>
+    </div>
+  </div>
+    <!-- ============================================== -->
+  <!-- DRIVER MANAGEMENT PAGE                         -->
+  <!-- ============================================== -->
+  <div id="driver-management-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>👤 Driver Management</h2>
+        <p class="text-muted">Manage your employed drivers and their compliance status</p>
+      </div>
+      <div>
+        <button class="btn primary" onclick="showAddDriverForm()">➕ Add New Driver</button>
+        <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+      </div>
+    </div>
+    
+    <!-- Search & Filter -->
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="driver-search">Search Drivers</label>
+          <input type="text" id="driver-search" placeholder="Name or email..." oninput="filterDrivers()">
+        </div>
+        <div class="form-group">
+          <label for="driver-filter-status">Status</label>
+          <select id="driver-filter-status" onchange="loadDrivers()">
+            <option value="all">All Statuses</option>
+            <option value="active">✅ Active</option>
+            <option value="inactive">⏸️ Inactive</option>
+            <option value="expiring">⚠️ Docs Expiring Soon</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Drivers List -->
+    <div class="card">
+      <div id="drivers-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading drivers...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Driver Form Page -->
+  <div id="driver-form-page" class="page hidden">
+    <div class="page-header">
+      <h2 id="driver-form-title">Add New Driver</h2>
+      <button class="btn secondary" onclick="showPage('driver-management-page')">← Back</button>
+    </div>
+    <div class="card">
+      <form id="driver-form" onsubmit="saveDriver(event)">
+        <input type="hidden" id="driver-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="driver-first-name">First Name *</label>
+            <input type="text" id="driver-first-name" required>
           </div>
           <div class="form-group">
-            <label for="veh-status">Status</label>
-            <select id="veh-status">
-              <option value="active" selected>✅ Active</option>
-              <option value="maintenance">🔧 In Maintenance</option>
-              <option value="offroad">⛔ Off Road</option>
-              <option value="retired">📦 Retired</option>
+            <label for="driver-last-name">Last Name *</label>
+            <input type="text" id="driver-last-name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="driver-email">Email Address *</label>
+          <input type="email" id="driver-email" required>
+        </div>
+        <div class="form-group">
+          <label for="driver-phone">Phone Number *</label>
+          <input type="tel" id="driver-phone" required>
+        </div>
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--grey-200);">
+        <h4 style="margin-bottom: 1rem;">📋 Licence & Compliance</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="driver-licence-number">Driving Licence Number *</label>
+            <input type="text" id="driver-licence-number" required style="text-transform: uppercase;">
+          </div>
+          <div class="form-group">
+            <label for="driver-dob">Date of Birth *</label>
+            <input type="date" id="driver-dob" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="driver-licence-expiry">Licence Expiry Date *</label>
+            <input type="date" id="driver-licence-expiry" required>
+          </div>
+          <div class="form-group">
+            <label for="driver-dqc-expiry">DQC / CPC Expiry</label>
+            <input type="date" id="driver-dqc-expiry">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="driver-medical-expiry">Medical Certificate Expiry</label>
+            <input type="date" id="driver-medical-expiry">
+          </div>
+          <div class="form-group">
+            <label for="driver-points">Penalty Points</label>
+            <input type="number" id="driver-points" min="0" max="12" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="driver-status">Employment Status</label>
+          <select id="driver-status">
+            <option value="active" selected>✅ Active</option>
+            <option value="inactive">⏸️ Inactive</option>
+            <option value="suspended">🚫 Suspended</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="driver-notes">Notes</label>
+          <textarea id="driver-notes" rows="3" placeholder="Any additional information..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="showPage('driver-management-page')">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Driver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- JOBS MANAGEMENT PAGE                          -->
+  <!-- ============================================== -->
+  <div id="jobs-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>📋 Job Management</h2>
+        <p class="text-muted">Post and manage all your transport jobs</p>
+      </div>
+      <div>
+        <button class="btn primary" onclick="showAddJobForm()">➕ Post New Job</button>
+        <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="job-search">Search Jobs</label>
+          <input type="text" id="job-search" placeholder="Job ref, customer, location..." oninput="filterJobs()">
+        </div>
+        <div class="form-group">
+          <label for="job-filter-status">Status</label>
+          <select id="job-filter-status" onchange="loadJobs()">
+            <option value="all">All Jobs</option>
+            <option value="posted">📢 Posted</option>
+            <option value="assigned">👤 Assigned</option>
+            <option value="in-progress">🚛 In Progress</option>
+            <option value="completed">✅ Completed</option>
+            <option value="cancelled">❌ Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="job-filter-driver">Assigned Driver</label>
+          <select id="job-filter-driver" onchange="loadJobs()">
+            <option value="all">All Drivers</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Jobs List -->
+    <div class="card">
+      <div id="jobs-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading jobs...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Job Form Page -->
+  <div id="job-form-page" class="page hidden">
+    <div class="page-header">
+      <h2 id="job-form-title">Post New Job</h2>
+      <button class="btn secondary" onclick="showPage('jobs-page')">← Back</button>
+    </div>
+    <div class="card">
+      <form id="job-form" onsubmit="saveJob(event)">
+        <input type="hidden" id="job-id">
+        <div class="form-group">
+          <label for="job-customer-name">Customer / Company Name *</label>
+          <input type="text" id="job-customer-name" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="job-pickup-name">Pickup Location Name *</label>
+            <input type="text" id="job-pickup-name" required placeholder="e.g. Poole Depot">
+          </div>
+          <div class="form-group">
+            <label for="job-dropoff-name">Dropoff Location Name *</label>
+            <input type="text" id="job-dropoff-name" required placeholder="e.g. Manchester Warehouse">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="job-pickup-time">Pickup Date & Time *</label>
+            <input type="datetime-local" id="job-pickup-time" required>
+          </div>
+          <div class="form-group">
+            <label for="job-dropoff-time">Estimated Delivery</label>
+            <input type="datetime-local" id="job-dropoff-time">
+          </div>
+        </div>
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--grey-200);">
+        <h4 style="margin-bottom: 1rem;">📦 Cargo Details</h4>
+        <div class="form-group">
+          <label for="job-description">Cargo Description *</label>
+          <textarea id="job-description" rows="3" required placeholder="What is being transported?"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="job-weight">Weight (kg)</label>
+            <input type="number" id="job-weight" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="job-distance">Distance (miles)</label>
+            <input type="number" id="job-distance" min="0" step="1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="job-assigned-driver">Assign to Driver</label>
+            <select id="job-assigned-driver">
+              <option value="">— Unassigned / Posted —</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="veh-notes">Notes</label>
-            <textarea id="veh-notes" rows="3"></textarea>
+            <label for="job-vehicle">Vehicle / Trailer</label>
+            <select id="job-vehicle">
+              <option value="">— Not specified —</option>
+            </select>
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn secondary" onclick="showPage('vehicles-page')">Cancel</button>
-            <button type="submit" class="btn primary">💾 Save Vehicle</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="job-rate">Job Rate (£)</label>
+            <input type="number" id="job-rate" min="0" step="0.01" placeholder="0.00">
           </div>
-        </form>
+          <div class="form-group">
+            <label for="job-status">Status</label>
+            <select id="job-status">
+              <option value="posted" selected>📢 Posted</option>
+              <option value="assigned">👤 Assigned</option>
+              <option value="in-progress">🚛 In Progress</option>
+              <option value="completed">✅ Completed</option>
+              <option value="cancelled">❌ Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="job-notes">Special Instructions / Notes</label>
+          <textarea id="job-notes" rows="3" placeholder="Loading times, contact info, requirements..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="showPage('jobs-page')">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- VEHICLES PAGE                                  -->
+  <!-- ============================================== -->
+  <div id="vehicles-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>🚚 Vehicle Management</h2>
+        <p class="text-muted">Manage your HGV fleet — trucks and rigid vehicles</p>
+      </div>
+      <div>
+        <button class="btn primary" onclick="showAddVehicleForm()">➕ Add Vehicle</button>
+        <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
       </div>
     </div>
-    <!-- Trailer List Page -->
-    <div id="trailers-page" class="page">
-      <div class="page-header">
-        <h2>🚛 Trailer Management</h2>
-        <div>
-          <button class="btn primary" onclick="showAddTrailerForm()">➕ Add Trailer</button>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+    
+    <div class="card">
+      <div id="vehicles-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading vehicles...</p>
         </div>
       </div>
-      <div id="trailers-list" class="card">
-        <p class="text-muted">Loading trailers...</p>
+    </div>
+  </div>
+
+  <!-- Add/Edit Vehicle Form Page -->
+  <div id="vehicle-form-page" class="page hidden">
+    <div class="page-header">
+      <h2 id="vehicle-form-title">Add Vehicle</h2>
+      <button class="btn secondary" onclick="showPage('vehicles-page')">← Back</button>
+    </div>
+    <div class="card">
+      <form id="vehicle-form" onsubmit="saveVehicle(event)">
+        <input type="hidden" id="vehicle-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vehicle-reg">Registration Number *</label>
+            <input type="text" id="vehicle-reg" required style="text-transform: uppercase;">
+          </div>
+          <div class="form-group">
+            <label for="vehicle-make">Make *</label>
+            <input type="text" id="vehicle-make" required>
+          </div>
+          <div class="form-group">
+            <label for="vehicle-model">Model *</label>
+            <input type="text" id="vehicle-model" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vehicle-year">Year</label>
+            <input type="number" id="vehicle-year" min="1990" max="2030">
+          </div>
+          <div class="form-group">
+            <label for="vehicle-mot-expiry">MOT Expiry Date *</label>
+            <input type="date" id="vehicle-mot-expiry" required>
+          </div>
+          <div class="form-group">
+            <label for="vehicle-tax-expiry">Road Tax Expiry</label>
+            <input type="date" id="vehicle-tax-expiry">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vehicle-ins-expiry">Insurance Expiry *</label>
+            <input type="date" id="vehicle-ins-expiry" required>
+          </div>
+          <div class="form-group">
+            <label for="vehicle-tachograph-expiry">Tachograph Calibration</label>
+            <input type="date" id="vehicle-tachograph-expiry">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vehicle-max-weight">Max Gross Weight (tonnes)</label>
+            <input type="number" id="vehicle-max-weight" min="3.5" step="0.5">
+          </div>
+          <div class="form-group">
+            <label for="vehicle-fuel-type">Fuel Type</label>
+            <select id="vehicle-fuel-type">
+              <option value="diesel" selected>Diesel</option>
+              <option value="electric">Electric</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="hydrogen">Hydrogen</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="vehicle-status">Status</label>
+          <select id="vehicle-status">
+            <option value="active" selected>✅ Active</option>
+            <option value="maintenance">🔧 In Maintenance</option>
+            <option value="offroad">⛔ Off Road</option>
+            <option value="retired">📭 Retired</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="vehicle-notes">Notes</label>
+          <textarea id="vehicle-notes" rows="3" placeholder="Alloys, livery, fitted equipment, known issues..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="showPage('vehicles-page')">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Vehicle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- TRAILERS PAGE                                  -->
+  <!-- ============================================== -->
+  <div id="trailers-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>🚛 Trailer Management</h2>
+        <p class="text-muted">Manage your trailers and other assets</p>
+      </div>
+      <div>
+        <button class="btn primary" onclick="showAddTrailerForm()">➕ Add Trailer</button>
+        <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
       </div>
     </div>
-    <!-- Add/Edit Trailer Form -->
-    <div id="trailer-form-page" class="page">
-      <div class="page-header">
-        <h2 id="trailer-form-title">Add Trailer</h2>
-        <button class="btn secondary" onclick="showPage('trailers-page')">← Back</button>
+    
+    <div class="card">
+      <div id="trailers-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading trailers...</p>
+        </div>
       </div>
-      <div class="card">
-        <form id="trailer-form" onsubmit="saveTrailer(event)">
-          <input type="hidden" id="trailer-id">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="trailer-reg">Registration / ID *</label>
-              <input type="text" id="trailer-reg" required style="text-transform:uppercase">
-            </div>
-            <div class="form-group">
-              <label for="trailer-type">Trailer Type *</label>
-              <select id="trailer-type" required>
-                <option value="">Select Type</option>
-                <option value="box">📦 Box / Van</option>
-                <option value="curtainside">🚪 Curtainside</option>
-                <option value="flatbed">📏 Flatbed</option>
-                <option value="refrigerated">❄️ Refrigerated</option>
-                <option value="tanker">🛢️ Tanker</option>
-                <option value="skeletal">🏗️ Skeletal</option>
-              </select>
-            </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Trailer Form Page -->
+  <div id="trailer-form-page" class="page hidden">
+    <div class="page-header">
+      <h2 id="trailer-form-title">Add Trailer</h2>
+      <button class="btn secondary" onclick="showPage('trailers-page')">← Back</button>
+    </div>
+    <div class="card">
+      <form id="trailer-form" onsubmit="saveTrailer(event)">
+        <input type="hidden" id="trailer-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="trailer-reg">Registration / ID *</label>
+            <input type="text" id="trailer-reg" required style="text-transform: uppercase;">
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="trailer-make">Make</label>
-              <input type="text" id="trailer-make">
-            </div>
-            <div class="form-group">
-              <label for="trailer-model">Model</label>
-              <input type="text" id="trailer-model">
-            </div>
-            <div class="form-group">
-              <label for="trailer-year">Year</label>
-              <input type="number" id="trailer-year" min="1990" max="2030">
-            </div>
+          <div class="form-group">
+            <label for="trailer-type">Trailer Type *</label>
+            <select id="trailer-type" required>
+              <option value="">Select Type</option>
+              <option value="box">📦 Box / Van</option>
+              <option value="curtainside">🚪 Curtainside</option>
+              <option value="flatbed">📏 Flatbed</option>
+              <option value="refrigerated">❄️ Refrigerated</option>
+              <option value="tanker">🛢️ Tanker</option>
+              <option value="skeletal">🏗️ Skeletal</option>
+              <option value="other">📝 Other</option>
+            </select>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="trailer-mot-expiry">Plating Certificate Expiry</label>
-              <input type="date" id="trailer-mot-expiry">
-            </div>
-            <div class="form-group">
-              <label for="trailer-ins-expiry">Insurance Expiry Date</label>
-              <input type="date" id="trailer-ins-expiry">
-            </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="trailer-make">Make / Manufacturer</label>
+            <input type="text" id="trailer-make">
           </div>
+          <div class="form-group">
+            <label for="trailer-year">Year</label>
+            <input type="number" id="trailer-year" min="1990" max="2030">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="trailer-mot-expiry">Plating Certificate Expiry</label>
+            <input type="date" id="trailer-mot-expiry">
+          </div>
+          <div class="form-group">
+            <label for="trailer-ins-expiry">Insurance Expiry</label>
+            <input type="date" id="trailer-ins-expiry">
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label for="trailer-max-weight">Max Load (kg)</label>
             <input type="number" id="trailer-max-weight" min="0">
@@ -909,178 +775,577 @@
               <option value="offroad">⛔ Off Road</option>
             </select>
           </div>
-          <div class="form-group">
-            <label for="trailer-notes">Notes</label>
-            <textarea id="trailer-notes" rows="3"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn secondary" onclick="showPage('trailers-page')">Cancel</button>
-            <button type="submit" class="btn primary">💾 Save Trailer</button>
-          </div>
-        </form>
+        </div>
+        <div class="form-group">
+          <label for="trailer-notes">Notes</label>
+          <textarea id="trailer-notes" rows="3"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="showPage('trailers-page')">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Trailer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+    <!-- ============================================== -->
+  <!-- INVOICES PAGE                                   -->
+  <!-- ============================================== -->
+  <div id="invoices-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>📄 Invoice Management</h2>
+        <p class="text-muted">Create, view and manage your invoices</p>
+      </div>
+      <div>
+        <button class="btn primary" onclick="showInvoiceForm()">➕ Create Invoice</button>
+        <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
       </div>
     </div>
-    <!-- Service & Maintenance Logs Page -->
-    <div id="service-logs-page" class="page">
-      <div class="page-header">
-        <h2>🔧 Service & Maintenance</h2>
-        <div>
-          <button class="btn primary" onclick="showAddServiceForm()">➕ Record Service</button>
-          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
-        </div>
+    
+    <!-- Invoice Stats -->
+    <div class="dashboard-grid" style="margin-bottom: 1.5rem;">
+      <div class="dashboard-card">
+        <div class="dashboard-card-icon">📋</div>
+        <div class="dashboard-card-title" id="invoice-total">0</div>
+        <div class="dashboard-card-desc">Total Invoices</div>
       </div>
-      <div class="card">
+      <div class="dashboard-card">
+        <div class="dashboard-card-icon">⏳</div>
+        <div class="dashboard-card-title" id="invoice-pending">£0.00</div>
+        <div class="dashboard-card-desc">Pending Payment</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-card-icon">✅</div>
+        <div class="dashboard-card-title" id="invoice-paid">£0.00</div>
+        <div class="dashboard-card-desc">Paid This Month</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-card-icon">⚠️</div>
+        <div class="dashboard-card-title" id="invoice-overdue">0</div>
+        <div class="dashboard-card-desc">Overdue</div>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card">
+      <div class="form-row">
         <div class="form-group">
-          <label>Select Vehicle/Trailer</label>
-          <select id="service-asset" onchange="loadServiceLogs()">
-            <option value="">-- Select an asset --</option>
+          <label for="invoice-search">Search Invoices</label>
+          <input type="text" id="invoice-search" placeholder="Invoice #, customer..." oninput="filterInvoices()">
+        </div>
+        <div class="form-group">
+          <label for="invoice-filter-status">Status</label>
+          <select id="invoice-filter-status" onchange="loadInvoices()">
+            <option value="all">All Invoices</option>
+            <option value="draft">📝 Draft</option>
+            <option value="sent">📧 Sent</option>
+            <option value="paid">✅ Paid</option>
+            <option value="overdue">⚠️ Overdue</option>
+            <option value="cancelled">❌ Cancelled</option>
           </select>
         </div>
       </div>
-      <div id="service-logs-list" class="card">
-        <p class="text-muted">Select an asset to view service history...</p>
+    </div>
+    
+    <!-- Invoices List -->
+    <div class="card">
+      <div id="invoices-list">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading invoices...</p>
+        </div>
       </div>
     </div>
-    <!-- Add Service Record Form -->
-    <div id="service-form-page" class="page">
-      <div class="page-header">
-        <h2 id="service-form-title">Record Service</h2>
-        <button class="btn secondary" onclick="showPage('service-logs-page')">← Back</button>
-      </div>
-      <div class="card">
-        <form id="service-form" onsubmit="saveServiceRecord(event)">
-          <input type="hidden" id="service-id">
-          <div class="form-group">
-            <label for="service-asset-ref">Asset (Vehicle/Trailer) *</label>
-            <input type="text" id="service-asset-ref" required placeholder="e.g. AB12 XYZ">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="service-date">Service Date *</label>
-              <input type="date" id="service-date" required>
-            </div>
-            <div class="form-group">
-              <label for="service-mileage">Mileage / Hours</label>
-              <input type="number" id="service-mileage" min="0">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="service-type">Service Type *</label>
-            <select id="service-type" required>
-              <option value="">Select Type</option>
-              <option value="routine">🔩 Routine Service</option>
-              <option value="repair">🔧 Repair</option>
-              <option value="mot">📋 MOT / Inspection</option>
-              <option value="tyres">🛞 Tyre Replacement</option>
-              <option value="brakes">🛑 Brakes</option>
-              <option value="other">📝 Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="service-description">Description of Work *</label>
-            <textarea id="service-description" rows="4" required placeholder="Details of work carried out..."></textarea>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="service-cost">Cost (£)</label>
-              <input type="number" id="service-cost" step="0.01" min="0" placeholder="0.00">
-            </div>
-            <div class="form-group">
-              <label for="service-next-due">Next Service Due</label>
-              <input type="date" id="service-next-due">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="service-provider">Service Provider / Garage</label>
-            <input type="text" id="service-provider" placeholder="Name of garage or mechanic">
-          </div>
-          <div class="form-group">
-            <label for="service-status">Status</label>
-            <select id="service-status">
-              <option value="completed" selected>✅ Completed</option>
-              <option value="pending">⏳ Pending</option>
-              <option value="in-progress">🔄 In Progress</option>
-            </select>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn secondary" onclick="showPage('service-logs-page')">Cancel</button>
-            <button type="submit" class="btn primary">💾 Save Record</button>
-          </div>
-        </form>
-      </div>
+  </div>
+
+  <!-- Create/Edit Invoice Form -->
+  <div id="invoice-form-page" class="page hidden">
+    <div class="page-header">
+      <h2 id="invoice-form-title">Create Invoice</h2>
+      <button class="btn secondary" onclick="showPage('invoices-page')">← Back</button>
     </div>
-    <!-- Reports & PDF Export Page -->
-    <div id="reports-page" class="page">
-      <div class="page-header">
-        <h2>📊 Reports & Documents</h2>
+    <div class="card">
+      <form id="invoice-form" onsubmit="saveInvoice(event)">
+        <input type="hidden" id="invoice-id">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="invoice-number">Invoice Number *</label>
+            <input type="text" id="invoice-number" required>
+          </div>
+          <div class="form-group">
+            <label for="invoice-date">Issue Date *</label>
+            <input type="date" id="invoice-date" required>
+          </div>
+          <div class="form-group">
+            <label for="invoice-due-date">Due Date *</label>
+            <input type="date" id="invoice-due-date" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="invoice-customer-name">Customer / Company Name *</label>
+          <input type="text" id="invoice-customer-name" required>
+        </div>
+        <div class="form-group">
+          <label for="invoice-customer-email">Customer Email</label>
+          <input type="email" id="invoice-customer-email">
+        </div>
+        <div class="form-group">
+          <label for="invoice-customer-address">Customer Address</label>
+          <textarea id="invoice-customer-address" rows="3"></textarea>
+        </div>
+        
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--grey-200);">
+        <h4 style="margin-bottom: 1rem;">📦 Invoice Items</h4>
+        
+        <div id="invoice-items-container">
+          <!-- Items will be added here dynamically -->
+        </div>
+        <button type="button" class="btn secondary small" onclick="addInvoiceItem()">➕ Add Line Item</button>
+        
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--grey-200);">
+        
+        <div class="form-row" style="justify-content: flex-end;">
+          <div style="min-width: 200px;">
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+              <strong>Subtotal:</strong>
+              <span id="invoice-subtotal">£0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+              <strong>VAT (%):</strong>
+              <span id="invoice-vat-amount">£0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; font-size: 1.1rem; border-top: 2px solid var(--grey-200);">
+              <strong>Total:</strong>
+              <span id="invoice-total-display" style="color: var(--primary); font-weight: 700;">£0.00</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="invoice-notes">Notes / Payment Instructions</label>
+          <textarea id="invoice-notes" rows="3" placeholder="Bank details, payment terms..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="invoice-status">Status</label>
+          <select id="invoice-status">
+            <option value="draft" selected>📝 Draft</option>
+            <option value="sent">📧 Sent</option>
+            <option value="paid">✅ Paid</option>
+            <option value="cancelled">❌ Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="showPage('invoices-page')">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- WALKAROUND CHECKLIST EDITOR                    -->
+  <!-- ============================================== -->
+  <div id="checklist-editor-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>✅ DVSA Walkaround Checklist Editor</h2>
+        <p class="text-muted">Customise your daily vehicle inspection items</p>
+      </div>
+      <div>
+        <button class="btn primary" onclick="showAddChecklistItemForm()">➕ Add Check Item</button>
+        <button class="btn secondary" onclick="resetChecklistToDefault()">🔄 Reset to DVSA Standard</button>
         <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
       </div>
-      
-      <div class="card">
-        <h3>📄 Generate PDF Reports</h3>
-        <p class="text-muted">Select a report type to download or print.</p>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
-          <button class="btn secondary" style="text-align: left;" onclick="generateVehicleReport()">
-            🚚 Vehicle Status Report
-          </button>
-          <button class="btn secondary" style="text-align: left;" onclick="generateTrailerReport()">
-            🚛 Trailer Status Report
-          </button>
-          <button class="btn secondary" style="text-align: left;" onclick="generateMaintenanceReport()">
-            🔧 Maintenance Summary
-          </button>
-          <button class="btn secondary" style="text-align: left;" onclick="generateExpiryReport()">
-            ⏰ Expiry Alerts Report
-          </button>
-          <button class="btn secondary" style="text-align: left;" onclick="generateChecklistReport()">
-            ✅ Walkaround Checklist Log
-          </button>
-          <button class="btn secondary" style="text-align: left;" onclick="generateDriverReport()">
-            👤 Driver Compliance Report
-          </button>
-        </div>
+    </div>
+    
+    <div class="card">
+      <h3>📋 Checklist Categories</h3>
+      <div class="form-group" style="margin-top: 1rem;">
+        <label>Filter by Category</label>
+        <select id="checklist-category-filter" onchange="loadChecklistItems()">
+          <option value="all">— All Categories —</option>
+          <option value="exterior">🚛 Exterior & Body</option>
+          <option value="wheels">🛞 Wheels & Tyres</option>
+          <option value="brakes">🛑 Brakes</option>
+          <option value="lights">💡 Lights & Mirrors</option>
+          <option value="cab">🚪 Cab & Interior</option>
+          <option value="documents">📄 Documents</option>
+          <option value="trailer">🚛 Trailer Specific</option>
+          <option value="other">📝 Other</option>
+        </select>
       </div>
-      
-      <div class="card">
-        <h3>📧 Email Notifications Settings</h3>
-        <form id="notification-settings-form" onsubmit="saveNotificationSettings(event)">
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
-            <input type="checkbox" id="notify-mot" checked> MOT Expiry Reminders
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
-            <input type="checkbox" id="notify-tax" checked> Tax Expiry Reminders
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
-            <input type="checkbox" id="notify-insurance" checked> Insurance Expiry Reminders
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
-            <input type="checkbox" id="notify-service" checked> Service Due Reminders
-          </label>
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
-            <input type="checkbox" id="notify-checklist"> Daily Checklist Submissions
-          </label>
-          <div class="form-group" style="margin-top: 1rem;">
-            <label for="notify-email">Send alerts to email:</label>
-            <input type="email" id="notify-email" placeholder="alerts@yourcompany.com">
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn primary">💾 Save Settings</button>
-          </div>
-        </form>
-      </div>
-      
-      <div class="card">
-        <h3>⏰ Upcoming Expiry Alerts</h3>
-        <p class="text-muted">Items due for renewal within the next 30 days.</p>
-        <div id="expiry-alerts">
-          <p class="text-muted">Checking for upcoming expiries...</p>
+    </div>
+    
+    <div class="card">
+      <h3>Checklist Items</h3>
+      <p class="text-muted">These items will appear on the driver's daily walkaround check.</p>
+      <div id="checklist-items-list" style="margin-top: 1rem;">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading checklist items...</p>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 
-  <!-- Firebase SDK Imports -->
+  <!-- Add/Edit Checklist Item Form -->
+  <div id="checklist-item-form-page" class="page hidden">
+    <div class="page-header">
+      <h2 id="checklist-item-form-title">Add Check Item</h2>
+      <button class="btn secondary" onclick="showPage('checklist-editor-page')">← Back</button>
+    </div>
+    <div class="card">
+      <form id="checklist-item-form" onsubmit="saveChecklistItem(event)">
+        <input type="hidden" id="checklist-item-id">
+        <div class="form-group">
+          <label for="checklist-item-category">Category *</label>
+          <select id="checklist-item-category" required>
+            <option value="">Select Category</option>
+            <option value="exterior">🚛 Exterior & Body</option>
+            <option value="wheels">🛞 Wheels & Tyres</option>
+            <option value="brakes">🛑 Brakes</option>
+            <option value="lights">💡 Lights & Mirrors</option>
+            <option value="cab">🚪 Cab & Interior</option>
+            <option value="documents">📄 Documents</option>
+            <option value="trailer">🚛 Trailer Specific</option>
+            <option value="other">📝 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="checklist-item-name">Check Item Name *</label>
+          <input type="text" id="checklist-item-name" required placeholder="e.g. Windscreen condition">
+        </div>
+        <div class="form-group">
+          <label for="checklist-item-description">Description / What to check</label>
+          <textarea id="checklist-item-description" rows="2" placeholder="Specific details for the driver..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="checklist-item-severity">Defect Severity *</label>
+          <select id="checklist-item-severity" required>
+            <option value="minor">🟡 Minor — Reportable</option>
+            <option value="major">🟠 Major — Must repair soon</option>
+            <option value="dangerous">🔴 Dangerous — Vehicle off road</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="checklist-item-required"> Required Check (cannot be skipped)
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="showPage('checklist-editor-page')">Cancel</button>
+          <button type="submit" class="btn primary">💾 Save Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- COMPANY SETTINGS PAGE                          -->
+  <!-- ============================================== -->
+  <div id="company-settings-page" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>⚙️ Company Settings</h2>
+        <p class="text-muted">Manage your business details and preferences</p>
+      </div>
+      <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+    </div>
+    
+    <!-- Company Profile -->
+    <div class="card">
+      <h3>🏢 Company Profile</h3>
+      <form id="company-profile-form" onsubmit="saveCompanyProfile(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="setting-company-name">Company Name *</label>
+            <input type="text" id="setting-company-name" required>
+          </div>
+          <div class="form-group">
+            <label for="setting-company-reg">Company Number</label>
+            <input type="text" id="setting-company-reg">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="setting-address">Business Address</label>
+          <textarea id="setting-address" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="setting-email">Email Address</label>
+            <input type="email" id="setting-email">
+          </div>
+          <div class="form-group">
+            <label for="setting-phone">Phone Number</label>
+            <input type="tel" id="setting-phone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="setting-vat-number">VAT Registration Number</label>
+          <input type="text" id="setting-vat-number">
+        </div>
+        <div class="form-group">
+          <label for="setting-bank-details">Bank Details (for invoices)</label>
+          <textarea id="setting-bank-details" rows="3" placeholder="Account name, sort code, account number..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">💾 Save Company Details</button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Notification Settings -->
+    <div class="card">
+      <h3>🔔 Notification Settings</h3>
+      <form id="notification-settings-form" onsubmit="saveNotificationSettings(event)">
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+          <input type="checkbox" id="notify-mot" checked> MOT Expiry Reminders
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+          <input type="checkbox" id="notify-tax" checked> Tax Expiry Reminders
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+          <input type="checkbox" id="notify-insurance" checked> Insurance Expiry Reminders
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+          <input type="checkbox" id="notify-service" checked> Service Due Reminders
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0;">
+          <input type="checkbox" id="notify-checklist"> Daily Checklist Submission Alerts
+        </label>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="notify-email">Send alerts to email:</label>
+          <input type="email" id="notify-email" placeholder="alerts@yourcompany.com">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">💾 Save Notification Settings</button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Danger Zone -->
+    <div class="card">
+      <h3 style="color: var(--danger);">⚠️ Danger Zone</h3>
+      <p class="text-muted" style="margin-bottom: 1rem;">Actions here cannot be undone.</p>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <button class="btn danger small" onclick="confirmClearTestData()">Clear Test Data</button>
+        <button class="btn secondary small" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- DRIVER PORTAL PAGES (for reference)            -->
+  <!-- ============================================== -->
+  <div id="driver-nav" class="top-nav hidden">
+    <div class="top-nav-inner">
+      <span class="top-nav-brand">🚛 Driver Portal</span>
+      <div class="top-nav-links">
+        <button onclick="showPage('driver-dashboard')" class="nav-btn">Home</button>
+        <button onclick="showPage('driver-jobs-page')" class="nav-btn">My Jobs</button>
+        <button onclick="showPage('driver-checklist-page')" class="nav-btn">Checklists</button>
+        <button onclick="showPage('driver-profile-page')" class="nav-btn">Profile</button>
+        <button onclick="showPage('driver-documents-page')" class="nav-btn">Documents</button>
+        <button onclick="handleSignOut()" style="color: #ffccbc;">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver Dashboard -->
+  <div id="driver-dashboard" class="page hidden">
+    <div class="page-header">
+      <div>
+        <h2>👤 Driver Dashboard</h2>
+        <p class="text-muted" id="driver-greeting">Welcome back</p>
+      </div>
+      <span class="text-muted" id="driver-current-date"></span>
+    </div>
+    
+    <div class="dashboard-grid">
+      <div class="dashboard-card" onclick="showPage('driver-jobs-page')">
+        <div class="dashboard-card-icon">📋</div>
+        <div class="dashboard-card-title" id="driver-active-jobs">0</div>
+        <div class="dashboard-card-desc">Active Jobs</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('driver-checklist-page')">
+        <div class="dashboard-card-icon">✅</div>
+        <div class="dashboard-card-title">Today</div>
+        <div class="dashboard-card-desc">Walkaround Check</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('driver-documents-page')">
+        <div class="dashboard-card-icon">📁</div>
+        <div class="dashboard-card-title">Files</div>
+        <div class="dashboard-card-desc">Documents</div>
+      </div>
+      <div class="dashboard-card" onclick="showPage('driver-profile-page')">
+        <div class="dashboard-card-icon">⚙️</div>
+        <div class="dashboard-card-title">Account</div>
+        <div class="dashboard-card-desc">Profile</div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top: 2rem;">
+      <h3>🚛 Today's Schedule</h3>
+      <div id="driver-today-jobs" style="margin-top: 1rem;">
+        <p class="text-muted">No jobs scheduled for today.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver Jobs Page -->
+  <div id="driver-jobs-page" class="page hidden">
+    <div class="page-header">
+      <h2>📋 My Jobs</h2>
+      <button class="btn secondary" onclick="showPage('driver-dashboard')">← Back</button>
+    </div>
+    <div id="driver-jobs-list">
+      <p class="text-muted">Loading your jobs...</p>
+    </div>
+  </div>
+
+  <!-- Driver Checklist Page -->
+  <div id="driver-checklist-page" class="page hidden">
+    <div class="page-header">
+      <h2>✅ Daily Walkaround Check</h2>
+      <button class="btn secondary" onclick="showPage('driver-dashboard')">← Back</button>
+    </div>
+    <div class="card">
+      <h3 id="checklist-vehicle-info">Vehicle: — Select vehicle —</h3>
+      <div class="form-group">
+        <label>Select Vehicle</label>
+        <select id="checklist-vehicle-select" onchange="loadVehicleChecklist()">
+          <option value="">— Choose your vehicle —</option>
+        </select>
+      </div>
+    </div>
+    <div id="driver-checklist-form">
+      <p class="text-muted">Select a vehicle to begin your daily check.</p>
+    </div>
+  </div>
+
+  <!-- Driver Profile Page -->
+  <div id="driver-profile-page" class="page hidden">
+    <div class="page-header">
+      <h2>👤 My Profile</h2>
+      <button class="btn secondary" onclick="showPage('driver-dashboard')">← Back</button>
+    </div>
+    <div class="card">
+      <form id="driver-profile-form" onsubmit="saveDriverProfile(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profile-first-name">First Name</label>
+            <input type="text" id="profile-first-name">
+          </div>
+          <div class="form-group">
+            <label for="profile-last-name">Last Name</label>
+            <input type="text" id="profile-last-name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="profile-email">Email</label>
+          <input type="email" id="profile-email">
+        </div>
+        <div class="form-group">
+          <label for="profile-phone">Phone</label>
+          <input type="tel" id="profile-phone">
+        </div>
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--grey-200);">
+        <h4>Licence Information</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profile-licence-number">Licence Number</label>
+            <input type="text" id="profile-licence-number" style="text-transform: uppercase;">
+          </div>
+          <div class="form-group">
+            <label for="profile-dob">Date of Birth</label>
+            <input type="date" id="profile-dob">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profile-licence-expiry">Licence Expiry</label>
+            <input type="date" id="profile-licence-expiry">
+          </div>
+          <div class="form-group">
+            <label for="profile-medical-expiry">Medical Expiry</label>
+            <input type="date" id="profile-medical-expiry">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">💾 Update Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Driver Documents Page -->
+  <div id="driver-documents-page" class="page hidden">
+    <div class="page-header">
+      <h2>📁 My Documents</h2>
+      <button class="btn secondary" onclick="showPage('driver-dashboard')">← Back</button>
+    </div>
+    <div class="card">
+      <h3>Upload Document</h3>
+      <div class="form-group">
+        <label>Document Type</label>
+        <select id="doc-type">
+          <option value="licence">Driving Licence</option>
+          <option value="cpc">CPC / DQC</option>
+          <option value="medical">Medical Certificate</option>
+          <option value="pvd">PVD</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Choose File</label>
+        <input type="file" id="doc-file" accept=".pdf,.jpg,.jpeg,.png">
+      </div>
+      <div class="form-group">
+        <label>Expiry Date</label>
+        <input type="date" id="doc-expiry">
+      </div>
+      <button class="btn primary" onclick="uploadDriverDocument()">📤 Upload Document</button>
+    </div>
+    <div class="card">
+      <h3>My Files</h3>
+      <div id="driver-docs-list">
+        <p class="text-muted">No documents uploaded yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL DIALOG BOXES                             -->
+  <!-- ============================================== -->
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="confirm-title">Confirm Action</h3>
+        <button type="button" class="modal-close" onclick="closeModal('confirm-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message">Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn secondary" onclick="closeModal('confirm-modal')">Cancel</button>
+        <button type="button" class="btn primary" id="confirm-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification / Toast -->
+  <div id="toast" style="position: fixed; bottom: 2rem; right: 2rem; background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 300;">
+    <span id="toast-message"></span>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- FIREBASE & APP SCRIPTS                         -->
+  <!-- ============================================== -->
   <script type="importmap">
   {
     "imports": {
@@ -1095,43 +1360,105 @@
   <!-- Main App Script -->
   <script type="module" src="app.js"></script>
 
-  <!-- Auth Page Tab Switching & Global Navigation -->
+  <!-- Global Navigation Helpers -->
   <script>
-    // Switch between Sign In / Register cards
     function showAuthPage(mode) {
+      const signinTab = document.getElementById('signin-tab');
+      const registerTab = document.getElementById('register-tab');
       const signinCard = document.getElementById('signin-card');
       const registerCard = document.getElementById('register-card');
+      const resetCard = document.getElementById('reset-card');
+      
+      resetCard.style.display = 'none';
+      
       if (mode === 'signin') {
+        signinTab.classList.add('active');
+        registerTab.classList.remove('active');
         signinCard.style.display = 'block';
         registerCard.style.display = 'none';
-      } else {
+      } else if (mode === 'register') {
+        signinTab.classList.remove('active');
+        registerTab.classList.add('active');
         signinCard.style.display = 'none';
         registerCard.style.display = 'block';
+      } else if (mode === 'reset') {
+        signinTab.classList.remove('active');
+        registerTab.classList.remove('active');
+        signinCard.style.display = 'none';
+        registerCard.style.display = 'none';
+        resetCard.style.display = 'block';
       }
     }
     window.showAuthPage = showAuthPage;
 
-    // Global page switching
+    function showPasswordReset() {
+      showAuthPage('reset');
+    }
+    window.showPasswordReset = showPasswordReset;
+
     function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-      const target = document.getElementById(pageId);
-      if (target) target.style.display = 'block';
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      
+      // Show target page
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+      }
+      
+      // Update navigation highlighting
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.page === pageId) {
+          btn.classList.add('active');
+        }
+      });
+      
       window.scrollTo(0, 0);
     }
     window.showPage = showPage;
 
-    // Mobile menu toggle
-    function toggleMobileMenu() {
-      const menu = document.getElementById('mobile-menu');
-      menu.classList.toggle('open');
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('open');
     }
-    window.toggleMobileMenu = toggleMobileMenu;
+    window.closeModal = closeModal;
 
-    // Show auth page by default
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toast-message');
+      toastMessage.textContent = message;
+      
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+      
+      if (type === 'success') toast.style.background = 'var(--success)';
+      else if (type === 'error') toast.style.background = 'var(--danger)';
+      else if (type === 'warning') toast.style.background = 'var(--warning)';
+      else toast.style.background = 'var(--primary)';
+      
+      setTimeout(() => {
+        toast.style.transform = 'translateY(100px)';
+        toast.style.opacity = '0';
+      }, 3000);
+    }
+    window.showToast = showToast;
+
+    // Show/hide company name field based on register role selection
+    document.addEventListener('change', e => {
+      if (e.target.id === 'register-role') {
+        const companyGroup = document.getElementById('company-name-group');
+        companyGroup.style.display = e.target.value === 'company' ? 'block' : 'none';
+      }
+    });
+
+    // Set current date on dashboard
     document.addEventListener('DOMContentLoaded', () => {
-      showAuthPage('signin');
+      const dateEl = document.getElementById('current-date');
+      if (dateEl) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateEl.textContent = new Date().toLocaleDateString('en-GB', options);
+      }
     });
   </script>
 </body>
 </html>
-      
