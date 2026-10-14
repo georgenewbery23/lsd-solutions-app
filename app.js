@@ -175,12 +175,13 @@ window.register = async function (role) {
 
     // ✅ Save to CORRECT collection matching auth state check
     const collectionName = role === 'driver' ? 'drivers' : 'companies';
-    await setDoc(doc(db, collectionName, user.uid), {
-      name,
-      email,
-      role,
-      createdAt: serverTimestamp()
-    });
+   await setDoc(doc(db, collectionName, user.uid), {
+  name,
+  email: user.email,
+  role: accountType,
+  createdAt: serverTimestamp(),
+  companyId: null // ✅ ADDED — starts null, filled when company assigns you
+});
 
     alert('✅ Account created! Please check your email to verify, then sign in.');
     showPage('auth-page');
@@ -712,16 +713,16 @@ async function submitChecklist() {
 
   try {
     await addDoc(collection(db, 'checklists'), {
-      driverUid: currentUser.uid,
-      driverName: userProfile.name,
-      vehicleReg: vrm,
-      date: new Date().toISOString(),
-      results,
-      comments,
-      passed: !anyFailures,
-      submittedAt: serverTimestamp()
-      companyId: userProfile.companyId || null
-    });
+  driverUid: currentUser.uid,
+  driverName: userProfile.name,
+  vehicleReg: vrm,
+  date: new Date().toISOString(),
+  results,
+  comments,
+  passed: !anyFailures,
+  submittedAt: serverTimestamp(), // ✅ COMMA ADDED
+  companyId: userProfile.companyId || null
+});
     alert('✅ Checklist submitted successfully — Thank you!');
     loadDriverDashboard();
   } catch (err) {
