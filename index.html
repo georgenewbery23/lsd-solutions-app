@@ -303,7 +303,7 @@
       </div>
     </div>
     <!-- END OF SECTION 1 -->
-        <!-- VEHICLE WALKAROUND CHECK -->
+            <!-- VEHICLE WALKAROUND CHECK -->
     <div id="page-checklist" class="page">
       <h2>Vehicle Walkaround Check</h2>
       
@@ -741,7 +741,6 @@
   <!-- END MAIN APP -->
   
 </main>
-
 <!-- JavaScript & Firebase -->
 <script type="module">
   // Firebase Imports
@@ -894,1039 +893,1170 @@
 
   function toggleDarkMode() {
     isDarkMode = !isDarkMode;
-    document.body.classList.toggle('dark-mode', isDarkMode);
-    localStorage.setItem('darkMode', isDarkMode);
+    // ========== VEHICLE & TRAILER MANAGEMENT ==========
+function renderVehiclesPage() {
+  if (!currentUser || currentUserRole !== 'company') {
+    return renderAccessDenied();
   }
 
-  function initDarkMode() {
-    const saved = localStorage.getItem('darkMode');
-    if (saved === 'true') {
-      isDarkMode = true;
-      document.body.classList.add('dark-mode');
-    }
-  }
+  return `
+    <div class="page-header">
+      <h2>🚛 Fleet Management</h2>
+      <button class="btn primary" onclick="showAddVehicleModal()">+ Add Vehicle</button>
+      <button class="btn secondary" onclick="showAddTrailerModal()">+ Add Trailer</button>
+    </div>
 
-  // ==========================================
-  // NAVIGATION & PAGE SWITCHING
-  // ==========================================
-  window.showPage = function(pageId) {
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    
-    // Show target page
-    const target = document.getElementById(`page-${pageId}`);
-    if (target) target.classList.add('active');
-    
-    // Close mobile menu
-    document.getElementById('navLinks').classList.remove('open');
-    
-    // Load page-specific data
-    if (pageId === 'checklist-history') loadCheckHistory();
-    if (pageId === 'vehicles') loadVehicles();
-    if (pageId === 'company-drivers') loadCompanyDrivers();
-    if (pageId === 'checklist-editor') loadChecklistEditor();
-    if (pageId === 'profile') loadProfileData();
-  };
+    <div class="card">
+      <h3>Vehicles</h3>
+      <div id="vehicles-list">
+        <p>Loading vehicles...</p>
+      </div>
+    </div>
 
-  function updateNavigation() {
-    const authPages = document.getElementById('authPages');
-    const mainApp = document.getElementById('mainApp');
-    const companyPages = document.getElementById('companyPages');
-    const userStatus = document.getElementById('userStatus');
-    
-    if (currentUser) {
-      // Logged in
-      authPages.classList.add('hidden');
-      mainApp.classList.remove('hidden');
-      
-      // Update user display
-      const displayName = userProfile?.name || currentUser.email;
-      document.getElementById('userDisplayName').textContent = displayName;
-      document.getElementById('userRoleDisplay').textContent = 
-        userProfile?.role === 'company' ? '🏢 Company Portal' : '👤 Driver Portal';
-      
-      // Build nav links
-      userStatus.innerHTML = `
-        <span style="margin-right:10px;">Signed in as ${displayName}</span>
-        ${userProfile?.role === 'company' ? `
-          <a href="#" onclick="showPage('company-home'); return false;">Company Home</a>
-        ` : ''}
-        <a href="#" onclick="showPage('profile'); return false;">Profile</a>
-        <button onclick="signOut()">Sign Out</button>
-      `;
-      
-      // Show/hide company sections
-      if (userProfile?.role === 'company') {
-        companyPages.classList.remove('hidden');
-        document.getElementById('driverLicenceSection').classList.add('hidden');
-        document.getElementById('driverDashboard').classList.add('hidden');
-        document.getElementById('companyDashboard').classList.remove('hidden');
-        showPage('company-home');
-      } else {
-        companyPages.classList.add('hidden');
-        document.getElementById('driverLicenceSection').classList.remove('hidden');
-        document.getElementById('driverDashboard').classList.remove('hidden');
-        document.getElementById('companyDashboard').classList.add('hidden');
-        showPage('home');
-      }
-      
-      // Set offline listener
-      window.addEventListener('offline', () => {
-        document.getElementById('offlineBanner').classList.add('show');
-      });
-      window.addEventListener('online', () => {
-        document.getElementById('offlineBanner').classList.remove('show');
-      });
-      
-    } else {
-      // Not logged in
-      authPages.classList.remove('hidden');
-      mainApp.classList.add('hidden');
-      userStatus.innerHTML = '';
-      showPage('signin');
-    }
-  }
+    <div class="card">
+      <h3>Trailers</h3>
+      <div id="trailers-list">
+        <p>Loading trailers...</p>
+      </div>
+    </div>
+  `;
+}
 
-  // ==========================================
-  // AUTHENTICATION
-  // ==========================================
-  window.selectRegType = function(type) {
-    regType = type;
-    document.getElementById('regTypeDriver').classList.toggle('btn-primary', type === 'driver');
-    document.getElementById('regTypeDriver').classList.toggle('btn-secondary', type !== 'driver');
-    document.getElementById('regTypeCompany').classList.toggle('btn-primary', type === 'company');
-    document.getElementById('regTypeCompany').classList.toggle('btn-secondary', type !== 'company');
-  };
-
-  async function handleRegister() {
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
+async function loadVehicles() {
+  if (!currentUser) return;
+  try {
+    const vehiclesRef = collection(db, 'companyVehicles');
+    const q = query(vehiclesRef, where('companyId', '==', currentUser.uid), orderBy('registration'));
+    const snapshot = await getDocs(q);
     
-    if (!name || !email || !password) {
-      return showAlert('registerAlert', '⚠️ Please fill in all fields', 'error');
+    const vehicles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const container = document.getElementById('vehicles-list');
+    
+    if (!vehicles.length) {
+      container.innerHTML = '<p class="text-muted">No vehicles added yet.</p>';
+      return;
     }
     
-    if (password.length < 6) {
-      return showAlert('registerAlert', '⚠️ Password must be at least 6 characters', 'error');
-    }
-    
-    try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      currentUser = userCred.user;
-      
-      await updateProfile(currentUser, { displayName: name });
-      
-      // Create profile document
-      const profileData = {
-        name: name,
-        email: email,
-        role: regType,
-        createdAt: serverTimestamp()
-      };
-      
-      await setDoc(doc(db, 'profiles', currentUser.uid), profileData);
-      
-      // If company — also create company profile doc
-      if (regType === 'company') {
-        await setDoc(doc(db, 'companies', currentUser.uid), {
-          ownerId: currentUser.uid,
-          registeredName: '',
-          tradingName: '',
-          regNumber: '',
-          operatorLicence: '',
-          createdAt: serverTimestamp()
-        });
-        
-        // Initialise default checklist
-        await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
-          categories: DEFAULT_CHECKLIST,
-          updatedAt: serverTimestamp()
-        });
-      }
-      
-      showAlert('registerAlert', '✅ Account created successfully!', 'success');
-      
-    } catch (err) {
-      console.error('Registration error:', err);
-      let msg = 'Registration failed. Please try again.';
-      if (err.code === 'auth/email-already-in-use') msg = 'This email address is already registered.';
-      if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-      if (err.code === 'auth/weak-password') msg = 'Password is too weak. Please use at least 6 characters.';
-      showAlert('registerAlert', '❌ ' + msg, 'error');
-    }
-  }
-
-  async function handleSignIn() {
-    const email = document.getElementById('signinEmail').value.trim();
-    const password = document.getElementById('signinPassword').value;
-    
-    if (!email || !password) {
-      return showAlert('signinAlert', '⚠️ Enter your email and password', 'error');
-    }
-    
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      console.error('Sign in error:', err);
-      let msg = 'Sign in failed.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        msg = 'Invalid email or password.';
-      }
-      if (err.code === 'auth/too-many-requests') {
-        msg = 'Too many attempts. Please try again later.';
-      }
-      showAlert('signinAlert', '❌ ' + msg, 'error');
-    }
-  }
-
-  async function handlePasswordReset() {
-    const email = document.getElementById('resetEmail').value.trim();
-    if (!email) return showAlert('resetAlert', '⚠️ Enter your email address', 'error');
-    
-    try {
-      await sendPasswordResetEmail(auth, email);
-      showPage('email-confirm');
-    } catch (err) {
-      showAlert('resetAlert', '❌ Could not send reset email. Check the address is correct.', 'error');
-    }
-  }
-
-  async function signOutUser() {
-    await signOut(auth);
-    currentUser = null;
-    userProfile = null;
-    updateNavigation();
-  }
-  window.signOut = signOutUser;
-
-  // Auth State Listener
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    
-    if (user) {
-      try {
-        const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
-        if (profileSnap.exists()) {
-          userProfile = profileSnap.data();
-        } else {
-          userProfile = { name: user.displayName || '', email: user.email, role: 'driver' };
-        }
-      } catch (err) {
-        console.warn('Profile load error:', err);
-        userProfile = { name: user.displayName, email: user.email, role: 'driver' };
-      }
-    }
-    
-    updateNavigation();
-  });
-
-  // ==========================================
-  // PROFILE & DATA
-  // ==========================================
-  async function loadProfileData() {
-    if (!currentUser) return;
-    
-    document.getElementById('profileName').value = userProfile?.name || '';
-    document.getElementById('profileEmail').value = currentUser.email || '';
-    document.getElementById('checkDriverName').value = userProfile?.name || currentUser.email?.split('@')[0] || '';
-    
-    // Load driver licence info
-    if (userProfile?.role !== 'company') {
-      try {
-        const docSnap = await getDoc(doc(db, 'drivers', currentUser.uid, 'profile', 'licence'));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          document.getElementById('licenceNumber').value = data.licenceNumber || '';
-          document.getElementById('licenceCategories').value = data.categories || '';
-          document.getElementById('licencePoints').value = data.points || 0;
-          document.getElementById('dvlaCheckCode').value = data.dvlaCheckCode || '';
-          document.getElementById('driverDob').value = data.dateOfBirth || '';
-          document.getElementById('licenceValidFrom').value = data.validFrom || '';
-          document.getElementById('licenceExpiry').value = data.expiryDate || '';
-          document.getElementById('medicalExpiry').value = data.medicalExpiry || '';
-        }
-      } catch (e) { console.warn('Could not load licence data'); }
-      
-      loadUserDocuments();
-    }
-  }
-  window.loadProfileData = loadProfileData;
-
-  async function saveProfile() {
-    const name = document.getElementById('profileName').value.trim();
-    if (!name) return showAlert('profileAlert', '⚠️ Enter your name', 'error');
-    
-    try {
-      await updateProfile(currentUser, { displayName: name });
-      await setDoc(doc(db, 'profiles', currentUser.uid), { name: name }, { merge: true });
-      userProfile.name = name;
-      document.getElementById('userDisplayName').textContent = name;
-      showAlert('profileAlert', '✅ Profile saved', 'success');
-    } catch (err) {
-      showAlert('profileAlert', '❌ Failed to save', 'error');
-    }
-  }
-  window.saveProfile = saveProfile;
-
-  async function saveLicenceDetails() {
-    if (!currentUser) return;
-    const data = {
-      licenceNumber: document.getElementById('licenceNumber').value.trim(),
-      categories: document.getElementById('licenceCategories').value.trim(),
-      points: parseInt(document.getElementById('licencePoints').value) || 0,
-      dvlaCheckCode: document.getElementById('dvlaCheckCode').value.trim(),
-      dateOfBirth: document.getElementById('driverDob').value,
-      validFrom: document.getElementById('licenceValidFrom').value,
-      expiryDate: document.getElementById('licenceExpiry').value,
-      medicalExpiry: document.getElementById('medicalExpiry').value,
-      updatedAt: serverTimestamp()
-    };
-    
-    try {
-      await setDoc(doc(db, 'drivers', currentUser.uid, 'profile', 'licence'), data);
-      showAlert('profileAlert', '✅ Licence details saved', 'success');
-    } catch (err) {
-      showAlert('profileAlert', '❌ Failed to save', 'error');
-    }
-  }
-  window.saveLicenceDetails = saveLicenceDetails;
-
-  // ==========================================
-  // DOCUMENTS UPLOAD & MANAGEMENT
-  // ==========================================
-  async function uploadDocument() {
-    const fileInput = document.getElementById('docFile');
-    const type = document.getElementById('docType').value;
-    
-    if (!fileInput.files.length) return showAlert('profileAlert', '⚠️ Select a file first', 'error');
-    
-    const file = fileInput.files[0];
-    const path = `users/${currentUser.uid}/documents/${type}/${file.name}`;
-    const fileRef = ref(storage, path);
-    
-    try {
-      const snapshot = await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(snapshot.ref);
-      
-      await addDoc(collection(db, 'profiles', currentUser.uid, 'documents'), {
-        type: type,
-        name: file.name,
-        url: url,
-        uploadedAt: serverTimestamp()
-      });
-      
-      showAlert('profileAlert', '✅ Document uploaded', 'success');
-      loadUserDocuments();
-      fileInput.value = '';
-    } catch (err) {
-      showAlert('profileAlert', '❌ Upload failed', 'error');
-    }
-  }
-  window.uploadDocument = uploadDocument;
-
-  async function loadUserDocuments() {
-    const container = document.getElementById('docsList');
-    try {
-      const q = query(collection(db, 'profiles', currentUser.uid, 'documents'), orderBy('uploadedAt', 'desc'));
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty) {
-        container.innerHTML = '<p style="color:var(--text-light); font-style:italic;">No documents uploaded yet.</p>';
-        return;
-      }
-      
-      container.innerHTML = snapshot.docs.map(d => {
-        const doc = d.data();
-        return `
-          <div style="padding:10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <strong>${doc.type.replace('_', ' ').toUpperCase()}</strong><br>
-              <span style="font-size:12px;">${doc.name} — ${formatDate(doc.uploadedAt?.toDate())}</span>
-            </div>
-            <a href="${doc.url}" target="_blank" class="btn btn-secondary btn-sm">View</a>
-          </div>
-        `;
-      }).join('');
-    } catch (err) {
-      container.innerHTML = '<p style="color:var(--danger);">Could not load documents</p>';
-    }
-  }
-
-  // ==========================================
-  // DATA DOWNLOAD
-  // ==========================================
-  async function downloadMyData() {
-    alert('This feature will export all your checks, documents and profile data as a ZIP/PDF file. Ready to implement.');
-  }
-  window.downloadMyData = downloadMyData;
-
-  function openDataSelection() {
-    alert('Opens a selection screen where you can pick which records to download. Ready to implement.');
-  }
-  window.openDataSelection = openDataSelection;
-
-  // ==========================================
-  // COMPANY PROFILE
-  // ==========================================
-  async function loadCompanyProfile() {
-    if (!currentUser || userProfile?.role !== 'company') return;
-    
-    try {
-      const snap = await getDoc(doc(db, 'companies', currentUser.uid));
-      if (snap.exists()) {
-        const d = snap.data();
-        document.getElementById('compRegisteredName').value = d.registeredName || '';
-        document.getElementById('compTradingName').value = d.tradingName || '';
-        document.getElementById('compRegNumber').value = d.regNumber || '';
-        document.getElementById('compLicenceNumber').value = d.operatorLicence || '';
-        document.getElementById('compRegAddress').value = d.registeredAddress || '';
-        document.getElementById('compTradingAddress').value = d.tradingAddress || '';
-        document.getElementById('compPhone').value = d.telephone || '';
-        document.getElementById('compAccountsEmail').value = d.accountsEmail || '';
-        document.getElementById('compTransportManager').value = d.transportManager || '';
-        document.getElementById('compTMEmail').value = d.tmEmail || '';
-        document.getElementById('compTMPhone').value = d.tmPhone || '';
-        document.getElementById('compNotes').value = d.complianceNotes || '';
-      }
-    } catch (e) { console.warn('Load company profile error'); }
-  }
-
-  async function saveCompanyProfile() {
-    if (!currentUser) return;
-    
-    const data = {
-      registeredName: document.getElementById('compRegisteredName').value.trim(),
-      tradingName: document.getElementById('compTradingName').value.trim(),
-      regNumber: document.getElementById('compRegNumber').value.trim(),
-      operatorLicence: document.getElementById('compLicenceNumber').value.trim(),
-      registeredAddress: document.getElementById('compRegAddress').value.trim(),
-      tradingAddress: document.getElementById('compTradingAddress').value.trim(),
-      telephone: document.getElementById('compPhone').value.trim(),
-      accountsEmail: document.getElementById('compAccountsEmail').value.trim(),
-      transportManager: document.getElementById('compTransportManager').value.trim(),
-      tmEmail: document.getElementById('compTMEmail').value.trim(),
-      tmPhone: document.getElementById('compTMPhone').value.trim(),
-      complianceNotes: document.getElementById('compNotes').value.trim(),
-      updatedAt: serverTimestamp()
-    };
-    
-    if (!data.registeredName || !data.regNumber) {
-      return showAlert('compProfileAlert', '⚠️ Fill in all required fields', 'error');
-    }
-    
-    try {
-      await setDoc(doc(db, 'companies', currentUser.uid), data, { merge: true });
-      showAlert('compProfileAlert', '✅ Company profile saved', 'success');
-    } catch (err) {
-      showAlert('compProfileAlert', '❌ Failed to save', 'error');
-    }
-  }
-  window.saveCompanyProfile = saveCompanyProfile;
-
-  // ==========================================
-  // VEHICLES & TRAILERS
-  // ==========================================
-  async function loadVehicles() {
-    if (!currentUser) return;
-    const vList = document.getElementById('vehiclesList');
-    const tList = document.getElementById('trailersList');
-    
-    try {
-      // Load Vehicles
-      const vSnap = await getDocs(collection(db, 'companies', currentUser.uid, 'vehicles'));
-      if (vSnap.empty) {
-        vList.innerHTML = '<p style="color:var(--text-light); font-style:italic;">No vehicles added yet.</p>';
-      } else {
-        vList.innerHTML = vSnap.docs.map(d => {
-          const v = d.data();
-          const statusBadge = v.status === 'active' 
-            ? '<span class="badge badge-success">Active</span>'
-            : v.status === 'maintenance'
-            ? '<span class="badge badge-warning">In Maintenance</span>'
-            : '<span class="badge badge-danger">Retired</span>';
-          return `
-            <div style="padding:12px; border-bottom:1px solid var(--border);">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                  <strong>${v.registration || 'No Reg'}</strong> — ${v.make || ''} ${v.model || ''}<br>
-                  <small style="color:var(--text-light);">${v.type || ''} | ${v.fleetNumber || 'No fleet no.'}</small>
-                </div>
-                <div>${statusBadge}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-      
-      // Load Trailers
-      const tSnap = await getDocs(collection(db, 'companies', currentUser.uid, 'trailers'));
-      if (tSnap.empty) {
-        tList.innerHTML = '<p style="color:var(--text-light); font-style:italic;">No trailers added yet.</p>';
-      } else {
-        tList.innerHTML = tSnap.docs.map(d => {
-          const t = d.data();
-          const statusBadge = t.status === 'active' 
-            ? '<span class="badge badge-success">Active</span>'
-            : t.status === 'maintenance'
-            ? '<span class="badge badge-warning">In Maintenance</span>'
-            : '<span class="badge badge-danger">Retired</span>';
-          return `
-            <div style="padding:12px; border-bottom:1px solid var(--border);">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                  <strong>${t.trailerNumber || 'Unknown'}</strong> — ${t.make || ''} ${t.type || ''}<br>
-                  <small style="color:var(--text-light);">Owner: ${t.owner || 'Not specified'}</small>
-                </div>
-                <div>${statusBadge}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-      
-      // Update dashboard stats
-      document.getElementById('statVehicles').textContent = vSnap.size;
-      
-    } catch (err) {
-      vList.innerHTML = '<p style="color:var(--danger);">Error loading vehicles</p>';
-      tList.innerHTML = '<p style="color:var(--danger);">Error loading trailers</p>';
-    }
-  }
-  window.loadVehicles = loadVehicles;
-
-  async function addVehicle() {
-    if (!currentUser) return;
-    
-    const data = {
-      registration: (document.getElementById('vehReg').value || '').toUpperCase(),
-      make: document.getElementById('vehMake').value.trim(),
-      model: document.getElementById('vehModel').value.trim(),
-      year: document.getElementById('vehYear').value.trim(),
-      fleetNumber: document.getElementById('vehFleetNo').value.trim(),
-      type: document.getElementById('vehType').value,
-      status: document.getElementById('vehStatus').value,
-      notes: document.getElementById('vehNotes').value.trim(),
-      companyId: currentUser.uid,
-      createdAt: serverTimestamp()
-    };
-    
-    if (!data.registration || !data.make || !data.model) {
-      return showAlert('vehAlert', '⚠️ Fill in all required fields', 'error');
-    }
-    
-    try {
-      await addDoc(collection(db, 'companies', currentUser.uid, 'vehicles'), data);
-      showAlert('vehAlert', '✅ Vehicle added successfully', 'success');
-      document.getElementById('vehReg').value = '';
-      document.getElementById('vehMake').value = '';
-      document.getElementById('vehModel').value = '';
-      document.getElementById('vehYear').value = '';
-      document.getElementById('vehFleetNo').value = '';
-      document.getElementById('vehNotes').value = '';
-      loadVehicles();
-    } catch (err) {
-      showAlert('vehAlert', '❌ Failed to add vehicle', 'error');
-    }
-  }
-  window.addVehicle = addVehicle;
-
-  async function addTrailer() {
-    if (!currentUser) return;
-    
-    const data = {
-      trailerNumber: document.getElementById('trailerNo').value.trim().toUpperCase(),
-      make: document.getElementById('trailerMake').value.trim(),
-      type: document.getElementById('trailerType').value,
-      owner: document.getElementById('trailerOwner').value,
-      status: document.getElementById('trailerStatus').value,
-      notes: document.getElementById('trailerNotes').value.trim(),
-      companyId: currentUser.uid,
-      createdAt: serverTimestamp()
-    };
-    
-    if (!data.trailerNumber) {
-      return showAlert('trailerAlert', '⚠️ Enter trailer number/ID', 'error');
-    }
-    
-    try {
-      await addDoc(collection(db, 'companies', currentUser.uid, 'trailers'), data);
-      showAlert('trailerAlert', '✅ Trailer added successfully', 'success');
-      document.getElementById('trailerNo').value = '';
-      document.getElementById('trailerMake').value = '';
-      document.getElementById('trailerNotes').value = '';
-      loadVehicles();
-    } catch (err) {
-      showAlert('trailerAlert', '❌ Failed to add trailer', 'error');
-    }
-  }
-  window.addTrailer = addTrailer;
-
-  // Populate dropdowns for driver checklist
-  async function populateVehicleDropdowns() {
-    const vehSelect = document.getElementById('selectedVehicle');
-    const trailSelect = document.getElementById('selectedTrailer');
-    
-    vehSelect.innerHTML = '<option value="">— Select vehicle —</option>';
-    trailSelect.innerHTML = '<option value="">— Select trailer —</option>';
-    
-    if (!currentUser || !userProfile) return;
-    
-    try {
-      // For drivers — show all vehicles from all companies (active only)
-      // For companies — show their own fleet
-      const vSnapshot = await getDocs(collection(db, 'companies', currentUser.uid, 'vehicles'));
-      vSnapshot.forEach(d => {
-        const v = d.data();
-        if (v.status === 'active') {
-          vehSelect.innerHTML += `<option value="${d.id}">${v.registration} — ${v.make} ${v.model}</option>`;
-        }
-      });
-      
-      const tSnapshot = await getDocs(collection(db, 'companies', currentUser.uid, 'trailers'));
-      tSnapshot.forEach(d => {
-        const t = d.data();
-        if (t.status === 'active') {
-          trailSelect.innerHTML += `<option value="${d.id}">${t.trailerNumber} — ${t.make} (${t.type})</option>`;
-        }
-      });
-    } catch (err) {
-      console.warn('Could not load vehicle lists');
-    }
-  }
-
-  function updateCheckOptions() {
-    const type = document.getElementById('checkType').value;
-    const vGroup = document.getElementById('vehicleSelectGroup');
-    const tGroup = document.getElementById('trailerSelectGroup');
-    const checklistContainer = document.getElementById('checklistContainer');
-    
-    vGroup.style.display = 'none';
-    tGroup.style.display = 'none';
-    checklistContainer.classList.add('hidden');
-    
-    if (type === 'vehicle') {
-      vGroup.style.display = 'block';
-      populateVehicleDropdowns();
-    } else if (type === 'trailer') {
-      tGroup.style.display = 'block';
-      populateVehicleDropdowns();
-    } else if (type === 'both') {
-      vGroup.style.display = 'block';
-      tGroup.style.display = 'block';
-      populateVehicleDropdowns();
-    }
-    
-    if (type) {
-      checklistContainer.classList.remove('hidden');
-      renderChecklist();
-    }
-  }
-  window.updateCheckOptions = updateCheckOptions;
-
-  // ==========================================
-  // WALKAROUND CHECKLIST
-  // ==========================================
-  async function renderChecklist() {
-    const container = document.getElementById('checklistItems');
-    
-    // Load custom checklist for company if exists
-    let checklistData = DEFAULT_CHECKLIST;
-    
-    if (userProfile?.role === 'company' || userProfile?.companyId) {
-      const compId = userProfile.role === 'company' ? currentUser.uid : userProfile.companyId;
-      try {
-        const snap = await getDoc(doc(db, 'companies', compId, 'settings', 'checklist'));
-        if (snap.exists() && snap.data().categories) {
-          checklistData = snap.data().categories;
-        }
-      } catch (e) {
-        console.warn('Using default checklist');
-      }
-    }
-    
-    appChecklist = checklistData;
-    
-    container.innerHTML = checklistData.map((cat, catIdx) => `
-      <div class="checklist-category">
-        <h4 class="category-title">${cat.category}</h4>
-        ${cat.items.map((item, idx) => `
-          <div class="check-item">
-            <input type="checkbox" id="check-${catIdx}-${idx}" data-category="${cat.category}" data-item="${item}" />
-            <label for="check-${catIdx}-${idx}">${item}</label>
-          </div>
-        `).join('')}
+    container.innerHTML = vehicles.map(v => `
+      <div class="list-item ${v.active !== false ? '' : 'inactive'}">
+        <div>
+          <strong>${v.make} ${v.model}</strong> — ${v.registration}
+          <div class="text-sm">${v.type || 'HGV'} • ${v.year || 'N/A'} • ${v.motExpiry ? 'MOT: ' + formatDate(v.motExpiry) : 'No MOT date'}</div>
+        </div>
+        <div class="item-actions">
+          <span class="badge ${v.active !== false ? 'badge-success' : 'badge-danger'}">${v.active !== false ? 'Active' : 'Inactive'}</span>
+          <button class="btn small" onclick="editVehicle('${v.id}')">Edit</button>
+          <button class="btn small danger" onclick="toggleVehicleActive('${v.id}', ${v.active !== false})">${v.active !== false ? 'Deactivate' : 'Activate'}</button>
+        </div>
       </div>
     `).join('');
-    
-    // Set default date/time
-    const now = new Date();
-    document.getElementById('checkDateTime').value = now.toISOString().slice(0, 16);
-    document.getElementById('checkDriverName').value = userProfile?.name || currentUser?.email || '';
+  } catch (err) { {
+    console.error('Error loading vehicles:', err);
+    document.getElementById('vehicles-list').innerHTML = '<p class="text-danger">Error loading vehicles.</p>';
   }
+}
 
-  async function submitChecklist() {
-    const type = document.getElementById('checkType').value;
-    const vehicleId = document.getElementById('selectedVehicle').value;
-    const trailerId = document.getElementById('selectedTrailer').value;
-    const dateTime = document.getElementById('checkDateTime').value;
-    const location = document.getElementById('checkLocation').value.trim();
-    const comments = document.getElementById('checkComments').value.trim();
+async function loadTrailers() {
+  if (!currentUser) return;
+  try {
+    const trailersRef = collection(db, 'companyTrailers');
+    const q = query(trailersRef, where('companyId', '==', currentUser.uid), orderBy('trailerNumber'));
+    const snapshot = await getDocs(q);
     
-    if (!type) return showAlert('checkAlert', '⚠️ Select check type', 'error');
-    if (!dateTime) return showAlert('checkAlert', '⚠️ Enter date/time', 'error');
-    if (!location) return showAlert('checkAlert', '⚠️ Enter location/depot', 'error');
+    const trailers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const container = document.getElementById('trailers-list');
     
-    // Collect results
-    const results = [];
-    const defects = [];
-    
-    appChecklist.forEach((cat, catIdx) => {
-      cat.items.forEach((item, idx) => {
-        const checkbox = document.getElementById(`check-${catIdx}-${idx}`);
-        const passed = checkbox?.checked || false;
-        results.push({
-          category: cat.category,
-          item: item,
-          passed: passed
-        });
-        if (!passed) {
-          defects.push({ category: cat.category, item: item });
-        }
-      });
-    });
-    
-    const checkData = {
-      type: type,
-      vehicleId: vehicleId || null,
-      trailerId: trailerId || null,
-      dateTime: dateTime,
-      location: location,
-      comments: comments,
-      driverName: userProfile?.name || 'Unknown',
-      driverId: currentUser.uid,
-      results: results,
-      defects: defects,
-      hasDefects: defects.length > 0,
-      submittedAt: serverTimestamp()
-    };
-    
-    try {
-      await addDoc(collection(db, 'walkaroundChecks'), checkData);
-      showAlert('checkAlert', '✅ Check submitted successfully! Thank you.', 'success');
-      
-      // Reset form
-      document.getElementById('checkType').value = '';
-      document.getElementById('checkLocation').value = '';
-      document.getElementById('checkComments').value = '';
-      document.getElementById('checklistContainer').classList.add('hidden');
-      
-    } catch (err) {
-      showAlert('checkAlert', '❌ Failed to submit check. Please try again.', 'error');
-    }
-  }
-  window.submitChecklist = submitChecklist;
-
-  async function loadCheckHistory() {
-    const container = document.getElementById('historyList');
-    container.innerHTML = '<p>Loading history...</p>';
-    
-    try {
-      let q;
-      
-      if (userProfile?.role === 'company') {
-        // Company sees all checks linked to their vehicles
-        q = query(
-          collection(db, 'walkaroundChecks'),
-          orderBy('submittedAt', 'desc')
-        );
-      } else {
-        // Driver sees only their own checks
-        q = query(
-          collection(db, 'walkaroundChecks'),
-          where('driverId', '==', currentUser.uid),
-          orderBy('submittedAt', 'desc')
-        );
-      }
-      
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty) {
-        container.innerHTML = '<p style="color:var(--text-light); font-style:italic;">No checks have been submitted yet.</p>';
-        return;
-      }
-      
-      container.innerHTML = snapshot.docs.map(doc => {
-        const c = doc.data();
-        const dateStr = c.dateTime ? new Date(c.dateTime).toLocaleString('en-GB') : 'Unknown date';
-        const statusBadge = c.hasDefects 
-          ? '<span class="badge badge-danger">⚠️ Defects Reported</span>'
-          : '<span class="badge badge-success">✅ All Satisfactory</span>';
-        
-        return `
-          <div style="padding:14px; border-bottom:1px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-              <strong>${dateStr}</strong>
-              ${statusBadge}
-            </div>
-            <div style="font-size:14px;">
-              <div><strong>Type:</strong> ${c.type === 'vehicle' ? '🚛 Vehicle Only' : c.type === 'trailer' ? '🔌 Trailer Only' : '🚛+🔌 Vehicle & Trailer'}</div>
-              <div><strong>Driver:</strong> ${c.driverName || 'Unknown'}</div>
-              <div><strong>Location:</strong> ${c.location || 'Not specified'}</div>
-              ${c.hasDefects ? `<div style="color:var(--danger); margin-top:4px;"><strong>Defects:</strong> ${c.defects?.length || 0} item(s) reported</div>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-      
-      // Update stats if company
-      if (userProfile?.role === 'company') {
-        const thisMonth = snapshot.docs.filter(d => {
-          const date = d.data().submittedAt?.toDate();
-          return date && date.getMonth() === new Date().getMonth();
-        });
-        document.getElementById('statChecks').textContent = thisMonth.length;
-      }
-      
-    } catch (err) {
-      container.innerHTML = `<p style="color:var(--danger);">❌ Could not load history: ${err.message}</p>`;
-    }
-  }
-  window.loadCheckHistory = loadCheckHistory;
-
-  // ==========================================
-  // CHECKLIST EDITOR (Company)
-  // ==========================================
-  let editorCategories = [];
-
-  async function loadChecklistEditor() {
-    if (!currentUser || userProfile?.role !== 'company') return;
-    
-    try {
-      const snap = await getDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'));
-      if (snap.exists() && snap.data().categories) {
-        editorCategories = JSON.parse(JSON.stringify(snap.data().categories));
-      } else {
-        editorCategories = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
-      }
-    } catch (e) {
-      editorCategories = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
+    if (!trailers.length) {
+      container.innerHTML = '<p class="text-muted">No trailers added yet.</p>';
+      return;
     }
     
-    renderEditor();
-  }
-  window.loadChecklistEditor = loadChecklistEditor;
-
-  function renderEditor() {
-    const container = document.getElementById('editorCategories');
-    
-    container.innerHTML = editorCategories.map((cat, catIdx) => `
-      <div style="border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; background:var(--bg);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <input type="text" value="${cat.category}" 
-                 style="font-weight:600; font-size:16px; border:none; background:transparent; border-bottom:1px dashed var(--border); width:60%;"
-                 onchange="updateCategoryName(${catIdx}, this.value)" />
-          <div>
-            <button class="btn btn-secondary btn-sm" onclick="moveCategoryUp(${catIdx})">⬆️</button>
-            <button class="btn btn-secondary btn-sm" onclick="moveCategoryDown(${catIdx})">⬇️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteCategory(${catIdx})">🗑️</button>
-          </div>
+    container.innerHTML = trailers.map(t => `
+      <div class="list-item ${t.active !== false ? '' : 'inactive'}">
+        <div>
+          <strong>${t.trailerNumber}</strong> — ${t.type || 'Trailer'}
+          <div class="text-sm">Owner: ${t.owner || 'Company'} • ${t.registration || 'No reg'} • MOT: ${t.motExpiry ? formatDate(t.motExpiry) : 'N/A'}</div>
         </div>
-        
-        <div style="margin-left:10px;">
-          ${cat.items.map((item, itemIdx) => `
-            <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
-              <span style="color:var(--text-light); cursor:grab;">⋮</span>
-              <input type="text" value="${item}" style="flex:1; padding:4px 8px;"
-                     onchange="updateItem(${catIdx}, ${itemIdx}, this.value)" />
-              <button class="btn btn-danger btn-sm" onclick="deleteItem(${catIdx}, ${itemIdx})">✕</button>
-            </div>
-          `).join('')}
-          
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="addItem(${catIdx})">➕ Add Item</button>
+        <div class="item-actions">
+          <span class="badge ${t.active !== false ? 'badge-success' : 'badge-danger'}">${t.active !== false ? 'Active' : 'Inactive'}</span>
+          <button class="btn small" onclick="editTrailer('${t.id}')">Edit</button>
+          <button class="btn small danger" onclick="toggleTrailerActive('${t.id}', ${t.active !== false})">${t.active !== false ? 'Deactivate' : 'Activate'}</button>
         </div>
       </div>
-    `).join('') + `
-      <button class="btn btn-secondary btn-sm" onclick="addNewCategory()">➕ Add New Category</button>
-    `;
+    `).join('');
+  } catch (err) {
+    console.error('Error loading trailers:', err);
+    document.getElementById('trailers-list').innerHTML = '<p class="text-danger">Error loading trailers.</p>';
   }
+}
 
-  function updateCategoryName(idx, value) {
-    editorCategories[idx].category = value;
-  }
+function showAddVehicleModal() {
+  showModal(`
+    <h3>Add New Vehicle</h3>
+    <form onsubmit="saveVehicle(event)">
+      <div class="form-group">
+        <label>Registration Number *</label>
+        <input type="text" id="v-reg" required style="text-transform:uppercase">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Make *</label>
+          <input type="text" id="v-make" required>
+        </div>
+        <div class="form-group">
+          <label>Model *</label>
+          <input type="text" id="v-model" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Year</label>
+          <input type="number" id="v-year">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="v-type">
+            <option value="HGV">HGV</option>
+            <option value="Rigid">Rigid</option>
+            <option value="Tractor Unit">Tractor Unit</option>
+            <option value="Van">Van</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>MOT Expiry Date</label>
+          <input type="date" id="v-mot">
+        </div>
+        <div class="form-group">
+          <label>Last Service Date</label>
+          <input type="date" id="v-service">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes / VIN / Details</label>
+        <textarea id="v-notes" rows="2"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn primary">Save Vehicle</button>
+      </div>
+    </form>
+  `);
+}
 
-  function moveCategoryUp(idx) {
-    if (idx > 0) {
-      [editorCategories[idx], editorCategories[idx - 1]] = [editorCategories[idx - 1], editorCategories[idx]];
-      renderEditor();
-    }
-  }
-  window.moveCategoryUp = moveCategoryUp;
-
-  function moveCategoryDown(idx) {
-    if (idx < editorCategories.length - 1) {
-      [editorCategories[idx], editorCategories[idx + 1]] = [editorCategories[idx + 1], editorCategories[idx]];
-      renderEditor();
-    }
-  }
-  window.moveCategoryDown = moveCategoryDown;
-
-  function deleteCategory(idx) {
-    if (confirm('Delete this entire category and all its items?')) {
-      editorCategories.splice(idx, 1);
-      renderEditor();
-    }
-  }
-  window.deleteCategory = deleteCategory;
-
-  function updateItem(catIdx, itemIdx, value) {
-    editorCategories[catIdx].items[itemIdx] = value;
-  }
-  window.updateItem = updateItem;
-
-  function deleteItem(catIdx, itemIdx) {
-    editorCategories[catIdx].items.splice(itemIdx, 1);
-    renderEditor();
-  }
-  window.deleteItem = deleteItem;
-
-  function addItem(catIdx) {
-    const newItem = prompt('Enter new check item:');
-    if (newItem && newItem.trim()) {
-      editorCategories[catIdx].items.push(newItem.trim());
-      renderEditor();
-    }
-  }
-  window.addItem = addItem;
-
-  function addNewCategory() {
-    const name = prompt('Enter category name:');
-    if (name && name.trim()) {
-      editorCategories.push({ category: name.trim(), items: [] });
-      renderEditor();
-    }
-  }
-  window.addNewCategory = addNewCategory;
-
-  async function saveChecklist() {
-    if (!currentUser || userProfile?.role !== 'company') return;
-    
-    try {
-      await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
-        categories: editorCategories,
-        updatedAt: serverTimestamp()
-      });
-      showAlert('editorAlert', '✅ Checklist saved successfully!', 'success');
-    } catch (err) {
-      showAlert('editorAlert', '❌ Failed to save checklist', 'error');
-    }
-  }
-  window.saveChecklist = saveChecklist;
-
-  async function resetChecklist() {
-    if (!confirm('⚠️ Reset to default DVSA checklist? All custom changes will be lost.')) return;
-    
-    editorCategories = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
-    renderEditor();
-    showAlert('editorAlert', '↩️ Reset to DVSA defaults — click Save to confirm.', 'info');
-  }
-  window.resetChecklist = resetChecklist;
-
-  // ==========================================
-  // COMPANY DRIVER MANAGEMENT
-  // ==========================================
-  async function loadCompanyDrivers() {
-    if (!currentUser || userProfile?.role !== 'company') return;
-    
-    const container = document.getElementById('companyDriversList');
-    container.innerHTML = '<p>Loading drivers...</p>';
-    
-    try {
-      const q = query(
-        collection(db, 'profiles'),
-        where('role', '==', 'driver')
-      );
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty) {
-        container.innerHTML = '<p style="color:var(--text-light); font-style:italic;">No drivers have completed work for your company yet. When a driver does a check for you, their profile will appear here.</p>';
-        document.getElementById('statDrivers').textContent = '0';
-        return;
-      }
-      
-      container.innerHTML = snapshot.docs.map(d => {
-        const driver = d.data();
-        return `
-          <div style="padding:12px; border-bottom:1px solid var(--border);">
-            <div style="font-weight:600;">${driver.name || 'Unknown Name'}</div>
-            <div style="font-size:13px; color:var(--text-light);">${driver.email || 'No email'}</div>
-            <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="viewDriverDetails('${d.id}')">📋 View Full Details</button>
-          </div>
-        `;
-      }).join('');
-      
-      document.getElementById('statDrivers').textContent = snapshot.size;
-      
-    } catch (err) {
-      container.innerHTML = `<p style="color:var(--danger);">❌ Could not load drivers</p>`;
-    }
-  }
-  window.loadCompanyDrivers = loadCompanyDrivers;
-
-  async function addCompanyDriver() {
-    const name = document.getElementById('newDriverName').value.trim();
-    const email = document.getElementById('newDriverEmail').value.trim();
-    
-    if (!name || !email) {
-      return showAlert('addDriverAlert', '⚠️ Enter name and email', 'error');
-    }
-    
-    try {
-      await addDoc(collection(db, 'companies', currentUser.uid, 'drivers'), {
-        name: name,
-        email: email,
-        addedAt: serverTimestamp()
-      });
-      showAlert('addDriverAlert', '✅ Driver added — they will appear in your list once they register or complete their first check.', 'success');
-      document.getElementById('newDriverName').value = '';
-      document.getElementById('newDriverEmail').value = '';
-      loadCompanyDrivers();
-    } catch (err) {
-      showAlert('addDriverAlert', '❌ Failed to add driver', 'error');
-    }
-  }
-  window.addCompanyDriver = addCompanyDriver;
-
-  async function viewDriverDetails(driverUid) {
-    alert('Full driver profile view — showing licence info, documents, and check history for: ' + driverUid);
-  }
-  window.viewDriverDetails = viewDriverDetails;
-
-  // ==========================================
-  // INITIALISE
-  // ==========================================
-  initDarkMode();
-  selectRegType('driver');
-  document.getElementById('checkDateTime').value = new Date().toISOString().slice(0, 16);
-
-  // Set company profile page load
-  const originalShowPage = window.showPage;
-  window.showPage = function(pageId) {
-    originalShowPage(pageId);
-    if (pageId === 'company-profile') loadCompanyProfile();
-    if (pageId === 'vehicles') loadVehicles();
+async function saveVehicle(e, editId = null) {
+  e.preventDefault();
+  const data = {
+    companyId: currentUser.uid,
+    registration: document.getElementById('v-reg').value.toUpperCase(),
+    make: document.getElementById('v-make').value,
+    model: document.getElementById('v-model').value,
+    year: document.getElementById('v-year').value,
+    type: document.getElementById('v-type').value,
+    motExpiry: document.getElementById('v-mot').value ? new Date(document.getElementById('v-mot').value) : null,
+    lastService: document.getElementById('v-service').value ? new Date(document.getElementById('v-service').value) : null,
+    notes: document.getElementById('v-notes').value,
+    active: true,
+    updatedAt: new Date()
   };
 
-  console.log('%c🚛 LSD Solutions App Loaded', 'color: #1a365d; font-weight:bold; font-size:14px;');
-  console.log('✅ DVSA-compliant walkaround checklist system ready');
-  console.log('✅ Vehicle & trailer management ready');
-  console.log('✅ Driver management ready');
-  console.log('✅ Company profile (DVSA/TC compliant) ready');
-  console.log('✅ Custom checklist editor ready');
+  try {
+    if (editId) {
+      await updateDoc(doc(db, 'companyVehicles', editId), data);
+    } else {
+      data.createdAt = new Date();
+      await addDoc(collection(db, 'companyVehicles'), data);
+    }
+    closeModal();
+    loadVehicles();
+    showToast('Vehicle saved successfully! ✅');
+  } catch (err) {
+    console.error('Error saving vehicle:', err);
+    showToast('Error saving vehicle ❌', 'error');
+  }
+}
 
+function showAddTrailerModal() {
+  showModal(`
+    <h3>Add New Trailer</h3>
+    <form onsubmit="saveTrailer(event)">
+      <div class="form-group">
+        <label>Trailer Number / ID *</label>
+        <input type="text" id="t-num" required>
+      </div>
+      <div class="form-group">
+        <label>Registration Number</label>
+        <input type="text" id="t-reg" style="text-transform:uppercase">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="t-type">
+            <option value="Box">Box</option>
+            <option value="Curtainside">Curtainside</option>
+            <option value="Refrigerated">Refrigerated</option>
+            <option value="Flatbed">Flatbed</option>
+            <option value="Tipper">Tipper</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Owner *</label>
+          <select id="t-owner">
+            <option value="Company">Company Owned</option>
+            <option value="Hired">Hired / Leased</option>
+            <option value="Customer">Customer Owned</option>
+            <option value="Third Party">Third Party</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Owner Name (if not company)</label>
+        <input type="text" id="t-ownerName">
+      </div>
+      <div class="form-group">
+        <label>MOT / Plating Certificate Expiry</label>
+        <input type="date" id="t-mot">
+      </div>
+      <div class="form-group">
+        <label>Notes / ID Details</label>
+        <textarea id="t-notes" rows="2"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn primary">Save Trailer</button>
+      </div>
+    </form>
+  `);
+}
+
+async function saveTrailer(e, editId = null) {
+  e.preventDefault();
+  const data = {
+    companyId: currentUser.uid,
+    trailerNumber: document.getElementById('t-num').value,
+    registration: document.getElementById('t-reg').value.toUpperCase(),
+    type: document.getElementById('t-type').value,
+    owner: document.getElementById('t-owner').value,
+    ownerName: document.getElementById('t-ownerName').value || '',
+    motExpiry: document.getElementById('t-mot').value ? new Date(document.getElementById('t-mot').value) : null,
+    notes: document.getElementById('t-notes').value,
+    active: true,
+    updatedAt: new Date()
+  };
+
+  try {
+    if (editId) {
+      await updateDoc(doc(db, 'companyTrailers', editId), data);
+    } else {
+      data.createdAt = new Date();
+      await addDoc(collection(db, 'companyTrailers'), data);
+    }
+    closeModal();
+    loadTrailers();
+    showToast('Trailer saved successfully! ✅');
+  } catch (err) {
+    console.error('Error saving trailer:', err);
+    showToast('Error saving trailer ❌', 'error');
+  }
+}
+
+async function toggleVehicleActive(id, currentState) {
+  try {
+    await updateDoc(doc(db, 'companyVehicles', id), { active: !currentState, updatedAt: new Date() });
+    loadVehicles();
+    showToast('Vehicle status updated ✅');
+  } catch (err) {
+    showToast('Error updating status ❌', 'error');
+  }
+}
+
+async function toggleTrailerActive(id, currentState) {
+  try {
+    await updateDoc(doc(db, 'companyTrailers', id), { active: !currentState, updatedAt: new Date() });
+    loadTrailers();
+    showToast('Trailer status updated ✅');
+  } catch (err) {
+    showToast('Error updating status ❌', 'error');
+  }
+}
+
+// ========== DRIVER MANAGEMENT ==========
+function renderDriversPage() {
+  if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
+  
+  return `
+    <div class="page-header">
+      <h2>👥 Driver Management</h2>
+    </div>
+
+    <div class="card">
+      <p class="text-muted">Drivers who work for your company will appear here automatically. You can also add employed drivers manually.</p>
+    </div>
+
+    <div class="card">
+      <h3>All Drivers</h3>
+      <div id="drivers-list">
+        <p>Loading drivers...</p>
+      </div>
+    </div>
+  `;
+}
+
+async function loadCompanyDrivers() {
+  if (!currentUser) return;
+  try {
+    const membersRef = collection(db, 'companyMembers');
+    const q = query(membersRef, where('companyId', '==', currentUser.uid));
+    const snapshot = await getDocs(q);
+    
+    const drivers = [];
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      let profile = { name: data.driverName || 'Unknown', email: data.driverEmail || '' };
+      
+      try {
+        const userRef = doc(db, 'users', data.driverId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) profile = { ...profile, ...userSnap.data() };
+      } catch (e) {}
+      
+      drivers.push({ id: docSnap.id, driverId: data.driverId, ...data, ...profile });
+    }
+    
+    const container = document.getElementById('drivers-list');
+    if (!drivers.length) {
+      container.innerHTML = '<p class="text-muted">No drivers linked to your company yet. When drivers accept work from you, they will appear here.</p>';
+      return;
+    }
+    
+    container.innerHTML = drivers.map(d => `
+      <div class="list-item">
+        <div>
+          <strong>${d.fullName || d.driverName || 'Unknown Driver'}</strong>
+          <div class="text-sm">${d.email || d.driverEmail || 'No email'}</div>
+          <div class="text-sm">
+            Licence: ${d.licenceNumber || 'Not provided'} 
+            ${d.licenceExpiry ? `• Expires: ${formatDate(d.licenceExpiry)}` : ''}
+            ${d.medicalExpiry ? `• Medical: ${formatDate(d.medicalExpiry)}` : ''}
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="btn small" onclick="viewDriverDocs('${d.driverId}')">📄 Documents</button>
+          <button class="btn small danger" onclick="removeDriver('${d.id}')">Remove</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Error loading drivers:', err);
+    document.getElementById('drivers-list').innerHTML = '<p class="text-danger">Error loading drivers.</p>';
+  }
+}
+
+async function viewDriverDocs(driverId) {
+  try {
+    const docRef = doc(db, 'users', driverId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Driver not found');
+    
+    const d = snap.data();
+    showModal(`
+      <h3>${d.fullName || 'Driver'} — Licence & Documents</h3>
+      <div class="doc-details">
+        <p><strong>Driving Licence Number:</strong> ${d.licenceNumber || 'Not provided'}</p>
+        <p><strong>Licence Categories:</strong> ${d.licenceCategories || 'Not provided'}</p>
+        <p><strong>DVLA Check Code:</strong> ${d.dvlaCheckCode || 'Not provided'}</p>
+        <p><strong>Licence Valid From:</strong> ${d.licenceValidFrom ? formatDate(d.licenceValidFrom) : 'Not provided'}</p>
+        <p><strong>Licence Expiry:</strong> ${d.licenceExpiry ? formatDate(d.licenceExpiry) : 'Not provided'}</p>
+        <p><strong>Penalty Points:</strong> ${d.points ?? 0}</p>
+        <p><strong>Medical Certificate Expiry:</strong> ${d.medicalExpiry ? formatDate(d.medicalExpiry) : 'Not provided'}</p>
+        <hr>
+        <p class="text-muted">Documents uploaded by driver will appear here.</p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" onclick="closeModal()">Close</button>
+      </div>
+    `);
+  } catch (err) {
+    showToast('Could not load driver details ❌', 'error');
+  }
+}
+
+async function removeDriver(memberId) {
+  if (!confirm('Remove this driver from your company? They will no longer see your jobs.')) return;
+  try {
+    await deleteDoc(doc(db, 'companyMembers', memberId));
+    loadCompanyDrivers();
+    showToast('Driver removed ✅');
+  } catch (err) {
+    showToast('Error removing driver ❌', 'error');
+  }
+}
+
+// ========== COMPANY PROFILE / SETTINGS ==========
+function renderCompanyProfilePage() {
+  if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
+  
+  return `
+    <div class="page-header">
+      <h2>🏢 Company Profile</h2>
+    </div>
+
+    <form onsubmit="saveCompanyProfile(event)" class="card">
+      <h3>Company Information</h3>
+      
+      <div class="form-group">
+        <label>Registered Company Name *</label>
+        <input type="text" id="comp-registeredName" required>
+      </div>
+
+      <div class="form-group">
+        <label>Trading Name (if different)</label>
+        <input type="text" id="comp-tradingName">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Companies House / HMRC Number *</label>
+          <input type="text" id="comp-companyNumber" required>
+        </div>
+        <div class="form-group">
+          <label>Operator's Licence Number *</label>
+          <input type="text" id="comp-licenceNumber" required>
+        </div>
+      </div>
+
+      <h4>Registered Address</h4>
+      <div class="form-group">
+        <label>Address Line 1 *</label>
+        <input type="text" id="comp-addr1" required>
+      </div>
+      <div class="form-group">
+        <label>Address Line 2</label>
+        <input type="text" id="comp-addr2">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Town / City *</label>
+          <input type="text" id="comp-city" required>
+        </div>
+        <div class="form-group">
+          <label>Postcode *</label>
+          <input type="text" id="comp-postcode" required>
+        </div>
+      </div>
+
+      <h4>Contact Information</h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Main Contact Name</label>
+          <input type="text" id="comp-contactName">
+        </div>
+        <div class="form-group">
+          <label>Telephone</label>
+          <input type="tel" id="comp-phone">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email Address (General)</label>
+        <input type="email" id="comp-email">
+      </div>
+      <div class="form-group">
+        <label>Invoicing Contact — Name & Department</label>
+        <input type="text" id="comp-invoiceContact" placeholder="e.g. Accounts Department">
+      </div>
+      <div class="form-group">
+        <label>Invoicing Email Address</label>
+        <input type="email" id="comp-invoiceEmail" placeholder="accounts@yourcompany.com">
+      </div>
+      <div class="form-group">
+        <label>Invoicing Telephone</label>
+        <input type="tel" id="comp-invoicePhone">
+      </div>
+
+      <h4>Compliance & Notes</h4>
+      <div class="form-group">
+        <label>Traffic Commissioner Area</label>
+        <select id="comp-tcArea">
+          <option value="">Select...</option>
+          <option value="North East of England">North East of England</option>
+          <option value="North West of England">North West of England</option>
+          <option value="West Midlands">West Midlands</option>
+          <option value="East Midlands">East Midlands</option>
+          <option value="South East & East of England">South East & East of England</option>
+          <option value="South West of England">South West of England</option>
+          <option value="Wales">Wales</option>
+          <option value="Scotland">Scotland</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Additional Notes</label>
+        <textarea id="comp-notes" rows="3" placeholder="Any compliance notes, insurance expiry dates, etc."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn primary">Save Company Profile</button>
+      </div>
+    </form>
+  `;
+}
+
+async function loadCompanyProfile() {
+  if (!currentUser) return;
+  try {
+    const docRef = doc(db, 'companies', currentUser.uid, 'settings', 'profile');
+    const snap = await getDoc(docRef);
+    
+    if (snap.exists()) {
+      const d = snap.data();
+      setVal('comp-registeredName', d.registeredName);
+      setVal('comp-tradingName', d.tradingName);
+      setVal('comp-companyNumber', d.companyNumber);
+      setVal('comp-licenceNumber', d.operatorsLicenceNumber);
+      setVal('comp-addr1', d.address?.line1);
+      setVal('comp-addr2', d.address?.line2);
+      setVal('comp-city', d.address?.city);
+      setVal('comp-postcode', d.address?.postcode);
+      setVal('comp-contactName', d.contactName);
+      setVal('comp-phone', d.telephone);
+      setVal('comp-email', d.email);
+      setVal('comp-invoiceContact', d.invoiceContactName);
+      setVal('comp-invoiceEmail', d.invoiceEmail);
+      setVal('comp-invoicePhone', d.invoiceTelephone);
+      setVal('comp-tcArea', d.trafficCommissionerArea);
+      setVal('comp-notes', d.notes);
+    }
+  } catch (err) {
+    console.error('Error loading profile:', err);
+  }
+}
+
+async function saveCompanyProfile(e) {
+  e.preventDefault();
+  const data = {
+    registeredName: getVal('comp-registeredName'),
+    tradingName: getVal('comp-tradingName'),
+    companyNumber: getVal('comp-companyNumber'),
+    operatorsLicenceNumber: getVal('comp-licenceNumber'),
+    address: {
+      line1: getVal('comp-addr1'),
+      line2: getVal('comp-addr2'),
+      city: getVal('comp-city'),
+      postcode: getVal('comp-postcode')
+    },
+    contactName: getVal('comp-contactName'),
+    telephone: getVal('comp-phone'),
+    email: getVal('comp-email'),
+    invoiceContactName: getVal('comp-invoiceContact'),
+    invoiceEmail: getVal('comp-invoiceEmail'),
+    invoiceTelephone: getVal('comp-invoicePhone'),
+    trafficCommissionerArea: getVal('comp-tcArea'),
+    notes: getVal('comp-notes'),
+    updatedAt: new Date()
+  };
+
+  try {
+    await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'profile'), data);
+    showToast('Company profile saved ✅');
+  } catch (err) {
+    console.error('Error saving profile:', err);
+    showToast('Error saving profile ❌', 'error');
+  }
+}
+
+// Helper function shortcut
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined) el.value = val;
+}
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+// ========== CHECKLIST EDITOR (DVSA COMPLIANT) ==========
+const DEFAULT_CHECKLIST_ITEMS = [
+  { category: "Vehicle Exterior", items: [
+    "Body — condition, secure, no sharp edges",
+    "Windscreen — clear, no damage, washers/wipers work",
+    "Mirrors — all present, clean, correctly adjusted",
+    "Lights & indicators — all working, lenses clean and intact",
+    "Number plates — secure, clean, correct, visible",
+    "Tyres — condition, pressure, tread depth above 1.6mm",
+    "Wheels — secure, no damage, no leaks",
+    "Wheel nuts — present and secure",
+    "Fuel caps — fitted and secure",
+    "Windows — intact, no cracks"
+  ]},
+  { category: "Vehicle Underside", items: [
+    "Exhaust — secure, no excessive smoke",
+    "Suspension — no leaks, no damage, components secure",
+    "Steering — no play, no fluid leaks",
+    "Brake lines & hoses — secure, no leaks or chafing"
+  ]},
+  { category: "Brakes & Systems", items: [
+    "Service brake — operates correctly",
+    "Secondary brake — operates correctly",
+    "Parking brake — holds vehicle on gradient",
+    "Brake fluid — correct level, no leaks",
+    "Air pressure — builds correctly, holds pressure",
+    "ABS warning lamp — not showing fault"
+  ]},
+  { category: "Fluid Levels & Engine", items: [
+    "Engine oil — correct level",
+    "Coolant — correct level",
+    "Screen wash — correct level",
+    "AdBlue — correct level (if fitted)",
+    "Engine bay — no fluid leaks, caps secure",
+    "Battery — secure, terminals clean"
+  ]},
+  { category: "Coupling & Trailer", items: [
+    "Fifth wheel — secure, lubricated, locking mechanism working",
+    "Air lines — connected correctly, no leaks, not chafing",
+    "Electrical connections — secure, all lights working",
+    "Breakaway cable — attached correctly",
+    "Trailer landing legs — fully raised and secured",
+    "Kingpin — secure and undamaged"
+  ]},
+  { category: "Load & Security", items: [
+    "Load — secure and appropriately distributed",
+    "Curtains / Doors — closed, secured, fasteners intact",
+    "Roof — secure if fitted",
+    "Tail lift — stowed correctly and secure",
+    "Hazard warning plates — displayed if applicable"
+  ]},
+  { category: "Emergency Equipment", items: [
+    "Fire extinguisher — present, accessible, in date",
+    "Warning triangle — present",
+    "First aid kit — present and complete",
+    "Wheel chocks — present",
+    "Spare bulbs — recommended"
+  ]},
+  { category: "Cab & Interior", items: [
+    "Seats & seatbelts — secure, operate correctly, no damage",
+    "Horns — working",
+    "Speedometer — working correctly",
+    "Tachograph — calibrated, working, chart/ card in use",
+    "Handbrake warning — illuminates correctly",
+    "Oil pressure / warning lights — operating correctly",
+    "All controls — operate smoothly and correctly",
+    "Doors — open, close and secure properly"
+  ]}
+];
+
+function renderChecklistEditorPage() {
+  if (!currentUser || currentUserRole !== 'company') return renderAccessDenied();
+  
+  return `
+    <div class="page-header">
+      <h2>📋 Walkaround Checklist Editor</h2>
+    </div>
+    <div class="card">
+      <p class="text-muted">Edit your DVSA-compliant walkaround checklists. Drivers will use this list for daily checks.</p>
+      <button class="btn secondary" onclick="resetChecklist()">↩️ Reset to DVSA Standard</button>
+    </div>
+    <div class="card">
+      <div id="checklist-editor-content">
+        <p>Loading checklist...</p>
+      </div>
+    </div>
+  `;
+}
+
+async function loadChecklistEditor() {
+  if (!currentUser) return;
+  try {
+    const docRef = doc(db, 'companies', currentUser.uid, 'settings', 'checklist');
+    const snap = await getDoc(docRef);
+    let checklist = DEFAULT_CHECKLIST_ITEMS;
+    
+    if (snap.exists() && snap.data().structure) {
+      checklist = snap.data().structure;
+    }
+    
+    renderChecklistEditorUI(checklist);
+  } catch (err) {
+    console.error('Loading checklist:', err);
+    renderChecklistEditorUI(DEFAULT_CHECKLIST_ITEMS);
+  }
+}
+
+function renderChecklistEditorUI(categories) {
+  const container = document.getElementById('checklist-editor-content');
+  container.innerHTML = `
+    ${categories.map((cat, catIdx) => `
+      <div class="checklist-category card" data-cat-index="${catIdx}">
+        <div class="category-header" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleCategory(${catIdx})">
+          <h4>📁 ${cat.category}</h4>
+          <span>▼</span>
+        </div>
+        <div class="category-body" id="cat-body-${catIdx}">
+          <div style="margin:8px 0">
+            <input type="text" value="${cat.category}" onchange="updateCategoryName(${catIdx}, this.value)" style="font-weight:bold; width:100%;padding:6px;">
+            <button class="btn small danger" style="margin-left:8px" onclick="deleteCategory(${catIdx})">Delete Category</button>
+          </div>
+          <ul id="cat-items-${catIdx}" style="list-style:none;padding-left:0;margin-top:10px">
+            ${cat.items.map((item, itemIdx) => `
+              <li class="checklist-item" style="padding:6px 0;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px" data-item-index="${itemIdx}">
+                <span style="cursor:grab">⋮⋮</span>
+                <input type="text" value="${item}" style="flex:1;padding:4px" onchange="updateItem(${catIdx}, ${itemIdx}, this.value)">
+                <button class="btn small danger" onclick="deleteItem(${catIdx}, ${itemIdx})">✕</button>
+              </li>
+            `).join('')}
+          </ul>
+          <button class="btn small" style="margin-top:8px" onclick="addItem(${catIdx})">+ Add Check Item</button>
+        </div>
+      </div>
+    `).join('')}
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn secondary" onclick="addCategory()">+ Add New Category</button>
+      <button class="btn primary" onclick="saveChecklist()">💾 Save Checklist</button>
+    </div>
+  `;
+}
+
+let currentChecklistData = [];
+
+async function getChecklistData() {
+  try {
+    const docRef = doc(db, 'companies', currentUser.uid, 'settings', 'checklist');
+    const snap = await getDoc(docRef);
+    if (snap.exists() && snap.data().structure) return snap.data().structure;
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+}
+
+async function updateCategoryName(idx, newName) {
+  currentChecklistData = await getChecklistData();
+  currentChecklistData[idx].category = newName;
+}
+
+async function deleteCategory(idx) {
+  if (!confirm('Delete this entire category and all its items?')) return;
+  currentChecklistData = await getChecklistData();
+  currentChecklistData.splice(idx, 1);
+  renderChecklistEditorUI(currentChecklistData);
+}
+
+async function addCategory() {
+  currentChecklistData = await getChecklistData();
+  currentChecklistData.push({ category: "New Category", items: ["New check item"] });
+  renderChecklistEditorUI(currentChecklistData);
+}
+
+async function updateItem(catIdx, itemIdx, value) {
+  currentChecklistData = await getChecklistData();
+  currentChecklistData[catIdx].items[itemIdx] = value;
+}
+
+async function deleteItem(catIdx, itemIdx) {
+  currentChecklistData = await getChecklistData();
+  currentChecklistData[catIdx].items.splice(itemIdx, 1);
+  renderChecklistEditorUI(currentChecklistData);
+}
+
+async function addItem(catIdx) {
+  currentChecklistData = await getChecklistData();
+  currentChecklistData[catIdx].items.push("New check item");
+  renderChecklistEditorUI(currentChecklistData);
+}
+
+function toggleCategory(idx) {
+  const body = document.getElementById(`cat-body-${idx}`);
+  if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveChecklist() {
+  try {
+    await setDoc(doc(db, 'companies', currentUser.uid, 'settings', 'checklist'), {
+      structure: currentChecklistData,
+      updatedAt: new Date()
+    });
+    showToast('Checklist saved ✅');
+  } catch (err) {
+    showToast('Error saving checklist ❌', 'error');
+  }
+}
+
+async function resetChecklist() {
+  if (!confirm('Reset to the standard DVSA checklist? Your custom changes will be lost.')) return;
+  currentChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+  renderChecklistEditorUI(currentChecklistData);
+  showToast('Reset — click Save to confirm ✅');
+}
+
+// ========== DRIVER WALMAROUND CHECK ==========
+function renderDriverCheckPage() {
+  if (!currentUser || currentUserRole !== 'driver') return renderAccessDenied();
+  
+  return `
+    <div class="page-header">
+      <h2>🚛 Daily Walkaround Check</h2>
+    </div>
+
+    <div class="card">
+      <h3>Select Vehicle & Trailer</h3>
+      <div class="form-group">
+        <label>Check Type</label>
+        <select id="check-type" onchange="updateCheckOptions()">
+          <option value="vehicle">Vehicle Only</option>
+          <option value="both">Vehicle + Trailer</option>
+          <option value="trailer">Trailer Only</option>
+        </select>
+      </div>
+      <div class="form-group" id="vehicle-select-group">
+        <label>Select Vehicle</label>
+        <select id="selected-vehicle">
+          <option value="">Loading vehicles...</option>
+        </select>
+      </div>
+      <div class="form-group" id="trailer-select-group" style="display:none">
+        <label>Select Trailer</label>
+        <select id="selected-trailer">
+          <option value="">Loading trailers...</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Daily Safety Check</h3>
+      <p class="text-muted">Complete all checks below. Report any defects immediately.</p>
+      <div id="checklist-display">
+        <p>Loading checklist...</p>
+      </div>
+    </div>
+  `;
+}
+
+async function loadDriverCheckData() {
+  await loadVehicleOptions();
+  await loadTrailerOptions();
+  await loadDriverChecklist();
+}
+
+async function loadVehicleOptions() {
+  try {
+    const qry = query(collection(db, 'companyVehicles'), where('active', '!=', false));
+    const snap = await getDocs(qry);
+    const vehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    const select = document.getElementById('selected-vehicle');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Select Vehicle --</option>' +
+      vehicles.map(v => `<option value="${v.id}">${v.registration} — ${v.make} ${v.model}</option>`).join('');
+  } catch (err) {
+    console.error('Vehicles load error:', err);
+  }
+}
+
+async function loadTrailerOptions() {
+  try {
+    const qry = query(collection(db, 'companyTrailers'), where('active', '!=', false));
+    const snap = await getDocs(qry);
+    const trailers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    const select = document.getElementById('selected-trailer');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Select Trailer --</option>' +
+      trailers.map(t => `<option value="${t.id}">${t.trailerNumber} — ${t.registration || t.type}</option>`).join('');
+  } catch (err) {
+    console.error('Trailers load error:', err);
+  }
+}
+
+function updateCheckOptions() {
+  const type = document.getElementById('check-type').value;
+  document.getElementById('vehicle-select-group').style.display = (type === 'trailer') ? 'none' : 'block';
+  document.getElementById('trailer-select-group').style.display = (type === 'trailer' || type === 'both') ? 'block' : 'none';
+}
+
+async function loadDriverChecklist() {
+  try {
+    let checklist = DEFAULT_CHECKLIST_ITEMS;
+    const snapshot = await getDocs(collection(db, 'companies'));
+    for (const comp of snapshot.docs) {
+      try {
+        const checkDoc = await getDoc(doc(db, 'companies', comp.id, 'settings', 'checklist'));
+        if (checkDoc.exists() && checkDoc.data().structure) {
+          checklist = checkDoc.data().structure;
+          break;
+        }
+      } catch (e) {}
+    }
+    renderDriverChecklistUI(checklist);
+  } catch (err) {
+    renderDriverChecklistUI(DEFAULT_CHECKLIST_ITEMS);
+  }
+}
+
+function renderDriverChecklistUI(categories) {
+  const container = document.getElementById('checklist-display');
+  container.innerHTML = `
+    <form id="walkaround-form" onsubmit="submitCheck(event)">
+      ${categories.map((cat, catIdx) => `
+        <div class="checklist-category" style="margin-bottom:20px">
+          <h4 style="background:var(--primary-light);padding:8px;border-radius:4px">${cat.category}</h4>
+          <ul style="list-style:none;padding:8px 12px">
+            ${cat.items.map((item, itemIdx) => {
+              const inputId = `check-${catIdx}-${itemIdx}`;
+              return `
+                <li style="padding:6px 0;border-bottom:1px solid #eee">
+                  <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+                    <input type="radio" name="${inputId}" value="pass" id="${inputId}-pass" required>
+                    <label for="${inputId}-pass" style="margin:0">✅ Satisfactory</label>
+                    <input type="radio" name="${inputId}" value="fail" id="${inputId}-fail">
+                    <label for="${inputId}-fail" style="margin:0">⚠️ Defect Found</label>
+                    <span style="flex:1"></span>
+                    <input type="text" id="${inputId}-note" placeholder="Notes if needed..." style="max-width:200px;padding:4px;font-size:0.9em">
+                  </div>
+                  <div style="margin-left:28px;margin-top:4px;display:none" id="note-wrap-${inputId}">
+                    <textarea id="${inputId}-defect" placeholder="Describe the defect..." style="width:100%;margin-top:4px"></textarea>
+                  </div>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+        </div>
+      `).join('')}
+      
+      <div class="form-group">
+        <label>General Remarks / Other Issues</label>
+        <textarea id="check-remarks" rows="3" placeholder="Any other comments or issues..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Driver Name</label>
+        <input type="text" id="driver-sign-name" value="${currentUser?.displayName || ''}" required>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn primary">✅ Submit Completed Check</button>
+      </div>
+    </form>
+  `;
+  
+  // Toggle defect note visibility
+  categories.forEach((cat, catIdx) => {
+    cat.items.forEach((item, itemIdx) => {
+      const baseId = `check-${catIdx}-${itemIdx}`;
+      const pass = document.getElementById(`${baseId}-pass`);
+      const fail = document.getElementById(`${baseId}-fail`);
+      const noteWrap = document.getElementById(`note-wrap-${baseId}`);
+      
+      if (pass && fail && noteWrap) {
+        pass.addEventListener('change', () => noteWrap.style.display = 'none');
+        fail.addEventListener('change', () => noteWrap.style.display = 'block');
+      }
+    });
+  });
+}
+
+async function submitCheck(e) {
+  e.preventDefault();
+  
+  const checkType = document.getElementById('check-type').value;
+  const vehicleId = (checkType !== 'trailer') ? document.getElementById('selected-vehicle')?.value : null;
+  const trailerId = (checkType !== 'vehicle') ? document.getElementById('selected-trailer')?.value : null;
+  
+  if ((checkType !== 'trailer' && !vehicleId) || ((checkType === 'both' || checkType === 'trailer') && !trailerId)) {
+    showToast('Please select vehicle/trailer ❌', 'error');
+    return;
+  }
+  
+  const results = {
+    checkType,
+    vehicleId: vehicleId || null,
+    trailerId: trailerId || null,
+    driverId: currentUser.uid,
+    driverName: document.getElementById('driver-sign-name').value,
+    date: new Date(),
+    remarks: document.getElementById('check-remarks').value,
+    items: [],
+    overallResult: 'pass'
+  };
+  
+  const categories = DEFAULT_CHECKLIST_ITEMS;
+  categories.forEach((cat, catIdx) => {
+    cat.items.forEach((item, itemIdx) => {
+      const baseId = `check-${catIdx}-${itemIdx}`;
+      const sel = document.querySelector(`input[name="${baseId}"]:checked`);
+      const noteEl = document.getElementById(`${baseId}-defect`);
+      const status = sel ? sel.value : 'pending';
+      
+      if (status === 'fail') results.overallResult = 'fail';
+      
+      results.items.push({
+        category: cat.category,
+        item: item,
+        status: status,
+        note: noteEl ? noteEl.value : ''
+      });
+    });
+  });
+  
+  try {
+    await addDoc(collection(db, 'walkaroundChecks'), results);
+    showModal(`
+      <h3>✅ Check Submitted</h3>
+      <p>Your daily check has been recorded.</p>
+      <p><strong>Result:</strong> ${results.overallResult === 'pass' ? 'All checks satisfactory' : '⚠️ Defects reported — please inform your transport manager immediately'}</p>
+      <p><strong>Date/Time:</strong> ${new Date().toLocaleString()}</p>
+      <button class="btn primary" onclick="closeModal()">OK</button>
+    `);
+  } catch (err) {
+    showToast('Error submitting check ❌', 'error');
+  }
+}
+
+// ========== INVOICING & BILLING ==========
+let invoiceCounter = 0;
+
+async function getNextInvoiceNumber() {
+  const counterRef = doc(db, 'counters', 'invoices');
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(counterRef);
+      if (!snap.exists()) {
+        tx.set(counterRef, { lastNumber: 1 });
+        invoiceCounter = 1;
+      } else {
+        const last = snap.data().lastNumber + 1;
+        tx.update(counterRef, { lastNumber: last });
+        invoiceCounter = last;
+      }
+    });
+  } catch (e) {
+    invoiceCounter += 1;
+  }
+  return `LSDSA-${String(invoiceCounter).padStart(6, '0')}`;
+}
+
+// ========== PAGE NAVIGATION & INIT ==========
+window.showPage = function(pageId) {
+  currentPage = pageId;
+  const app = document.getElementById('app');
+  
+  if (!currentUser && !['login','register','reset'].includes(pageId)) {
+    return showPage('login');
+  }
+  
+  // Hide mobile menu
+  const menu = document.getElementById('mobile-menu');
+  if (menu) menu.classList.remove('open');
+  
+  switch(pageId) {
+    case 'dashboard':
+      app.innerHTML = renderDashboardPage();
+      break;
+    case 'vehicles':
+      if (currentUserRole !== 'company') return showPage('dashboard');
+      app.innerHTML = renderVehiclesPage();
+      loadVehicles();
+      loadTrailers();
+      break;
+    case 'drivers':
+      if (currentUserRole !== 'company') return showPage('dashboard');
+      app.innerHTML = renderDriversPage();
+      loadCompanyDrivers();
+      break;
+    case 'company-profile':
+      if (currentUserRole !== 'company') return showPage('dashboard');
+      app.innerHTML = renderCompanyProfilePage();
+      loadCompanyProfile();
+      break;
+    case 'checklist-editor':
+      if (currentUserRole !== 'company') return showPage('dashboard');
+      app.innerHTML = renderChecklistEditorPage();
+      setTimeout(loadChecklistEditor, 50);
+      break;
+    case 'driver-check':
+      if (currentUserRole !== 'driver') return showPage('dashboard');
+      app.innerHTML = renderDriverCheckPage();
+      setTimeout(loadDriverCheckData, 50);
+      break;
+    case 'jobs':
+      app.innerHTML = renderJobsPage();
+      break;
+    case 'profile':
+      app.innerHTML = renderProfilePage();
+      loadProfileData();
+      break;
+    case 'login':
+      app.innerHTML = renderLoginPage();
+      break;
+    case 'register':
+      app.innerHTML = renderRegisterPage();
+      break;
+    case 'reset':
+      app.innerHTML = renderResetPage();
+      break;
+    default:
+      app.innerHTML = renderDashboardPage();
+  }
+};
+
+// Global helpers
+window.showToast = function(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 4000);
+};
+
+window.showModal = function(content) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.id = 'modal-backdrop';
+  backdrop.onclick = (e) => { if (e.target === backdrop) closeModal(); };
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = content;
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+};
+
+window.closeModal = function() {
+  const b = document.getElementById('modal-backdrop');
+  if (b) b.remove();
+};
+
+window.formatDate = function(d) {
+  if (!d) return '—';
+  const dt = d instanceof Date ? d : d.toDate ? d.toDate() : new Date(d);
+  return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+};
+
+window.toggleMobileMenu = function() {
+  const m = document.getElementById('mobile-menu');
+  if (m) m.classList.toggle('open');
+};
+
+// Expose globally
+window.saveVehicle = saveVehicle;
+window.saveTrailer = saveTrailer;
+window.showAddVehicleModal = showAddVehicleModal;
+window.showAddTrailerModal = showAddTrailerModal;
+window.toggleVehicleActive = toggleVehicleActive;
+window.toggleTrailerActive = toggleTrailerActive;
+window.viewDriverDocs = viewDriverDocs;
+window.removeDriver = removeDriver;
+window.saveCompanyProfile = saveCompanyProfile;
+window.resetChecklist = resetChecklist;
+window.addCategory = addCategory;
+window.addItem = addItem;
+window.updateItem = updateItem;
+window.deleteItem = deleteItem;
+window.updateCategoryName = updateCategoryName;
+window.deleteCategory = deleteCategory;
+window.toggleCategory = toggleCategory;
+window.saveChecklist = saveChecklist;
+window.updateCheckOptions = updateCheckOptions;
+window.submitCheck = submitCheck;
+
+console.log('✅ LSD Solutions App Loaded — Ready');
 </script>
-
 </body>
 </html>
-
-      
