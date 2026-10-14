@@ -7,23 +7,9 @@
   <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <style>
-  .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.calendar-header button { padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; }
-.calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 0.5rem; }
-.calendar-weekdays span { text-align: center; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.calendar-day { 
-  padding: 0.75rem 0.25rem; 
-  text-align: center; 
-  border-radius: 4px; 
-  background: var(--primary-light); 
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.calendar-day.today { background: var(--accent); color: white; font-weight: bold; }
-.calendar-day.empty { background: transparent; }
+    /* ======================================
+       GLOBAL STYLES
+       ====================================== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
       --primary: #1a365d;
@@ -68,7 +54,7 @@
     input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 15px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .form-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+    .form-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; flex-wrap: wrap; }
     
     /* Buttons */
     .btn { padding: 10px 20px; border: none; border-radius: 4px; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; text-decoration: none; display: inline-block; text-align: center; }
@@ -106,6 +92,44 @@
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast.success { background: var(--success); }
     .toast.error { background: var(--danger); }
+    
+    /* Calendar Styles */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .calendar-header button { padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 0.5rem; }
+    .calendar-weekdays span { text-align: center; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .calendar-day { 
+      padding: 0.75rem 0.25rem; 
+      text-align: center; 
+      border-radius: 4px; 
+      background: var(--primary-light); 
+      min-height: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .calendar-day:hover { filter: brightness(0.95); }
+    .calendar-day.today { background: var(--accent); color: white; font-weight: bold; }
+    .calendar-day.empty { background: transparent; cursor: default; }
+    
+    /* Calendar Status Colors */
+    .status-undefined { background: #f0f0f0; }
+    .status-available { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-booked { background: #cce5ff; color: #004085; }
+    .status-unavailable { background: #f8d7da; color: #721c24; }
+    .status-pending-approval { background: #fff3cd; color: #856404; }
+    .status-holiday-approved { background: #d4edda; color: #155724; }
+    .status-holiday-rejected { background: #f8d7da; color: #721c24; }
+    
+    /* Calendar Legend */
+    .calendar-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
     
     /* Checklist */
     .checklist-category { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -150,7 +174,7 @@
       <span style="color:white;font-weight:600">🚛 LSD Solutions</span>
       <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
       <div class="nav-links" id="nav-links">
-        <a href="#" onclick="showPage('auth-page');return false;" id="nav-auth" style="display:block;">Sign In</a>
+        <a href="#" onclick="showPage('auth-page');return false;" id="nav-auth">Sign In</a>
         <a href="#" onclick="showPage('driver-portal-page');return false;" id="nav-driver" style="display:none;">Driver Portal</a>
         <a href="#" onclick="showPage('company-portal-page');return false;" id="nav-company" style="display:none;">Company Portal</a>
         <a href="#" onclick="showPage('reset-page');return false;" id="nav-reset" style="display:none;">Reset Password</a>
@@ -170,7 +194,7 @@
   </div>
 
   <main class="app-container">
-      <!-- ====================================== -->
+    <!-- ====================================== -->
     <!-- AUTH PAGE — Sign In / Register         -->
     <!-- ====================================== -->
     <div id="auth-page" class="page">
@@ -251,79 +275,149 @@
         </div>
       </div>
     </div>
-
-    <!-- ====================================== -->
+        <!-- ====================================== -->
     <!-- DRIVER PORTAL PAGE                      -->
     <!-- ====================================== -->
     <div id="driver-portal-page" class="page">
-      <div id="driver-dashboard"></div>
-      
-      <!-- Profile Page -->
+      <div class="card">
+        <div class="page-header">
+          <h2>🚛 Driver Portal</h2>
+        </div>
+        <p id="driver-greeting" class="text-muted">Loading...</p>
+      </div>
+
+      <!-- Driver Dashboard Buttons -->
+      <div class="card">
+        <h3>Quick Access</h3>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-profile-page'); loadDriverProfile();">
+            👤 My Profile
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-calendar-page'); loadDriverCalendar();">
+            📅 My Calendar
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-documents-page'); loadDriverDocuments();">
+            📁 My Documents
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-checklist-page'); loadDriverChecklist();">
+            ✅ Walkaround Check
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('driver-work-page'); loadDriverWork();">
+            📋 Posted Work
+          </button>
+        </div>
+      </div>
+
+      <!-- Driver Profile Page -->
       <div id="driver-profile-page" style="display:none">
         <div class="page-header">
           <h2>👤 My Profile</h2>
-          <button class="btn secondary" onclick="showWalkaroundChecklist()">← Back</button>
+          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
         </div>
         <div class="card">
           <form onsubmit="saveDriverProfile(event)">
             <div class="form-group">
-              <label>Full Name</label>
+              <label for="profile-name">Full Name</label>
               <input type="text" id="profile-name" required>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Email</label>
+                <label for="profile-email">Email</label>
                 <input type="email" id="profile-email" readonly>
               </div>
               <div class="form-group">
-                <label>Phone</label>
+                <label for="profile-phone">Phone Number</label>
                 <input type="tel" id="profile-phone">
               </div>
             </div>
             <div class="form-group">
-              <label>Driving Licence Number</label>
+              <label for="profile-licence-number">Driving Licence Number</label>
               <input type="text" id="profile-licence-number">
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Licence Valid From</label>
+                <label for="profile-valid-from">Licence Valid From</label>
                 <input type="date" id="profile-valid-from">
               </div>
               <div class="form-group">
-                <label>Licence Expiry Date</label>
+                <label for="profile-expiry-date">Licence Expiry Date</label>
                 <input type="date" id="profile-expiry-date">
               </div>
             </div>
             <div class="form-group">
-              <label>Medical Certificate Expiry</label>
+              <label for="profile-medical-expiry">Medical Certificate Expiry</label>
               <input type="date" id="profile-medical-expiry">
             </div>
             <div class="form-group">
-              <label>Penalty Points</label>
-              <input type="number" id="profile-points" value="0" min="0">
+              <label for="profile-points">Penalty Points</label>
+              <input type="number" id="profile-points" value="0" min="0" max="12">
             </div>
             <div class="form-group">
-              <label>Notes</label>
+              <label for="profile-notes">Notes</label>
               <textarea id="profile-notes" rows="3"></textarea>
             </div>
             <div class="form-actions">
               <button type="button" class="btn secondary" onclick="showPage('driver-portal-page')">Cancel</button>
-              <button type="submit" class="btn primary">Save Profile</button>
+              <button type="submit" class="btn primary">💾 Save Profile</button>
             </div>
           </form>
         </div>
       </div>
-      
-      <!-- Calendar Page -->
+
+      <!-- Driver Calendar Page -->
       <div id="driver-calendar-page" style="display:none">
         <div class="page-header">
           <h2>📅 My Schedule</h2>
           <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
         </div>
-        <div id="calendar-content"></div>
+        <div class="card">
+          <div class="calendar-header">
+            <button onclick="changeMonth(-1)">◀ Prev</button>
+            <h3 id="calendar-month-year" style="margin:0">Month Year</h3>
+            <button onclick="changeMonth(1)">Next ▶</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="legend-dot status-available"></span> Available</span>
+            <span class="legend-item"><span class="legend-dot status-pending"></span> Pending</span>
+            <span class="legend-item"><span class="legend-dot status-booked"></span> Booked</span>
+            <span class="legend-item"><span class="legend-dot status-unavailable"></span> Unavailable</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>📝 Holiday / Time-Off Request</h3>
+          <form onsubmit="submitHolidayRequest(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start Date *</label>
+                <input type="date" id="holiday-start" required>
+              </div>
+              <div class="form-group">
+                <label>End Date *</label>
+                <input type="date" id="holiday-end" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Notes (optional)</label>
+              <textarea id="holiday-notes" rows="2" placeholder="Reason or additional info..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn primary">🏖️ Submit Request</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h3>📋 My Requests</h3>
+          <div id="holiday-requests-list">
+            <p class="text-muted">Loading requests...</p>
+          </div>
+        </div>
       </div>
-      
-      <!-- Documents Page -->
+
+      <!-- Driver Documents Page -->
       <div id="driver-documents-page" style="display:none">
         <div class="page-header">
           <h2>📁 My Documents</h2>
@@ -332,11 +426,11 @@
         <div class="card">
           <form onsubmit="uploadDriverDocument(event)">
             <div class="form-group">
-              <label>Document Name</label>
+              <label for="document-name">Document Name *</label>
               <input type="text" id="document-name" placeholder="e.g. Driving Licence" required>
             </div>
             <div class="form-group">
-              <label>Select File</label>
+              <label for="document-file">Select File *</label>
               <input type="file" id="document-file" accept=".pdf,.jpg,.jpeg,.png" required>
             </div>
             <div class="form-actions">
@@ -347,12 +441,12 @@
         <div class="card">
           <h3>Uploaded Documents</h3>
           <div id="documents-list">
-            <p class="text-muted">Loading documents...</p>
+            <p class="text-muted">No documents uploaded yet.</p>
           </div>
         </div>
       </div>
-      
-      <!-- Walkaround Checklist Page -->
+
+      <!-- Driver Checklist Page -->
       <div id="driver-checklist-page" style="display:none">
         <div class="page-header">
           <h2>✅ Daily Walkaround Check</h2>
@@ -361,37 +455,98 @@
         <div class="card">
           <div class="form-row">
             <div class="form-group">
-              <label>Vehicle Registration *</label>
+              <label for="checklist-vehiclereg">Vehicle Registration *</label>
               <input type="text" id="checklist-vehiclereg" placeholder="e.g. AB12 XYZ" required style="text-transform:uppercase">
             </div>
             <div class="form-group">
-              <label>Current Mileage *</label>
+              <label for="checklist-mileage">Current Mileage *</label>
               <input type="number" id="checklist-mileage" placeholder="Miles" required>
             </div>
+          </div>
+          <div class="form-group">
+            <label for="checklist-signature">Your Name / Signature *</label>
+            <input type="text" id="checklist-signature" placeholder="Enter your full name" required>
           </div>
         </div>
         <div class="card">
           <h3>Check Items</h3>
           <p class="text-muted">Select PASS or FAIL for each item. Add notes if reporting a defect.</p>
           <form id="checklist-form" onsubmit="event.preventDefault()">
-            <!-- Checklist items rendered dynamically by app.js -->
-            <p>Loading checklist...</p>
+            <p>Loading checklist items...</p>
           </form>
-        </div>
-        <div class="card">
-          <div class="form-actions">
-            <button class="btn secondary" onclick="showPage('driver-portal-page')">Cancel</button>
+          <div style="margin-top: 1.5rem;">
             <button class="btn primary" onclick="submitChecklist()">✅ Submit Check</button>
           </div>
         </div>
+        <div class="card">
+          <h3>📋 Recent Checks</h3>
+          <div id="checklist-history">
+            <p class="text-muted">Loading history...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Driver Posted Work Page -->
+      <div id="driver-work-page" style="display:none">
+        <div class="page-header">
+          <h2>📋 Posted Work</h2>
+          <button class="btn secondary" onclick="showPage('driver-portal-page')">← Back</button>
+        </div>
+        <div id="driver-work-list">
+          <p class="text-muted">Loading available jobs...</p>
+        </div>
       </div>
     </div>
-        <!-- ====================================== -->
+
+    <!-- ====================================== -->
     <!-- COMPANY PORTAL PAGE                    -->
     <!-- ====================================== -->
     <div id="company-portal-page" class="page">
-      <div id="company-dashboard"></div>
-      
+      <div class="card">
+        <div class="page-header">
+          <h2>🏢 Company Portal</h2>
+        </div>
+        <p id="company-greeting" class="text-muted">Loading...</p>
+      </div>
+
+      <!-- Company Dashboard Buttons -->
+      <div class="card">
+        <h3>Quick Access</h3>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <button class="btn primary" style="width: 100%;" onclick="showPage('posted-work-page'); loadCompanyWork();">
+            📋 Posted Work
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('company-drivers-page'); loadCompanyDrivers();">
+            👥 Employed Drivers
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('post-job-page');">
+            🚛 Post New Job
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('checklist-editor-page'); loadChecklistEditor();">
+            ✅ Checklist Editor
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('company-holidays-page'); loadHolidayRequests();">
+            🏖️ Holiday Requests
+          </button>
+        </div>
+      </div>
+
+      <!-- Company Stats Cards -->
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div class="card">
+          <h3>📊 Quick Stats</h3>
+          <p><strong>Active Jobs:</strong> <span id="stat-jobs">0</span></p>
+          <p><strong>Employed Drivers:</strong> <span id="stat-drivers">0</span></p>
+          <p><strong>Checklists Today:</strong> <span id="stat-checklists">0</span></p>
+        </div>
+        <div class="card">
+          <h3>🕐 Recent Activity</h3>
+          <div id="company-activity">
+            <p class="text-muted">Loading...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Posted Work Page -->
       <div id="posted-work-page" style="display:none">
         <div class="page-header">
@@ -402,69 +557,81 @@
           <p class="text-muted">Loading jobs...</p>
         </div>
       </div>
-      
+
       <!-- Post New Job Page -->
       <div id="post-job-page" style="display:none">
         <div class="page-header">
           <h2>🚛 Post New Job</h2>
-          <button class="btn secondary" onclick="showPostedWork()">← Back</button>
+          <button class="btn secondary" onclick="showPage('posted-work-page'); loadCompanyWork();">← Back</button>
         </div>
         <div class="card">
           <form id="post-job-form" onsubmit="postNewJob(event)">
             <div class="form-group">
-              <label>Job Title *</label>
+              <label for="job-title">Job Title *</label>
               <input type="text" id="job-title" placeholder="e.g. Glasgow — Manchester Return" required>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Location *</label>
-                <input type="text" id="job-location" placeholder="Pickup / Destination" required>
+                <label for="job-from">From Location *</label>
+                <input type="text" id="job-from" placeholder="Pickup location" required>
               </div>
               <div class="form-group">
-                <label>Date *</label>
+                <label for="job-to">To Location *</label>
+                <input type="text" id="job-to" placeholder="Destination" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="job-date">Job Date *</label>
                 <input type="date" id="job-date" required>
+              </div>
+              <div class="form-group">
+                <label for="job-pay">Pay (£) *</label>
+                <input type="number" id="job-pay" step="0.01" min="0" placeholder="0.00" required>
               </div>
             </div>
             <div class="form-group">
-              <label>Rate (£) *</label>
-              <input type="number" id="job-rate" step="0.01" min="0" placeholder="0.00" required>
-            </div>
-            <div class="form-group">
-              <label>Description / Additional Info</label>
-              <textarea id="job-description" rows="4" placeholder="Vehicle type, load details, special instructions..."></textarea>
+              <label for="job-desc">Description / Additional Info</label>
+              <textarea id="job-desc" rows="4" placeholder="Vehicle type, load details, special instructions..."></textarea>
             </div>
             <div class="form-actions">
-              <button type="button" class="btn secondary" onclick="showPostedWork()">Cancel</button>
+              <button type="button" class="btn secondary" onclick="showPage('company-portal-page')">Cancel</button>
               <button type="submit" class="btn primary">🚛 Post Job</button>
             </div>
           </form>
         </div>
       </div>
-      
-      <!-- Add Driver Page -->
-      <div id="add-driver-page" style="display:none">
+
+      <!-- Company Drivers Page -->
+      <div id="company-drivers-page" style="display:none">
         <div class="page-header">
-          <h2>👤 Add Employed Driver</h2>
+          <h2>👥 Employed Drivers</h2>
           <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
         </div>
         <div class="card">
-          <form id="add-driver-form" onsubmit="addEmployedDriver(event)">
+          <h3>Add New Driver</h3>
+          <form onsubmit="addEmployedDriver(event)">
             <div class="form-group">
-              <label>Driver's Email Address *</label>
-              <input type="email" id="driver-email-input" required>
+              <label for="new-driver-name">Driver Name *</label>
+              <input type="text" id="new-driver-name" required>
             </div>
             <div class="form-group">
-              <label>Driver's Full Name</label>
-              <input type="text" id="driver-name-input" placeholder="If not yet registered">
+              <label for="new-driver-email">Driver Email *</label>
+              <input type="email" id="new-driver-email" required>
             </div>
             <div class="form-actions">
               <button type="submit" class="btn primary">➕ Add Driver</button>
             </div>
-            <div id="add-driver-result" style="margin-top:16px"></div>
           </form>
         </div>
+        <div class="card">
+          <h3>Current Drivers</h3>
+          <div id="drivers-list">
+            <p class="text-muted">No drivers added yet.</p>
+          </div>
+        </div>
       </div>
-      
+
       <!-- Checklist Editor Page -->
       <div id="checklist-editor-page" style="display:none">
         <div class="page-header">
@@ -474,8 +641,44 @@
         <div class="card">
           <p class="text-muted">Customise your DVSA walkaround checklist. Changes apply to all drivers in your company.</p>
         </div>
-        <div id="checklist-editor-content">
-          <p>Loading checklist...</p>
+        <div class="card">
+          <h3>Add New Check Item</h3>
+          <div class="form-group">
+            <label>Item Label</label>
+            <input type="text" id="new-item-label" placeholder="e.g. Fifth Wheel Operation">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="new-item-category" placeholder="e.g. Trailer">
+          </div>
+          <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+            <input type="checkbox" id="new-item-required" checked> Required Item
+          </label>
+          <button class="btn primary" onclick="addChecklistItem()">➕ Add Item</button>
+        </div>
+        <div class="card">
+          <h3>Current Checklist Items</h3>
+          <div id="checklist-editor-list">
+            <p class="text-muted">Loading checklist...</p>
+          </div>
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button class="btn primary" onclick="saveChecklist()">💾 Save Changes</button>
+            <button class="btn secondary" onclick="resetChecklist()">↩️ Reset to DVSA Default</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holiday Requests Page -->
+      <div id="company-holidays-page" style="display:none">
+        <div class="page-header">
+          <h2>🏖️ Holiday Requests</h2>
+          <button class="btn secondary" onclick="showPage('company-portal-page')">← Back</button>
+        </div>
+        <div class="card">
+          <p class="text-muted">Review and manage driver holiday & time-off requests.</p>
+          <div id="holiday-list">
+            <p class="text-muted">Loading requests...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -498,7 +701,6 @@
 
   <!-- Auth Page Tab Switching -->
   <script>
-    // Simple tab switching for auth page
     document.addEventListener('DOMContentLoaded', () => {
       const tabSignin = document.getElementById('tab-signin');
       const tabRegister = document.getElementById('tab-register');
@@ -519,7 +721,26 @@
           if(registerForm) registerForm.style.display = 'block';
         };
       }
+      
+      // Show auth page by default
+      showPage('auth-page');
     });
+
+    // Global page switching
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      const target = document.getElementById(pageId);
+      if (target) target.style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+    window.showPage = showPage;
+
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('open');
+    }
+    window.toggleMobileMenu = toggleMobileMenu;
   </script>
 </body>
 </html>
