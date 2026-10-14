@@ -567,18 +567,64 @@ window.saveDriverProfile = async function() {
 };
 
 // ==================================================
-// 🔹 DRIVER PORTAL — CALENDAR
+// 📅 DRIVER PORTAL — CALENDAR
 // ==================================================
-window.showDriverCalendar = function() {
-  showPage('driver-calendar-page');
-  document.getElementById('calendar-content').innerHTML = `
-    <h3>My Schedule</h3>
-    <p style="color: #888; margin-bottom: 16px;">Coming soon — view your upcoming shifts and assignments</p>
-    <div style="background: var(--primary-light); padding: 20px; border-radius: 8px;">
-      <p>📅 Calendar feature is ready for your schedule data.<br>Assignments from your company will appear here once added.</p>
-    </div>
-  `;
-};
+function showDriverCalendarPage() {
+  const page = document.getElementById('driver-calendar-page');
+  const today = new Date();
+  let currentMonth = today.getMonth();
+  let currentYear = today.getFullYear();
+  
+  renderCalendar();
+  
+  function renderCalendar() {
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    let daysHTML = '';
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+      daysHTML += `<div class="calendar-day empty"></div>`;
+    }
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday = day === today.getDate() && 
+                      currentMonth === today.getMonth() && 
+                      currentYear === today.getFullYear();
+      daysHTML += `
+        <div class="calendar-day ${isToday ? 'today' : ''}" 
+             data-date="${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}">
+          ${day}
+        </div>
+      `;
+    }
+    
+    page.innerHTML = `
+      <div class="calendar-header">
+        <button onclick="changeMonth(-1)">◀</button>
+        <h3>${monthNames[currentMonth]} ${currentYear}</h3>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+        <span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="calendar-grid">${daysHTML}</div>
+    `;
+  }
+  
+  window.changeMonth = (delta) => {
+    currentMonth += delta;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    renderCalendar();
+  };
+}
 
 // ==================================================
 // 🔹 DRIVER PORTAL — DOCUMENTS
