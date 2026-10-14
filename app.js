@@ -2995,8 +2995,12 @@ window.recordInfringement = async function (event) {
     }
 
     // Mark for archive — 15 months + 10% = ~16.5 months
-    await ArchiveManager.markForArchive('companies', driverId, 'infringementReports', currentUserProfile.companyId);
-
+    await ArchiveManager.markForArchive(
+  `companies/${currentUserProfile.companyId}/infringements`,
+  docRef.id,
+  'infringementReports',
+  currentUserProfile.companyId
+);
     showToast('✅ Infringement recorded', 'success');
     event.target.reset();
     loadInfringementsList(currentUserProfile.companyId);
