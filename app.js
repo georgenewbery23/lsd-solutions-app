@@ -262,10 +262,45 @@ onAuthStateChanged(auth, async (user) => {
     accountType = 'company';
   }
 
+  // 🔧 FIX: If profile missing — offer to recover it
   if (!docSnap.exists()) {
-    alert('⚠️ Profile not found — please register again');
-    await auth.signOut();
-    return;
+    const proceed = confirm(
+      '⚠️ Account exists but profile not found in database.\n' +
+      'This usually happens if Firestore was locked during registration.\n\n' +
+      'Click OK to recover your account now.'
+    );
+    
+    if (!proceed) {
+      await signOut(auth);
+      showPage('auth-page');
+      return;
+    }
+
+    // Try to recover — ask which role they intended
+    const roleChoice = confirm(
+      'Are you logging in as a COMPANY?\n\n' +
+      'OK = Company\nCancel = Driver'
+    );
+    accountType = roleChoice ? 'company' : 'driver';
+    
+    // Get name from displayName or prompt
+    const name = user.displayName || 
+      prompt('Enter your full/business name:') || 
+      'Account Holder';
+
+    // ✅ Recreate the missing profile document
+    const collectionName = accountType === 'driver' ? 'drivers' : 'companies';
+    await setDoc(doc(db, collectionName, user.uid), {
+      name,
+      email: user.email,
+      role: accountType,
+      createdAt: serverTimestamp()
+    });
+
+    alert('✅ Account recovered! Welcome back.');
+    
+    // Refetch the newly created profile
+    docSnap = await getDoc(doc(db, collectionName, user.uid));
   }
 
   userProfile = { uid: user.uid, ...docSnap.data(), accountType };
