@@ -137,101 +137,94 @@ window.auth = auth;
 window.db = db;
 window.storage = storage;
 // ==================================================
-// 🔐 AUTHENTICATION FUNCTIONS
+// 🔐 AUTHENTICATION FUNCTIONS  🌐 EXPOSE ALL FUNCTIONS TO WINDOW — REQUIRED FOR onclick
 // ==================================================
 window.signIn = async function () {
   const email = document.getElementById('signin-email').value.trim();
   const password = document.getElementById('signin-password').value;
 
-  if (!Utils.Validators.email(email)) {
-    alert('❌ Please enter a valid email address');
-    return;
-  }
-  if (!Utils.Validators.password(password)) {
-    alert('❌ Password must be at least 6 characters');
+  if (!email || !password) {
+    alert('Please enter email and password');
     return;
   }
 
   try {
     const userCred = await signInWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
-
-    if (!user.emailVerified) {
-      alert('ℹ️ Please check your email to verify your account before signing in');
-      await auth.signOut();
-      return;
+    
+    // Get user role from Firestore
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      if (data.role === 'driver') {
+        showPage('driver-portal-page');
+      } else if (data.role === 'company') {
+        showPage('company-portal-page');
+      } else {
+        showPage('auth-page');
+        alert('Unknown user role — contact support');
+      }
     }
-
-    console.log('✅ Signed in:', user.uid);
   } catch (err) {
-    console.error('[Sign In Error]', err.code, err.message);
-    const messages = {
-      'auth/invalid-email': '❌ Invalid email address',
-      'auth/user-disabled': '❌ This account has been disabled',
-      'auth/user-not-found': '❌ No account found with this email — please register first',
-      'auth/wrong-password': '❌ Incorrect password',
-      'auth/too-many-requests': '❌ Too many attempts — please try again later',
-      'auth/network-request-failed': '❌ Network error — check your internet connection'
-    };
-    alert(messages[err.code] || '❌ Sign in failed: ' + err.message);
+    console.error(err);
+    alert('Sign in failed: ' + err.message);
   }
 };
 
-window.register = async function () {
-  const name = document.getElementById('register-name').value.trim();
-  const email = document.getElementById('register-email').value.trim();
-  const password = document.getElementById('register-password').value;
-  const confirm = document.getElementById('register-confirm').value;
-  const accountType = document.querySelector('input[name="account-type"]:checked')?.value;
+window.register = async function (role) {
+  const name = document.getElementById(`register-${role}-name`).value.trim();
+  const email = document.getElementById(`register-${role}-email`).value.trim();
+  const password = document.getElementById(`register-${role}-password`).value;
+  const confirm = document.getElementById(`register-${role}-confirm`).value;
 
-  if (!name) return alert('❌ Please enter your name');
-  if (!Utils.Validators.email(email)) return alert('❌ Please enter a valid email');
-  if (!Utils.Validators.password(password)) return alert('❌ Password must be at least 6 characters');
-  if (password !== confirm) return alert('❌ Passwords do not match');
-  if (!accountType) return alert('❌ Please select account type: Driver or Company');
+  if (!name || !email || !password) {
+    alert('Please fill in all fields');
+    return;
+  }
+  if (password !== confirm) {
+    alert('Passwords do not match');
+    return;
+  }
+  if (password.length < 6) {
+    alert('Password must be at least 6 characters');
+    return;
+  }
 
   try {
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
 
-    await sendEmailVerification(user);
-
-    const collectionName = accountType === 'driver' ? 'drivers' : 'companies';
-    const profileData = {
-      uid: user.uid,
+    // Store user profile
+    await setDoc(doc(db, 'users', user.uid), {
       name,
       email,
-      accountType,
+      role,
       createdAt: serverTimestamp()
-    };
+    });
 
-    await setDoc(doc(db, collectionName, user.uid), profileData);
-
-    // Initialise DVSA checklist for new companies
-    if (accountType === 'company') {
-      await initialiseCompanyChecklist(user.uid);
+    alert('Account created! Signing in...');
+    
+    if (role === 'driver') {
+      showPage('driver-portal-page');
+    } else {
+      showPage('company-portal-page');
     }
-
-    alert('✅ Account created! Please check your email to verify your account, then sign in.');
-    showPage('auth-page');
   } catch (err) {
-    console.error('[Register Error]', err.code, err.message);
-    const messages = {
-      'auth/email-already-in-use': '❌ This email is already registered — try signing in instead',
-      'auth/invalid-email': '❌ Invalid email address',
-      'auth/operation-not-allowed': '❌ Account creation is not enabled',
-      'auth/weak-password': '❌ Please use a stronger password (at least 6 characters)'
-    };
-    alert(messages[err.code] || '❌ Registration failed: ' + err.message);
+    console.error(err);
+    alert('Registration failed: ' + err.message);
   }
 };
 
 window.signOut = async function () {
-  if (confirm('Are you sure you want to sign out?')) {
-    await auth.signOut();
-    Utils.Storage.removeItem('userData');
-    showPage('auth-page');
-  }
+  await signOut(auth);
+  showPage('auth-page');
+};
+
+window.showPage = function (pageId) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  const el = document.getElementById(pageId);
+  if (el) el.style.display = 'block';
+  window.scrollTo(0, 0);
 };
 
 window.resetPassword = async function () {
