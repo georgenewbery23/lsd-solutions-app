@@ -103,6 +103,36 @@ function escapeHtml(text) {
 }
 window.escapeHtml = escapeHtml;
 
+// ===== MODAL SYSTEM =====
+let activeModal = null;
+
+window.showModal = function(content) {
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.id = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 10000; display: flex;
+    align-items: center; justify-content: center;
+  `;
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: white; padding: 24px; border-radius: 8px; max-width: 500px;
+    width: 90%; max-height: 90vh; overflow-y: auto;
+  `;
+  modal.innerHTML = content;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  activeModal = overlay;
+};
+
+window.closeModal = function() {
+  if (activeModal) {
+    activeModal.remove();
+    activeModal = null;
+  }
+};
+
 const Utils = {
   Storage: {
     get(key, defaultValue = null) {
@@ -184,12 +214,9 @@ window.Utils = Utils;
 // 🔹 NAVIGATION — SHOW/HIDE PAGES
 // ==================================================
 window.showPage = function(pageId) {
-  // Hide ALL pages first
   document.querySelectorAll('.page').forEach(page => {
     page.style.display = 'none';
   });
-
-  // Show only the requested page
   const target = document.getElementById(pageId);
   if (target) {
     target.style.display = 'block';
@@ -199,6 +226,462 @@ window.showPage = function(pageId) {
   }
 };
 
+// ==================================================
+// 🔹 CALENDAR SYSTEM — ENHANCED ROLE-BASED
+// ==================================================
+let calendarState = {
+  userId: null,
+  currentMonth: new Date().getMonth(),
+  currentYear: new Date().getFullYear(),
+  calendarData: {},
+  isCompanyView: false,
+  companyViewDriverId: null,
+  userRole: null,
+  companyId: null
+};
+
+const CAL_STATUS = {
+  UNDEFINED: 'undefined',
+  AVAILABLE: 'available',
+  PENDING: 'pending',
+  BOOKED: 'booked',
+  UNAVAILABLE: 'unavailable',
+  PENDING_APPROVAL: 'pending-approval',
+  HOLIDAY_APPROVED: 'holiday-approved',
+  HOLIDAY_REJECTED: 'holiday-rejected'
+};
+
+const STATUS_LABELS = {
+  undefined: '—',
+  available: '✅ Available',
+  pending: '⏳ Application Pending',
+  booked: '🔵 Booked',
+  unavailable: '🔴 Unavailable',
+  'pending-approval': '⏳ Pending Approval',
+  'holiday-approved': '🏖️ Holiday — Approved',
+  'holiday-rejected': '❌ Holiday — Rejected'
+};
+
+async function loadUserRole() {
+  if (!auth.currentUser) return;
+  try {
+    const userSnap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      calendarState.userRole = userData.userRole || 'self-employed';
+      calendarState.companyId = userData.companyId || null;
+    }
+  } catch (e) {
+    console.error('Error loading user role:', e);
+  }
+}
+
+function mapForCompanyView(driverStatus) {
+  return driverStatus === CAL_STATUS.AVAILABLE 
+    ? CAL_STATUS.AVAILABLE 
+    : CAL_STATUS.UNAVAILABLE;
+}
+
+window.showDriverCalendarPage = async function(viewingDriverId = null) {
+  calendarState.isCompanyView = !!viewingDriverId;
+  calendarState.companyViewDriverId = viewingDriverId;
+  
+  const page = document.getElementById('driver-calendar-page');
+  if (!page) return;
+  
+  const today = new Date();
+  calendarState.currentMonth = today.getMonth();
+  calendarState.currentYear = today.getFullYear();
+  calendarState.userId = viewingDriverId || auth.currentUser?.uid;
+  
+  if (!calendarState.isCompanyView) {
+    await loadUserRole();
+  }
+  
+  await loadCalendarData();
+  renderCalendar();
+};
+
+async function loadCalendarData() {
+  const targetUserId = calendarState.companyViewDriverId || auth.currentUser?.uid;
+  if (!targetUserId) return;
+  
+  calendarState.calendarData = {};
+  
+  try {
+    const availSnap = await getDoc(doc(db, 'driverAvailability', targetUserId));
+    if (availSnap.exists()) {
+      calendarState.calendarData = availSnap.data().dates || {};
+    }
+    
+    const userSnap = await getDoc(doc(db, 'users', targetUserId));
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    const isEmployee = userData.userRole === 'employee';
+    
+    if (!isEmployee) {
+      const appsQuery = query(
+        collection(db, 'jobApplications'),
+        where('driverUid', '==', targetUserId),
+        where('status', '==', 'pending')
+      );
+      const appsSnap = await getDocs(appsQuery);
+      appsSnap.forEach(doc => {
+        const app = doc.data();
+        if (app.jobDate) {
+          calendarState.calendarData[app.jobDate] = {
+            status: CAL_STATUS.PENDING,
+            jobId: app.jobId,
+            note: 'Application pending'
+          };
+        }
+      });
+      
+      const bookedQuery = query(
+        collection(db, 'jobApplications'),
+        where('driverUid', '==', targetUserId),
+        where('status', '==', 'accepted')
+      );
+      const bookedSnap = await getDocs(bookedQuery);
+      bookedSnap.forEach(doc => {
+        const booking = doc.data();
+        if (booking.jobDate) {
+          calendarState.calendarData[booking.jobDate] = {
+            status: CAL_STATUS.BOOKED,
+            jobId: booking.jobId,
+            note: booking.jobTitle || 'Confirmed Work'
+          };
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading calendar:', error);
+  }
+}
+
+function renderCalendar() {
+  const page = document.getElementById('driver-calendar-page');
+  if (!page) return;
+  
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  
+  const firstDay = new Date(calendarState.currentYear, calendarState.currentMonth, 1).getDay();
+  const daysInMonth = new Date(calendarState.currentYear, calendarState.currentMonth + 1, 0).getDate();
+  const todayStr = new Date().toISOString().split('T')[0];
+  
+  let daysHTML = '';
+  
+  for (let i = 0; i < firstDay; i++) {
+    daysHTML += `<div class="calendar-day empty"></div>`;
+  }
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${calendarState.currentYear}-${String(calendarState.currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    let dayData = calendarState.calendarData[dateStr] || { status: CAL_STATUS.UNDEFINED };
+    
+    const displayStatus = calendarState.isCompanyView 
+      ? mapForCompanyView(dayData.status)
+      : dayData.status;
+    
+    const isToday = dateStr === todayStr;
+    const hasNote = dayData.note && !calendarState.isCompanyView;
+    
+    daysHTML += `
+      <div class="calendar-day status-${displayStatus} ${isToday ? 'today' : ''}"
+           data-date="${dateStr}"
+           onclick="${calendarState.isCompanyView ? '' : `openDayMenu('${dateStr}')`}"
+           ${calendarState.isCompanyView ? 'style="cursor:default"' : ''}>
+        <span style="font-weight:500">${day}</span>
+        ${hasNote ? `<span style="font-size:9px;opacity:0.8">${escapeHtml(dayData.note.substring(0,8))}</span>` : ''}
+      </div>
+    `;
+  }
+  
+  let legendHTML = '';
+  if (!calendarState.isCompanyView) {
+    if (calendarState.userRole === 'employee') {
+      legendHTML = `
+        <div class="calendar-legend">
+          <span class="legend-item"><span class="legend-dot status-undefined"></span> Not Set</span>
+          <span class="legend-item"><span class="legend-dot status-pending-approval"></span> ⏳ Pending Approval</span>
+          <span class="legend-item"><span class="legend-dot status-holiday-approved"></span> 🏖️ Holiday Approved</span>
+        </div>
+      `;
+    } else {
+      legendHTML = `
+        <div class="calendar-legend">
+          <span class="legend-item"><span class="legend-dot status-undefined"></span> Not Set</span>
+          <span class="legend-item"><span class="legend-dot status-available"></span> ✅ Available</span>
+          <span class="legend-item"><span class="legend-dot status-pending"></span> ⏳ App Pending</span>
+          <span class="legend-item"><span class="legend-dot status-booked"></span> 🔵 Booked</span>
+          <span class="legend-item"><span class="legend-dot status-unavailable"></span> 🔴 Unavailable</span>
+        </div>
+      `;
+    }
+  } else {
+    legendHTML = `
+      <div class="calendar-legend">
+        <span class="legend-item"><span class="legend-dot status-available"></span> ✅ Available</span>
+        <span class="legend-item"><span class="legend-dot status-unavailable"></span> ❌ Unavailable</span>
+      </div>
+    `;
+  }
+  
+  page.innerHTML = `
+    <div class="calendar-header">
+      <button onclick="changeMonth(-1)">◀</button>
+      <h3>${monthNames[calendarState.currentMonth]} ${calendarState.currentYear}</h3>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+    <div class="calendar-weekdays">
+      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+      <span>Thu</span><span>Fri</span><span>Sat</span>
+    </div>
+    <div class="calendar-grid">${daysHTML}</div>
+    ${legendHTML}
+  `;
+}
+
+window.changeMonth = async function(delta) {
+  calendarState.currentMonth += delta;
+  if (calendarState.currentMonth > 11) { calendarState.currentMonth = 0; calendarState.currentYear++; }
+  if (calendarState.currentMonth < 0) { calendarState.currentMonth = 11; calendarState.currentYear--; }
+  await loadCalendarData();
+  renderCalendar();
+};
+
+function formatDateLong(dateStr) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+window.openDayMenu = function(dateStr) {
+  const current = calendarState.calendarData[dateStr] || { status: CAL_STATUS.UNDEFINED, note: '' };
+  
+  if (calendarState.userRole === 'employee') {
+    openEmployeeDayMenu(dateStr, current);
+  } else {
+    openSelfEmployedDayMenu(dateStr, current);
+  }
+};
+
+function openSelfEmployedDayMenu(dateStr, current) {
+  showModal(`
+    <h3>Set Availability — ${formatDateLong(dateStr)}</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:16px 0">
+      <label style="padding:8px;cursor:pointer;border-radius:4px;background:${current.status === CAL_STATUS.AVAILABLE ? '#d4edda' : 'transparent'}">
+        <input type="radio" name="status" value="${CAL_STATUS.AVAILABLE}" 
+          ${current.status === CAL_STATUS.AVAILABLE ? 'checked' : ''}> ✅ Available for work
+      </label>
+      <label style="padding:8px;cursor:pointer;border-radius:4px;background:${current.status === CAL_STATUS.UNAVAILABLE ? '#f8d7da' : 'transparent'}">
+        <input type="radio" name="status" value="${CAL_STATUS.UNAVAILABLE}" 
+          ${current.status === CAL_STATUS.UNAVAILABLE ? 'checked' : ''}> 🔴 Unavailable / Time Off
+      </label>
+      <label style="padding:8px;cursor:pointer;border-radius:4px;background:${current.status === CAL_STATUS.UNDEFINED ? '#eee' : 'transparent'}">
+        <input type="radio" name="status" value="${CAL_STATUS.UNDEFINED}" 
+          ${current.status === CAL_STATUS.UNDEFINED ? 'checked' : ''}> ⚪ Clear
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <input type="text" id="day-note" value="${escapeHtml(current.note || '')}" placeholder="e.g. Morning only">
+    </div>
+    <p class="text-sm">⏳ Pending & 🔵 Booked dates are updated automatically from job applications.</p>
+    <div class="form-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveDayStatus('${dateStr}')">Save</button>
+    </div>
+  `);
+}
+
+function openEmployeeDayMenu(dateStr, current) {
+  if (current.status === CAL_STATUS.HOLIDAY_APPROVED) {
+    showModal(`
+      <h3>🏖️ Holiday — Approved</h3>
+      <p>This date has already been approved as holiday. Contact your company to make changes.</p>
+      <div class="form-actions"><button class="btn primary" onclick="closeModal()">Close</button></div>
+    `);
+    return;
+  }
+  if (current.status === CAL_STATUS.PENDING_APPROVAL) {
+    showModal(`
+      <h3>⏳ Holiday Request — Pending Approval</h3>
+      <p>Your request is waiting for approval.</p>
+      <div class="form-actions">
+        <button class="btn secondary" onclick="cancelHolidayRequest('${dateStr}')">Cancel Request</button>
+        <button class="btn primary" onclick="closeModal()">Close</button>
+      </div>
+    `);
+    return;
+  }
+  
+  showModal(`
+    <h3>Request Holiday — ${formatDateLong(dateStr)}</h3>
+    <div class="form-group">
+      <label>Reason / Notes (optional)</label>
+      <textarea id="holiday-note" rows="3" placeholder="e.g. Annual leave, medical appointment..."></textarea>
+    </div>
+    <p class="text-sm">Your request will be sent to your manager for approval.</p>
+    <div class="form-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="submitHolidayRequest('${dateStr}')">Submit Request</button>
+    </div>
+  `);
+}
+
+window.saveDayStatus = async function(dateStr) {
+  const selected = document.querySelector('input[name="status"]:checked');
+  const note = document.getElementById('day-note')?.value?.trim() || '';
+  
+  if (!selected) { Utils.showToast('Please select a status', 'error'); return; }
+  
+  const existing = calendarState.calendarData[dateStr];
+  if (existing && (existing.status === CAL_STATUS.BOOKED || existing.status === CAL_STATUS.PENDING)) {
+    Utils.showToast('Cannot change — has pending or confirmed work', 'error');
+    closeModal();
+    return;
+  }
+  
+  try {
+    if (selected.value === CAL_STATUS.UNDEFINED) {
+      delete calendarState.calendarData[dateStr];
+    } else {
+      calendarState.calendarData[dateStr] = { 
+        status: selected.value, 
+        note: note, 
+        updatedAt: serverTimestamp() 
+      };
+    }
+    
+    const user = auth.currentUser;
+    if (user) {
+      await setDoc(doc(db, 'driverAvailability', user.uid), 
+        { dates: calendarState.calendarData }, { merge: true });
+    }
+    
+    closeModal();
+    renderCalendar();
+    Utils.showToast('✅ Status saved', 'success');
+  } catch (error) {
+    console.error('Error saving:', error);
+    Utils.showToast('Failed to save', 'error');
+  }
+};
+
+window.submitHolidayRequest = async function(dateStr) {
+  const user = auth.currentUser;
+  if (!user || !calendarState.companyId) return;
+  
+  const note = document.getElementById('holiday-note')?.value?.trim() || '';
+  
+  try {
+    const holidayRef = doc(db, 'driverAvailability', user.uid);
+    await setDoc(holidayRef, {
+      dates: {
+        ...calendarState.calendarData,
+        [dateStr]: {
+          status: CAL_STATUS.PENDING_APPROVAL,
+          note: note || 'Holiday request',
+          requestedAt: serverTimestamp()
+        }
+      }
+    }, { merge: true });
+    
+    await addDoc(collection(db, 'holidayRequests'), {
+      driverUid: user.uid,
+      companyId: calendarState.companyId,
+      date: dateStr,
+      note: note,
+      status: 'pending',
+      submittedAt: serverTimestamp()
+    });
+    
+    closeModal();
+    await loadCalendarData();
+    renderCalendar();
+    Utils.showToast('✅ Request submitted — pending approval', 'success');
+  } catch (error) {
+    console.error('Error submitting request:', error);
+    Utils.showToast('Failed to submit request', 'error');
+  }
+};
+
+window.cancelHolidayRequest = async function(dateStr) {
+  if (!confirm('Cancel this request?')) return;
+  const user = auth.currentUser;
+  if (!user) return;
+  
+  try {
+    delete calendarState.calendarData[dateStr];
+    await setDoc(doc(db, 'driverAvailability', user.uid), 
+      { dates: calendarState.calendarData }, { merge: true });
+    closeModal();
+    renderCalendar();
+    Utils.showToast('Request cancelled', 'info');
+  } catch (error) {
+    Utils.showToast('Failed to cancel', 'error');
+  }
+};
+
+window.approveHoliday = async function(driverId, dateStr, requestId) {
+  const companyId = auth.currentUser?.uid;
+  if (!companyId) return;
+  
+  try {
+    const driverData = calendarState.calendarData[dateStr] || {};
+    driverData.status = CAL_STATUS.HOLIDAY_APPROVED;
+    driverData.approvedAt = serverTimestamp();
+    driverData.approvedBy = companyId;
+    calendarState.calendarData[dateStr] = driverData;
+    
+    await setDoc(doc(db, 'driverAvailability', driverId), 
+      { dates: calendarState.calendarData }, { merge: true });
+    
+    await updateDoc(doc(db, 'holidayRequests', requestId), {
+      status: 'approved',
+      approvedAt: serverTimestamp(),
+      approvedBy: companyId
+    });
+    
+    Utils.showToast('✅ Holiday approved', 'success');
+    renderCalendar();
+  } catch (error) {
+    Utils.showToast('Failed to approve', 'error');
+  }
+};
+
+window.rejectHoliday = async function(driverId, dateStr, requestId) {
+  if (!confirm('Reject this holiday request?')) return;
+  const companyId = auth.currentUser?.uid;
+  if (!companyId) return;
+  
+  try {
+    delete calendarState.calendarData[dateStr];
+    await setDoc(doc(db, 'driverAvailability', driverId), 
+      { dates: calendarState.calendarData }, { merge: true });
+    
+    await updateDoc(doc(db, 'holidayRequests', requestId), {
+      status: 'rejected',
+      rejectedAt: serverTimestamp()
+    });
+    
+    Utils.showToast('Request rejected', 'info');
+    renderCalendar();
+  } catch (error) {
+    Utils.showToast('Failed to reject', 'error');
+  }
+};
+
+window.viewDriverCalendar = function(driverId) {
+  showPage('driver-calendar-page');
+  showDriverCalendarPage(driverId);
+};
+
+window.viewDriverCalendarForCompany = function(driverId) {
+  closeModal();
+  showDriverCalendarPage(driverId);
+};
 // ==================================================
 // 🔹 AUTHENTICATION — SIGN IN
 // ==================================================
@@ -236,6 +719,9 @@ window.registerDriver = async function() {
   const email = document.getElementById('driver-email').value.trim();
   const password = document.getElementById('driver-password').value;
   const confirm = document.getElementById('driver-confirm').value;
+  const userRole = document.querySelector('input[name="driver-role"]:checked')?.value || 'self-employed';
+  const homeTown = document.getElementById('driver-town')?.value?.trim() || '';
+  const homePostcode = document.getElementById('driver-postcode')?.value?.trim() || '';
 
   if (!name || !email || !password) {
     Utils.showToast('Please fill in all fields', 'error');
@@ -263,6 +749,10 @@ window.registerDriver = async function() {
       name,
       email,
       role: 'driver',
+      userRole,
+      homeTown,
+      homePostcode: userRole === 'self-employed' ? homePostcode : null,
+      companyId: null,
       createdAt: serverTimestamp()
     });
 
@@ -271,6 +761,9 @@ window.registerDriver = async function() {
       name,
       email,
       role: 'driver',
+      userRole,
+      homeTown,
+      homePostcode: userRole === 'self-employed' ? homePostcode : null,
       companyId: null,
       profileComplete: false,
       createdAt: serverTimestamp()
@@ -338,7 +831,6 @@ window.registerCompany = async function() {
       createdAt: serverTimestamp()
     });
 
-    // Initialise DVSA checklist for new company
     await initialiseCompanyChecklist(uid);
 
     Utils.showToast('✅ Company registered successfully!', 'success');
@@ -422,6 +914,7 @@ onAuthStateChanged(auth, async (user) => {
     showPage('auth-page');
   }
 });
+
 // ==================================================
 // 🔹 DRIVER PORTAL — DASHBOARD
 // ==================================================
@@ -438,16 +931,16 @@ window.loadDriverDashboard = async function(userId) {
       </div>
       
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 32px;">
-        <button onclick="showPage('driver-profile-page')" style="padding: 24px; background: white; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--primary); transition: all 0.2s;">
+        <button onclick="showPage('driver-profile-page')" style="padding: 24px; background: white; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--primary);">
           👤 My Profile
         </button>
-        <button onclick="showPage('driver-calendar-page')" style="padding: 24px; background: white; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--primary); transition: all 0.2s;">
+        <button onclick="showPage('driver-calendar-page'); showDriverCalendarPage();" style="padding: 24px; background: white; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--primary);">
           📅 My Calendar
         </button>
-        <button onclick="showPage('driver-documents-page')" style="padding: 24px; background: white; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--primary); transition: all 0.2s;">
+        <button onclick="showPage('driver-documents-page')" style="padding: 24px; background: white; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--primary);">
           📁 My Documents
         </button>
-        <button onclick="showPage('driver-checklist-page')" style="padding: 24px; background: white; border: 2px solid var(--accent); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--accent); transition: all 0.2s;">
+        <button onclick="showPage('driver-checklist-page')" style="padding: 24px; background: white; border: 2px solid var(--accent); border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: var(--accent);">
           ✅ Walkaround Check
         </button>
       </div>
@@ -495,7 +988,7 @@ async function loadDriverRecentChecks(userId) {
         <div style="padding: 12px 0; border-bottom: 1px solid #eee;">
           <strong>${escapeHtml(data.vehicleReg || 'Unknown Vehicle')}</strong>
           <span style="color: #888; font-size: 14px; margin-left: 12px;">${date.toLocaleDateString('en-GB')}</span>
-          <span style="float: right; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: data.hasDefects ? '#fff3cd' : '#d4edda'; color: data.hasDefects ? '#856404' : '#155724';">
+          <span style="float: right; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: ${data.hasDefects ? '#fff3cd' : '#d4edda'}; color: ${data.hasDefects ? '#856404' : '#155724'};">
             ${data.hasDefects ? '⚠️ Defects Reported' : '✅ No Defects'}
           </span>
         </div>
@@ -529,6 +1022,8 @@ window.showDriverProfile = async function() {
     document.getElementById('profile-expiry-date').value = profile.expiryDate || '';
     document.getElementById('profile-medical-expiry').value = profile.medicalExpiry || '';
     document.getElementById('profile-points').value = profile.points || 0;
+    document.getElementById('profile-town').value = profile.homeTown || '';
+    document.getElementById('profile-postcode').value = profile.homePostcode || '';
     document.getElementById('profile-notes').value = profile.notes || '';
     
   } catch (error) {
@@ -550,6 +1045,8 @@ window.saveDriverProfile = async function() {
       validFrom: document.getElementById('profile-valid-from').value || null,
       expiryDate: document.getElementById('profile-expiry-date').value || null,
       medicalExpiry: document.getElementById('profile-medical-expiry').value || null,
+      homeTown: document.getElementById('profile-town').value.trim(),
+      homePostcode: document.getElementById('profile-postcode').value.trim(),
       points: parseInt(document.getElementById('profile-points').value) || 0,
       notes: document.getElementById('profile-notes').value.trim(),
       profileComplete: true,
@@ -557,7 +1054,7 @@ window.saveDriverProfile = async function() {
     };
     
     await setDoc(doc(db, 'drivers', user.uid), data, { merge: true });
-    await setDoc(doc(db, 'users', user.uid), { name: data.name }, { merge: true });
+    await setDoc(doc(db, 'users', user.uid), { name: data.name, homeTown: data.homeTown }, { merge: true });
     
     Utils.showToast('✅ Profile saved successfully', 'success');
   } catch (error) {
@@ -565,66 +1062,6 @@ window.saveDriverProfile = async function() {
     Utils.showToast('Failed to save profile', 'error');
   }
 };
-
-// ==================================================
-// 📅 DRIVER PORTAL — CALENDAR
-// ==================================================
-function showDriverCalendarPage() {
-  const page = document.getElementById('driver-calendar-page');
-  const today = new Date();
-  let currentMonth = today.getMonth();
-  let currentYear = today.getFullYear();
-  
-  renderCalendar();
-  
-  function renderCalendar() {
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-    let daysHTML = '';
-    // Empty cells before first day
-    for (let i = 0; i < firstDay; i++) {
-      daysHTML += `<div class="calendar-day empty"></div>`;
-    }
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = day === today.getDate() && 
-                      currentMonth === today.getMonth() && 
-                      currentYear === today.getFullYear();
-      daysHTML += `
-        <div class="calendar-day ${isToday ? 'today' : ''}" 
-             data-date="${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}">
-          ${day}
-        </div>
-      `;
-    }
-    
-    page.innerHTML = `
-      <div class="calendar-header">
-        <button onclick="changeMonth(-1)">◀</button>
-        <h3>${monthNames[currentMonth]} ${currentYear}</h3>
-        <button onclick="changeMonth(1)">▶</button>
-      </div>
-      <div class="calendar-weekdays">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
-        <span>Thu</span><span>Fri</span><span>Sat</span>
-      </div>
-      <div class="calendar-grid">${daysHTML}</div>
-    `;
-  }
-  
-  window.changeMonth = (delta) => {
-    currentMonth += delta;
-    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-    renderCalendar();
-  };
-}
 
 // ==================================================
 // 🔹 DRIVER PORTAL — DOCUMENTS
@@ -741,6 +1178,10 @@ function renderDriverChecklist() {
             </div>
           </div>
           ${!item.pass && item.pass !== null ? `
+            <div
+            // ... continued from Part 2
+
+          ${!item.pass && item.pass !== null ? `
             <div style="padding: 0 12px 8px;">
               <input type="text" id="defect-note-${globalIdx}" placeholder="Enter defect details..." 
                 value="${escapeHtml(item.defectNote || '')}"
@@ -751,7 +1192,8 @@ function renderDriverChecklist() {
         `;
       }).join('')}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 window.renderDriverChecklist = renderDriverChecklist;
 
@@ -802,6 +1244,7 @@ window.submitChecklist = async function() {
     Utils.showToast('Failed to submit checklist', 'error');
   }
 };
+
 // ==================================================
 // 🔹 COMPANY PORTAL — DASHBOARD
 // ==================================================
@@ -829,6 +1272,9 @@ window.loadCompanyDashboard = async function(companyId) {
         </button>
         <button onclick="showChecklistEditor()" style="padding: 24px; background: white; border: 2px solid #28a745; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: #28a745;">
           ✅ Checklist Editor
+        </button>
+        <button onclick="showHolidayRequests()" style="padding: 24px; background: white; border: 2px solid #9333ea; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: #9333ea;">
+          🏖️ Holiday Requests
         </button>
       </div>
       
@@ -916,6 +1362,113 @@ async function loadCompanyActivity(companyId) {
       '<p style="color: #888;">Could not load activity.</p>';
   }
 }
+
+// ==================================================
+// 🔹 COMPANY PORTAL — HOLIDAY REQUESTS
+// ==================================================
+window.showHolidayRequests = async function() {
+  showPage('holiday-requests-page');
+  const user = auth.currentUser;
+  if (!user) return;
+  
+  try {
+    const q = query(
+      collection(db, 'holidayRequests'),
+      where('companyId', '==', user.uid),
+      orderBy('submittedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    const container = document.getElementById('holiday-requests-list');
+    
+    if (snap.empty) {
+      container.innerHTML = '<p style="color: #888;">No holiday requests yet.</p>';
+      return;
+    }
+    
+    container.innerHTML = snap.docs.map(doc => {
+      const r = doc.data();
+      const statusColor = r.status === 'pending' ? '#d47500' : 
+                          r.status === 'approved' ? '#28a745' : '#dc3545';
+      return `
+        <div style="background: white; padding: 16px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid ${statusColor};">
+          <h4 style="margin-bottom: 8px;">📅 ${Utils.Date.format(r.date)}</h4>
+          <p style="font-size: 14px; color: #666; margin-bottom: 4px;">${escapeHtml(r.note || 'No note')}</p>
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; background: ${statusColor}20; color: ${statusColor};">
+            ${r.status}
+          </span>
+          ${r.status === 'pending' ? `
+            <div style="margin-top: 8px;">
+              <button onclick="approveHolidayRequest('${doc.id}', '${r.driverUid}', '${r.date}')" 
+                style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 8px; cursor: pointer;">✅ Approve</button>
+              <button onclick="rejectHolidayRequest('${doc.id}', '${r.driverUid}', '${r.date}')" 
+                style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">❌ Reject</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Error loading holiday requests:', error);
+    document.getElementById('holiday-requests-list').innerHTML = 
+      '<p style="color: red;">Could not load requests.</p>';
+  }
+};
+
+window.approveHolidayRequest = async function(requestId, driverUid, dateStr) {
+  const user = auth.currentUser;
+  if (!user) return;
+  
+  try {
+    const availRef = doc(db, 'driverAvailability', driverUid);
+    const availSnap = await getDoc(availRef);
+    const dates = availSnap.exists() ? availSnap.data().dates || {} : {};
+    
+    dates[dateStr] = {
+      status: 'holiday-approved',
+      note: 'Approved holiday',
+      approvedAt: serverTimestamp(),
+      approvedBy: user.uid
+    };
+    
+    await setDoc(availRef, { dates }, { merge: true });
+    await updateDoc(doc(db, 'holidayRequests', requestId), {
+      status: 'approved',
+      approvedAt: serverTimestamp(),
+      approvedBy: user.uid
+    });
+    
+    Utils.showToast('✅ Holiday approved', 'success');
+    showHolidayRequests();
+  } catch (error) {
+    console.error('Error approving:', error);
+    Utils.showToast('Failed to approve', 'error');
+  }
+};
+
+window.rejectHolidayRequest = async function(requestId, driverUid, dateStr) {
+  if (!confirm('Reject this request?')) return;
+  
+  try {
+    const availRef = doc(db, 'driverAvailability', driverUid);
+    const availSnap = await getDoc(availRef);
+    if (availSnap.exists()) {
+      const dates = availSnap.data().dates || {};
+      delete dates[dateStr];
+      await setDoc(availRef, { dates }, { merge: true });
+    }
+    
+    await updateDoc(doc(db, 'holidayRequests', requestId), {
+      status: 'rejected',
+      rejectedAt: serverTimestamp()
+    });
+    
+    Utils.showToast('Request rejected', 'info');
+    showHolidayRequests();
+  } catch (error) {
+    console.error('Error rejecting:', error);
+    Utils.showToast('Failed to reject', 'error');
+  }
+};
 
 // ==================================================
 // 🔹 COMPANY PORTAL — POSTED WORK
@@ -1047,7 +1600,13 @@ window.addEmployedDriver = async function() {
       
       await setDoc(doc(db, 'drivers', driverUid), {
         companyId: user.uid,
+        userRole: 'employee',
         employedAt: serverTimestamp()
+      }, { merge: true });
+      
+      await setDoc(doc(db, 'users', driverUid), {
+        companyId: user.uid,
+        userRole: 'employee'
       }, { merge: true });
       
       await setDoc(doc(db, 'companies', user.uid, 'drivers', driverUid), {
@@ -1197,6 +1756,7 @@ window.resetChecklistToDefault = function() {
     Utils.showToast('✅ Reset to DVSA default', 'success');
   }
 };
+
 // ==================================================
 // 🔹 PASSWORD RESET & UTILITY FUNCTIONS
 // ==================================================
@@ -1278,6 +1838,8 @@ window.exportMyData = async function() {
 window.showAuthPage = function() { showPage('auth-page'); };
 window.showDriverPortal = function() { showPage('driver-portal-page'); };
 window.showCompanyPortal = function() { showPage('company-portal-page'); };
+window.showPostedWork = showPostedWork;
+window.showAddDriver = showAddDriver;
 
 // ==================================================
 // 🔹 DEBUG / DIAGNOSTIC — RUN FROM CONSOLE (F12)
@@ -1295,6 +1857,8 @@ window.AppDiagnostics = {
       { name: 'DEFAULT_CHECKLIST', ok: Array.isArray(DEFAULT_CHECKLIST) },
       { name: 'escapeHtml()', ok: typeof escapeHtml === 'function' },
       { name: 'Utils Library', ok: typeof Utils === 'object' && Utils !== null },
+      { name: 'Calendar System', ok: typeof showDriverCalendarPage === 'function' },
+      { name: 'Holiday Functions', ok: typeof showHolidayRequests === 'function' },
     ];
     
     checks.forEach(c => console.log(`${c.ok ? '✅' : '❌'} ${c.name}`));
@@ -1316,7 +1880,6 @@ console.log('🚛 LSD Solutions — App Loaded');
 console.log(`📅 ${new Date().toLocaleString('en-GB')}`);
 console.log('Run AppDiagnostics.run() in console to verify setup.');
 
-// Auto-hide loading overlays if any
 document.addEventListener('DOMContentLoaded', () => {
   const loaders = document.querySelectorAll('.loading');
   loaders.forEach(el => el.style.display = 'none');
