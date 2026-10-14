@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LSD Solutions — HGV & Logistics Services</title>
   <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
-  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="icon" type="image/png" href="./assets/favicon.png" />
   <style>
     /* ======================================
        GLOBAL STYLES
@@ -162,7 +162,7 @@
 <body>
   <!-- Site Header -->
   <header class="site-header">
-<img src="./assets/lsd-logo.png" alt="LSD Solutions" class="logo">
+    <img src="./assets/lsd-logo.png" alt="LSD Solutions" class="logo" onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<span style=&quot;font-size:2rem;&quot;>🚛</span>')">
     <h1 class="site-title">LSD Solutions</h1>
     <p class="site-subtitle">HGV & Logistics Services</p>
     <p class="site-tagline">For All Your Longhaul, Shunting And Delivery Needs</p>
@@ -177,6 +177,10 @@
         <a href="#" onclick="showPage('auth-page');return false;" id="nav-auth">Sign In</a>
         <a href="#" onclick="showPage('driver-portal-page');return false;" id="nav-driver" style="display:none;">Driver Portal</a>
         <a href="#" onclick="showPage('company-portal-page');return false;" id="nav-company" style="display:none;">Company Portal</a>
+        <a href="#" onclick="showPage('vehicles-page');return false;" id="nav-vehicles" style="display:none;">Vehicles</a>
+        <a href="#" onclick="showPage('trailers-page');return false;" id="nav-trailers" style="display:none;">Trailers</a>
+        <a href="#" onclick="showPage('service-logs-page');return false;" id="nav-service" style="display:none;">Service Logs</a>
+        <a href="#" onclick="showPage('reports-page');return false;" id="nav-reports" style="display:none;">Reports</a>
         <a href="#" onclick="showPage('reset-page');return false;" id="nav-reset" style="display:none;">Reset Password</a>
         <a href="#" onclick="exportMyData();return false;" id="nav-export" style="display:none;">Export My Data</a>
         <a href="#" onclick="handleSignOut();return false;" id="nav-logout" style="display:none;">Sign Out</a>
@@ -189,12 +193,16 @@
     <a href="#" onclick="showPage('auth-page');toggleMobileMenu();return false;">Sign In</a>
     <a href="#" onclick="showPage('driver-portal-page');toggleMobileMenu();return false;" id="mob-nav-driver" style="display:none;">Driver Portal</a>
     <a href="#" onclick="showPage('company-portal-page');toggleMobileMenu();return false;" id="mob-nav-company" style="display:none;">Company Portal</a>
+    <a href="#" onclick="showPage('vehicles-page');toggleMobileMenu();return false;" id="mob-nav-vehicles" style="display:none;">🚚 Vehicles</a>
+    <a href="#" onclick="showPage('trailers-page');toggleMobileMenu();return false;" id="mob-nav-trailers" style="display:none;">🚛 Trailers</a>
+    <a href="#" onclick="showPage('service-logs-page');toggleMobileMenu();return false;" id="mob-nav-service" style="display:none;">🔧 Service Logs</a>
+    <a href="#" onclick="showPage('reports-page');toggleMobileMenu();return false;" id="mob-nav-reports" style="display:none;">📊 Reports</a>
     <a href="#" onclick="exportMyData();toggleMobileMenu();return false;" id="mob-nav-export" style="display:none;">Export My Data</a>
     <a href="#" onclick="handleSignOut();toggleMobileMenu();return false;" id="mob-nav-logout" style="display:none;">Sign Out</a>
   </div>
 
   <main class="app-container">
-    <!-- ====================================== -->
+        <!-- ====================================== -->
     <!-- AUTH PAGE — Sign In / Register         -->
     <!-- ====================================== -->
     <div id="auth-page" class="page">
@@ -275,7 +283,8 @@
         </div>
       </div>
     </div>
-        <!-- ====================================== -->
+
+    <!-- ====================================== -->
     <!-- DRIVER PORTAL PAGE                      -->
     <!-- ====================================== -->
     <div id="driver-portal-page" class="page">
@@ -497,8 +506,7 @@
         </div>
       </div>
     </div>
-
-    <!-- ====================================== -->
+        <!-- ====================================== -->
     <!-- COMPANY PORTAL PAGE                    -->
     <!-- ====================================== -->
     <div id="company-portal-page" class="page">
@@ -527,6 +535,18 @@
           </button>
           <button class="btn primary" style="width: 100%;" onclick="showPage('company-holidays-page'); loadHolidayRequests();">
             🏖️ Holiday Requests
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('vehicles-page'); loadVehicles();">
+            🚚 Vehicles
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('trailers-page'); loadTrailers();">
+            🚛 Trailers
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('service-logs-page'); loadServiceLogsPage();">
+            🔧 Service Logs
+          </button>
+          <button class="btn primary" style="width: 100%;" onclick="showPage('reports-page'); loadExpiryAlerts();">
+            📊 Reports & Alerts
           </button>
         </div>
       </div>
@@ -1023,7 +1043,6 @@
       </div>
     </div>
   </main>
-
   <!-- Firebase SDK Imports -->
   <script type="importmap">
   {
@@ -1039,7 +1058,7 @@
   <!-- Main App Script -->
   <script type="module" src="app.js"></script>
 
-  <!-- Auth Page Tab Switching -->
+  <!-- Auth Page Tab Switching & Global Navigation -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const tabSignin = document.getElementById('tab-signin');
@@ -1083,4 +1102,4 @@
     window.toggleMobileMenu = toggleMobileMenu;
   </script>
 </body>
-</html>
+</html>        
