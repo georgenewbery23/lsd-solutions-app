@@ -28,6 +28,60 @@ let currentUser = null;
 let userProfile = null;
 let userRole = null;
 let companyId = null;
+let previousPageStack = []; // ✅ Declared here
+
+// ==================================================
+// NAVIGATION HELPERS — OUTSIDE, SO THEY WORK ✅
+// ==================================================
+function updateNavigationForPage(pageId) {
+  const homeNav = document.getElementById('homeNav');
+  if (!homeNav) return;
+
+  // Always show full nav bar
+  homeNav.style.display = 'block';
+
+  // Hide ONLY the button for the current page
+  const allNavButtons = homeNav.querySelectorAll('button[data-page]');
+  allNavButtons.forEach(btn => {
+    const targetPage = btn.getAttribute('data-page');
+    btn.style.display = (targetPage === pageId) ? 'none' : 'inline-block';
+  });
+}
+
+window.showPage = function(pageId) {
+  // Save current page to history
+  const currentPage = document.querySelector('.page.active');
+  if (currentPage && currentPage.id !== pageId) {
+    previousPageStack.push(currentPage.id);
+  }
+
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.remove('active');
+    page.style.display = 'none';
+  });
+
+  // Show target page
+  const target = document.getElementById(pageId);
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'block';
+  }
+
+  // Update navigation buttons
+  updateNavigationForPage(pageId);
+  
+  window.scrollTo(0, 0);
+};
+
+window.goBack = function() {
+  if (previousPageStack.length > 0) {
+    const prev = previousPageStack.pop();
+    showPage(prev);
+  } else {
+    showPage(userRole === 'driver' ? 'driverDashboardPage' : 'companyDashboardPage');
+  }
+};
 
 // ==================================================
 // GLOBAL FUNCTIONS
@@ -48,63 +102,6 @@ window.showAuthTab = function(tab) {
   if (tabRegister) tabRegister.className = tab === 'register' ? 'btn btn-primary' : 'btn btn-secondary';
 };
 
-window.showPage = function(pageId) {
-  // Hide EVERY page first
-  document.querySelectorAll('.page').forEach(page => {
-    page.classList.remove('active');
-    page.style.display = 'none';
-  });
-  
-  // Show ONLY the requested page
-  function updateNavigationForPage(pageId) {
-  const homeNav = document.getElementById('homeNav');
-  
-  // ✅ Always show the full navigation bar — never hide it
-  if (homeNav) homeNav.style.display = 'block';
-  
-  // Go through EVERY button — hide ONLY the one matching the current page
-  const allNavButtons = homeNav.querySelectorAll('button[data-page]');
-  allNavButtons.forEach(btn => {
-    const targetPage = btn.getAttribute('data-page');
-    if (targetPage === pageId) {
-      // ✅ Hide the button for the page we're CURRENTLY on
-      btn.style.display = 'none';
-    } else {
-      // ✅ Show ALL other navigation buttons
-      btn.style.display = 'inline-block';
-    }
-  });
-}
-window.showPage = function(pageId) {
-  // Save to history for back button
-  const currentPage = document.querySelector('.page.active');
-  if (currentPage && currentPage.id !== pageId) {
-    previousPageStack.push(currentPage.id);
-  }
-
-  // Hide all pages
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
-    p.style.display = 'none';
-  });
-
-  // Show the selected page
-  const target = document.getElementById(pageId);
-  if (target) {
-    target.classList.add('active');
-    target.style.display = 'block';
-  }
-
-  // Update which buttons are visible
-  updateNavigationForPage(pageId);
-  
-  window.scrollTo(0, 0);
-};
-  
-  // Scroll to top
-  window.scrollTo(0, 0);
-};
-
 window.handleSignOut = async function() {
   if (!auth) return;
   await signOut(auth);
@@ -112,6 +109,7 @@ window.handleSignOut = async function() {
   userProfile = null;
   userRole = null;
   companyId = null;
+  previousPageStack = [];
   showPage('authPage');
 };
 
@@ -172,7 +170,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
 });
 
 // ==================================================
-// REGISTER — BRACES ARE NOW PERFECT ✅
+// REGISTER
 // ==================================================
 document.getElementById('registerFormEl').addEventListener('submit', async e => {
   e.preventDefault();
