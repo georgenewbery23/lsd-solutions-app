@@ -11,18 +11,6 @@ import {
   query, where, getDocs, addDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'your-email@gmail.com',
-    pass: 'your-app-password'
-  }
-});
-
-const functions = require('firebase-functions/v1');
-const admin = require('firebase-admin');
-admin.initializeApp();
-
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
   authDomain: "lsd-solutions.firebaseapp.com",
@@ -40,27 +28,24 @@ let currentUser = null;
 let userProfile = null;
 let userRole = null;
 let companyId = null;
-let previousPageStack = []; // ✅ Declared here
+let previousPageStack = [];
 
 // ==================================================
-// NAVIGATION HELPERS — OUTSIDE, SO THEY WORK ✅
+// NAVIGATION HELPERS
 // ==================================================
 function updateNavigationForPage(pageId) {
   const companyNav = document.getElementById('companyNav');
   const driverNav = document.getElementById('driverNav');
   
-  // Determine which nav to show based on page
   const isDriverPage = pageId.startsWith('driver') || 
                        pageId === 'checklistPage' || 
                        pageId === 'documentsPage' ||
                        pageId === 'noticesPage' ||
                        pageId === 'workingTimePage';
 
-  // Show ONLY the correct navigation
   if (companyNav) companyNav.style.display = isDriverPage ? 'none' : 'block';
   if (driverNav) driverNav.style.display = isDriverPage ? 'block' : 'none';
 
-  // Hide ONLY the current page's button in the ACTIVE nav
   const activeNav = isDriverPage ? driverNav : companyNav;
   if (!activeNav) return;
   
@@ -72,28 +57,23 @@ function updateNavigationForPage(pageId) {
 }
 
 window.showPage = function(pageId) {
-  // Save current page to history
   const currentPage = document.querySelector('.page.active');
   if (currentPage && currentPage.id !== pageId) {
     previousPageStack.push(currentPage.id);
   }
 
-  // Hide all pages
   document.querySelectorAll('.page').forEach(page => {
     page.classList.remove('active');
     page.style.display = 'none';
   });
 
-  // Show target page
   const target = document.getElementById(pageId);
   if (target) {
     target.classList.add('active');
     target.style.display = 'block';
   }
 
-  // Update navigation buttons
   updateNavigationForPage(pageId);
-  
   window.scrollTo(0, 0);
 };
 
@@ -134,9 +114,8 @@ window.handleSignOut = async function() {
   companyId = null;
   previousPageStack = [];
   
-  // ✅ Hide both navs on sign-in page
-  document.getElementById('companyNav').style.display = 'none';
-  document.getElementById('driverNav').style.display = 'none';
+  if (document.getElementById('companyNav')) document.getElementById('companyNav').style.display = 'none';
+  if (document.getElementById('driverNav')) document.getElementById('driverNav').style.display = 'none';
   
   showPage('authPage');
 };
@@ -277,7 +256,7 @@ document.getElementById('resetFormEl').addEventListener('submit', async e => {
 });
 
 // ==================================================
-// AUTH STATE — PERFECTLY BALANCED BRACES ✅
+// AUTH STATE
 // ==================================================
 onAuthStateChanged(auth, async user => {
   if (user) {
@@ -289,14 +268,14 @@ onAuthStateChanged(auth, async user => {
         userProfile = snap.data();
         userRole = userProfile.accountType;
         if (userRole === 'driver') {
-          document.getElementById('companyNav').style.display = 'none';
-          document.getElementById('driverNav').style.display = 'block';
+          if (document.getElementById('companyNav')) document.getElementById('companyNav').style.display = 'none';
+          if (document.getElementById('driverNav')) document.getElementById('driverNav').style.display = 'block';
           showPage('driverDashboardPage');
           const n = document.getElementById('driverNameDisplay');
           if (n) n.textContent = userProfile.name || 'Driver';
         } else if (userRole === 'company') {
-          document.getElementById('driverNav').style.display = 'none';
-          document.getElementById('companyNav').style.display = 'block';
+          if (document.getElementById('driverNav')) document.getElementById('driverNav').style.display = 'none';
+          if (document.getElementById('companyNav')) document.getElementById('companyNav').style.display = 'block';
           showPage('companyDashboardPage');
           const n = document.getElementById('companyNameDisplay');
           if (n) n.textContent = userProfile.name || 'Company';
