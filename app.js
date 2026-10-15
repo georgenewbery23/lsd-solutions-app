@@ -34,28 +34,28 @@ let previousPageStack = []; // ✅ Declared here
 // NAVIGATION HELPERS — OUTSIDE, SO THEY WORK ✅
 // ==================================================
 function updateNavigationForPage(pageId) {
-  const homeNav = document.getElementById('homeNav');
+  const companyNav = document.getElementById('companyNav');
+  const driverNav = document.getElementById('driverNav');
   
-  // ✅ FORCE it to ALWAYS show — no exceptions!
-  if (homeNav) {
-    homeNav.style.display = 'block';
-    homeNav.style.visibility = 'visible';
-    homeNav.style.opacity = '1';
-  }
+  // Determine which nav to show based on page
+  const isDriverPage = pageId.startsWith('driver') || 
+                       pageId === 'checklistPage' || 
+                       pageId === 'documentsPage' ||
+                       pageId === 'noticesPage' ||
+                       pageId === 'workingTimePage';
 
-  // Hide ONLY the button for the current page — show ALL others
-  const allNavButtons = homeNav?.querySelectorAll('button[data-page]') || [];
+  // Show ONLY the correct navigation
+  if (companyNav) companyNav.style.display = isDriverPage ? 'none' : 'block';
+  if (driverNav) driverNav.style.display = isDriverPage ? 'block' : 'none';
+
+  // Hide ONLY the current page's button in the ACTIVE nav
+  const activeNav = isDriverPage ? driverNav : companyNav;
+  if (!activeNav) return;
+  
+  const allNavButtons = activeNav.querySelectorAll('button[data-page]');
   allNavButtons.forEach(btn => {
     const targetPage = btn.getAttribute('data-page');
-    if (targetPage === pageId) {
-      // You're on this page — hide the button
-      btn.style.display = 'none';
-    } else {
-      // Not this page — make SURE it's visible
-      btn.style.display = 'inline-block';
-      btn.style.visibility = 'visible';
-      btn.style.opacity = '1';
-    }
+    btn.style.display = (targetPage === pageId) ? 'none' : 'inline-block';
   });
 }
 
@@ -263,24 +263,17 @@ document.getElementById('resetFormEl').addEventListener('submit', async e => {
 // AUTH STATE
 // ==================================================
 onAuthStateChanged(auth, async user => {
-  if (user) {
-    currentUser = user;
-    const profileRef = doc(db, 'users', user.uid);
-    try {
-      const snap = await getDoc(profileRef);
-      if (snap.exists()) {
-        userProfile = snap.data();
-        userRole = userProfile.accountType;
-        if (userRole === 'driver') {
-          showPage('driverDashboardPage');
-          const n = document.getElementById('driverNameDisplay');
-          if (n) n.textContent = userProfile.name || 'Driver';
-        } else if (userRole === 'company') {
-          companyId = user.uid;
-          showPage('companyDashboardPage');
-          const n = document.getElementById('companyNameDisplay');
-          if (n) n.textContent = userProfile.name || 'Company';
-        }
+  if (userRole === 'driver') {
+  // ✅ Hide company nav, show driver nav
+  document.getElementById('companyNav').style.display = 'none';
+  document.getElementById('driverNav').style.display = 'block';
+  showPage('driverDashboardPage');
+} else if (userRole === 'company') {
+  // ✅ Hide driver nav, show company nav
+  document.getElementById('driverNav').style.display = 'none';
+  document.getElementById('companyNav').style.display = 'block';
+  showPage('companyDashboardPage');
+}
       }
     } catch (e) {
       console.error('Auth error:', e);
