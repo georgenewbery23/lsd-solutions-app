@@ -282,7 +282,7 @@ onAuthStateChanged(auth, async user => {
       }
     } catch (e) {
       console.error('Auth error:', e);
-    }
+    
   } else {
     currentUser = null;
     userProfile = null;
