@@ -7,393 +7,311 @@
   <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <style>
-    /* ============================================== */
-    /* LSD SOLUTIONS — FULL CORRECTED STYLES          */
-    /* ============================================== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
       --primary: #1a365d;
       --primary-light: #e8edf3;
       --accent: #d47500;
-      --accent-light: #ffecd0;
+      --accent-light: #fff4e5;
       --success: #006633;
       --danger: #cc0000;
-      --grey-100: #f3f4f6;
-      --grey-200: #e5e7eb;
-      --grey-700: #374151;
-      --grey-900: #111827;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
-      --radius: 8px;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --border: #d1d5db;
+      --bg-light: #f9fafb;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-
-    body {
-      background-color: #fff;
-      color: var(--grey-900);
-      line-height: 1.5;
-    }
-
-    /* ── PAGE VISIBILITY SYSTEM — FIXED ── */
-    .page {
-      display: none;
-      min-height: 100vh;
-      padding: 2rem;
-    }
-    .page.active {
-      display: block;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    /* ── TYPOGRAPHY ── */
-    h1, h2, h3, h4 { margin-bottom: 1rem; color: var(--primary); }
-    h1 { font-size: 2rem; }
-    h2 { font-size: 1.5rem; }
-    p { margin-bottom: 1rem; }
-
-    /* ── HEADER & NAV ── */
+    
+    body { background: #f8fafc; color: var(--text-dark); line-height: 1.6; }
+    
+    /* Page visibility system */
+    .page { display: none; min-height: 100vh; padding-bottom: 2rem; }
+    .page.active { display: block; }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+    
+    /* Header & Navigation */
     .top-header {
       background: var(--primary);
       color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
     }
-    .top-header h1 { margin: 0; font-size: 1.25rem; color: white; }
-    .nav-links { display: flex; gap: 1rem; align-items: center; }
+    .top-header h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .nav-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .nav-links button {
-      background: transparent;
+      background: rgba(255,255,255,0.15);
       color: white;
-      border: 1px solid rgba(255,255,255,0.3);
+      border: none;
       padding: 0.5rem 1rem;
-      border-radius: var(--radius);
+      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.2s;
+      font-size: 0.9rem;
+      transition: background 0.2s;
     }
-    .nav-links button:hover { background: rgba(255,255,255,0.2); }
-
-    /* ── CARDS ── */
+    .nav-links button:hover { background: rgba(255,255,255,0.25); }
+    
+    /* Cards */
     .card {
       background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border: 1px solid var(--grey-200);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
     }
-    .card h3 { margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; }
-
-    /* ── BUTTONS ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.25rem;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
-      min-width: 120px;
-    }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: #152c4d; }
-    .btn-accent { background: var(--accent); color: white; }
-    .btn-accent:hover { background: #b86600; }
-    .btn-success { background: var(--success); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-secondary { background: var(--grey-200); color: var(--grey-900); }
-    .btn-secondary:hover { background: var(--grey-300); }
-    .btn-block { width: 100%; margin: 0.5rem 0; }
-    .btn-group { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; }
-
-    /* ── FORMS — Fully Accessible ── */
-    .form-group { margin-bottom: 1.25rem; }
-    label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-      color: var(--grey-700);
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--grey-200);
-      border-radius: var(--radius);
-      font-size: 1rem;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(26,54,93,0.15);
-    }
-    .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .form-col { flex: 1; min-width: 200px; }
-
-    /* ── AUTH LAYOUT ── */
-    .auth-wrapper {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, var(--primary-light) 0%, #fff 100%);
-      padding: 1rem;
-    }
-    .auth-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: var(--shadow-lg);
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 440px;
-    }
-    .auth-card h2 { text-align: center; margin-bottom: 1.5rem; }
-    .auth-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid var(--grey-200); }
-    .auth-tab {
-      flex: 1;
-      padding: 0.75rem;
-      text-align: center;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--grey-700);
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-    }
-    .auth-tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-    .auth-role-toggle { display: flex; gap: 0.5rem; margin: 1rem 0; }
-    .role-btn {
-      flex: 1;
-      padding: 0.5rem;
-      border: 2px solid var(--grey-200);
-      background: white;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .role-btn.active {
-      border-color: var(--primary);
-      background: var(--primary-light);
-      font-weight: 600;
-    }
-
-    /* ── DASHBOARD GRID ── */
+    .card h2, .card h3 { margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; }
+    .card h4 { margin-bottom: 0.5rem; font-size: 1rem; }
+    
+    /* Dashboard Grid */
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1rem;
-      margin: 2rem 0;
+      margin-bottom: 1.5rem;
     }
     .dashboard-card {
       background: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      padding: 1.5rem;
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
       text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-      border-left: 4px solid var(--primary);
+      transition: transform 0.2s;
     }
-    .dashboard-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-lg);
-    }
-    .dashboard-card.accent-border { border-left-color: var(--accent); }
-    .dashboard-card.success-border { border-left-color: var(--success); }
-    .dashboard-card h3 { margin: 0.5rem 0; color: var(--primary); }
+    .dashboard-card:hover { transform: translateY(-2px); }
     .dashboard-card .icon { font-size: 2rem; margin-bottom: 0.5rem; }
-
-    /* ── CHECKLIST STYLES — DVSA ── */
-    .checklist-section { margin-bottom: 1.5rem; }
+    .dashboard-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--primary); }
+    .dashboard-card p { font-size: 0.9rem; color: var(--text-light); }
+    
+    /* Forms */
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .form-col { flex: 1; min-width: 220px; }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    label { font-weight: 500; font-size: 0.9rem; color: var(--text-dark); }
+    input, select, textarea, button {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(26,54,93,0.1);
+    }
+    input.error { border-color: var(--danger); }
+    
+    button { cursor: pointer; border: none; font-weight: 500; transition: all 0.2s; }
+    .btn { border-radius: 4px; padding: 0.65rem 1.25rem; font-size: 0.95rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #0f2547; }
+    .btn-secondary { background: #e5e7eb; color: var(--text-dark); }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover { background: #b86500; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #004d26; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #990000; }
+    
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    
+    /* Status text */
+    .success-text { color: var(--success); font-size: 0.9rem; margin-top: 0.5rem; }
+    .error-text { color: var(--danger); font-size: 0.9rem; margin-top: 0.5rem; }
+    .loading { color: var(--text-light); font-style: italic; padding: 1rem; }
+    
+    /* Checklist items */
+    .checklist-section { margin-bottom: 1.25rem; }
     .checklist-section h4 {
       background: var(--primary-light);
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      margin: 1rem 0 0.5rem;
+      padding: 0.6rem 1rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      color: var(--primary);
     }
     .check-item {
       display: flex;
       align-items: flex-start;
       gap: 0.75rem;
-      padding: 0.75rem;
-      border-bottom: 1px solid var(--grey-100);
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
     }
-    .check-item:last-child { border-bottom: none; }
-    .check-item input[type="checkbox"] {
-      width: 1.25rem;
-      height: 1.25rem;
-      margin-top: 0.1rem;
-      cursor: pointer;
-    }
-    .check-item label { margin-bottom: 0; cursor: pointer; flex: 1; }
-    .check-item.defect-found { background: #fff0f0; border-left: 3px solid var(--danger); }
+    .check-item input { margin-top: 0.2rem; }
     .defect-note {
-      margin-left: 2rem;
-      margin-top: 0.5rem;
-      padding: 0.75rem;
-      background: #fff0f0;
-      border-radius: var(--radius);
       display: none;
+      margin-left: 1.75rem;
+      margin-bottom: 0.75rem;
+      padding-left: 0.5rem;
+      border-left: 3px solid var(--accent);
     }
     .defect-note.visible { display: block; }
-
-    /* ── UTILITY ── */
-    .hidden { display: none !important; }
-    .loading { text-align: center; padding: 2rem; color: var(--grey-700); }
-    .spinner {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      border: 4px solid var(--grey-200);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+    .defect-note textarea { width: 100%; min-height: 60px; margin-top: 0.3rem; }
+    
+    /* Hidden by default — shown via JS */
+    #authForms, #portalContent { display: none; }
+    
+    /* Responsive */
+    @media(max-width: 600px) {
+      .form-row { flex-direction: column; }
+      .nav-links { flex-direction: column; }
+      .dashboard-grid { grid-template-columns: 1fr; }
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error-text { color: var(--danger); font-size: 0.9rem; margin-top: 0.25rem; }
-    .success-text { color: var(--success); font-size: 0.9rem; margin-top: 0.25rem; }
+    
+    small { font-size: 0.8rem; color: var(--text-light); }
   </style>
 </head>
 <body>
 
   <!-- ================================================== -->
-  <!-- PAGE 1: AUTH / LOGIN / REGISTER                    -->
+  <!-- LANDING / AUTH PAGE                                -->
   <!-- ================================================== -->
   <div id="authPage" class="page active">
-    <div class="auth-wrapper">
-      <div class="auth-card">
-        <h2>🚛 LSD Solutions</h2>
-        <p style="text-align:center; color:#666; margin-bottom:1.5rem;">HGV & Logistics Services Portal</p>
+    <div class="container" style="max-width: 420px; padding-top: 3rem;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <span style="font-size: 3rem;">🚛</span>
+        <h1 style="color: var(--primary); margin: 0.5rem 0;">LSD Solutions</h1>
+        <p style="color: var(--text-light);">HGV & Logistics Services Portal</p>
+      </div>
 
-        <div class="auth-tabs">
-          <button type="button" class="auth-tab active" data-tab="signin" id="tabSignIn">Sign In</button>
-          <button type="button" class="auth-tab" data-tab="register" id="tabRegister">Register</button>
-        </div>
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem;">
+        <button type="button" id="tabSignIn" class="btn btn-primary" style="flex:1;" onclick="showAuthTab('signin')">Sign In</button>
+        <button type="button" id="tabRegister" class="btn btn-secondary" style="flex:1;" onclick="showAuthTab('register')">Register</button>
+      </div>
 
-        <!-- SIGN-IN FORM -->
-        <form id="signInForm" method="dialog">
+      <!-- SIGN IN FORM -->
+      <div id="signInForm" class="card">
+        <h3>Sign In</h3>
+        <form id="loginForm">
           <div class="form-group">
-            <label for="siEmail">Email Address</label>
-            <input type="email" id="siEmail" name="siEmail" required autocomplete="email" />
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" name="loginEmail" required autocomplete="email" />
           </div>
           <div class="form-group">
-            <label for="siPassword">Password</label>
-            <input type="password" id="siPassword" name="siPassword" required autocomplete="current-password" />
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" name="loginPassword" required autocomplete="current-password" />
           </div>
-          <div id="signInError" class="error-text" role="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+          <p style="text-align:center; margin-top:1rem; font-size:0.9rem;">
+            <a href="#" onclick="showAuthTab('reset'); return false;" style="color:var(--primary);">Forgot password?</a>
+          </p>
         </form>
+        <p id="loginError" class="error-text" style="display:none;"></p>
+      </div>
 
-        <!-- REGISTER FORM -->
-        <form id="registerForm" method="dialog" class="hidden">
-          <div class="auth-role-toggle">
-            <button type="button" class="role-btn active" data-role="driver" id="roleDriver">
-              👤 Driver
-            </button>
-            <button type="button" class="role-btn" data-role="company" id="roleCompany">
-              🏢 Company
-            </button>
-          </div>
-          <input type="hidden" id="regRole" name="regRole" value="driver" />
-
+      <!-- REGISTER FORM -->
+      <div id="registerForm" class="card" style="display:none;">
+        <h3>Register</h3>
+        <form id="registerFormEl">
           <div class="form-group">
             <label for="regName">Full Name</label>
             <input type="text" id="regName" name="regName" required autocomplete="name" />
           </div>
           <div class="form-group">
-            <label for="regEmail">Email Address</label>
+            <label for="regEmail">Email</label>
             <input type="email" id="regEmail" name="regEmail" required autocomplete="email" />
           </div>
           <div class="form-group">
-            <label for="regPassword">Create Password</label>
-            <input type="password" id="regPassword" name="regPassword" required autocomplete="new-password" minlength="6" />
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" name="regPassword" required autocomplete="new-password" />
           </div>
-          <div class="form-group hidden" id="companyNameGroup">
-            <label for="regCompanyName">Company Name</label>
-            <input type="text" id="regCompanyName" name="regCompanyName" autocomplete="organization" />
+          <div class="form-group">
+            <label>Account Type</label>
+            <div style="display:flex; gap:1rem;">
+              <label style="display:flex; align-items:center; gap:0.3rem; font-weight:normal;">
+                <input type="radio" name="accountType" value="driver" checked /> Driver
+              </label>
+              <label style="display:flex; align-items:center; gap:0.3rem; font-weight:normal;">
+                <input type="radio" name="accountType" value="company" /> Company
+              </label>
+            </div>
           </div>
-          <div id="regError" class="error-text" role="alert"></div>
-          <div id="regSuccess" class="success-text" role="status"></div>
-          <button type="submit" class="btn btn-accent btn-block">Create Account</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Create Account</button>
         </form>
+        <p id="registerError" class="error-text" style="display:none;"></p>
+        <p id="registerSuccess" class="success-text" style="display:none;">✅ Account created! Please check your email to verify, then sign in.</p>
+      </div>
+
+      <!-- PASSWORD RESET -->
+      <div id="resetForm" class="card" style="display:none;">
+        <h3>Reset Password</h3>
+        <form id="resetFormEl">
+          <div class="form-group">
+            <label for="resetEmail">Email</label>
+            <input type="email" id="resetEmail" name="resetEmail" required autocomplete="email" />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Send Reset Link</button>
+        </form>
+        <p id="resetMessage" style="margin-top:1rem; display:none;"></p>
       </div>
     </div>
   </div>
-    <!-- ================================================== -->
-  <!-- PAGE 2: DRIVER PORTAL — DASHBOARD                  -->
+
   <!-- ================================================== -->
+  <!-- DRIVER PORTAL — PAGES                             -->
+  <!-- ================================================== -->
+  
+  <!-- DRIVER DASHBOARD -->
   <div id="driverDashboardPage" class="page">
     <header class="top-header">
       <h1>🚛 Driver Portal — LSD Solutions</h1>
       <nav class="nav-links">
-        <button type="button" onclick="showPage('driverDashboardPage')">Dashboard</button>
+        <button type="button" onclick="showPage('driverDashboardPage')">Home</button>
         <button type="button" onclick="showPage('driverProfilePage')">My Profile</button>
-        <button type="button" onclick="showPage('driverCalendarPage')">Calendar</button>
-        <button type="button" onclick="showPage('driverDocumentsPage')">Documents</button>
         <button type="button" onclick="showPage('driverChecklistPage')">Walkaround</button>
+        <button type="button" onclick="showPage('driverDocumentsPage')">Documents</button>
+        <button type="button" onclick="showPage('driverInfringementsPage')">Notices</button>
+        <button type="button" onclick="showPage('driverWtdPage')">Working Time</button>
         <button type="button" onclick="handleSignOut()">Sign Out</button>
       </nav>
     </header>
     <div class="container">
-      <h2>Welcome, <span id="drWelcomeName">Driver</span></h2>
-      <p>Your hub for work, compliance and documents</p>
-
+      <h2 style="margin-bottom:1.5rem;">Welcome, <span id="driverNameDisplay">Driver</span></h2>
+      
       <div class="dashboard-grid">
-        <div class="dashboard-card" onclick="showPage('driverProfilePage')">
+        <div class="dashboard-card" onclick="showPage('driverProfilePage')" style="cursor:pointer;">
           <div class="icon">👤</div>
           <h3>My Profile</h3>
-          <p>Licence, medical & details</p>
+          <p>View & update details</p>
         </div>
-        <div class="dashboard-card accent-border" onclick="showPage('driverCalendarPage')">
-          <div class="icon">📅</div>
-          <h3>Calendar & Shifts</h3>
-          <p>Upcoming work & availability</p>
-        </div>
-        <div class="dashboard-card success-border" onclick="showPage('driverDocumentsPage')">
-          <div class="icon">📁</div>
-          <h3>My Documents</h3>
-          <p>Uploads & certificates</p>
-        </div>
-        <div class="dashboard-card" onclick="showPage('driverChecklistPage')">
+        <div class="dashboard-card" onclick="showPage('driverChecklistPage')" style="cursor:pointer;">
           <div class="icon">✅</div>
-          <h3>Walkaround Checks</h3>
-          <p>DVSA daily vehicle inspection</p>
+          <h3>Walkaround Check</h3>
+          <p>Daily vehicle inspection</p>
         </div>
-        <div class="dashboard-card accent-border" onclick="loadDriverJobs()">
+        <div class="dashboard-card" onclick="showPage('driverDocumentsPage')" style="cursor:pointer;">
+          <div class="icon">📁</div>
+          <h3>Documents</h3>
+          <p>Upload & view files</p>
+        </div>
+        <div class="dashboard-card" onclick="loadDriverJobs(); showPage('driverCalendarPage')" style="cursor:pointer;">
           <div class="icon">📋</div>
           <h3>Posted Work</h3>
-          <p>Available jobs from company</p>
+          <p>Available jobs</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('driverInfringementsPage')" style="cursor:pointer;">
+          <div class="icon">⚠️</div>
+          <h3>Notices</h3>
+          <p>Review & sign off</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('driverWtdPage')" style="cursor:pointer;">
+          <div class="icon">⏱️</div>
+          <h3>Working Time</h3>
+          <p>WTD compliance</p>
         </div>
       </div>
 
-      <div id="drRecentActivity" class="card">
+      <div class="card">
         <h3>Recent Activity</h3>
         <div id="drActivityList" class="loading">Loading...</div>
       </div>
     </div>
   </div>
 
-  <!-- ================================================== -->
-  <!-- PAGE 3: DRIVER PROFILE                             -->
-  <!-- ================================================== -->
+  <!-- DRIVER PROFILE PAGE -->
   <div id="driverProfilePage" class="page">
     <header class="top-header">
-      <h1>🚛 My Profile</h1>
+      <h1>👤 My Profile</h1>
       <nav class="nav-links">
         <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
         <button type="button" onclick="handleSignOut()">Sign Out</button>
@@ -410,7 +328,7 @@
             </div>
             <div class="form-col form-group">
               <label for="dpEmail">Email</label>
-              <input type="email" id="dpEmail" name="dpEmail" readonly />
+              <input type="email" id="dpEmail" name="dpEmail" readonly style="background:#f3f4f6;" />
             </div>
           </div>
           <div class="form-row">
@@ -435,7 +353,7 @@
           </div>
           <div class="form-row">
             <div class="form-col form-group">
-              <label for="dpMedicalExpiry">Medical Certificate Expiry</label>
+              <label for="dpMedicalExpiry">D4 Medical Expiry</label>
               <input type="date" id="dpMedicalExpiry" name="dpMedicalExpiry" />
             </div>
             <div class="form-col form-group">
@@ -444,101 +362,16 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="dpPhone">Contact Phone</label>
+            <label for="dpPhone">Phone Number</label>
             <input type="tel" id="dpPhone" name="dpPhone" />
           </div>
-          <div id="dpSaveStatus" class="success-text"></div>
           <button type="submit" class="btn btn-primary">Save Profile</button>
+          <p id="dpSaveStatus" class="success-text"></p>
         </form>
       </div>
     </div>
   </div>
-
-  <!-- ================================================== -->
-  <!-- PAGE 4: DRIVER CALENDAR / SHIFTS                   -->
-  <!-- ================================================== -->
-  <div id="driverCalendarPage" class="page">
-    <header class="top-header">
-      <h1>📅 Calendar & Shifts</h1>
-      <nav class="nav-links">
-        <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
-        <button type="button" onclick="handleSignOut()">Sign Out</button>
-      </nav>
-    </header>
-    <div class="container">
-      <div class="card">
-        <h3>Upcoming Shifts & Jobs</h3>
-        <div id="calJobList">
-          <p class="loading">Loading scheduled work...</p>
-        </div>
-      </div>
-      <div class="card">
-        <h3>My Availability</h3>
-        <form id="availabilityForm">
-          <div class="form-group">
-            <label for="availStart">Available From</label>
-            <input type="date" id="availStart" name="availStart" />
-          </div>
-          <div class="form-group">
-            <label for="availEnd">Available Until</label>
-            <input type="date" id="availEnd" name="availEnd" />
-          </div>
-          <div class="form-group">
-            <label for="availNotes">Notes / Unavailable Dates</label>
-            <textarea id="availNotes" name="availNotes" rows="3" placeholder="e.g. Annual leave, appointments..."></textarea>
-          </div>
-          <button type="submit" class="btn btn-accent">Update Availability</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================================================== -->
-  <!-- PAGE 5: DRIVER DOCUMENTS                           -->
-  <!-- ================================================== -->
-  <div id="driverDocumentsPage" class="page">
-    <header class="top-header">
-      <h1>📁 My Documents</h1>
-      <nav class="nav-links">
-        <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
-        <button type="button" onclick="handleSignOut()">Sign Out</button>
-      </nav>
-    </header>
-    <div class="container">
-      <div class="card">
-        <h3>Upload Document</h3>
-        <form id="docUploadForm">
-          <div class="form-group">
-            <label for="docType">Document Type</label>
-            <select id="docType" name="docType">
-              <option value="licence">Driving Licence</option>
-              <option value="medical">Medical Certificate</option>
-              <option value="digi">Digi Card</option>
-              <option value="cpc">CPC / Qualification</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="docFile">Select File</label>
-            <input type="file" id="docFile" name="docFile" accept=".pdf,.jpg,.jpeg,.png" />
-          </div>
-          <div class="form-group">
-            <label for="docExpiry">Expiry Date (if applicable)</label>
-            <input type="date" id="docExpiry" name="docExpiry" />
-          </div>
-          <button type="submit" class="btn btn-primary">Upload Document</button>
-        </form>
-      </div>
-      <div class="card">
-        <h3>My Uploaded Files</h3>
-        <div id="docList" class="loading">Loading documents...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================================================== -->
-  <!-- PAGE 6: DRIVER WALKAROUND CHECKLIST — DVSA         -->
-  <!-- ================================================== -->
+    <!-- DRIVER WALKAROUND CHECKLIST PAGE -->
   <div id="driverChecklistPage" class="page">
     <header class="top-header">
       <h1>✅ Daily Walkaround Check</h1>
@@ -549,176 +382,388 @@
     </header>
     <div class="container">
       <div class="card">
-        <h3>Vehicle & Inspection Details</h3>
+        <h3>Vehicle Details</h3>
         <div class="form-row">
           <div class="form-col form-group">
-            <label for="chkVehicleReg">Vehicle Registration</label>
-            <input type="text" id="chkVehicleReg" name="chkVehicleReg" required placeholder="e.g. AB51 XYZ" />
+            <label for="checkVehicleReg">Vehicle Registration</label>
+            <input type="text" id="checkVehicleReg" name="checkVehicleReg" placeholder="e.g. AB12 CDE" required />
           </div>
           <div class="form-col form-group">
-            <label for="chkDate">Date</label>
-            <input type="date" id="chkDate" name="chkDate" required />
+            <label for="checkTrailerNo">Trailer Number (if applicable)</label>
+            <input type="text" id="checkTrailerNo" name="checkTrailerNo" placeholder="e.g. TR123" />
           </div>
         </div>
         <div class="form-row">
           <div class="form-col form-group">
-            <label for="chkTimeStart">Start Time</label>
-            <input type="time" id="chkTimeStart" name="chkTimeStart" required />
+            <label for="checkDate">Date</label>
+            <input type="date" id="checkDate" name="checkDate" required />
           </div>
           <div class="form-col form-group">
-            <label for="chkOdometer">Odometer Reading</label>
-            <input type="number" id="chkOdometer" name="chkOdometer" placeholder="Miles" />
+            <label for="checkTime">Time</label>
+            <input type="time" id="checkTime" name="checkTime" required />
           </div>
         </div>
       </div>
 
-      <form id="walkaroundChecklistForm" class="card">
-        <h3>DVSA Compliant Inspection Items</h3>
-        <p style="color:#666; margin-bottom:1rem;">Check each item. Mark any defects clearly — report to transport manager immediately.</p>
-        <div id="checklistDynamicContent">
-          <!-- Checklist items loaded from DEFAULT_CHECKLIST -->
-          <p class="loading">Loading checklist...</p>
-        </div>
-        <div class="form-group" style="margin-top:2rem;">
-          <label for="chkGeneralNotes">General Comments / Other Defects</label>
-          <textarea id="chkGeneralNotes" name="chkGeneralNotes" rows="3" placeholder="Describe any issues not covered above..."></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-col form-group">
-            <label for="chkDriverName">Driver Name (Print)</label>
-            <input type="text" id="chkDriverName" name="chkDriverName" required />
+      <form id="checklistForm">
+        <!-- EXTERIOR SECTION -->
+        <div class="card checklist-section">
+          <h4>🚛 EXTERIOR</h4>
+          <div class="check-item">
+            <input type="checkbox" id="ext01" name="ext01" class="check-main" />
+            <label for="ext01">Tyres — condition, pressure, tread depth, no cuts/abnormal wear</label>
+            <div class="defect-note" id="ext01_note">
+              <textarea placeholder="Describe the defect..."></textarea>
+            </div>
           </div>
-          <div class="form-col form-group">
-            <label for="chkSignature">Driver Confirmation — Type "CONFIRMED" to sign</label>
-            <input type="text" id="chkSignature" name="chkSignature" required placeholder="Type CONFIRMED" />
+          <div class="check-item">
+            <input type="checkbox" id="ext02" name="ext02" class="check-main" />
+            <label for="ext02">Wheels & Fixings — secure, no damage, no loose/missing nuts</label>
+            <div class="defect-note" id="ext02_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="ext03" name="ext03" class="check-main" />
+            <label for="ext03">Lights & Reflectors — all working, lenses clean & intact</label>
+            <div class="defect-note" id="ext03_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="ext04" name="ext04" class="check-main" />
+            <label for="ext04">Mirrors — clean, secure, glass intact</label>
+            <div class="defect-note" id="ext04_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="ext05" name="ext05" class="check-main" />
+            <label for="ext05">Windscreen & Windows — clean, no damage, wipers/washers working</label>
+            <div class="defect-note" id="ext05_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="ext06" name="ext06" class="check-main" />
+            <label for="ext06">Body & Mudguards — condition, security, no sharp edges</label>
+            <div class="defect-note" id="ext06_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="ext07" name="ext07" class="check-main" />
+            <label for="ext07">Number Plates — secure, clean, legible</label>
+            <div class="defect-note" id="ext07_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="ext08" name="ext08" class="check-main" />
+            <label for="ext08">Coupling / Security — fifth wheel, landing legs, air lines, electrical connections</label>
+            <div class="defect-note" id="ext08_note"><textarea placeholder="Describe the defect..."></textarea></div>
           </div>
         </div>
-        <button type="submit" class="btn btn-success btn-block">✅ Submit Inspection</button>
-        <div id="chkSubmitStatus" class="success-text"></div>
+
+        <!-- INTERIOR SECTION -->
+        <div class="card checklist-section">
+          <h4>🚛 INTERIOR</h4>
+          <div class="check-item">
+            <input type="checkbox" id="int01" name="int01" class="check-main" />
+            <label for="int01">Cab Security — doors lock correctly, windows operate, mirrors adjusted</label>
+            <div class="defect-note" id="int01_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="int02" name="int02" class="check-main" />
+            <label for="int02">Seat Belts — condition, security, operation</label>
+            <div class="defect-note" id="int02_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="int03" name="int03" class="check-main" />
+            <label for="int03">Horn — working correctly</label>
+            <div class="defect-note" id="int03_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="int04" name="int04" class="check-main" />
+            <label for="int04">Warning Devices — all audible/visual warnings functioning</label>
+            <div class="defect-note" id="int04_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="int05" name="int05" class="check-main" />
+            <label for="int05">Fire Extinguisher — present, sealed, in date, accessible</label>
+            <div class="defect-note" id="int05_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="int06" name="int06" class="check-main" />
+            <label for="int06">First Aid Kit — present, contents complete & in date</label>
+            <div class="defect-note" id="int06_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+        </div>
+
+        <!-- ENGINE & BRAKES SECTION -->
+        <div class="card checklist-section">
+          <h4>⚙️ ENGINE & BRAKES</h4>
+          <div class="check-item">
+            <input type="checkbox" id="eng01" name="eng01" class="check-main" />
+            <label for="eng01">Fluid Levels — oil, coolant, screen wash at correct levels, no leaks</label>
+            <div class="defect-note" id="eng01_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="eng02" name="eng02" class="check-main" />
+            <label for="eng02">Air System — no audible leaks, pressure builds correctly</label>
+            <div class="defect-note" id="eng02_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="eng03" name="eng03" class="check-main" />
+            <label for="eng03">Brakes — service, secondary & parking brake operation</label>
+            <div class="defect-note" id="eng03_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+        </div>
+
+        <!-- TRAILER SECTION -->
+        <div class="card checklist-section">
+          <h4>🚛 TRAILER (if applicable)</h4>
+          <div class="check-item">
+            <input type="checkbox" id="trl01" name="trl01" class="check-main" />
+            <label for="trl01">Trailer Coupling — secure, safety catch engaged, correct height</label>
+            <div class="defect-note" id="trl01_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="trl02" name="trl02" class="check-main" />
+            <label for="trl02">Air & Electrical Connections — secure, no damage, lights working</label>
+            <div class="defect-note" id="trl02_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="trl03" name="trl03" class="check-main" />
+            <label for="trl03">Trailer Tyres & Wheels — condition, pressure, security</label>
+            <div class="defect-note" id="trl03_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="trl04" name="trl04" class="check-main" />
+            <label for="trl04">Doors & Body — secure, seals intact, markings legible</label>
+            <div class="defect-note" id="trl04_note"><textarea placeholder="Describe the defect..."></textarea></div>
+          </div>
+        </div>
+
+        <!-- SIGNATURE -->
+        <div class="card">
+          <h3>Declaration & Signature</h3>
+          <div class="form-group">
+            <label for="checkComments">Additional Comments</label>
+            <textarea id="checkComments" name="checkComments" rows="3" placeholder="Any other notes or issues..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="checkSignature">Type your full name to confirm all checks are complete and accurate:</label>
+            <input type="text" id="checkSignature" name="checkSignature" placeholder="Your full name" required />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">✅ Submit Checklist</button>
+          <p id="checklistStatus" style="margin-top:1rem; display:none;"></p>
+        </div>
       </form>
-
-      <div class="card">
-        <h3>Previous Inspections</h3>
-        <div id="checklistHistory" class="loading">Loading history...</div>
-      </div>
-    </div>
-  </div>
-    <!-- ================================================== -->
-  <!-- PAGE 7: COMPANY DASHBOARD                          -->
-  <!-- ================================================== -->
-  <div id="companyDashboardPage" class="page">
-    <header class="top-header">
-      <h1>🏢 Company Portal — LSD Solutions</h1>
-      <nav class="nav-links">
-        <button type="button" onclick="showPage('companyDashboardPage')">Dashboard</button>
-        <button type="button" onclick="showPage('companyDriversPage')">Drivers</button>
-        <button type="button" onclick="showPage('companyVehiclesPage')">Vehicles</button>
-        <button type="button" onclick="showPage('companyJobsPage')">Posted Work</button>
-        <button type="button" onclick="showPage('companyChecklistEditorPage')">Checklist Editor</button>
-        <button type="button" onclick="handleSignOut()">Sign Out</button>
-      </nav>
-    </header>
-    <div class="container">
-      <h2>Welcome, <span id="coWelcomeName">Company</span></h2>
-      <p>Manage your fleet, drivers and operations</p>
-
-      <div class="dashboard-grid">
-        <div class="dashboard-card" onclick="showPage('companyDriversPage')">
-          <div class="icon">👥</div>
-          <h3>Employed Drivers</h3>
-          <p>Manage team & licences</p>
-        </div>
-        <div class="dashboard-card accent-border" onclick="showPage('companyVehiclesPage')">
-          <div class="icon">🚚</div>
-          <h3>Fleet & Trailers</h3>
-          <p>Vehicle records & maintenance</p>
-        </div>
-        <div class="dashboard-card success-border" onclick="showPage('companyJobsPage')">
-          <div class="icon">📋</div>
-          <h3>Posted Work</h3>
-          <p>Assign & publish jobs</p>
-        </div>
-        <div class="dashboard-card" onclick="showPage('companyChecklistEditorPage')">
-          <div class="icon">✅</div>
-          <h3>Checklist Editor</h3>
-          <p>Customise DVSA checks</p>
-        </div>
-        <div class="dashboard-card accent-border" onclick="loadCompanyInvoices()">
-          <div class="icon">💰</div>
-          <h3>Invoicing</h3>
-          <p>Rates & payments</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Recent Activity Overview</h3>
-        <div class="form-row">
-          <div class="form-col">
-            <p><strong>Active Drivers:</strong> <span id="coStatDrivers">0</span></p>
-            <p><strong>Active Vehicles:</strong> <span id="coStatVehicles">0</span></p>
-          </div>
-          <div class="form-col">
-            <p><strong>Open Jobs:</strong> <span id="coStatJobs">0</span></p>
-            <p><strong>This Week's Checks:</strong> <span id="coStatChecks">0</span></p>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- ================================================== -->
-  <!-- PAGE 8: COMPANY — MANAGE DRIVERS                   -->
-  <!-- ================================================== -->
-  <div id="companyDriversPage" class="page">
+  <!-- DRIVER DOCUMENTS PAGE -->
+  <div id="driverDocumentsPage" class="page">
     <header class="top-header">
-      <h1>👥 Manage Drivers</h1>
+      <h1>📁 My Documents</h1>
       <nav class="nav-links">
-        <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
+        <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
         <button type="button" onclick="handleSignOut()">Sign Out</button>
       </nav>
     </header>
     <div class="container">
       <div class="card">
-        <h3>Add Employed Driver</h3>
-        <form id="addDriverForm">
+        <h3>Upload New Document</h3>
+        <form id="docUploadForm">
           <div class="form-row">
             <div class="form-col form-group">
-              <label for="adName">Full Name</label>
-              <input type="text" id="adName" name="adName" required />
+              <label for="docType">Document Type</label>
+              <select id="docType" name="docType" required>
+                <option value="">— Select Type —</option>
+                <option value="driving_licence">Driving Licence</option>
+                <option value="d4_medical">D4 Medical Certificate</option>
+                <option value="cpc_card">Driver CPC / Qualification Card</option>
+                <option value="tachograph_card">Tachograph Driver Card</option>
+                <option value="insurance">Insurance Certificate</option>
+                <option value="other">Other</option>
+              </select>
             </div>
             <div class="form-col form-group">
-              <label for="adEmail">Email Address</label>
-              <input type="email" id="adEmail" name="adEmail" required />
+              <label for="docExpiry">Expiry Date</label>
+              <input type="date" id="docExpiry" name="docExpiry" />
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-col form-group">
-              <label for="adLicence">Licence Number</label>
-              <input type="text" id="adLicence" name="adLicence" />
-            </div>
-            <div class="form-col form-group">
-              <label for="adPhone">Phone</label>
-              <input type="tel" id="adPhone" name="adPhone" />
-            </div>
+          <div class="form-group">
+            <label for="docFile">Choose File</label>
+            <input type="file" id="docFile" name="docFile" accept=".pdf,.jpg,.jpeg,.png" required />
           </div>
-          <button type="submit" class="btn btn-primary">Add Driver</button>
-          <div id="addDriverStatus" class="success-text"></div>
+          <button type="submit" class="btn btn-primary">📤 Upload Document</button>
+          <p id="docUploadStatus" style="margin-top:0.5rem;"></p>
         </form>
       </div>
 
       <div class="card">
-        <h3>Employed Drivers List</h3>
-        <div id="companyDriverList" class="loading">Loading drivers...</div>
+        <h3>My Filed Documents</h3>
+        <div id="docsList" class="loading">Loading documents...</div>
       </div>
     </div>
   </div>
 
-  <!-- ================================================== -->
-  <!-- PAGE 9: COMPANY — FLEET & VEHICLES                 -->
-  <!-- ================================================== -->
-  <div id="companyVehiclesPage" class="page">
+  <!-- DRIVER CALENDAR / JOBS PAGE -->
+  <div id="driverCalendarPage" class="page">
     <header class="top-header">
-      <h1>🚚 Fleet & Trailers</h1>
+      <h1>📋 Posted Work</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="card">
+        <h3>Available & Assigned Jobs</h3>
+        <div id="jobsList" class="loading">Loading jobs...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER INFRINGEMENT REVIEW & SIGN-OFF PAGE -->
+  <div id="driverInfringementsPage" class="page">
+    <header class="top-header">
+      <h1>⚠️ My Infringements & Notices</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="card">
+        <h3>Items Requiring Your Attention</h3>
+        <p style="color:#666;">Please review each item, add any comments, and sign to confirm you have read and understood it.</p>
+        <div id="pendingInfringementsList" class="loading">Checking for items...</div>
+      </div>
+      <div class="card">
+        <h3>✅ Previously Signed & Filed</h3>
+        <div id="signedInfringementsList" class="loading">Loading history...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER WORKING TIME DIRECTIVE PAGE -->
+  <div id="driverWtdPage" class="page">
+    <header class="top-header">
+      <h1>⏱️ My Working Time</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('driverDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <h3>This Week</h3>
+          <p><span id="wtdThisWeekHours">0</span> hrs worked</p>
+          <p>Max allowed: 48 hrs avg / 60 hrs max</p>
+        </div>
+        <div class="dashboard-card">
+          <h3>Rest Breaks Today</h3>
+          <p id="wtdRestStatus">✅ Requirements Met</p>
+        </div>
+        <div class="dashboard-card">
+          <h3>Night Work</h3>
+          <p id="wtdNightHours">0 hrs this week</p>
+          <p style="font-size:0.85rem; color:#666;">Limit: 10 hrs/night</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Recent Working Time History</h3>
+        <div id="wtdHistoryList" class="loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+    <!-- ================================================== -->
+  <!-- COMPANY PORTAL — PAGES                             -->
+  <!-- ================================================== -->
+
+  <!-- COMPANY DASHBOARD / HOME -->
+  <div id="companyDashboardPage" class="page">
+    <header class="top-header">
+      <h1>🏢 Company Portal — LSD Solutions</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('companyDashboardPage')">Home</button>
+        <button type="button" onclick="showPage('companyProfilePage')">Company Profile</button>
+        <button type="button" onclick="showPage('companyVehiclesPage')">Vehicles</button>
+        <button type="button" onclick="showPage('companyDriversPage')">Drivers</button>
+        <button type="button" onclick="showPage('companyJobsPage')">Posted Work</button>
+        <button type="button" onclick="showPage('companyMaintenancePage')">Maintenance</button>
+        <button type="button" onclick="showPage('companyDefectsPage')">Defects</button>
+        <button type="button" onclick="showPage('companyCompliancePage')">Compliance</button>
+        <button type="button" onclick="showPage('companyTachographPage')">Tachograph Data</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <h2 style="margin-bottom:1.5rem;">Welcome, <span id="companyNameDisplay">Company</span></h2>
+      
+      <div class="dashboard-grid">
+        <div class="dashboard-card" onclick="showPage('companyProfilePage')" style="cursor:pointer;">
+          <div class="icon">🏢</div>
+          <h3>Company Profile</h3>
+          <p>Business details & settings</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyVehiclesPage')" style="cursor:pointer;">
+          <div class="icon">🚛</div>
+          <h3>Vehicles</h3>
+          <p>Manage fleet & trailers</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyDriversPage')" style="cursor:pointer;">
+          <div class="icon">👥</div>
+          <h3>Drivers</h3>
+          <p>Manage employed drivers</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyJobsPage')" style="cursor:pointer;">
+          <div class="icon">📋</div>
+          <h3>Posted Work</h3>
+          <p>Jobs & assignments</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyMaintenancePage')" style="cursor:pointer;">
+          <div class="icon">🔧</div>
+          <h3>Maintenance</h3>
+          <p>Service & inspection schedule</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyDefectsPage')" style="cursor:pointer;">
+          <div class="icon">⚠️</div>
+          <h3>Defects</h3>
+          <p>Report & manage issues</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyCompliancePage')" style="cursor:pointer;">
+          <div class="icon">📊</div>
+          <h3>Compliance</h3>
+          <p>Overview & alerts</p>
+        </div>
+        <div class="dashboard-card" onclick="showPage('companyTachographPage')" style="cursor:pointer;">
+          <div class="icon">📥</div>
+          <h3>Tachograph Data</h3>
+          <p>Downloads & reports</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Quick Compliance Summary</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem;">
+          <div style="padding:1rem; background:#f0f7f0; border-radius:6px; text-align:center;">
+            <p style="font-size:1.5rem; font-weight:bold; color:#006633;" id="qDocsOk">0</p>
+            <p style="font-size:0.9rem;">Docs OK</p>
+          </div>
+          <div style="padding:1rem; background:#fff7e6; border-radius:6px; text-align:center;">
+            <p style="font-size:1.5rem; font-weight:bold; color:#d47500;" id="qMaintDue">0</p>
+            <p style="font-size:0.9rem;">Due Maint</p>
+          </div>
+          <div style="padding:1rem; background:#fff0f0; border-radius:6px; text-align:center;">
+            <p style="font-size:1.5rem; font-weight:bold; color:#cc0000;" id="qDefectsOpen">0</p>
+            <p style="font-size:0.9rem;">Open Defects</p>
+          </div>
+          <div style="padding:1rem; background:#e8edf3; border-radius:6px; text-align:center;">
+            <p style="font-size:1.5rem; font-weight:bold; color:#1a365d;" id="qDriversTotal">0</p>
+            <p style="font-size:0.9rem;">Total Drivers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY PROFILE PAGE -->
+  <div id="companyProfilePage" class="page">
+    <header class="top-header">
+      <h1>🏢 Company Profile & Settings</h1>
       <nav class="nav-links">
         <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
         <button type="button" onclick="handleSignOut()">Sign Out</button>
@@ -726,61 +771,123 @@
     </header>
     <div class="container">
       <div class="card">
-        <h3>Add Vehicle / Trailer</h3>
+        <h3>Business Information</h3>
+        <form id="companyProfileForm">
+          <div class="form-row">
+            <div class="form-col form-group">
+              <label for="cpCompanyName">Company Name</label>
+              <input type="text" id="cpCompanyName" name="cpCompanyName" required />
+            </div>
+            <div class="form-col form-group">
+              <label for="cpCompanyEmail">Email</label>
+              <input type="email" id="cpCompanyEmail" name="cpCompanyEmail" readonly style="background:#f3f4f6;" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-col form-group">
+              <label for="cpAddress">Business Address</label>
+              <input type="text" id="cpAddress" name="cpAddress" />
+            </div>
+            <div class="form-col form-group">
+              <label for="cpPhone">Business Phone</label>
+              <input type="tel" id="cpPhone" name="cpPhone" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-col form-group">
+              <label for="cpOlicence">Operator Licence Number</label>
+              <input type="text" id="cpOlicence" name="cpOlicence" placeholder="e.g. OB123456" />
+            </div>
+            <div class="form-col form-group">
+              <label for="cpFleetSize">Authorised Vehicles</label>
+              <input type="number" id="cpFleetSize" name="cpFleetSize" min="1" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Company Profile</button>
+          <p id="cpSaveStatus" class="success-text"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>🔑 Tacomaster API Integration</h3>
+        <p style="color:#666; margin-bottom:1rem;">Enter your Tacomaster API key to enable automatic tachograph downloads, infringement detection, and working time tracking.</p>
+        <form id="tacomasterSettingsForm">
+          <div class="form-group">
+            <label for="tacomasterApiKey">API Key</label>
+            <input type="password" id="tacomasterApiKey" name="tacomasterApiKey" placeholder="••••••••••••••••••••" />
+            <small>Your key is stored securely and never exposed to drivers.</small>
+          </div>
+          <button type="submit" class="btn btn-primary">Save API Key</button>
+          <p id="tacomasterStatus" class="success-text"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY VEHICLES PAGE -->
+  <div id="companyVehiclesPage" class="page">
+    <header class="top-header">
+      <h1>🚛 Vehicle Fleet</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="card">
+        <h3>Add New Vehicle</h3>
         <form id="addVehicleForm">
           <div class="form-row">
             <div class="form-col form-group">
-              <label for="vReg">Registration / ID</label>
-              <input type="text" id="vReg" name="vReg" required />
+              <label for="vReg">Registration Number</label>
+              <input type="text" id="vReg" name="vReg" placeholder="AB12 CDE" required />
             </div>
             <div class="form-col form-group">
-              <label for="vType">Type</label>
+              <label for="vMake">Make</label>
+              <input type="text" id="vMake" name="vMake" placeholder="Volvo, DAF, Scania..." />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-col form-group">
+              <label for="vModel">Model</label>
+              <input type="text" id="vModel" name="vModel" />
+            </div>
+            <div class="form-col form-group">
+              <label for="vType">Vehicle Type</label>
               <select id="vType" name="vType">
-                <option value="tractor">Tractor Unit</option>
                 <option value="rigid">Rigid Vehicle</option>
+                <option value="tractor">Tractor Unit</option>
                 <option value="trailer">Trailer</option>
-                <option value="other">Other</option>
+                <option value="van">Light Commercial</option>
               </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-col form-group">
-              <label for="vMake">Make</label>
-              <input type="text" id="vMake" name="vMake" />
-            </div>
-            <div class="form-col form-group">
-              <label for="vModel">Model</label>
-              <input type="text" id="vModel" name="vModel" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-col form-group">
-              <label for="vMotExpiry">MOT Expiry</label>
+              <label for="vMotExpiry">MOT Expiry Date</label>
               <input type="date" id="vMotExpiry" name="vMotExpiry" />
             </div>
             <div class="form-col form-group">
-              <label for="vServiceDue">Service Due</label>
-              <input type="date" id="vServiceDue" name="vServiceDue" />
+              <label for="vInsExpiry">Insurance Expiry</label>
+              <input type="date" id="vInsExpiry" name="vInsExpiry" />
             </div>
           </div>
-          <button type="submit" class="btn btn-primary">Save Vehicle</button>
-          <div id="addVehicleStatus" class="success-text"></div>
+          <button type="submit" class="btn btn-primary">Add Vehicle</button>
+          <p id="vSaveStatus" class="success-text"></p>
         </form>
       </div>
 
       <div class="card">
         <h3>Fleet List</h3>
-        <div id="companyVehicleList" class="loading">Loading fleet...</div>
+        <div id="vehiclesList" class="loading">Loading fleet...</div>
       </div>
     </div>
   </div>
 
-  <!-- ================================================== -->
-  <!-- PAGE 10: COMPANY — POSTED WORK / JOBS              -->
-  <!-- ================================================== -->
-  <div id="companyJobsPage" class="page">
+  <!-- COMPANY DRIVERS PAGE -->
+  <div id="companyDriversPage" class="page">
     <header class="top-header">
-      <h1>📋 Posted Work</h1>
+      <h1>👥 Employed Drivers</h1>
       <nav class="nav-links">
         <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
         <button type="button" onclick="handleSignOut()">Sign Out</button>
@@ -788,17 +895,49 @@
     </header>
     <div class="container">
       <div class="card">
-        <h3>Post New Job</h3>
+        <h3>Add Existing Driver to Company</h3>
+        <p style="color:#666; margin-bottom:1rem;">Enter the driver's registered email address to link them to your company.</p>
+        <form id="addDriverForm">
+          <div class="form-group">
+            <label for="dEmail">Driver Email Address</label>
+            <input type="email" id="dEmail" name="dEmail" placeholder="driver@example.com" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Link Driver</button>
+          <p id="dSaveStatus" class="success-text"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Company Drivers</h3>
+        <div id="driversList" class="loading">Loading drivers...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY JOBS PAGE -->
+  <div id="companyJobsPage" class="page">
+    <header class="top-header">
+      <h1>📋 Posted Work & Jobs</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="card">
+        <h3>Post New Job / Assignment</h3>
         <form id="postJobForm">
           <div class="form-row">
             <div class="form-col form-group">
               <label for="jobTitle">Job Title / Reference</label>
-              <input type="text" id="jobTitle" name="jobTitle" required />
+              <input type="text" id="jobTitle" name="jobTitle" placeholder="e.g. Leeds → Southampton" required />
             </div>
             <div class="form-col form-group">
-              <label for="jobAssignee">Assign To Driver</label>
-              <select id="jobAssignee" name="jobAssignee">
-                <option value="">— All Drivers / Open —</option>
+              <label for="jobStatus">Status</label>
+              <select id="jobStatus" name="jobStatus">
+                <option value="open">Open — Available</option>
+                <option value="assigned">Assigned</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
           </div>
@@ -808,42 +947,39 @@
               <input type="text" id="jobPickup" name="jobPickup" required />
             </div>
             <div class="form-col form-group">
-              <label for="jobDropoff">Dropoff Location</label>
+              <label for="jobDropoff">Delivery Location</label>
               <input type="text" id="jobDropoff" name="jobDropoff" required />
             </div>
           </div>
           <div class="form-row">
             <div class="form-col form-group">
-              <label for="jobDate">Date / Start Time</label>
+              <label for="jobDate">Date / Time</label>
               <input type="datetime-local" id="jobDate" name="jobDate" required />
             </div>
             <div class="form-col form-group">
-              <label for="jobRate">Rate / Pay (£)</label>
-              <input type="number" id="jobRate" name="jobRate" step="0.01" min="0" />
+              <label for="jobPay">Pay / Rate (£)</label>
+              <input type="number" id="jobPay" name="jobPay" min="0" step="1" />
             </div>
           </div>
           <div class="form-group">
             <label for="jobDetails">Cargo & Additional Details</label>
-            <textarea id="jobDetails" name="jobDetails" rows="3" placeholder="Description, weight, vehicle reqs, contact..."></textarea>
+            <textarea id="jobDetails" name="jobDetails" rows="3" placeholder="Cargo type, weight, special instructions..."></textarea>
           </div>
-          <button type="submit" class="btn btn-accent">Post Job</button>
-          <div id="postJobStatus" class="success-text"></div>
+          <button type="submit" class="btn btn-primary">Post New Job</button>
+          <p id="jobSaveStatus" class="success-text"></p>
         </form>
       </div>
 
       <div class="card">
-        <h3>Active Jobs</h3>
-        <div id="companyJobsList" class="loading">Loading jobs...</div>
+        <h3>All Posted Jobs</h3>
+        <div id="jobsCompanyList" class="loading">Loading jobs...</div>
       </div>
     </div>
   </div>
-
-  <!-- ================================================== -->
-  <!-- PAGE 11: COMPANY — CHECKLIST EDITOR                -->
-  <!-- ================================================== -->
-  <div id="companyChecklistEditorPage" class="page">
+    <!-- COMPANY MAINTENANCE PAGE -->
+  <div id="companyMaintenancePage" class="page">
     <header class="top-header">
-      <h1>✅ Checklist Editor</h1>
+      <h1>🔧 Vehicle Maintenance & Service Schedule</h1>
       <nav class="nav-links">
         <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
         <button type="button" onclick="handleSignOut()">Sign Out</button>
@@ -851,1084 +987,184 @@
     </header>
     <div class="container">
       <div class="card">
-        <h3>DVSA Walkaround Checklist — Customise Items</h3>
-        <p style="color:#666; margin-bottom:1rem;">Edit your company's daily inspection checklist. Changes apply to all new checks submitted by drivers.</p>
-        <button type="button" class="btn btn-secondary" onclick="resetChecklistToDefault()">Restore DVSA Default</button>
-        <hr style="margin:1rem 0; border:none; border-top:1px solid #eee;" />
-        <div id="checklistEditorContent">
-          <p class="loading">Loading checklist template...</p>
-        </div>
-        <button type="button" class="btn btn-primary" onclick="saveChecklistTemplate()" style="margin-top:1.5rem;">Save Checklist Template</button>
-        <div id="checklistEditorStatus" class="success-text"></div>
+        <h3>Schedule Service / Inspection</h3>
+        <form id="addMaintenanceForm">
+          <div class="form-row">
+            <div class="form-col form-group">
+              <label for="mVehicle">Vehicle Registration</label>
+              <input type="text" id="mVehicle" name="mVehicle" placeholder="AB12 CDE" required />
+            </div>
+            <div class="form-col form-group">
+              <label for="mType">Service Type</label>
+              <select id="mType" name="mType">
+                <option value="routine">Routine Service</option>
+                <option value="mot">MOT Test</option>
+                <option value="repair">Repair</option>
+                <option value="inspection">Safety Inspection</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-col form-group">
+              <label for="mDueDate">Due Date</label>
+              <input type="date" id="mDueDate" name="mDueDate" required />
+            </div>
+            <div class="form-col form-group">
+              <label for="mStatus">Status</label>
+              <select id="mStatus" name="mStatus">
+                <option value="scheduled">Scheduled</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="mNotes">Notes / Work Required</label>
+            <textarea id="mNotes" name="mNotes" rows="3" placeholder="Description of work or issues..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Schedule Entry</button>
+          <p id="mSaveStatus" class="success-text"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Service & Maintenance Schedule</h3>
+        <div id="maintenanceList" class="loading">Loading schedule...</div>
       </div>
     </div>
   </div>
-    <!-- ================================================== -->
-  <!-- FIREBASE INIT & GLOBAL SCRIPTS                      -->
-  <!-- ================================================== -->
-  <script type="module">
-    // --------------------------
-    // FIREBASE CONFIG — UPDATE WITH YOUR VALUES
-    // --------------------------
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged,
-      sendEmailVerification
-    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      getDoc,
-      updateDoc,
-      collection,
-      query,
-      where,
-      orderBy,
-      getDocs,
-      addDoc,
-      onSnapshot,
-      serverTimestamp,
-      runTransaction
-    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    import {
-      getStorage,
-      ref,
-      uploadBytes,
-      getDownloadURL
-    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
-      authDomain: "lsd-solutions.firebaseapp.com",
-      projectId: "lsd-solutions",
-      storageBucket: "lsd-solutions.appspot.com",
-      messagingSenderId: "492873164228",
-      appId: "1:492873164228:web:abc123def456ghi789jkl01"
-    };
-
-    // INITIALISE
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // GLOBAL STATE
-    let currentUser = null;
-    let currentUserRole = null;
-    let unsubscribeListener = null;
-
-    // ==================================================
-    // HELPER UTILITIES
-    // ==================================================
-    function escapeHtml(text) {
-      if (text === null || text === undefined) return '';
-      return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      } catch { return dateStr; }
-    }
-
-    function formatInputDate(dateStr) {
-      if (!dateStr) return '';
-      try {
-        const d = new Date(dateStr);
-        return d.toISOString().split('T')[0];
-      } catch { return ''; }
-    }
-
-    // ==================================================
-    // PAGE NAVIGATION — FIXED: only shows ONE page
-    // ==================================================
-    function showPage(pageId) {
-      // Hide ALL pages first
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      // Show only the requested page
-      const target = document.getElementById(pageId);
-      if (target) {
-        target.classList.add('active');
-        window.scrollTo(0, 0);
-      } else {
-        console.error(`Page not found: ${pageId}`);
-      }
-    }
-    window.showPage = showPage;
-
-    // ==================================================
-    // AUTH STATE MANAGEMENT
-    // ==================================================
-    onAuthStateChanged(auth, async (user) => {
-      if (unsubscribeListener) {
-        unsubscribeListener();
-        unsubscribeListener = null;
-      }
-
-      if (user) {
-        currentUser = user;
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          currentUserRole = userData.role;
-
-          if (currentUserRole === 'driver') {
-            document.getElementById('drWelcomeName').textContent = userData.fullName || 'Driver';
-            loadDriverDashboardData(user.uid, userData);
-            showPage('driverDashboardPage');
-          } else if (currentUserRole === 'company') {
-            document.getElementById('coWelcomeName').textContent = userData.companyName || userData.fullName || 'Company';
-            loadCompanyDashboardData(user.uid, userData);
-            showPage('companyDashboardPage');
-          }
-        } else {
-          console.warn('User document missing — signing out');
-          await signOut(auth);
-          currentUser = null;
-          currentUserRole = null;
-          showPage('authPage');
-        }
-      } else {
-        currentUser = null;
-        currentUserRole = null;
-        showPage('authPage');
-      }
-    });
-
-    // ==================================================
-    // SIGN IN
-    // ==================================================
-    document.getElementById('signInForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('siEmail').value.trim();
-      const password = document.getElementById('siPassword').value;
-      const errorEl = document.getElementById('signInError');
-      errorEl.textContent = '';
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        e.target.reset();
-      } catch (err) {
-        console.error('Sign in error:', err);
-        switch (err.code) {
-          case 'auth/user-not-found':
-          case 'auth/wrong-password':
-            errorEl.textContent = 'Email or password incorrect';
-            break;
-          case 'auth/too-many-requests':
-            errorEl.textContent = 'Too many attempts — try again later';
-            break;
-          default:
-            errorEl.textContent = 'Sign in failed: ' + err.message;
-        }
-      }
-    });
-
-    // ==================================================
-    // REGISTER
-    // ==================================================
-    let selectedRole = 'driver';
-
-    document.querySelectorAll('.role-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedRole = btn.dataset.role;
-        document.getElementById('regRole').value = selectedRole;
-
-        if (selectedRole === 'company') {
-          document.getElementById('companyNameGroup').classList.remove('hidden');
-        } else {
-          document.getElementById('companyNameGroup').classList.add('hidden');
-        }
-      });
-    });
-
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        if (tab.dataset.tab === 'signin') {
-          document.getElementById('signInForm').classList.remove('hidden');
-          document.getElementById('registerForm').classList.add('hidden');
-        } else {
-          document.getElementById('signInForm').classList.add('hidden');
-          document.getElementById('registerForm').classList.remove('hidden');
-        }
-      });
-    });
-
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const password = document.getElementById('regPassword').value;
-      const companyName = document.getElementById('regCompanyName')?.value.trim() || '';
-      const errorEl = document.getElementById('regError');
-      const successEl = document.getElementById('regSuccess');
-      errorEl.textContent = '';
-      successEl.textContent = '';
-
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
-
-        const userData = {
-          uid: user.uid,
-          email,
-          fullName: name,
-          role: selectedRole,
-          createdAt: serverTimestamp()
-        };
-
-        if (selectedRole === 'company') {
-          userData.companyName = companyName || name;
-        }
-
-        await setDoc(doc(db, 'users', user.uid), userData);
-
-        if (selectedRole === 'company') {
-          await initialiseCompanyChecklist(user.uid);
-        }
-
-        await sendEmailVerification(user);
-        successEl.textContent = 'Account created! Check your email for verification.';
-        e.target.reset();
-        setTimeout(() => {
-          document.getElementById('tabSignIn').click();
-        }, 2500);
-      } catch (err) {
-        console.error('Registration error:', err);
-        errorEl.textContent = 'Registration failed: ' + err.message;
-      }
-    });
-
-    async function initialiseCompanyChecklist(companyId) {
-      const checklistRef = doc(db, 'companies', companyId, 'settings', 'checklist');
-      await setDoc(checklistRef, {
-        ...DEFAULT_CHECKLIST,
-        createdAt: serverTimestamp()
-      });
-      console.log('✅ DVSA checklist installed');
-    }
-
-    // ==================================================
-    // SIGN OUT
-    // ==================================================
-    window.handleSignOut = async function () {
-      if (confirm('Sign out?')) {
-        await signOut(auth);
-      }
-    };
-
-    // ==================================================
-    // DEFAULT CHECKLIST — DVSA COMPLIANT
-    // ==================================================
-    const DEFAULT_CHECKLIST = {
-      sections: [
-        {
-          name: 'Exterior & Bodywork',
-          items: [
-            { id: 'ext1', text: 'Bodywork, panels and mirrors secure and undamaged', checked: false, critical: false },
-            { id: 'ext2', text: 'Windscreen and windows clean, undamaged and wipers operational', checked: false, critical: true },
-            { id: 'ext3', text: 'All lights, reflectors and markers clean and working', checked: false, critical: true },
-            { id: 'ext4', text: 'Number plates secure, clean and legible', checked: false, critical: true },
-            { id: 'ext5', text: 'Fuel caps secure, no leaks visible', checked: false, critical: false }
-          ]
-        },
-        {
-          name: 'Wheels & Tyres',
-          items: [
-            { id: 'wh1', text: 'Tyres in good condition — no cuts, bulges or sidewall damage', checked: false, critical: true },
-            { id: 'wh2', text: 'Tread depth meets legal minimum (1.6mm across ¾ width)', checked: false, critical: true },
-            { id: 'wh3', text: 'Tyres correctly inflated', checked: false, critical: false },
-            { id: 'wh4', text: 'Wheel nuts secure and no signs of movement', checked: false, critical: true },
-            { id: 'wh5', text: 'Hub/axle oil levels correct — no leaks', checked: false, critical: false }
-          ]
-        },
-        {
-          name: 'Brakes & Steering',
-          items: [
-            { id: 'br1', text: 'Brake pedal firm — no excessive travel', checked: false, critical: true },
-            { id: 'br2', text: 'Air pressure builds correctly — no leaks or excessive noise', checked: false, critical: true },
-            { id: 'br3', text: 'Parking brake holds vehicle securely', checked: false, critical: true },
-            { id: 'br4', text: 'Steering smooth with no play or unusual noise', checked: false, critical: true },
-            { id: 'br5', text: 'Brake lines and hoses secure and undamaged', checked: false, critical: false }
-          ]
-        },
-        {
-          name: 'Coupling & Security',
-          items: [
-            { id: 'cp1', text: 'Fifth wheel secure, properly coupled and greased', checked: false, critical: true },
-            { id: 'cp2', text: 'Safety chains/cables connected and secure', checked: false, critical: true },
-            { id: 'cp3', text: 'Air and electrical connections secure and undamaged', checked: false, critical: true },
-            { id: 'cp4', text: 'Doors, locks and load security secure and intact', checked: false, critical: false }
-          ]
-        },
-        {
-          name: 'Interior & Controls',
-          items: [
-            { id: 'in1', text: 'All instruments, gauges and warning lights functioning', checked: false, critical: true },
-            { id: 'in2', text: 'Horn, indicators and hazard lights operational', checked: false, critical: true },
-            { id: 'in3', text: 'Seats and seatbelts secure and undamaged', checked: false, critical: true },
-            { id: 'in4', text: 'Fire extinguisher present, charged and accessible', checked: false, critical: true },
-            { id: 'in5', text: 'First aid kit & emergency triangles present', checked: false, critical: false }
-          ]
-        }
-      ]
-    };
-        // ==================================================
-    // DRIVER PORTAL FUNCTIONS
-    // ==================================================
-    async function loadDriverDashboardData(uid, userData) {
-      // Profile form
-      document.getElementById('dpFullName').value = userData.fullName || '';
-      document.getElementById('dpEmail').value = userData.email || '';
-      document.getElementById('dpLicenceNumber').value = userData.licenceNumber || '';
-      document.getElementById('dpDob').value = formatInputDate(userData.dob) || '';
-      document.getElementById('dpLicenceValidFrom').value = formatInputDate(userData.licenceValidFrom) || '';
-      document.getElementById('dpLicenceExpiry').value = formatInputDate(userData.licenceExpiry) || '';
-      document.getElementById('dpMedicalExpiry').value = formatInputDate(userData.medicalExpiry) || '';
-      document.getElementById('dpDrivingPoints').value = userData.drivingPoints || 0;
-      document.getElementById('dpPhone').value = userData.phone || '';
-
-      // Set today's date on checklist
-      document.getElementById('chkDate').value = new Date().toISOString().split('T')[0];
-      document.getElementById('chkTimeStart').value = new Date().toTimeString().slice(0, 5);
-      document.getElementById('chkDriverName').value = userData.fullName || '';
-
-      // Load checklist
-      loadChecklistForDriver(uid);
-
-      // Load recent activity
-      loadDriverActivity(uid);
-
-      // Load documents
-      loadDriverDocuments(uid);
-    }
-
-    // ── Driver Profile Save ──
-    document.getElementById('driverProfileForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser) return;
-
-      const updates = {
-        fullName: document.getElementById('dpFullName').value.trim(),
-        licenceNumber: document.getElementById('dpLicenceNumber').value.trim(),
-        dob: document.getElementById('dpDob').value || null,
-        licenceValidFrom: document.getElementById('dpLicenceValidFrom').value || null,
-        licenceExpiry: document.getElementById('dpLicenceExpiry').value || null,
-        medicalExpiry: document.getElementById('dpMedicalExpiry').value || null,
-        drivingPoints: parseInt(document.getElementById('dpDrivingPoints').value) || 0,
-        phone: document.getElementById('dpPhone').value.trim()
-      };
-
-      try {
-        await updateDoc(doc(db, 'users', currentUser.uid), updates);
-        document.getElementById('dpSaveStatus').textContent = '✅ Profile saved';
-        setTimeout(() => { document.getElementById('dpSaveStatus').textContent = ''; }, 3000);
-      } catch (err) {
-        console.error('Save error:', err);
-        alert('Failed to save profile: ' + err.message);
-      }
-    });
-
-    // ── Load Checklist Template ──
-    async function loadChecklistForDriver(driverUid) {
-      const container = document.getElementById('checklistDynamicContent');
-      try {
-        // Try company-specific checklist first
-        let checklistData = null;
-        const userSnap = await getDoc(doc(db, 'users', driverUid));
-        const userData = userSnap.data();
-
-        if (userData.companyId) {
-          const companyChecklistRef = doc(db, 'companies', userData.companyId, 'settings', 'checklist');
-          const companyChecklistSnap = await getDoc(companyChecklistRef);
-          if (companyChecklistSnap.exists()) {
-            checklistData = companyChecklistSnap.data();
-          }
-        }
-
-        // Fallback to default
-        if (!checklistData || !checklistData.sections) {
-          checklistData = DEFAULT_CHECKLIST;
-        }
-
-        renderChecklist(checklistData);
-      } catch (err) {
-        console.error('Checklist load error:', err);
-        renderChecklist(DEFAULT_CHECKLIST);
-      }
-    }
-
-    function renderChecklist(checklistData) {
-      const container = document.getElementById('checklistDynamicContent');
-      container.innerHTML = '';
-
-      if (!checklistData.sections || !checklistData.sections.length) {
-        container.innerHTML = '<p class="error-text">No checklist sections found.</p>';
-        return;
-      }
-
-      checklistData.sections.forEach((section, si) => {
-        const sectionEl = document.createElement('div');
-        sectionEl.className = 'checklist-section';
-        sectionEl.innerHTML = `<h4>${escapeHtml(section.name)}</h4>`;
-
-        section.items.forEach((item, ii) => {
-          const itemId = `chk_${si}_${ii}`;
-          sectionEl.innerHTML += `
-            <div class="check-item" id="item_${itemId}">
-              <input type="checkbox" id="${itemId}" data-section="${si}" data-item="${ii}" data-critical="${item.critical || false}" />
-              <label for="${itemId}">
-                ${escapeHtml(item.text)}
-                ${item.critical ? '<strong style="color:#cc0000;">(Critical)</strong>' : ''}
-              </label>
-            </div>
-            <div class="defect-note" id="note_${itemId}">
-              <label for="defectText_${itemId}">Describe defect / action taken:</label>
-              <textarea id="defectText_${itemId}" rows="2" placeholder="Enter details..."></textarea>
-            </div>
-          `;
-        });
-        container.appendChild(sectionEl);
-      });
-
-      // Attach listeners — show note when unchecked
-      container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', () => {
-          const noteEl = document.getElementById(`note_${cb.id}`);
-          if (noteEl) {
-            noteEl.classList.toggle('visible', !cb.checked);
-          }
-        });
-      });
-    }
-
-    // ── Submit Walkaround ──
-    document.getElementById('walkaroundChecklistForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser) { alert('Please sign in first'); return; }
-
-      const reg = document.getElementById('chkVehicleReg').value.trim();
-      const date = document.getElementById('chkDate').value;
-      const timeStart = document.getElementById('chkTimeStart').value;
-      const odo = parseInt(document.getElementById('chkOdometer').value) || 0;
-      const driverName = document.getElementById('chkDriverName').value.trim();
-      const signature = document.getElementById('chkSignature').value.trim();
-      const notes = document.getElementById('chkGeneralNotes').value.trim();
-
-      if (signature !== 'CONFIRMED') {
-        alert('Please type "CONFIRMED" to sign');
-        return;
-      }
-
-      // Collect results
-      const results = [];
-      document.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
-        const noteEl = document.getElementById(`note_${cb.id}`);
-        results.push({
-          id: cb.id,
-          passed: cb.checked,
-          critical: cb.dataset.critical === 'true',
-          defectNote: noteEl ? noteEl.querySelector('textarea').value.trim() : ''
-        });
-      });
-
-      const hasCritical = results.some(r => r.critical && !r.passed);
-      if (hasCritical) {
-        if (!confirm('⚠️ Critical item(s) failed. Report before operating? Submit anyway?')) {
-          return;
-        }
-      }
-
-      try {
-        await addDoc(collection(db, 'walkarounds'), {
-          driverUid: currentUser.uid,
-          driverName,
-          vehicleReg: reg,
-          date,
-          timeStart,
-          odometer: odo,
-          items: results,
-          generalNotes: notes,
-          submittedAt: serverTimestamp(),
-          status: hasCritical ? 'DEFECT_REPORTED' : 'COMPLETED'
-        });
-
-        document.getElementById('chkSubmitStatus').textContent = '✅ Inspection submitted';
-        e.target.reset();
-        document.getElementById('chkDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('chkTimeStart').value = new Date().toTimeString().slice(0, 5);
-        document.getElementById('chkDriverName').value = driverName;
-        loadChecklistHistory(currentUser.uid);
-      } catch (err) {
-        console.error('Submit error:', err);
-        alert('Failed to submit: ' + err.message);
-      }
-    });
-
-    // ── Load Checklist History ──
-    async function loadChecklistHistory(uid) {
-      const container = document.getElementById('checklistHistory');
-      try {
-        const qSnap = await getDocs(
-          query(
-            collection(db, 'walkarounds'),
-            where('driverUid', '==', uid),
-            orderBy('submittedAt', 'desc'),
-            limit(10)
-          )
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No previous inspections found.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const d = doc.data();
-          const statusColour = d.status === 'DEFECT_REPORTED' ? '#cc0000' : '#006633';
-          return `
-            <div style="padding:0.75rem; border-bottom:1px solid #eee;">
-              <strong>${escapeHtml(d.vehicleReg || 'Unknown')}</strong> — ${formatDate(d.date)}
-              <span style="color:${statusColour}; font-weight:bold; float:right;">${escapeHtml(d.status)}</span>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('History load error:', err);
-        container.innerHTML = '<p class="error-text">Could not load history.</p>';
-      }
-    }
-
-    // ── Load Posted Work for Driver ──
-    window.loadDriverJobs = async function () {
-      if (!currentUser) return;
-      showPage('driverCalendarPage');
-
-      const container = document.getElementById('calJobList');
-      container.innerHTML = '<p class="loading">Loading jobs...</p>';
-
-      try {
-        const qSnap = await getDocs(
-          query(
-            collection(db, 'jobs'),
-            where('status', 'in', ['open', 'assigned']),
-            orderBy('jobDate', 'desc')
-          )
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No posted work at the moment.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const j = doc.data();
-          return `
-            <div class="card" style="margin:0.5rem 0; padding:1rem;">
-              <h4>${escapeHtml(j.title || 'Job')}</h4>
-              <p><strong>Pickup:</strong> ${escapeHtml(j.pickup || '—')}</p>
-              <p><strong>Dropoff:</strong> ${escapeHtml(j.dropoff || '—')}</p>
-              <p><strong>Date:</strong> ${j.jobDate ? new Date(j.jobDate).toLocaleString('en-GB') : 'Not set'}</p>
-              ${j.rate ? `<p><strong>Rate:</strong> £${j.rate}</p>` : ''}
-              <p><strong>Status:</strong> ${escapeHtml(j.status)}</p>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Jobs load error:', err);
-        container.innerHTML = `<p class="error-text">Failed to load jobs: ${err.message}</p>`;
-      }
-    };
-
-    // ── Load Driver Documents ──
-    async function loadDriverDocuments(uid) {
-      const container = document.getElementById('docList');
-      try {
-        const qSnap = await getDocs(
-          query(collection(db, 'documents'), where('driverUid', '==', uid), orderBy('uploadedAt', 'desc'))
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No documents uploaded yet.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const d = doc.data();
-          return `
-            <div style="padding:0.75rem; border-bottom:1px solid #eee;">
-              <strong>${escapeHtml(d.type || 'Document')}</strong>
-              ${d.expiryDate ? `<br>Expires: ${formatDate(d.expiryDate)}` : ''}
-              <br><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener">View / Download</a>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Documents load error:', err);
-        container.innerHTML = '<p class="error-text">Could not load documents.</p>';
-      }
-    }
-
-    // ── Document Upload ──
-    document.getElementById('docUploadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser) return;
-
-      const fileEl = document.getElementById('docFile');
-      if (!fileEl.files.length) { alert('Please select a file'); return; }
-
-      const file = fileEl.files[0];
-      const type = document.getElementById('docType').value;
-      const expiry = document.getElementById('docExpiry').value || null;
-
-      try {
-        const fileRef = ref(storage, `documents/${currentUser.uid}/${Date.now()}_${file.name}`);
-        await uploadBytes(fileRef, file);
-        const url = await getDownloadURL(fileRef);
-
-        await addDoc(collection(db, 'documents'), {
-          driverUid: currentUser.uid,
-          type,
-          name: file.name,
-          url,
-          expiryDate: expiry,
-          uploadedAt: serverTimestamp()
-        });
-
-        alert('✅ Document uploaded');
-        e.target.reset();
-        loadDriverDocuments(currentUser.uid);
-      } catch (err) {
-        console.error('Upload error:', err);
-        alert('Upload failed: ' + err.message);
-      }
-    });
-
-    // ── Availability Save ──
-    document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser) return;
-
-      try {
-        await setDoc(doc(db, 'availability', currentUser.uid), {
-          availableFrom: document.getElementById('availStart').value || null,
-          availableUntil: document.getElementById('availEnd').value || null,
-          notes: document.getElementById('availNotes').value.trim(),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-
-        alert('✅ Availability updated');
-      } catch (err) {
-        console.error('Availability error:', err);
-        alert('Save failed: ' + err.message);
-      }
-    });
-
-    // ── Driver Activity ──
-    async function loadDriverActivity(uid) {
-      const container = document.getElementById('drActivityList');
-      try {
-        const qSnap = await getDocs(
-          query(collection(db, 'walkarounds'), where('driverUid', '==', uid), orderBy('submittedAt', 'desc'), limit(5))
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No recent activity.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const d = doc.data();
-          return `<p>✅ Walkaround — ${escapeHtml(d.vehicleReg || 'Vehicle')} — ${formatDate(d.date)}</p>`;
-        }).join('');
-      } catch (err) {
-        container.innerHTML = '<p class="error-text">Could not load activity.</p>';
-      }
-    }
-        // ==================================================
-    // COMPANY PORTAL FUNCTIONS
-    // ==================================================
-    async function loadCompanyDashboardData(uid, userData) {
-      // Load checklist editor
-      loadChecklistEditor();
-      // Load drivers list
-      loadCompanyDrivers(uid);
-      // Load vehicles list
-      loadCompanyVehicles(uid);
-      // Load jobs list
-      loadCompanyJobs();
-      // Populate job assignee dropdown
-      populateJobAssigneeDropdown(uid);
-    }
-
-    // ── Add Employed Driver ──
-    document.getElementById('addDriverForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser || currentUserRole !== 'company') return;
-
-      const name = document.getElementById('adName').value.trim();
-      const email = document.getElementById('adEmail').value.trim();
-      const licence = document.getElementById('adLicence').value.trim();
-      const phone = document.getElementById('adPhone').value.trim();
-      const statusEl = document.getElementById('addDriverStatus');
-
-      try {
-        await addDoc(collection(db, 'companies', currentUser.uid, 'drivers'), {
-          fullName: name,
-          email,
-          licenceNumber: licence,
-          phone,
-          companyId: currentUser.uid,
-          addedAt: serverTimestamp(),
-          status: 'active'
-        });
-
-        statusEl.textContent = '✅ Driver added';
-        e.target.reset();
-        loadCompanyDrivers(currentUser.uid);
-        populateJobAssigneeDropdown(currentUser.uid);
-      } catch (err) {
-        console.error('Add driver error:', err);
-        statusEl.textContent = 'Error: ' + err.message;
-      }
-    });
-
-    // ── Load Company Drivers ──
-    async function loadCompanyDrivers(companyUid) {
-      const container = document.getElementById('companyDriverList');
-      try {
-        const qSnap = await getDocs(
-          query(collection(db, 'companies', companyUid, 'drivers'), orderBy('addedAt', 'desc'))
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No drivers added yet. Use the form above to add your team.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const d = doc.data();
-          return `
-            <div style="padding:0.75rem; border-bottom:1px solid #eee;">
-              <strong>${escapeHtml(d.fullName)}</strong>
-              <br>📧 ${escapeHtml(d.email)}
-              ${d.licenceNumber ? `<br>📄 ${escapeHtml(d.licenceNumber)}` : ''}
-              ${d.phone ? `<br>📞 ${escapeHtml(d.phone)}` : ''}
-              <br><em>Added: ${formatDate(d.addedAt?.toDate())}</em>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Load drivers error:', err);
-        container.innerHTML = '<p class="error-text">Could not load drivers.</p>';
-      }
-    }
-
-    // ── Add Vehicle ──
-    document.getElementById('addVehicleForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser || currentUserRole !== 'company') return;
-
-      const reg = document.getElementById('vReg').value.trim();
-      const type = document.getElementById('vType').value;
-      const make = document.getElementById('vMake').value.trim();
-      const model = document.getElementById('vModel').value.trim();
-      const motExpiry = document.getElementById('vMotExpiry').value || null;
-      const serviceDue = document.getElementById('vServiceDue').value || null;
-      const statusEl = document.getElementById('addVehicleStatus');
-
-      try {
-        await addDoc(collection(db, 'companies', currentUser.uid, 'vehicles'), {
-          registration: reg,
-          type,
-          make,
-          model,
-          motExpiry,
-          serviceDue,
-          addedAt: serverTimestamp()
-        });
-
-        statusEl.textContent = '✅ Vehicle saved';
-        e.target.reset();
-        loadCompanyVehicles(currentUser.uid);
-      } catch (err) {
-        console.error('Add vehicle error:', err);
-        statusEl.textContent = 'Error: ' + err.message;
-      }
-    });
-
-    // ── Load Company Vehicles ──
-    async function loadCompanyVehicles(companyUid) {
-      const container = document.getElementById('companyVehicleList');
-      try {
-        const qSnap = await getDocs(
-          query(collection(db, 'companies', companyUid, 'vehicles'), orderBy('addedAt', 'desc'))
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No vehicles added yet.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const v = doc.data();
-          return `
-            <div style="padding:0.75rem; border-bottom:1px solid #eee;">
-              <strong>${escapeHtml(v.registration)}</strong> — ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')}
-              <br>Type: ${escapeHtml(v.type)}
-              ${v.motExpiry ? `<br>MOT Expiry: ${formatDate(v.motExpiry)}` : ''}
-              ${v.serviceDue ? `<br>Service Due: ${formatDate(v.serviceDue)}` : ''}
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Load vehicles error:', err);
-        container.innerHTML = '<p class="error-text">Could not load fleet.</p>';
-      }
-    }
-
-    // ── Populate Job Assignee Dropdown ──
-    async function populateJobAssigneeDropdown(companyUid) {
-      const select = document.getElementById('jobAssignee');
-      if (!select) return;
-
-      try {
-        const qSnap = await getDocs(
-          query(collection(db, 'companies', companyUid, 'drivers'), where('status', '==', 'active'))
-        );
-
-        // Preserve first option
-        select.innerHTML = '<option value="">— All Drivers / Open —</option>';
-
-        qSnap.forEach(doc => {
-          const d = doc.data();
-          select.innerHTML += `<option value="${escapeHtml(d.email)}">${escapeHtml(d.fullName)}</option>`;
-        });
-      } catch (err) {
-        console.error('Dropdown populate error:', err);
-      }
-    }
-
-    // ── Post New Job ──
-    document.getElementById('postJobForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser || currentUserRole !== 'company') return;
-
-      const title = document.getElementById('jobTitle').value.trim();
-      const assignee = document.getElementById('jobAssignee').value;
-      const pickup = document.getElementById('jobPickup').value.trim();
-      const dropoff = document.getElementById('jobDropoff').value.trim();
-      const jobDate = document.getElementById('jobDate').value;
-      const rate = parseFloat(document.getElementById('jobRate').value) || 0;
-      const details = document.getElementById('jobDetails').value.trim();
-      const statusEl = document.getElementById('postJobStatus');
-
-      try {
-        await addDoc(collection(db, 'jobs'), {
-          companyId: currentUser.uid,
-          title,
-          assignedTo: assignee || null,
-          pickup,
-          dropoff,
-          jobDate,
-          rate,
-          details,
-          status: assignee ? 'assigned' : 'open',
-          postedAt: serverTimestamp()
-        });
-
-        statusEl.textContent = '✅ Job posted';
-        e.target.reset();
-        loadCompanyJobs();
-      } catch (err) {
-        console.error('Post job error:', err);
-        statusEl.textContent = 'Error: ' + err.message;
-      }
-    });
-
-    // ── Load Company Jobs ──
-    async function loadCompanyJobs() {
-      const container = document.getElementById('companyJobsList');
-      if (!container || !currentUser) return;
-
-      container.innerHTML = '<p class="loading">Loading jobs...</p>';
-
-      try {
-        const qSnap = await getDocs(
-          query(
-            collection(db, 'jobs'),
-            where('companyId', '==', currentUser.uid),
-            orderBy('postedAt', 'desc')
-          )
-        );
-
-        if (qSnap.empty) {
-          container.innerHTML = '<p>No jobs posted yet.</p>';
-          return;
-        }
-
-        container.innerHTML = qSnap.docs.map(doc => {
-          const j = doc.data();
-          const statusColour = j.status === 'open' ? '#d47500' : '#006633';
-          return `
-            <div class="card" style="margin:0.5rem 0; padding:1rem;">
-              <h4>${escapeHtml(j.title)}</h4>
-              <p><strong>Pickup:</strong> ${escapeHtml(j.pickup)}</p>
-              <p><strong>Dropoff:</strong> ${escapeHtml(j.dropoff)}</p>
-              ${j.assignedTo ? `<p><strong>Assigned To:</strong> ${escapeHtml(j.assignedTo)}</p>` : ''}
-              <p><strong>Date:</strong> ${j.jobDate ? new Date(j.jobDate).toLocaleString('en-GB') : 'Not set'}</p>
-              ${j.rate ? `<p><strong>Rate:</strong> £${j.rate}</p>` : ''}
-              <p style="color:${statusColour}; font-weight:bold;">Status: ${escapeHtml(j.status)}</p>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Load jobs error:', err);
-        container.innerHTML = `<p class="error-text">Failed to load jobs: ${err.message}</p>`;
-      }
-    }
-
-    // ── Load Checklist Editor ──
-    let editorChecklistData = null;
-
-    async function loadChecklistEditor() {
-      const container = document.getElementById('checklistEditorContent');
-      if (!container || !currentUser) return;
-
-      try {
-        const checklistRef = doc(db, 'companies', currentUser.uid, 'settings', 'checklist');
-        const snap = await getDoc(checklistRef);
-
-        if (snap.exists()) {
-          editorChecklistData = snap.data();
-          if (!editorChecklistData.sections) {
-            editorChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
-          }
-        } else {
-          editorChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
-        }
-
-        renderChecklistEditorUI();
-      } catch (err) {
-        console.error('Editor load error:', err);
-        editorChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
-        renderChecklistEditorUI();
-      }
-    }
-
-    function renderChecklistEditorUI() {
-      const container = document.getElementById('checklistEditorContent');
-      container.innerHTML = '';
-
-      editorChecklistData.sections.forEach((section, si) => {
-        const sectionDiv = document.createElement('div');
-        sectionDiv.style = 'margin-bottom:1.5rem; padding:1rem; background:#f9fafb; border-radius:8px;';
-        sectionDiv.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-            <input type="text" value="${escapeHtml(section.name)}" 
-                   style="font-weight:bold; font-size:1rem; border:none; background:transparent; border-bottom:1px solid #ccc; width:70%;"
-                   data-section-name="${si}" />
-            <button type="button" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem;"
-                    onclick="addItemToSection(${si})">+ Add Item</button>
+  <!-- COMPANY DEFECTS PAGE -->
+  <div id="companyDefectsPage" class="page">
+    <header class="top-header">
+      <h1>⚠️ Reported Defects & Issues</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="card">
+        <h3>Filter Defects</h3>
+        <div class="btn-group">
+          <button type="button" class="btn btn-secondary" onclick="loadDefects('all')">All</button>
+          <button type="button" class="btn btn-accent" onclick="loadDefects('open')">Open</button>
+          <button type="button" class="btn btn-primary" onclick="loadDefects('in_progress')">In Progress</button>
+          <button type="button" class="btn btn-success" onclick="loadDefects('resolved')">Resolved</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Defect Register</h3>
+        <div id="defectsList" class="loading">Loading defects...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY COMPLIANCE PAGE -->
+  <div id="companyCompliancePage" class="page">
+    <header class="top-header">
+      <h1>📊 Compliance Overview & DVSA Records</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <h3>Documents</h3>
+          <p style="font-size:2rem; font-weight:bold; color:var(--success);" id="compDocsOk">0%</p>
+          <p>Up to date</p>
+        </div>
+        <div class="dashboard-card">
+          <h3>Walkarounds</h3>
+          <p style="font-size:2rem; font-weight:bold; color:var(--primary);" id="compChecklists">0</p>
+          <p>This month</p>
+        </div>
+        <div class="dashboard-card">
+          <h3>Defects Fixed</h3>
+          <p style="font-size:2rem; font-weight:bold; color:var(--success);" id="compDefectsFixed">0</p>
+          <p>Resolved / Total</p>
+        </div>
+        <div class="dashboard-card">
+          <h3>WTD Compliance</h3>
+          <p style="font-size:2rem; font-weight:bold; color:var(--accent);" id="compWtd">0%</p>
+          <p>Average driver</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⚠️ Compliance Alerts</h3>
+        <div id="complianceAlerts" style="padding:1rem 0;">
+          <p class="loading">Checking compliance status...</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📁 DVSA Inspection Records — Quick Access</h3>
+        <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn btn-secondary" onclick="generateInspectionReport('checklists')">📄 Walkaround Check Register</button>
+          <button type="button" class="btn btn-secondary" onclick="generateInspectionReport('defects')">📄 Defect Report & Repair Register</button>
+          <button type="button" class="btn btn-secondary" onclick="generateInspectionReport('maintenance')">📄 Vehicle Service History</button>
+          <button type="button" class="btn btn-secondary" onclick="generateInspectionReport('drivers')">📄 Driver Compliance Summary</button>
+          <button type="button" class="btn btn-secondary" onclick="generateInspectionReport('tachograph')">📄 Tachograph & Working Time Summary</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY TACHOGRAPH PAGE -->
+  <div id="companyTachographPage" class="page">
+    <header class="top-header">
+      <h1>📥 Tachograph Data, Reports & Infringements</h1>
+      <nav class="nav-links">
+        <button type="button" onclick="showPage('companyDashboardPage')">← Back</button>
+        <button type="button" onclick="handleSignOut()">Sign Out</button>
+      </nav>
+    </header>
+    <div class="container">
+      <div class="card">
+        <h3>Tacomaster Sync Controls</h3>
+        <p style="color:#666;">Last Sync: <span id="tachoLastSync">Never</span></p>
+        <div class="btn-group" style="margin:1rem 0;">
+          <button type="button" class="btn btn-primary" onclick="syncTacomasterDownloads()">🔄 Pull All Data</button>
+          <button type="button" class="btn btn-secondary" onclick="generateAllTachoReports()">📄 Generate All Reports</button>
+        </div>
+        <div id="tachoSyncProgress" style="margin-top:1rem;"></div>
+      </div>
+
+      <div class="card">
+        <h3>📁 Downloaded Records — By Type</h3>
+        <div class="form-row" style="margin-bottom:1rem;">
+          <div class="form-col form-group">
+            <label>Filter:</label>
+            <select id="tachoFilterType" onchange="loadTachoRecords()">
+              <option value="all">All Records</option>
+              <option value="driver_card">Driver Card Downloads</option>
+              <option value="vehicle_unit">Vehicle Unit Downloads</option>
+              <option value="infringement">Infringements</option>
+              <option value="wtd">Working Time Data</option>
+            </select>
           </div>
-          <div id="sectionItems_${si}">
-            ${section.items.map((item, ii) => `
-              <div style="display:flex; align-items:flex-start; gap:0.5rem; padding:0.5rem 0; border-bottom:1px solid #e5e7eb;">
-                <input type="text" value="${escapeHtml(item.text)}" 
-                       style="flex:1; padding:0.4rem;"
-                       data-si="${si}" data-ii="${ii}" class="editor-item-text" />
-                <label style="display:flex; align-items:center; gap:0.25rem; white-space:nowrap;">
-                  <input type="checkbox" ${item.critical ? 'checked' : ''} 
-                         data-crit-si="${si}" data-crit-ii="${ii}" class="editor-item-critical" />
-                  Critical
-                </label>
-              </div>
-            `).join('')}
-          </div>
-        `;
-        container.appendChild(sectionDiv);
-      });
-    }
+        </div>
+        <div id="tachoRecordsList" class="loading">Loading records...</div>
+      </div>
 
-    window.addItemToSection = function(sectionIndex) {
-      editorChecklistData.sections[sectionIndex].items.push({
-        id: `new_${Date.now()}`,
-        text: '',
-        checked: false,
-        critical: false
-      });
-      renderChecklistEditorUI();
-    };
+      <div class="card">
+        <h3>⚠️ Outstanding Infringements</h3>
+        <div id="infringementsCompanyList" class="loading">Loading infringements...</div>
+      </div>
 
-    window.saveChecklistTemplate = async function() {
-      if (!currentUser) return;
+      <div class="card">
+        <h3>⏱️ Working Time Directive — Company Overview</h3>
+        <div id="wtdCompanyOverview">
+          <p class="loading">Calculating compliance status...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      // Gather values from editor
-      document.querySelectorAll('.editor-item-text').forEach(input => {
-        const si = parseInt(input.dataset.si);
-        const ii = parseInt(input.dataset.ii);
-        editorChecklistData.sections[si].items[ii].text = input.value.trim();
-      });
-      document.querySelectorAll('.editor-item-critical').forEach(cb => {
-        const si = parseInt(cb.dataset.critSi);
-        const ii = parseInt(cb.dataset.critIi);
-        editorChecklistData.sections[si].items[ii].critical = cb.checked;
-      });
-      document.querySelectorAll('[data-section-name]').forEach(input => {
-        const si = parseInt(input.dataset.sectionName);
-        editorChecklistData.sections[si].name = input.value.trim();
-      });
-
-      // Remove empty items
-      editorChecklistData.sections.forEach(sec => {
-        sec.items = sec.items.filter(item => item.text.length > 0);
-      });
-
-      try {
-        const checklistRef = doc(db, 'companies', currentUser.uid, 'settings', 'checklist');
-        await setDoc(checklistRef, {
-          ...editorChecklistData,
-          updatedAt: serverTimestamp()
-        });
-
-        document.getElementById('checklistEditorStatus').textContent = '✅ Checklist saved — applies to all new inspections';
-        setTimeout(() => { document.getElementById('checklistEditorStatus').textContent = ''; }, 4000);
-      } catch (err) {
-        console.error('Save checklist error:', err);
-        alert('Failed to save: ' + err.message);
-      }
-    };
-
-    window.resetChecklistToDefault = function() {
-      if (!confirm('Restore all sections and items to DVSA defaults? Custom changes will be lost.')) return;
-      editorChecklistData = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
-      renderChecklistEditorUI();
-    };
-
-    // ── Load Company Invoices ──
-    window.loadCompanyInvoices = async function() {
-      if (!currentUser) return;
-      alert('💰 Invoicing module — coming soon!');
-    };
-
-  </script>
 </body>
 </html>
