@@ -133,18 +133,48 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
   const pass = document.getElementById('regPassword').value;
   const err = document.getElementById('registerError');
   const succ = document.getElementById('registerSuccess');
-  
+
+  // ✅ Client-side checks FIRST
+  if (!email.includes('@')) {
+    err.textContent = '❌ Please enter a valid email address';
+    err.style.display = 'block';
+    return;
+  }
+  if (pass.length < 6) {
+    err.textContent = '❌ Password must be at least 6 characters';
+    err.style.display = 'block';
+    return;
+  }
+
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const uid = cred.user.uid;
     
     await setDoc(doc(db, 'users', uid), {
-      uid,
-      name,
-      email,
-      accountType: type,
-      createdAt: serverTimestamp()
+      uid, name, email, accountType: type, createdAt: serverTimestamp()
     });
+    
+    succ.style.display = 'block';
+    succ.textContent = '✅ Account created! Signing in...';
+    setTimeout(() => showAuthTab('signin'), 1500);
+    
+  } catch (e) {
+    console.error('Signup error code:', e.code, 'Message:', e.message);
+    
+    let msg = 'Registration failed.';
+    if (e.code === 'auth/email-already-in-use') {
+      msg = '❌ This email is already registered — try signing in instead';
+    } else if (e.code === 'auth/invalid-email') {
+      msg = '❌ Please enter a valid email address';
+    } else if (e.code === 'auth/weak-password') {
+      msg = '❌ Password must be at least 6 characters';
+    } else if (e.code === 'auth/operation-not-allowed') {
+      msg = '⚠️ Email sign-in is not enabled in Firebase Console — go to Authentication → Sign-in method and enable Email/Password';
+    }
+    err.textContent = msg;
+    err.style.display = 'block';
+  }
+});
     
     if (type === 'company') {
       await setDoc(doc(db, 'companies', uid), {
