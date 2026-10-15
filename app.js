@@ -243,43 +243,22 @@ function showPageBasedOnRole() {
 // ==================================================
 // 🔐 AUTH TABS SWITCHING
 // ==================================================
+// ==================================================
+// 🔐 AUTH TABS SWITCHING
+// ==================================================
 window.showAuthTab = function(tabName) {
-  // Hide all forms
-  document.getElementById('signInForm').style.display = 'none';
-  document.getElementById('registerForm').style.display = 'none';
-  document.getElementById('resetForm').style.display = 'none';
-  
-  // Reset tab styles
-  document.getElementById('tabSignIn').classList.remove('btn-secondary');
-  document.getElementById('tabSignIn').classList.add('btn-primary');
-  document.getElementById('tabRegister').classList.remove('btn-primary');
-  document.getElementById('tabRegister').classList.add('btn-secondary');
-  
-  // Show selected form
-  if (tabName === 'signin') {
-    document.getElementById('signInForm').style.display = 'block';
-  } else if (tabName === 'register') {
-    document.getElementById('registerForm').style.display = 'block';
-    document.getElementById('tabSignIn').classList.remove('btn-primary');
-    document.getElementById('tabSignIn').classList.add('btn-secondary');
-    document.getElementById('tabRegister').classList.remove('btn-secondary');
-    document.getElementById('tabRegister').classList.add('btn-primary');
-  } else if (tabName === 'reset') {
-    document.getElementById('resetForm').style.display = 'block';
-  }
-  
-  // Get all elements first
+  // Get elements with safety checks
   const signInForm = document.getElementById('signInForm');
   const registerForm = document.getElementById('registerForm');
   const resetForm = document.getElementById('resetForm');
   const tabSignIn = document.getElementById('tabSignIn');
   const tabRegister = document.getElementById('tabRegister');
-  
+
   // Hide ALL forms first
   if (signInForm) signInForm.style.display = 'none';
   if (registerForm) registerForm.style.display = 'none';
   if (resetForm) resetForm.style.display = 'none';
-  
+
   // Reset tab button styles
   if (tabSignIn) {
     tabSignIn.classList.remove('btn-secondary');
@@ -289,8 +268,8 @@ window.showAuthTab = function(tabName) {
     tabRegister.classList.remove('btn-primary');
     tabRegister.classList.add('btn-secondary');
   }
-  
-  // Show the selected form and update active tab style
+
+  // Show selected form
   if (tabName === 'signin' && signInForm) {
     signInForm.style.display = 'block';
   } 
@@ -308,8 +287,8 @@ window.showAuthTab = function(tabName) {
   else if (tabName === 'reset' && resetForm) {
     resetForm.style.display = 'block';
   }
-  
-  // Clear any error/success messages when switching tabs
+
+  // Clear messages
   Utils.hideStatus('loginError');
   Utils.hideStatus('registerError');
   Utils.hideStatus('registerSuccess');
