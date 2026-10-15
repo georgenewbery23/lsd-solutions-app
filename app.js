@@ -56,13 +56,25 @@ window.showPage = function(pageId) {
   });
   
   // Show ONLY the requested page
-  const targetPage = document.getElementById(pageId);
-  if (targetPage) {
-    targetPage.classList.add('active');
-    targetPage.style.display = 'block';
-  } else {
-    console.error('Page not found:', pageId);
-  }
+  function updateNavigationForPage(pageId) {
+  const homeNav = document.getElementById('homeNav');
+  
+  // ✅ Always show the full navigation bar — never hide it
+  if (homeNav) homeNav.style.display = 'block';
+  
+  // Go through EVERY button — hide ONLY the one matching the current page
+  const allNavButtons = homeNav.querySelectorAll('button[data-page]');
+  allNavButtons.forEach(btn => {
+    const targetPage = btn.getAttribute('data-page');
+    if (targetPage === pageId) {
+      // ✅ Hide the button for the page we're CURRENTLY on
+      btn.style.display = 'none';
+    } else {
+      // ✅ Show ALL other navigation buttons
+      btn.style.display = 'inline-block';
+    }
+  });
+}
   
   // Scroll to top
   window.scrollTo(0, 0);
