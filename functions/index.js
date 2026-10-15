@@ -1,4 +1,3 @@
-// functions/index.js
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const serviceAccount = require('./service-account-key.json');
@@ -8,6 +7,17 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+// ─── EMAIL NOTIFICATIONS SETUP ───
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'admin@lsd-solutions.co.uk',
+    pass: 'krrw dvtw aeml kkps'
+  }
+});
 
 // ─── DAILY TACHOMASTER SYNC — PER COMPANY ───
 exports.dailyTachomasterSync = functions.pubsub
@@ -227,3 +237,82 @@ async function fetchFromTachomaster(apiKey, clientId, dateFrom, dateTo) {
     return { success: false, error: error.message, data: [] };
   }
 }
+
+// ─── DEFECT REPORT EMAIL NOTIFICATION ───
+exports.sendDefectNotification = functions.firestore
+  .document('checklists/{checklistId}')
+  .onCreate(async (snap, context) => {
+    const checklist = snap.data();
+    
+    // Check if there are ANY defects noted
+    const checks = checklist.checks || {};
+    const hasDefects = Object.entries(checks).some(([key, value]) => 
+      key.endsWith('_note') && value && value.trim() !== ''
+    );
+
+    // Only send email if there ARE defects
+    if (!hasDefects) {
+      console.log('✅ No defects — no email needed');
+      return null;
+    }
+
+    try {
+      // Company email — your actual address
+      let companyEmail = 'admin@lsd-solutions.co.uk';
+      
+      // Try to get company email from driver's profile
+      if (checklist.driverUid) {
+        const userSnap = await db.collection('users')
+          .doc(checklist.driverUid)
+          .get();
+        
+        if (userSnap.exists) {
+          const userData = userSnap.data();
+          if (userData.companyEmail) {
+            companyEmail = userData.companyEmail;
+          }
+        }
+      }
+
+      // Build email content
+      const defectNotes = Object.entries(checks)
+        .filter(([k, v]) => k.endsWith('_note') && v)
+        .map(([k, v]) => `• ${k.replace('_note', '').replace(/_/g, ' ').toUpperCase()}: ${v}`)
+        .join('\n\n');
+
+      const mailOptions = {
+        from: '"LSD Solutions — Defect Alert" <admin@lsd-solutions.co.uk>',
+        to: companyEmail,
+        subject: `⚠️ DEFECT REPORTED — ${checklist.vehicleReg || 'Unknown Vehicle'}`,
+        html: `
+          <h2>⚠️ New Defect Reported</h2>
+          <p><strong>Vehicle:</strong> ${checklist.vehicleReg || 'Not provided'}</p>
+          <p><strong>Trailer:</strong> ${checklist.trailerNo || 'N/A'}</p>
+          <p><strong>Driver:</strong> ${checklist.driverName || 'Anonymous'}</p>
+          <p><strong>Date/Time:</strong> ${checklist.checkDate || 'Unknown'} at ${checklist.checkTime || 'Unknown'}</p>
+          <hr>
+          <h3>Defect Details:</h3>
+          <pre style="background:#f9f9f9; padding:1rem; border-left:4px solid #d47500;">${defectNotes}</pre>
+          ${checklist.comments ? `<p><strong>Additional Comments:</strong> ${checklist.comments}</p>` : ''}
+          <hr>
+          <p>Please review and arrange repairs as necessary.</p>
+          <p style="color:#666; font-size:0.9rem;">This is an automated email from LSD Solutions HGV Portal.</p>
+        `
+      };
+
+      // Send the email
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Email sent to ${companyEmail} for ${checklist.vehicleReg}`);
+      
+      // Update the checklist record to mark email as sent
+      await snap.ref.update({
+        emailNotificationSent: true,
+        emailSentAt: new Date()
+      });
+
+      return null;
+    } catch (error) {
+      console.error('❌ Error sending email:', error);
+      return null;
+    }
+  });
