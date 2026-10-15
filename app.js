@@ -29,6 +29,52 @@ let userRole = null;
 let companyId = null;
 
 // ==================================================
+// GLOBAL FUNCTIONS — Called directly from HTML onclick
+// ==================================================
+
+// Auth tab switching
+window.showAuthTab = function(tab) {
+  const signInForm = document.getElementById('signInForm');
+  const registerForm = document.getElementById('registerForm');
+  const resetForm = document.getElementById('resetForm');
+  
+  if (signInForm) signInForm.style.display = tab === 'signin' ? 'block' : 'none';
+  if (registerForm) registerForm.style.display = tab === 'register' ? 'block' : 'none';
+  if (resetForm) resetForm.style.display = tab === 'reset' ? 'block' : 'none';
+  
+  const tabSignIn = document.getElementById('tabSignIn');
+  const tabRegister = document.getElementById('tabRegister');
+  
+  if (tabSignIn) {
+    tabSignIn.className = tab === 'signin' ? 'btn btn-primary' : 'btn btn-secondary';
+  }
+  if (tabRegister) {
+    tabRegister.className = tab === 'register' ? 'btn btn-primary' : 'btn btn-secondary';
+  }
+};
+
+// Page navigation
+window.showPage = function(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById(pageId);
+  if (page) {
+    page.classList.add('active');
+  } else {
+    console.error('Page not found:', pageId);
+  }
+};
+
+// Sign out
+window.handleSignOut = async function() {
+  if (!auth) return;
+  await signOut(auth);
+  currentUser = null;
+  userRole = null;
+  companyId = null;
+  showPage('authPage');
+};
+
+// ==================================================
 // PAGE NAVIGATION — Core function that fixes visibility
 // ==================================================
 window.showPage = function(pageId) {
