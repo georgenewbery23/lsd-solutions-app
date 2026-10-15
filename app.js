@@ -19,6 +19,12 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+const nodemailer = require('nodemailer'); // ✅ Add if not there
+
+const functions = require('firebase-functions/v1');
+const admin = require('firebase-admin');
+admin.initializeApp();
+
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
   authDomain: "lsd-solutions.firebaseapp.com",
@@ -272,9 +278,6 @@ document.getElementById('resetFormEl').addEventListener('submit', async e => {
   }
 });
 
-// ==================================================
-// AUTH STATE
-// ==================================================
 // ==================================================
 // AUTH STATE — PERFECTLY BALANCED BRACES ✅
 // ==================================================
