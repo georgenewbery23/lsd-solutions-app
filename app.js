@@ -70,13 +70,13 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
 });
 
 // ==================================================
-// REGISTER
+// REGISTER — Unified users collection
 // ==================================================
 document.getElementById('registerFormEl').addEventListener('submit', async e => {
   e.preventDefault();
   const type = document.querySelector('input[name="accountType"]:checked').value;
-  const name = document.getElementById('regName').value;
-  const email = document.getElementById('regEmail').value;
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
   const pass = document.getElementById('regPassword').value;
   const err = document.getElementById('registerError');
   const succ = document.getElementById('registerSuccess');
@@ -85,22 +85,98 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const uid = cred.user.uid;
     
-    if (type === 'driver') {
-      await setDoc(doc(db, 'drivers', uid), {
-        uid, name, email, role: 'driver', createdAt: serverTimestamp()
-      });
-    } else {
-      companyId = uid;
-      await setDoc(doc(db, 'companies', uid), {
-        id: uid, name, email, role: 'company', createdAt: serverTimestamp()
-      });
+    // ONE unified users collection — matches auth state listener
+    await setDoc(doc(db, 'users', uid), {
+      uid,
+      name,
+      email,
+      accountType: type,
+      createdAt: serverTimestamp(),
+      emailVerified: false
+    });
+    
+    // If company — initialize default DVSA checklist
+    if (type === 'company') {
+      await initialiseCompanyChecklist(uid);
     }
+    
     succ.style.display = 'block';
     succ.textContent = '✅ Account created! Signing in...';
-    setTimeout(() => signInWithEmailAndPassword(auth, email, pass), 1200);
+    setTimeout(() => showAuthTab('signin'), 1500);
+    
   } catch (e) {
     err.style.display = 'block';
-    err.textContent = 'Registration failed: ' + e.message;
+    err.textContent = '❌ ' + (e.code === 'auth/email-already-in-use' 
+      ? 'This email is already registered' 
+      : e.message);
+  }
+});
+
+// Initialize company checklist
+async function initialiseCompanyChecklist(companyId) {
+  const DEFAULT_CHECKLIST = {
+    ext01: { label: 'Tyres — condition, pressure, tread depth', required: true },
+    ext02: { label: 'Wheels & Fixings — secure, no damage', required: true },
+    ext03: { label: 'Lights & Reflectors — working, lenses intact', required: true },
+    ext04: { label: 'Mirrors — clean, secure, glass intact', required: true },
+    ext05: { label: 'Windscreen & Wipers — clean, operate correctly', required: true },
+    ext06: { label: 'Body & Mudguards — condition, security', required: true },
+    ext07: { label: 'Number Plates — legible & secure', required: true },
+    ext08: { label: 'Coupling & Connections — secure', required: true },
+    int01: { label: 'Cab Security — doors lock correctly', required: true },
+    int02: { label: 'Seat Belts — condition & operation', required: true },
+    int03: { label: 'Horn — working', required: true },
+    int04: { label: 'Warning Devices — functioning', required: true },
+    int05: { label: 'Fire Extinguisher — present & in date', required: true },
+    int06: { label: 'First Aid Kit — complete & in date', required: true },
+    eng01: { label: 'Fluid Levels — correct, no leaks', required: true },
+    eng02: { label: 'Air System — no audible leaks', required: true },
+    eng03: { label: 'Brakes — operation & performance', required: true },
+    trl01: { label: 'Trailer Coupling — secure', required: false },
+    trl02: { label: 'Air & Electrics — connected & working', required: false },
+    trl03: { label: 'Trailer Tyres & Wheels', required: false },
+    trl04: { label: 'Trailer Doors & Body — secure', required: false }
+  };
+  
+  try {
+    await setDoc(doc(db, 'companies', companyId, 'settings', 'checklist'), {
+      items: DEFAULT_CHECKLIST,
+      updatedAt: serverTimestamp()
+    });
+    console.log('✅ DVSA checklist installed');
+  } catch (err) {
+    console.warn('Checklist init skipped:', err);
+  }
+}
+
+// ==================================================
+// AUTH STATE — UPDATED to match unified users
+// ==================================================
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    const profileRef = doc(db, 'users', user.uid);
+    const snap = await getDoc(profileRef);
+    
+    if (snap.exists()) {
+      userProfile = snap.data();
+      userRole = userProfile.accountType;
+      
+      if (userRole === 'driver') {
+        showPage('driverDashboardPage');
+        const nameEl = document.getElementById('driverNameDisplay');
+        if (nameEl) nameEl.textContent = userProfile.name || 'Driver';
+      } else if (userRole === 'company') {
+        companyId = user.uid;
+        showPage('companyDashboardPage');
+        const nameEl = document.getElementById('companyNameDisplay');
+        if (nameEl) nameEl.textContent = userProfile.name || 'Company';
+      }
+    }
+  } else {
+    currentUser = null;
+    userProfile = null;
+    showPage('authPage');
   }
 });
 
