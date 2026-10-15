@@ -75,6 +75,31 @@ window.showPage = function(pageId) {
     }
   });
 }
+window.showPage = function(pageId) {
+  // Save to history for back button
+  const currentPage = document.querySelector('.page.active');
+  if (currentPage && currentPage.id !== pageId) {
+    previousPageStack.push(currentPage.id);
+  }
+
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+
+  // Show the selected page
+  const target = document.getElementById(pageId);
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'block';
+  }
+
+  // Update which buttons are visible
+  updateNavigationForPage(pageId);
+  
+  window.scrollTo(0, 0);
+};
   
   // Scroll to top
   window.scrollTo(0, 0);
