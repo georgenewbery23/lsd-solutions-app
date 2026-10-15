@@ -54,17 +54,37 @@
     }
     .top-header h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
     .nav-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .nav-links button {
-      background: rgba(255,255,255,0.15);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background 0.2s;
-    }
-    .nav-links button:hover { background: rgba(255,255,255,0.25); }
+    /* ✅ This is ALL you need — keep it simple */
+.nav-container {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #1a365d;
+  color: white;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.nav-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.nav-buttons button {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.nav-buttons button:hover {
+  background: rgba(255,255,255,0.25);
+}
     
     /* Cards */
     .card {
