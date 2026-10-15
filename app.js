@@ -121,6 +121,11 @@ window.handleSignOut = async function() {
   userRole = null;
   companyId = null;
   previousPageStack = [];
+  
+  // ✅ Hide both navs on sign-in page
+  document.getElementById('companyNav').style.display = 'none';
+  document.getElementById('driverNav').style.display = 'none';
+  
   showPage('authPage');
 };
 
