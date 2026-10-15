@@ -49,9 +49,23 @@ window.showAuthTab = function(tab) {
 };
 
 window.showPage = function(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const page = document.getElementById(pageId);
-  if (page) page.classList.add('active');
+  // Hide EVERY page first
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.remove('active');
+    page.style.display = 'none';
+  });
+  
+  // Show ONLY the requested page
+  const targetPage = document.getElementById(pageId);
+  if (targetPage) {
+    targetPage.classList.add('active');
+    targetPage.style.display = 'block';
+  } else {
+    console.error('Page not found:', pageId);
+  }
+  
+  // Scroll to top
+  window.scrollTo(0, 0);
 };
 
 window.handleSignOut = async function() {
