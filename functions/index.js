@@ -18,6 +18,10 @@ const transporter = nodemailer.createTransport({
     pass: 'krrw dvtw aeml kkps'
   }
 });
+const functions = require('firebase-functions/v1');
+const admin = require('firebase-admin');
+admin.initializeApp();
+const nodemailer = require('nodemailer'); // 
 
 // ─── DAILY TACHOMASTER SYNC — PER COMPANY ───
 exports.dailyTachomasterSync = functions.pubsub
