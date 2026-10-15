@@ -24,9 +24,24 @@
     
     body { background: #f8fafc; color: var(--text-dark); line-height: 1.6; }
     
-    /* Page visibility system */
-    .page { display: none; min-height: 100vh; padding-bottom: 2rem; }
-    .page.active { display: block; }
+    /* ===== PAGE SYSTEM — ONLY ONE PAGE VISIBLE AT A TIME ===== */
+.page {
+  display: none;
+  min-height: 100vh;
+}
+
+.page.active {
+  display: block;
+}
+
+/* Auth page shows by default */
+#authPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a365d 0%, #2c528a 100%);
+}
     
     .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
     
