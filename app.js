@@ -1,5 +1,5 @@
 // ==================================================
-// LSD SOLUTIONS — FULL WORKING APP.JS
+// LSD SOLUTIONS — FULL CORRECTED APP.JS
 // ==================================================
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
@@ -24,15 +24,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ===== DECLARE ALL VARIABLES =====
 let currentUser = null;
+let userProfile = null;  // ✅ FIXED — declared here
 let userRole = null;
 let companyId = null;
 
 // ==================================================
-// GLOBAL FUNCTIONS — Called directly from HTML onclick
+// GLOBAL FUNCTIONS — Called from onclick
 // ==================================================
-
-// Auth tab switching
 window.showAuthTab = function(tab) {
   const signInForm = document.getElementById('signInForm');
   const registerForm = document.getElementById('registerForm');
@@ -45,61 +45,71 @@ window.showAuthTab = function(tab) {
   const tabSignIn = document.getElementById('tabSignIn');
   const tabRegister = document.getElementById('tabRegister');
   
-  if (tabSignIn) {
-    tabSignIn.className = tab === 'signin' ? 'btn btn-primary' : 'btn btn-secondary';
-  }
-  if (tabRegister) {
-    tabRegister.className = tab === 'register' ? 'btn btn-primary' : 'btn btn-secondary';
-  }
+  if (tabSignIn) tabSignIn.className = tab === 'signin' ? 'btn btn-primary' : 'btn btn-secondary';
+  if (tabRegister) tabRegister.className = tab === 'register' ? 'btn btn-primary' : 'btn btn-secondary';
 };
 
-// Page navigation
 window.showPage = function(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const page = document.getElementById(pageId);
-  if (page) {
-    page.classList.add('active');
-  } else {
-    console.error('Page not found:', pageId);
-  }
-};
-
-// Sign out
-window.handleSignOut = async function() {
-  if (!auth) return;
-  await signOut(auth);
-  currentUser = null;
-  userRole = null;
-  companyId = null;
-  showPage('authPage');
-};
-
-// ==================================================
-// PAGE NAVIGATION — Core function that fixes visibility
-// ==================================================
-window.showPage = function(pageId) {
-  // Hide ALL pages
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  // Show selected page
   const page = document.getElementById(pageId);
   if (page) page.classList.add('active');
   else console.error('Page not found:', pageId);
 };
 
-// ==================================================
-// AUTH TABS
-// ==================================================
-window.showAuthTab = function(tab) {
-  document.getElementById('signInForm').style.display = tab === 'signin' ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('resetForm').style.display = tab === 'reset' ? 'block' : 'none';
+window.handleSignOut = async function() {
+  if (!auth) return;
+  await signOut(auth);
+  currentUser = null;
+  userProfile = null;
+  userRole = null;
+  companyId = null;
+  showPage('authPage');
+};
+
+window.loadDriverJobs = async function() {
+  const list = document.getElementById('jobsList');
+  if (!list) return;
   
-  document.getElementById('tabSignIn').className = tab === 'signin' ? 'btn btn-primary' : 'btn btn-secondary';
-  document.getElementById('tabRegister').className = tab === 'register' ? 'btn btn-primary' : 'btn btn-secondary';
+  try {
+    const snap = await getDocs(query(collection(db, 'jobs'), where('status', '==', 'open')));
+    list.innerHTML = snap.empty ? '<p>No available jobs right now.</p>' :
+      snap.docs.map(d => {
+        const j = d.data();
+        return `<div class="card" style="margin:0.5rem 0;">
+          <strong>${j.title}</strong><br>
+          ${j.pickup || ''} → ${j.dropoff || ''}<br>
+          ${j.date || ''} | <strong>£${j.pay || 'On application'}</strong>
+          <p style="margin-top:0.5rem;">${j.details || ''}</p>
+        </div>`;
+      }).join('');
+  } catch (e) {
+    list.innerHTML = `<p class="error-text">Error loading jobs: ${e.message}</p>`;
+  }
+};
+
+window.loadDefects = async function(filter = 'all') {
+  const list = document.getElementById('defectsList');
+  if (!list) return;
+  
+  try {
+    const snap = await getDocs(collection(db, 'checklists'));
+    list.innerHTML = snap.empty ? '<p>No defects reported.</p>' :
+      snap.docs.map(d => {
+        const chk = d.data();
+        const hasDefect = Object.entries(chk.checks || {}).some(([k, v]) => k.endsWith('_note') && v);
+        return `<div class="card" style="margin:0.5rem 0;">
+          <strong>${chk.vehicleReg || 'Unknown Vehicle'}</strong> — ${chk.checkDate || ''}<br>
+          Driver: ${chk.signature || 'Anonymous'}<br>
+          ${hasDefect ? '<span style="color:red;">⚠️ Defects noted</span>' : '<span style="color:green;">✅ No defects</span>'}
+        </div>`;
+      }).join('');
+  } catch (e) {
+    list.innerHTML = `<p class="error-text">Error loading defects: ${e.message}</p>`;
+  }
 };
 
 // ==================================================
-// SIGN IN
+// AUTH FORMS
 // ==================================================
 document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -115,9 +125,6 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   }
 });
 
-// ==================================================
-// REGISTER — Unified users collection
-// ==================================================
 document.getElementById('registerFormEl').addEventListener('submit', async e => {
   e.preventDefault();
   const type = document.querySelector('input[name="accountType"]:checked').value;
@@ -131,19 +138,21 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const uid = cred.user.uid;
     
-    // ONE unified users collection — matches auth state listener
     await setDoc(doc(db, 'users', uid), {
       uid,
       name,
       email,
       accountType: type,
-      createdAt: serverTimestamp(),
-      emailVerified: false
+      createdAt: serverTimestamp()
     });
     
-    // If company — initialize default DVSA checklist
     if (type === 'company') {
-      await initialiseCompanyChecklist(uid);
+      await setDoc(doc(db, 'companies', uid), {
+        id: uid,
+        name,
+        email,
+        createdAt: serverTimestamp()
+      });
     }
     
     succ.style.display = 'block';
@@ -152,83 +161,10 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
     
   } catch (e) {
     err.style.display = 'block';
-    err.textContent = '❌ ' + (e.code === 'auth/email-already-in-use' 
-      ? 'This email is already registered' 
-      : e.message);
+    err.textContent = '❌ ' + e.message;
   }
 });
 
-// Initialize company checklist
-async function initialiseCompanyChecklist(companyId) {
-  const DEFAULT_CHECKLIST = {
-    ext01: { label: 'Tyres — condition, pressure, tread depth', required: true },
-    ext02: { label: 'Wheels & Fixings — secure, no damage', required: true },
-    ext03: { label: 'Lights & Reflectors — working, lenses intact', required: true },
-    ext04: { label: 'Mirrors — clean, secure, glass intact', required: true },
-    ext05: { label: 'Windscreen & Wipers — clean, operate correctly', required: true },
-    ext06: { label: 'Body & Mudguards — condition, security', required: true },
-    ext07: { label: 'Number Plates — legible & secure', required: true },
-    ext08: { label: 'Coupling & Connections — secure', required: true },
-    int01: { label: 'Cab Security — doors lock correctly', required: true },
-    int02: { label: 'Seat Belts — condition & operation', required: true },
-    int03: { label: 'Horn — working', required: true },
-    int04: { label: 'Warning Devices — functioning', required: true },
-    int05: { label: 'Fire Extinguisher — present & in date', required: true },
-    int06: { label: 'First Aid Kit — complete & in date', required: true },
-    eng01: { label: 'Fluid Levels — correct, no leaks', required: true },
-    eng02: { label: 'Air System — no audible leaks', required: true },
-    eng03: { label: 'Brakes — operation & performance', required: true },
-    trl01: { label: 'Trailer Coupling — secure', required: false },
-    trl02: { label: 'Air & Electrics — connected & working', required: false },
-    trl03: { label: 'Trailer Tyres & Wheels', required: false },
-    trl04: { label: 'Trailer Doors & Body — secure', required: false }
-  };
-  
-  try {
-    await setDoc(doc(db, 'companies', companyId, 'settings', 'checklist'), {
-      items: DEFAULT_CHECKLIST,
-      updatedAt: serverTimestamp()
-    });
-    console.log('✅ DVSA checklist installed');
-  } catch (err) {
-    console.warn('Checklist init skipped:', err);
-  }
-}
-
-// ==================================================
-// AUTH STATE — UPDATED to match unified users
-// ==================================================
-onAuthStateChanged(auth, async user => {
-  if (user) {
-    currentUser = user;
-    const profileRef = doc(db, 'users', user.uid);
-    const snap = await getDoc(profileRef);
-    
-    if (snap.exists()) {
-      userProfile = snap.data();
-      userRole = userProfile.accountType;
-      
-      if (userRole === 'driver') {
-        showPage('driverDashboardPage');
-        const nameEl = document.getElementById('driverNameDisplay');
-        if (nameEl) nameEl.textContent = userProfile.name || 'Driver';
-      } else if (userRole === 'company') {
-        companyId = user.uid;
-        showPage('companyDashboardPage');
-        const nameEl = document.getElementById('companyNameDisplay');
-        if (nameEl) nameEl.textContent = userProfile.name || 'Company';
-      }
-    }
-  } else {
-    currentUser = null;
-    userProfile = null;
-    showPage('authPage');
-  }
-});
-
-// ==================================================
-// PASSWORD RESET
-// ==================================================
 document.getElementById('resetFormEl').addEventListener('submit', async e => {
   e.preventDefault();
   const email = document.getElementById('resetEmail').value;
@@ -242,44 +178,44 @@ document.getElementById('resetFormEl').addEventListener('submit', async e => {
 });
 
 // ==================================================
-// SIGN OUT
-// ==================================================
-window.handleSignOut = async function() {
-  await signOut(auth);
-  currentUser = null;
-  userRole = null;
-  showPage('authPage');
-};
-
-// ==================================================
-// AUTH STATE — Routes to correct portal
+// AUTH STATE — Fixed with userProfile declared
 // ==================================================
 onAuthStateChanged(auth, async user => {
   if (user) {
     currentUser = user;
-    const driverSnap = await getDoc(doc(db, 'drivers', user.uid));
-    const companySnap = await getDoc(doc(db, 'companies', user.uid));
+    const profileRef = doc(db, 'users', user.uid);
     
-    if (driverSnap.exists()) {
-      userRole = 'driver';
-      showPage('driverDashboardPage');
-      document.getElementById('driverNameDisplay').textContent = driverSnap.data().name || 'Driver';
-    } else if (companySnap.exists()) {
-      userRole = 'company';
-      companyId = user.uid;
-      showPage('companyDashboardPage');
-      document.getElementById('companyNameDisplay').textContent = companySnap.data().name || 'Company';
-      loadCompanyJobs();
-      loadVehicles();
-      loadDrivers();
+    try {
+      const snap = await getDoc(profileRef);
+      if (snap.exists()) {
+        userProfile = snap.data();
+        userRole = userProfile.accountType;
+        
+        if (userRole === 'driver') {
+          showPage('driverDashboardPage');
+          const nameEl = document.getElementById('driverNameDisplay');
+          if (nameEl) nameEl.textContent = userProfile.name || 'Driver';
+        } else if (userRole === 'company') {
+          companyId = user.uid;
+          showPage('companyDashboardPage');
+          const nameEl = document.getElementById('companyNameDisplay');
+          if (nameEl) nameEl.textContent = userProfile.name || 'Company';
+        }
+      }
+    } catch (e) {
+      console.error('Auth state error:', e);
     }
   } else {
+    currentUser = null;
+    userProfile = null;
+    userRole = null;
+    companyId = null;
     showPage('authPage');
   }
 });
 
 // ==================================================
-// DRIVER PROFILE SAVE
+// DRIVER PROFILE
 // ==================================================
 document.getElementById('driverProfileForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -297,14 +233,21 @@ document.getElementById('driverProfileForm').addEventListener('submit', async e 
     phone: document.getElementById('dpPhone').value
   };
   
-  await setDoc(doc(db, 'drivers', currentUser.uid), data, { merge: true });
-  document.getElementById('dpSaveStatus').textContent = '✅ Profile Saved!';
-  setTimeout(() => document.getElementById('dpSaveStatus').textContent = '', 3000);
+  await setDoc(doc(db, 'users', currentUser.uid), data, { merge: true });
+  const status = document.getElementById('dpSaveStatus');
+  if (status) status.textContent = '✅ Profile Saved!';
 });
 
 // ==================================================
-// WALkAROUND CHECKLIST — Load existing + Submit
+// CHECKLIST — Defect note toggles
 // ==================================================
+document.querySelectorAll('.check-main').forEach(cb => {
+  cb.addEventListener('change', function() {
+    const note = document.getElementById(this.id + '_note');
+    if (note) note.classList.toggle('visible', !this.checked);
+  });
+});
+
 document.getElementById('checklistForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (!currentUser) return;
@@ -317,8 +260,8 @@ document.getElementById('checklistForm').addEventListener('submit', async e => {
   });
   
   await addDoc(collection(db, 'checklists'), {
-    driverId: currentUser.uid,
-    driverName: document.getElementById('dpFullName')?.value || 'Anonymous',
+    driverUid: currentUser.uid,
+    driverName: userProfile?.name || 'Anonymous',
     vehicleReg: document.getElementById('checkVehicleReg').value,
     trailerNo: document.getElementById('checkTrailerNo').value,
     checkDate: document.getElementById('checkDate').value,
@@ -330,25 +273,17 @@ document.getElementById('checklistForm').addEventListener('submit', async e => {
   });
   
   const status = document.getElementById('checklistStatus');
-  status.style.display = 'block';
-  status.innerHTML = '✅ Checklist submitted successfully!';
+  if (status) {
+    status.style.display = 'block';
+    status.textContent = '✅ Checklist submitted!';
+  }
   e.target.reset();
 });
 
-// Show defect note when checkbox UNCHECKED (defect found)
-document.querySelectorAll('.check-main').forEach(cb => {
-  cb.addEventListener('change', function() {
-    const note = document.getElementById(this.id + '_note');
-    if (note) {
-      note.classList.toggle('visible', !this.checked);
-    }
-  });
-});
-
 // ==================================================
-// COMPANY JOBS — Post & Load
+// COMPANY JOBS
 // ==================================================
-document.getElementById('postJobForm').addEventListener('submit', async e => {
+document.getElementById('postJobForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   if (!currentUser || userRole !== 'company') return;
   
@@ -364,163 +299,13 @@ document.getElementById('postJobForm').addEventListener('submit', async e => {
     createdAt: serverTimestamp()
   });
   
-  document.getElementById('jobSaveStatus').textContent = '✅ Job Posted!';
+  const status = document.getElementById('jobSaveStatus');
+  if (status) status.textContent = '✅ Job Posted!';
   e.target.reset();
-  loadCompanyJobs();
-});
-
-async function loadCompanyJobs() {
-  const list = document.getElementById('jobsCompanyList');
-  if (!list) return;
-  
-  const snap = await getDocs(query(collection(db, 'jobs'), where('companyId', '==', companyId)));
-  list.innerHTML = snap.empty ? '<p>No jobs posted yet.</p>' : 
-    snap.docs.map(d => {
-      const j = d.data();
-      return `<div class="card" style="margin:0.5rem 0;">
-        <strong>${j.title}</strong> — <em>${j.status}</em><br>
-        ${j.pickup} → ${j.dropoff}<br>
-        ${j.date || 'No date set'} | £${j.pay || '0'}
-      </div>`;
-    }).join('');
-}
-
-window.loadDriverJobs = async function() {
-  const list = document.getElementById('jobsList');
-  if (!list) return;
-  
-  const snap = await getDocs(query(collection(db, 'jobs'), where('status', '==', 'open')));
-  list.innerHTML = snap.empty ? '<p>No available jobs right now.</p>' :
-    snap.docs.map(d => {
-      const j = d.data();
-      return `<div class="card" style="margin:0.5rem 0;">
-        <strong>${j.title}</strong><br>
-        ${j.pickup} → ${j.dropoff}<br>
-        ${j.date || ''} | <strong>£${j.pay || 'On application'}</strong>
-        <p style="margin-top:0.5rem;">${j.details || ''}</p>
-      </div>`;
-    }).join('');
-};
-
-// ==================================================
-// VEHICLES — Add & List
-// ==================================================
-document.getElementById('addVehicleForm')?.addEventListener('submit', async e => {
-  e.preventDefault();
-  if (!currentUser || userRole !== 'company') return;
-  
-  await addDoc(collection(db, 'vehicles'), {
-    companyId,
-    reg: document.getElementById('vReg').value.toUpperCase(),
-    make: document.getElementById('vMake').value,
-    model: document.getElementById('vModel').value,
-    type: document.getElementById('vType').value,
-    motExpiry: document.getElementById('vMotExpiry').value,
-    insExpiry: document.getElementById('vInsExpiry').value,
-    createdAt: serverTimestamp()
-  });
-  
-  document.getElementById('vSaveStatus').textContent = '✅ Vehicle Added!';
-  e.target.reset();
-  loadVehicles();
-});
-
-async function loadVehicles() {
-  const list = document.getElementById('vehiclesList');
-  if (!list || !companyId) return;
-  
-  const snap = await getDocs(query(collection(db, 'vehicles'), where('companyId', '==', companyId)));
-  list.innerHTML = snap.empty ? '<p>No vehicles added yet.</p>' :
-    `<div style="display:grid; gap:0.75rem;">` +
-    snap.docs.map(d => {
-      const v = d.data();
-      return `<div style="padding:0.75rem; background:#f9fafb; border-radius:4px;">
-        <strong>${v.reg}</strong> — ${v.make} ${v.model} (${v.type})<br>
-        MOT: ${v.motExpiry || 'Not set'} | Ins: ${v.insExpiry || 'Not set'}
-      </div>`;
-    }).join('') + `</div>`;
-}
-
-// ==================================================
-// DRIVERS — Link & List
-// ==================================================
-document.getElementById('addDriverForm')?.addEventListener('submit', async e => {
-  e.preventDefault();
-  if (!currentUser || userRole !== 'company') return;
-  const email = document.getElementById('dEmail').value;
-  
-  const snap = await getDocs(query(collection(db, 'drivers'), where('email', '==', email)));
-  if (snap.empty) {
-    document.getElementById('dSaveStatus').textContent = '⚠️ Driver not found — ask them to register first.';
-    return;
-  }
-  
-  const docRef = snap.docs[0].ref;
-  await updateDoc(docRef, { linkedCompanyId: companyId });
-  document.getElementById('dSaveStatus').textContent = '✅ Driver linked!';
-  e.target.reset();
-  loadDrivers();
-});
-
-async function loadDrivers() {
-  const list = document.getElementById('driversList');
-  if (!list || !companyId) return;
-  
-  const snap = await getDocs(query(collection(db, 'drivers'), where('linkedCompanyId', '==', companyId)));
-  list.innerHTML = snap.empty ? '<p>No drivers linked yet. Enter a driver\'s email above to link them.</p>' :
-    snap.docs.map(d => {
-      const dr = d.data();
-      return `<div style="padding:0.75rem; background:#f9fafb; border-radius:4px;">
-        <strong>${dr.name || 'Unnamed Driver'}</strong><br>
-        ${dr.email}<br>
-        Licence: ${dr.licenceNumber || 'Not provided'}
-      </div>`;
-    }).join('');
-}
-
-// ==================================================
-// DEFECTS — Load & Filter
-// ==================================================
-window.loadDefects = async function(filter) {
-  const list = document.getElementById('defectsList');
-  if (!list || !companyId) return;
-  
-  let q = collection(db, 'checklists');
-  // For demo: load all; add filter logic as needed
-  const snap = await getDocs(q);
-  list.innerHTML = snap.empty ? '<p>No defects reported.</p>' :
-    snap.docs.map(d => {
-      const chk = d.data();
-      const hasDefect = Object.entries(chk.checks || {}).some(([k,v]) => k.endsWith('_note') && v);
-      return `<div class="card" style="margin:0.5rem 0;">
-        <strong>${chk.vehicleReg || 'Unknown Vehicle'}</strong> — ${chk.checkDate}<br>
-        Driver: ${chk.signature || 'Anonymous'}<br>
-        ${hasDefect ? '<span style="color:red;">⚠️ Defects noted</span>' : '<span style="color:green;">✅ No defects</span>'}
-      </div>`;
-    }).join('');
-};
-
-// ==================================================
-// COMPANY PROFILE SAVE
-// ==================================================
-document.getElementById('companyProfileForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  if (!currentUser || userRole !== 'company') return;
-  
-  await setDoc(doc(db, 'companies', currentUser.uid), {
-    name: document.getElementById('cpCompanyName').value,
-    email: document.getElementById('cpCompanyEmail').value,
-    address: document.getElementById('cpAddress').value,
-    phone: document.getElementById('cpPhone').value,
-    oLicence: document.getElementById('cpOlicence').value,
-    fleetSize: document.getElementById('cpFleetSize').value
-  }, { merge: true });
-  
-  document.getElementById('cpSaveStatus').textContent = '✅ Company Profile Saved!';
 });
 
 // ==================================================
-// INIT — Set today's date/time in checklist
+// DEFAULTS
 // ==================================================
 function initChecklistDefaults() {
   const today = new Date().toISOString().split('T')[0];
