@@ -268,7 +268,48 @@ window.showAuthTab = function(tabName) {
     document.getElementById('resetForm').style.display = 'block';
   }
   
-  // Hide all status messages
+  // Get all elements first
+  const signInForm = document.getElementById('signInForm');
+  const registerForm = document.getElementById('registerForm');
+  const resetForm = document.getElementById('resetForm');
+  const tabSignIn = document.getElementById('tabSignIn');
+  const tabRegister = document.getElementById('tabRegister');
+  
+  // Hide ALL forms first
+  if (signInForm) signInForm.style.display = 'none';
+  if (registerForm) registerForm.style.display = 'none';
+  if (resetForm) resetForm.style.display = 'none';
+  
+  // Reset tab button styles
+  if (tabSignIn) {
+    tabSignIn.classList.remove('btn-secondary');
+    tabSignIn.classList.add('btn-primary');
+  }
+  if (tabRegister) {
+    tabRegister.classList.remove('btn-primary');
+    tabRegister.classList.add('btn-secondary');
+  }
+  
+  // Show the selected form and update active tab style
+  if (tabName === 'signin' && signInForm) {
+    signInForm.style.display = 'block';
+  } 
+  else if (tabName === 'register' && registerForm) {
+    registerForm.style.display = 'block';
+    if (tabSignIn) {
+      tabSignIn.classList.remove('btn-primary');
+      tabSignIn.classList.add('btn-secondary');
+    }
+    if (tabRegister) {
+      tabRegister.classList.remove('btn-secondary');
+      tabRegister.classList.add('btn-primary');
+    }
+  } 
+  else if (tabName === 'reset' && resetForm) {
+    resetForm.style.display = 'block';
+  }
+  
+  // Clear any error/success messages when switching tabs
   Utils.hideStatus('loginError');
   Utils.hideStatus('registerError');
   Utils.hideStatus('registerSuccess');
