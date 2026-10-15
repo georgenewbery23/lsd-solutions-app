@@ -35,16 +35,27 @@ let previousPageStack = []; // ✅ Declared here
 // ==================================================
 function updateNavigationForPage(pageId) {
   const homeNav = document.getElementById('homeNav');
-  if (!homeNav) return;
+  
+  // ✅ FORCE it to ALWAYS show — no exceptions!
+  if (homeNav) {
+    homeNav.style.display = 'block';
+    homeNav.style.visibility = 'visible';
+    homeNav.style.opacity = '1';
+  }
 
-  // Always show full nav bar
-  homeNav.style.display = 'block';
-
-  // Hide ONLY the button for the current page
-  const allNavButtons = homeNav.querySelectorAll('button[data-page]');
+  // Hide ONLY the button for the current page — show ALL others
+  const allNavButtons = homeNav?.querySelectorAll('button[data-page]') || [];
   allNavButtons.forEach(btn => {
     const targetPage = btn.getAttribute('data-page');
-    btn.style.display = (targetPage === pageId) ? 'none' : 'inline-block';
+    if (targetPage === pageId) {
+      // You're on this page — hide the button
+      btn.style.display = 'none';
+    } else {
+      // Not this page — make SURE it's visible
+      btn.style.display = 'inline-block';
+      btn.style.visibility = 'visible';
+      btn.style.opacity = '1';
+    }
   });
 }
 
