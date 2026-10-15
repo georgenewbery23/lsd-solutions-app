@@ -1,16 +1,16 @@
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const serviceAccount = require('./service-account-key.json');
+const nodemailer = require('nodemailer');
 
+// ONE single initialization — ✅ Correct
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
 const db = admin.firestore();
 
-// ─── EMAIL NOTIFICATIONS SETUP ───
-const nodemailer = require('nodemailer');
-
+// Email setup — ✅ Defined BEFORE it's used
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -18,19 +18,14 @@ const transporter = nodemailer.createTransport({
     pass: 'krrw dvtw aeml kkps'
   }
 });
-const functions = require('firebase-functions/v1');
-const admin = require('firebase-admin');
-admin.initializeApp();
-const nodemailer = require('nodemailer'); // 
 
-// ─── DAILY TACHOMASTER SYNC — PER COMPANY ───
+// ─── DAILY TACHOMASTER SYNC ───
 exports.dailyTachomasterSync = functions.pubsub
   .schedule('every day 04:00')
   .timeZone('Europe/London')
   .onRun(async (context) => {
     console.log('🔄 Starting Daily Tachomaster Sync — 04:00 UK Time');
     
-    // Get ALL companies with Tachomaster enabled
     const companiesSnapshot = await db.collection('companies')
       .where('tachomasterEnabled', '==', true)
       .get();
@@ -72,7 +67,6 @@ exports.dailyTachomasterSync = functions.pubsub
       }
     }
 
-    // Master log
     await db.collection('sync_logs').add({
       service: 'tachomaster_daily',
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -99,21 +93,18 @@ async function syncCompanyInfringements(companyId, companyData) {
   const fromDate = thirtyDaysAgo.toISOString().split('T')[0];
   const toDate = new Date().toISOString().split('T')[0];
 
-  // ─── STEP 1: Fetch from Tachomaster ───
   const infringements = await fetchFromTachomaster(apiKey, clientId, fromDate, toDate);
   
   if (!infringements.success) {
     throw new Error(`API Error: ${infringements.error}`);
   }
 
-  // ─── STEP 2: Process & Match Each Infringement ───
   let created = 0;
   let needsMatch = 0;
 
   for (const item of infringements.data) {
     const driverUid = await matchDriverByTachoCard(item.driver_tacho_card, item.driver_email);
     
-    // Check for duplicate
     const existing = await db.collection('tacho_infringements')
       .where('companyId', '==', companyId)
       .where('externalReference', '==', item.id)
@@ -122,7 +113,6 @@ async function syncCompanyInfringements(companyId, companyData) {
     
     if (!existing.empty) continue;
 
-    // Save new infringement
     const newInfringement = {
       companyId: companyId,
       driverId: driverUid,
@@ -145,7 +135,6 @@ async function syncCompanyInfringements(companyId, companyData) {
     
     if (!driverUid) needsMatch++;
     
-    // Notify matched driver
     if (driverUid) {
       await db.collection('notifications').add({
         userId: driverUid,
@@ -158,7 +147,6 @@ async function syncCompanyInfringements(companyId, companyData) {
     }
   }
 
-  // Per-company sync log
   await db.collection('sync_logs').add({
     service: 'tachomaster_daily',
     companyId: companyId,
@@ -178,7 +166,6 @@ async function syncCompanyInfringements(companyId, companyData) {
 async function matchDriverByTachoCard(tachoCardNumber, email = null) {
   if (!tachoCardNumber && !email) return null;
 
-  // Primary match: Tacho Card Number (most reliable & permanent)
   if (tachoCardNumber) {
     const cardMatch = await db.collection('users')
       .where('tachoCardNumber', '==', tachoCardNumber)
@@ -188,7 +175,6 @@ async function matchDriverByTachoCard(tachoCardNumber, email = null) {
     if (!cardMatch.empty) return cardMatch.docs[0].id;
   }
 
-  // Fallback match: Email
   if (email) {
     const emailMatch = await db.collection('users')
       .where('email', '==', email)
@@ -198,7 +184,7 @@ async function matchDriverByTachoCard(tachoCardNumber, email = null) {
     if (!emailMatch.empty) return emailMatch.docs[0].id;
   }
 
-  return null; // Needs manual matching
+  return null;
 }
 
 // ─── TACHOMASTER API CALL ───
@@ -206,7 +192,6 @@ async function fetchFromTachomaster(apiKey, clientId, dateFrom, dateTo) {
   try {
     const baseUrl = 'https://api.tachomaster.co.uk/v1';
     
-    // Get auth token
     const tokenResponse = await fetch(`${baseUrl}/auth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -223,7 +208,6 @@ async function fetchFromTachomaster(apiKey, clientId, dateFrom, dateTo) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Fetch infringements
     const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo });
     const infraResponse = await fetch(`${baseUrl}/infringements?${params}`, {
       headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -248,23 +232,19 @@ exports.sendDefectNotification = functions.firestore
   .onCreate(async (snap, context) => {
     const checklist = snap.data();
     
-    // Check if there are ANY defects noted
     const checks = checklist.checks || {};
     const hasDefects = Object.entries(checks).some(([key, value]) => 
       key.endsWith('_note') && value && value.trim() !== ''
     );
 
-    // Only send email if there ARE defects
     if (!hasDefects) {
       console.log('✅ No defects — no email needed');
       return null;
     }
 
     try {
-      // Company email — your actual address
       let companyEmail = 'admin@lsd-solutions.co.uk';
       
-      // Try to get company email from driver's profile
       if (checklist.driverUid) {
         const userSnap = await db.collection('users')
           .doc(checklist.driverUid)
@@ -278,7 +258,6 @@ exports.sendDefectNotification = functions.firestore
         }
       }
 
-      // Build email content
       const defectNotes = Object.entries(checks)
         .filter(([k, v]) => k.endsWith('_note') && v)
         .map(([k, v]) => `• ${k.replace('_note', '').replace(/_/g, ' ').toUpperCase()}: ${v}`)
@@ -304,11 +283,9 @@ exports.sendDefectNotification = functions.firestore
         `
       };
 
-      // Send the email
       await transporter.sendMail(mailOptions);
       console.log(`✅ Email sent to ${companyEmail} for ${checklist.vehicleReg}`);
       
-      // Update the checklist record to mark email as sent
       await snap.ref.update({
         emailNotificationSent: true,
         emailSentAt: new Date()
