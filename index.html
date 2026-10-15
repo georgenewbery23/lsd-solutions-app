@@ -207,7 +207,7 @@
     <!-- ✅ YOUR BUTTONS GO RIGHT HERE ↓ -->
     
    <!-- ===== MAIN NAVIGATION BAR ===== -->
-<nav id="homeNav" class="nav-container">
+<nav id="companyNav" class="nav-container">
   <span class="nav-title">🏢 Company Portal — LSD Solutions</span>
   <div class="nav-buttons">
     <button onclick="goBack()">← Back</button>
@@ -223,7 +223,19 @@
     <button onclick="handleSignOut()">Sign Out</button>
   </div>
 </nav>
-    
+    <nav id="driverNav" class="nav-container" style="display: none;">
+  <span class="nav-title">🚛 Driver Portal — LSD Solutions</span>
+  <div class="nav-buttons">
+    <button onclick="goBack()">← Back</button>
+    <button data-page="driverDashboardPage" onclick="showPage('driverDashboardPage')">Home</button>
+    <button data-page="driverProfilePage" onclick="showPage('driverProfilePage')">My Profile</button>
+    <button data-page="checklistPage" onclick="showPage('checklistPage')">Walkaround</button>
+    <button data-page="documentsPage" onclick="showPage('documentsPage')">Documents</button>
+    <button data-page="noticesPage" onclick="showPage('noticesPage')">Notices</button>
+    <button data-page="workingTimePage" onclick="showPage('workingTimePage')">Working Time</button>
+    <button onclick="handleSignOut()">Sign Out</button>
+  </div>
+</nav>
     <!-- ✅ END OF BUTTONS ↑ -->
 
   </nav>
