@@ -267,27 +267,42 @@ document.getElementById('resetFormEl').addEventListener('submit', async e => {
 // ==================================================
 // AUTH STATE
 // ==================================================
+// ==================================================
+// AUTH STATE — PERFECTLY BALANCED BRACES ✅
+// ==================================================
 onAuthStateChanged(auth, async user => {
-  if (userRole === 'driver') {
-  // ✅ Hide company nav, show driver nav
-  document.getElementById('companyNav').style.display = 'none';
-  document.getElementById('driverNav').style.display = 'block';
-  showPage('driverDashboardPage');
-} else if (userRole === 'company') {
-  // ✅ Hide driver nav, show company nav
-  document.getElementById('driverNav').style.display = 'none';
-  document.getElementById('companyNav').style.display = 'block';
-  showPage('companyDashboardPage');
-}
+  if (user) {
+    currentUser = user;
+    const profileRef = doc(db, 'users', user.uid);
+    try {
+      const snap = await getDoc(profileRef);
+      if (snap.exists()) {
+        userProfile = snap.data();
+        userRole = userProfile.accountType;
+        if (userRole === 'driver') {
+          document.getElementById('companyNav').style.display = 'none';
+          document.getElementById('driverNav').style.display = 'block';
+          showPage('driverDashboardPage');
+          const n = document.getElementById('driverNameDisplay');
+          if (n) n.textContent = userProfile.name || 'Driver';
+        } else if (userRole === 'company') {
+          document.getElementById('driverNav').style.display = 'none';
+          document.getElementById('companyNav').style.display = 'block';
+          showPage('companyDashboardPage');
+          const n = document.getElementById('companyNameDisplay');
+          if (n) n.textContent = userProfile.name || 'Company';
+        }
       }
     } catch (e) {
       console.error('Auth error:', e);
-    
+    }
   } else {
     currentUser = null;
     userProfile = null;
     userRole = null;
     companyId = null;
+    if (document.getElementById('companyNav')) document.getElementById('companyNav').style.display = 'none';
+    if (document.getElementById('driverNav')) document.getElementById('driverNav').style.display = 'none';
     showPage('authPage');
   }
 });
