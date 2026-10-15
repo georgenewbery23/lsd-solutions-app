@@ -1,5 +1,5 @@
 // ==================================================
-// LSD SOLUTIONS — FULL CORRECTED APP.JS
+// LSD SOLUTIONS — FULL BUILD-READY APP.JS
 // ==================================================
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
@@ -7,7 +7,7 @@ import {
   signOut, sendPasswordResetEmail, onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import {
-  getFirestore, doc, setDoc, getDoc, updateDoc, collection,
+  getFirestore, doc, setDoc, getDoc, collection,
   query, where, getDocs, addDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -24,14 +24,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ===== DECLARE ALL VARIABLES =====
 let currentUser = null;
-let userProfile = null;  // ✅ FIXED — declared here
+let userProfile = null;
 let userRole = null;
 let companyId = null;
 
 // ==================================================
-// GLOBAL FUNCTIONS — Called from onclick
+// GLOBAL FUNCTIONS
 // ==================================================
 window.showAuthTab = function(tab) {
   const signInForm = document.getElementById('signInForm');
@@ -53,7 +52,6 @@ window.showPage = function(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById(pageId);
   if (page) page.classList.add('active');
-  else console.error('Page not found:', pageId);
 };
 
 window.handleSignOut = async function() {
@@ -69,14 +67,13 @@ window.handleSignOut = async function() {
 window.loadDriverJobs = async function() {
   const list = document.getElementById('jobsList');
   if (!list) return;
-  
   try {
     const snap = await getDocs(query(collection(db, 'jobs'), where('status', '==', 'open')));
     list.innerHTML = snap.empty ? '<p>No available jobs right now.</p>' :
       snap.docs.map(d => {
         const j = d.data();
         return `<div class="card" style="margin:0.5rem 0;">
-          <strong>${j.title}</strong><br>
+          <strong>${j.title || 'Job'}</strong><br>
           ${j.pickup || ''} → ${j.dropoff || ''}<br>
           ${j.date || ''} | <strong>£${j.pay || 'On application'}</strong>
           <p style="margin-top:0.5rem;">${j.details || ''}</p>
@@ -90,7 +87,6 @@ window.loadDriverJobs = async function() {
 window.loadDefects = async function(filter = 'all') {
   const list = document.getElementById('defectsList');
   if (!list) return;
-  
   try {
     const snap = await getDocs(collection(db, 'checklists'));
     list.innerHTML = snap.empty ? '<p>No defects reported.</p>' :
@@ -109,14 +105,13 @@ window.loadDefects = async function(filter = 'all') {
 };
 
 // ==================================================
-// AUTH FORMS
+// SIGN IN
 // ==================================================
 document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value;
   const pass = document.getElementById('loginPassword').value;
   const err = document.getElementById('loginError');
-  
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch (e) {
@@ -125,6 +120,9 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   }
 });
 
+// ==================================================
+// REGISTER — BRACES ARE NOW PERFECT ✅
+// ==================================================
 document.getElementById('registerFormEl').addEventListener('submit', async e => {
   e.preventDefault();
   const type = document.querySelector('input[name="accountType"]:checked').value;
@@ -134,7 +132,6 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
   const err = document.getElementById('registerError');
   const succ = document.getElementById('registerSuccess');
 
-  // ✅ Client-side checks FIRST
   if (!email.includes('@')) {
     err.textContent = '❌ Please enter a valid email address';
     err.style.display = 'block';
@@ -151,30 +148,12 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
     const uid = cred.user.uid;
     
     await setDoc(doc(db, 'users', uid), {
-      uid, name, email, accountType: type, createdAt: serverTimestamp()
+      uid,
+      name,
+      email,
+      accountType: type,
+      createdAt: serverTimestamp()
     });
-    
-    succ.style.display = 'block';
-    succ.textContent = '✅ Account created! Signing in...';
-    setTimeout(() => showAuthTab('signin'), 1500);
-    
-  } catch (e) {
-    console.error('Signup error code:', e.code, 'Message:', e.message);
-    
-    let msg = 'Registration failed.';
-    if (e.code === 'auth/email-already-in-use') {
-      msg = '❌ This email is already registered — try signing in instead';
-    } else if (e.code === 'auth/invalid-email') {
-      msg = '❌ Please enter a valid email address';
-    } else if (e.code === 'auth/weak-password') {
-      msg = '❌ Password must be at least 6 characters';
-    } else if (e.code === 'auth/operation-not-allowed') {
-      msg = '⚠️ Email sign-in is not enabled in Firebase Console — go to Authentication → Sign-in method and enable Email/Password';
-    }
-    err.textContent = msg;
-    err.style.display = 'block';
-  }
-});
     
     if (type === 'company') {
       await setDoc(doc(db, 'companies', uid), {
@@ -188,52 +167,63 @@ document.getElementById('registerFormEl').addEventListener('submit', async e => 
     succ.style.display = 'block';
     succ.textContent = '✅ Account created! Signing in...';
     setTimeout(() => showAuthTab('signin'), 1500);
-    
   } catch (e) {
     err.style.display = 'block';
-    err.textContent = '❌ ' + e.message;
+    if (e.code === 'auth/email-already-in-use') {
+      err.textContent = '❌ This email is already registered';
+    } else if (e.code === 'auth/invalid-email') {
+      err.textContent = '❌ Please enter a valid email address';
+    } else if (e.code === 'auth/weak-password') {
+      err.textContent = '❌ Password must be at least 6 characters';
+    } else if (e.code === 'auth/operation-not-allowed') {
+      err.textContent = '⚠️ Enable Email/Password in Firebase Console → Auth → Sign-in methods';
+    } else {
+      err.textContent = '❌ ' + e.message;
+    }
   }
 });
 
+// ==================================================
+// PASSWORD RESET
+// ==================================================
 document.getElementById('resetFormEl').addEventListener('submit', async e => {
   e.preventDefault();
   const email = document.getElementById('resetEmail').value;
   try {
     await sendPasswordResetEmail(auth, email);
-    document.getElementById('resetMessage').style.display = 'block';
-    document.getElementById('resetMessage').textContent = '✅ Reset link sent! Check your email.';
+    const msg = document.getElementById('resetMessage');
+    msg.style.display = 'block';
+    msg.textContent = '✅ Reset link sent! Check your email.';
   } catch (e) {
     alert('Error: ' + e.message);
   }
 });
 
 // ==================================================
-// AUTH STATE — Fixed with userProfile declared
+// AUTH STATE
 // ==================================================
 onAuthStateChanged(auth, async user => {
   if (user) {
     currentUser = user;
     const profileRef = doc(db, 'users', user.uid);
-    
     try {
       const snap = await getDoc(profileRef);
       if (snap.exists()) {
         userProfile = snap.data();
         userRole = userProfile.accountType;
-        
         if (userRole === 'driver') {
           showPage('driverDashboardPage');
-          const nameEl = document.getElementById('driverNameDisplay');
-          if (nameEl) nameEl.textContent = userProfile.name || 'Driver';
+          const n = document.getElementById('driverNameDisplay');
+          if (n) n.textContent = userProfile.name || 'Driver';
         } else if (userRole === 'company') {
           companyId = user.uid;
           showPage('companyDashboardPage');
-          const nameEl = document.getElementById('companyNameDisplay');
-          if (nameEl) nameEl.textContent = userProfile.name || 'Company';
+          const n = document.getElementById('companyNameDisplay');
+          if (n) n.textContent = userProfile.name || 'Company';
         }
       }
     } catch (e) {
-      console.error('Auth state error:', e);
+      console.error('Auth error:', e);
     }
   } else {
     currentUser = null;
@@ -250,8 +240,7 @@ onAuthStateChanged(auth, async user => {
 document.getElementById('driverProfileForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (!currentUser) return;
-  
-  const data = {
+  await setDoc(doc(db, 'users', currentUser.uid), {
     fullName: document.getElementById('dpFullName').value,
     email: document.getElementById('dpEmail').value,
     licenceNumber: document.getElementById('dpLicenceNumber').value,
@@ -261,15 +250,13 @@ document.getElementById('driverProfileForm').addEventListener('submit', async e 
     medicalExpiry: document.getElementById('dpMedicalExpiry').value,
     points: parseInt(document.getElementById('dpDrivingPoints').value) || 0,
     phone: document.getElementById('dpPhone').value
-  };
-  
-  await setDoc(doc(db, 'users', currentUser.uid), data, { merge: true });
-  const status = document.getElementById('dpSaveStatus');
-  if (status) status.textContent = '✅ Profile Saved!';
+  }, { merge: true });
+  const s = document.getElementById('dpSaveStatus');
+  if (s) s.textContent = '✅ Profile Saved!';
 });
 
 // ==================================================
-// CHECKLIST — Defect note toggles
+// CHECKLIST
 // ==================================================
 document.querySelectorAll('.check-main').forEach(cb => {
   cb.addEventListener('change', function() {
@@ -281,14 +268,12 @@ document.querySelectorAll('.check-main').forEach(cb => {
 document.getElementById('checklistForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (!currentUser) return;
-  
   const checks = {};
   document.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
     checks[cb.name] = cb.checked;
     const note = document.getElementById(cb.name + '_note');
     if (note) checks[cb.name + '_note'] = note.querySelector('textarea').value;
   });
-  
   await addDoc(collection(db, 'checklists'), {
     driverUid: currentUser.uid,
     driverName: userProfile?.name || 'Anonymous',
@@ -301,22 +286,17 @@ document.getElementById('checklistForm').addEventListener('submit', async e => {
     checks,
     submittedAt: serverTimestamp()
   });
-  
-  const status = document.getElementById('checklistStatus');
-  if (status) {
-    status.style.display = 'block';
-    status.textContent = '✅ Checklist submitted!';
-  }
+  const s = document.getElementById('checklistStatus');
+  if (s) { s.style.display = 'block'; s.textContent = '✅ Checklist submitted!'; }
   e.target.reset();
 });
 
 // ==================================================
-// COMPANY JOBS
+// POST JOB
 // ==================================================
 document.getElementById('postJobForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   if (!currentUser || userRole !== 'company') return;
-  
   await addDoc(collection(db, 'jobs'), {
     companyId,
     title: document.getElementById('jobTitle').value,
@@ -328,9 +308,8 @@ document.getElementById('postJobForm')?.addEventListener('submit', async e => {
     details: document.getElementById('jobDetails').value,
     createdAt: serverTimestamp()
   });
-  
-  const status = document.getElementById('jobSaveStatus');
-  if (status) status.textContent = '✅ Job Posted!';
+  const s = document.getElementById('jobSaveStatus');
+  if (s) s.textContent = '✅ Job Posted!';
   e.target.reset();
 });
 
@@ -341,11 +320,9 @@ function initChecklistDefaults() {
   const today = new Date().toISOString().split('T')[0];
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  
-  const dateEl = document.getElementById('checkDate');
-  const timeEl = document.getElementById('checkTime');
-  if (dateEl && !dateEl.value) dateEl.value = today;
-  if (timeEl && !timeEl.value) timeEl.value = time;
+  const d = document.getElementById('checkDate');
+  const t = document.getElementById('checkTime');
+  if (d && !d.value) d.value = today;
+  if (t && !t.value) t.value = time;
 }
-
 document.addEventListener('DOMContentLoaded', initChecklistDefaults);
