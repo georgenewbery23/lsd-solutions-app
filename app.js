@@ -481,7 +481,7 @@ async function loadDrivers() {
 // ==================================================
 // DEFECTS — Load & Filter
 // ==================================================
-window.loadDefects = async function(filter = 'all') {
+window.loadDefects = async function(filter) {
   const list = document.getElementById('defectsList');
   if (!list || !companyId) return;
   
