@@ -277,6 +277,7 @@ onAuthStateChanged(auth, async user => {
           if (document.getElementById('driverNav')) document.getElementById('driverNav').style.display = 'none';
           if (document.getElementById('companyNav')) document.getElementById('companyNav').style.display = 'block';
           showPage('companyDashboardPage');
+          await initialiseCompanyChecklist(user.uid);
           const n = document.getElementById('companyNameDisplay');
           if (n) n.textContent = userProfile.name || 'Company';
         }
@@ -314,16 +315,6 @@ document.getElementById('driverProfileForm').addEventListener('submit', async e 
   }, { merge: true });
   const s = document.getElementById('dpSaveStatus');
   if (s) s.textContent = '✅ Profile Saved!';
-});
-
-// ==================================================
-// CHECKLIST
-// ==================================================
-document.querySelectorAll('.check-main').forEach(cb => {
-  cb.addEventListener('change', function() {
-    const note = document.getElementById(this.id + '_note');
-    if (note) note.classList.toggle('visible', !this.checked);
-  });
 });
 
 // ==================================================
@@ -867,3 +858,17 @@ window.initializeChecklistPage = async function() {
     selectedTrailerNo = this.value || null;
   });
 };
+
+// ==================================================
+// ✅ AUTO-INITIALIZE CHECKLIST PAGE
+// ==================================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Call your existing defaults
+  initChecklistDefaults();
+  
+  // ✅ Auto-load vehicle/trailer options on checklist page
+  const checkPage = document.getElementById('checklistPage');
+  if (checkPage) {
+    initializeChecklistPage();
+  }
+});
