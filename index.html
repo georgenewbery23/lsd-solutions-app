@@ -767,6 +767,199 @@
 
   <!-- TOAST NOTIFICATION -->
   <div id="toast" class="toast"></div>
+  
+  <!-- ==================================================
+   JOB BOARD PAGE — For Drivers: Browse & Apply
+   ================================================== -->
+<section id="job-board-page" class="page hidden">
+  <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 2rem 1rem;">
+    
+    <!-- Page Header -->
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2.2rem; color: var(--primary); margin-bottom: 0.5rem;">Available Jobs</h1>
+      <p style="color: var(--text-light);">Find work near you. Apply directly. No fees — ever.</p>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Location</label>
+          <input type="text" id="job-search-location" placeholder="Town or postcode..." 
+                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Job Type</label>
+          <select id="job-search-type" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
+            <option value="">All Types</option>
+            <option value="longhaul">Long Haul</option>
+            <option value="local">Local / Shunting</option>
+            <option value="multidrop">Multi-Drop</option>
+            <option value="tramping">Tramping</option>
+            <option value="dailyruns">Daily Runs</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Date</label>
+          <input type="date" id="job-search-date" 
+                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+          <button class="btn primary" style="width: 100%;" onclick="searchJobs()">🔍 Search</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Listings -->
+    <div id="job-listings">
+      <p style="text-align: center; color: var(--text-light); padding: 2rem;">Loading available jobs...</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================================================
+   MY APPLICATIONS PAGE — For Drivers
+   ================================================== -->
+<section id="my-applications-page" class="page hidden">
+  <div class="container" style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem;">
+    <h1 style="font-size: 1.8rem; color: var(--primary); margin-bottom: 2rem;">My Applications</h1>
+    
+    <div id="applications-list">
+      <p style="text-align: center; color: var(--text-light); padding: 2rem;">You haven't applied for any jobs yet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================================================
+   POST A JOB PAGE — For Companies
+   ================================================== -->
+<section id="post-job-page" class="page hidden">
+  <div class="container" style="max-width: 700px; margin: 0 auto; padding: 2rem 1rem;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">Post a Job</h1>
+      <p style="color: var(--text-light);">It's completely free to post. You only pay £1.00 when you accept a driver.</p>
+    </div>
+
+    <form id="post-job-form" class="card" style="padding: 2rem;">
+      <!-- Job Type -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="job-type" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Job Type *</label>
+        <select id="job-type" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
+          <option value="">Select type...</option>
+          <option value="longhaul">Long Haul</option>
+          <option value="local">Local / Shunting</option>
+          <option value="multidrop">Multi-Drop</option>
+          <option value="tramping">Tramping</option>
+          <option value="dailyruns">Daily Runs</option>
+        </select>
+      </div>
+
+      <!-- Start Date & Time -->
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <label for="job-start-date" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Date *</label>
+          <input type="date" id="job-start-date" required 
+                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+        </div>
+        <div>
+          <label for="job-start-time" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Time *</label>
+          <input type="time" id="job-start-time" required 
+                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="job-location" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Location *</label>
+        <input type="text" id="job-location" placeholder="Town or postcode" required
+               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+      </div>
+
+      <!-- Destination -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="job-destination" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Destination</label>
+        <input type="text" id="job-destination" placeholder="Optional — where you're heading"
+               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+      </div>
+
+      <!-- Rate -->
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <label for="pay-rate-type" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Pay Type *</label>
+          <select id="pay-rate-type" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
+            <option value="">Select...</option>
+            <option value="daily">Per Day</option>
+            <option value="halfday">Half Day</option>
+            <option value="hourly">Per Hour</option>
+            <option value="job">Fixed Price Per Job</option>
+            <option value="mile">Per Mile</option>
+          </select>
+        </div>
+        <div>
+          <label for="pay-rate-amount" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Rate (£) *</label>
+          <input type="number" id="pay-rate-amount" step="0.01" min="0" placeholder="e.g. 160.00" required
+                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+        </div>
+      </div>
+
+      <!-- Vehicle Info -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="job-vehicle" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Vehicle / Trailer Details</label>
+        <input type="text" id="job-vehicle" placeholder="e.g. Scania R450 — Curtainside"
+               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
+      </div>
+
+      <!-- Additional Info -->
+      <div style="margin-bottom: 1.5rem;">
+        <label for="job-description" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Additional Information</label>
+        <textarea id="job-description" rows="4" placeholder="Any special requirements, load type, restrictions, etc."
+                  style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px; resize: vertical;"></textarea>
+      </div>
+
+      <!-- Fee Notice -->
+      <div style="background: var(--primary-light); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; text-align: center;">
+        <p style="margin: 0; font-size: 0.9rem;">
+          <strong>✅ Free to post.</strong> You will only be charged a one-off fee of <strong>£1.00</strong> when you accept a driver for this job.<br>
+          <span style="color: var(--text-light);">The driver's agreed rate is paid directly — this £1 is our only charge.</span>
+        </p>
+      </div>
+
+      <button type="submit" class="btn primary" style="width: 100%; font-size: 1.05rem;">📢 Post Job — It's Free</button>
+    </form>
+
+  </div>
+</section>
+
+<!-- ==================================================
+   MANAGE POSTED JOBS PAGE — For Companies
+   ================================================== -->
+<section id="manage-jobs-page" class="page hidden">
+  <div class="container" style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 1.8rem; color: var(--primary);">My Posted Jobs</h1>
+      <button class="btn primary" onclick="showPage('post-job-page')">+ Post New Job</button>
+    </div>
+
+    <div id="company-jobs-list">
+      <p style="text-align: center; color: var(--text-light); padding: 2rem;">You haven't posted any jobs yet.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================================================
+   JOB DETAILS MODAL
+   ================================================== -->
+<div id="job-details-modal" class="modal hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+  <div class="card" style="max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative;">
+    <button onclick="closeJobModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    
+    <div id="job-details-content"></div>
+  </div>
+</div>
 
   <!-- SCRIPTS -->
   <script type="module" src="./app.js"></script>
