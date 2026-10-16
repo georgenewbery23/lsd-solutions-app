@@ -59,6 +59,9 @@
     .header-bar img { height: 36px; width: auto; }
     .header-bar h1 { font-size: 1.1rem; font-weight: 600; }
     .header-bar .user-area { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; }
+    .main-nav { background: #fff; border-bottom: 1px solid var(--border); padding: 0 1rem; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+    .main-nav a { padding: 0.75rem 1rem; font-size: 0.9rem; color: var(--text-light); border-bottom: 2px solid transparent; }
+    .main-nav a:hover { color: var(--primary); background: var(--primary-light); }
     .nav-tabs { display: flex; flex-wrap: wrap; background: #fff; border-bottom: 1px solid var(--border); padding: 0 1rem; gap: 0.25rem; }
     .nav-tab { padding: 0.75rem 1rem; font-size: 0.9rem; color: var(--text-light); border-bottom: 2px solid transparent; cursor: pointer; }
     .nav-tab:hover { color: var(--primary); background: var(--primary-light); }
@@ -96,6 +99,16 @@
     .status-warning { color: var(--warning); font-weight: 500; }
     .status-bad { color: var(--danger); font-weight: 500; }
     .hidden-mobile { display: table-cell; }
+    
+    /* Calendar Styles */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .calendar-header button { padding: 0.4rem 0.8rem; background: var(--primary-light); color: var(--primary); border: none; border-radius: var(--radius); }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; margin-top: 0.75rem; }
+    .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--radius); font-size: 0.85rem; cursor: pointer; border: 1px solid var(--border); }
+    .calendar-day:hover { background: var(--primary-light); }
+    .calendar-day.empty { border: none; cursor: default; }
+    .calendar-day.today { border: 2px solid var(--primary); font-weight: 600; }
+    
     @media(max-width:640px){
       .hidden-mobile { display: none; }
       .form-row { grid-template-columns: 1fr; }
@@ -189,7 +202,7 @@
        ====================================== -->
   <header id="app-header" class="header-bar" style="display:none;">
     <div class="logo-group">
-<img src="./assets/lsd-logo.png" alt="LSD Solutions" />
+      <img src="./assets/lsd-logo.png" alt="LSD Solutions" />
       <h1>LSD Solutions</h1>
     </div>
     <div class="user-area">
@@ -214,6 +227,7 @@
   <a href="#" data-page="driver-dashboard-page">Dashboard</a>
   <a href="#" data-page="job-board-page">🔍 Find Work</a>
   <a href="#" data-page="my-applications-page">My Applications</a>
+  <a href="#" data-page="driver-calendar-page">📅 My Availability</a>
   <a href="#" data-page="driver-profile-page">My Profile</a>
   <a href="#" onclick="window.handleSignOut()">Sign Out</a>
 </nav>
@@ -225,7 +239,11 @@
   <a href="#" data-page="company-dashboard-page">Dashboard</a>
   <a href="#" data-page="post-job-page">📢 Post a Job</a>
   <a href="#" data-page="manage-jobs-page">Manage Jobs</a>
-  <a href="#" data-page="company-profile-page">Company Profile</a>
+  <a href="#" data-page="maintenance-page">🔧 Maintenance</a>
+  <a href="#" data-page="defects-page">⚠️ Defects</a>
+  <a href="#" data-page="compliance-page">📋 Compliance</a>
+  <a href="#" data-page="tacomaster-page">⏱️ Tacomaster</a>
+  <a href="#" data-page="company-settings-page">⚙️ Settings</a>
   <a href="#" onclick="window.handleSignOut()">Sign Out</a>
 </nav>
 
@@ -598,7 +616,7 @@
             <div id="tacho-compliance-status" style="margin-top: 1rem;">
               <p style="color: var(--text-light); font-style: italic;">Not connected</p>
             </div>
-            <button class="btn small secondary" style="margin-top: 0.75rem; width: 100%;" onclick="showPage('company-settings-page')">Configure Tacomaster API</button>
+            <button class="btn small secondary" style="margin-top: 0.75rem; width: 100%;" onclick="showPage('tacomaster-page')">Configure Tacomaster API</button>
           </div>
         </div>
 
@@ -752,7 +770,7 @@
         <div class="form-group">
           <label>Select Vehicle / Trailer</label>
           <select id="checklist-vehicle">
-            <option value="">Select your vehicle...</option>
+            <option value="">Select a vehicle to load checklist items...</option>
           </select>
         </div>
         <div id="checklist-items" style="margin-top: 1.5rem;">
@@ -782,301 +800,4 @@
           </div>
           <div class="form-group">
             <label>How serious is it? *</label>
-            <select id="dr-defect-severity" required>
-              <option value="">Select...</option>
-              <option value="minor">Minor</option>
-              <option value="significant">Significant</option>
-              <option value="major">Major — Vehicle off road</option>
-              <option value="prohibitive">Prohibitive — Must not move</option>
-            </select>
-          </div>
-          <button type="submit" class="btn primary">Submit Report</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="driver-calendar-page" class="page">
-      <div class="card">
-        <h2>My Availability & Schedule</h2>
-        <p style="color: var(--text-light); margin-bottom: 1rem;">Let your transport manager know when you're available</p>
-        <div id="calendar-container">
-          <!-- Calendar rendered by app.js -->
-          <div class="calendar-header">
-            <button onclick="changeMonth(-1)">&lt;</button>
-            <h3 id="calendar-month-year"></h3>
-            <button onclick="changeMonth(+1)">&gt;</button>
-          </div>
-          <div class="calendar-grid" id="calendar-days"></div>
-          <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; font-size: 0.85rem;">
-            <span><span style="display:inline-block; width:14px; height:14px; background:#e8f5e9; border-radius:3px; margin-right:4px;"></span>Available</span>
-            <span><span style="display:inline-block; width:14px; height:14px; background:#ffebee; border-radius:3px; margin-right:4px;"></span>Unavailable</span>
-            <span><span style="display:inline-block; width:14px; height:14px; background:#fff4e5; border-radius:3px; margin-right:4px;"></span>Pending</span>
-            <span><span style="display:inline-block; width:14px; height:14px; background:#bbdefb; border-radius:3px; margin-right:4px;"></span>Booked</span>
-            <span><span style="display:inline-block; width:14px; height:14px; background:#f3f4f6; border-radius:3px; margin-right:4px;"></span>Not set</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="driver-documents-page" class="page">
-      <div class="card">
-        <h2>My Documents</h2>
-        <p style="color: var(--text-light); margin-bottom: 1rem;">Upload and manage your licence, CPC, tachograph card, and more.</p>
-        <div class="form-group">
-          <label>Upload New Document</label>
-          <input type="file" id="doc-upload" />
-          <select id="doc-type" style="margin-top:0.5rem;">
-            <option value="">Select document type...</option>
-            <option value="driving-licence">Driving Licence</option>
-            <option value="cpc-card">Driver CPC Card</option>
-            <option value="tacho-card">Tachograph Card</option>
-            <option value="digital-tacho">Digital Tachograph Files</option>
-            <option value="qualification">Certificate / Qualification</option>
-            <option value="medical">Medical Certificate</option>
-            <option value="other">Other</option>
-          </select>
-          <button class="btn small primary" style="margin-top:0.5rem;" onclick="uploadDriverDocument()">Upload</button>
-        </div>
-        <div id="driver-docs-list" style="margin-top: 1.5rem;">
-          <p style="color: var(--text-light); font-style: italic;">No documents uploaded yet</p>
-        </div>
-      </div>
-    </div>
-
-    <div id="driver-profile-page" class="page">
-      <div class="card">
-        <h2>My Profile</h2>
-        <form id="driver-profile-form">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="dr-profile-name" />
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="dr-profile-email" disabled style="background: var(--neutral);" />
-          </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" id="dr-profile-phone" />
-          </div>
-          <div class="form-group">
-            <label>Location (Town/City)</label>
-            <input type="text" id="dr-profile-location" />
-          </div>
-          <button type="submit" class="btn primary">Update Profile</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="driver-tachograph-page" class="page">
-      <div class="card">
-        <h2>My Tachograph Information</h2>
-        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Your latest tachograph data and driver hours</p>
-        <div id="driver-tacho-data">
-          <p style="color: var(--text-light); font-style: italic;">Connect via your company's Tacomaster integration to view tachograph data here.</p>
-        </div>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="toast"></div>
-  
-  <!-- ==================================================
-   JOB BOARD PAGE — For Drivers: Browse & Apply
-   ================================================== -->
-<section id="job-board-page" class="page hidden">
-  <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 2rem 1rem;">
-    
-    <!-- Page Header -->
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <h1 style="font-size: 2.2rem; color: var(--primary); margin-bottom: 0.5rem;">Available Jobs</h1>
-      <p style="color: var(--text-light);">Find work near you. Apply directly. No fees — ever.</p>
-    </div>
-
-    <!-- Search & Filters -->
-    <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
-      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <div>
-          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Location</label>
-          <input type="text" id="job-search-location" placeholder="Town or postcode..." 
-                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-        </div>
-        <div>
-          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Job Type</label>
-          <select id="job-search-type" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
-            <option value="">All Types</option>
-            <option value="longhaul">Long Haul</option>
-            <option value="local">Local / Shunting</option>
-            <option value="multidrop">Multi-Drop</option>
-            <option value="tramping">Tramping</option>
-            <option value="dailyruns">Daily Runs</option>
-          </select>
-        </div>
-        <div>
-          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Date</label>
-          <input type="date" id="job-search-date" 
-                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-        </div>
-        <div style="display: flex; align-items: flex-end;">
-          <button class="btn primary" style="width: 100%;" onclick="searchJobs()">🔍 Search</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Job Listings -->
-    <div id="job-listings">
-      <p style="text-align: center; color: var(--text-light); padding: 2rem;">Loading available jobs...</p>
-    </div>
-
-  </div>
-</section>
-
-<!-- ==================================================
-   MY APPLICATIONS PAGE — For Drivers
-   ================================================== -->
-<section id="my-applications-page" class="page hidden">
-  <div class="container" style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem;">
-    <h1 style="font-size: 1.8rem; color: var(--primary); margin-bottom: 2rem;">My Applications</h1>
-    
-    <div id="applications-list">
-      <p style="text-align: center; color: var(--text-light); padding: 2rem;">You haven't applied for any jobs yet.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ==================================================
-   POST A JOB PAGE — For Companies
-   ================================================== -->
-<section id="post-job-page" class="page hidden">
-  <div class="container" style="max-width: 700px; margin: 0 auto; padding: 2rem 1rem;">
-    
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <h1 style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">Post a Job</h1>
-      <p style="color: var(--text-light);">It's completely free to post. You only pay £1.00 when you accept a driver.</p>
-    </div>
-
-    <form id="post-job-form" class="card" style="padding: 2rem;">
-      <!-- Job Type -->
-      <div style="margin-bottom: 1.25rem;">
-        <label for="job-type" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Job Type *</label>
-        <select id="job-type" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
-          <option value="">Select type...</option>
-          <option value="longhaul">Long Haul</option>
-          <option value="local">Local / Shunting</option>
-          <option value="multidrop">Multi-Drop</option>
-          <option value="tramping">Tramping</option>
-          <option value="dailyruns">Daily Runs</option>
-        </select>
-      </div>
-
-      <!-- Start Date & Time -->
-      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-        <div>
-          <label for="job-start-date" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Date *</label>
-          <input type="date" id="job-start-date" required 
-                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-        </div>
-        <div>
-          <label for="job-start-time" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Time *</label>
-          <input type="time" id="job-start-time" required 
-                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-        </div>
-      </div>
-
-      <!-- Location -->
-      <div style="margin-bottom: 1.25rem;">
-        <label for="job-location" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Start Location *</label>
-        <input type="text" id="job-location" placeholder="Town or postcode" required
-               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-      </div>
-
-      <!-- Destination -->
-      <div style="margin-bottom: 1.25rem;">
-        <label for="job-destination" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Destination</label>
-        <input type="text" id="job-destination" placeholder="Optional — where you're heading"
-               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-      </div>
-
-      <!-- Rate -->
-      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-        <div>
-          <label for="pay-rate-type" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Pay Type *</label>
-          <select id="pay-rate-type" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
-            <option value="">Select...</option>
-            <option value="daily">Per Day</option>
-            <option value="halfday">Half Day</option>
-            <option value="hourly">Per Hour</option>
-            <option value="job">Fixed Price Per Job</option>
-            <option value="mile">Per Mile</option>
-          </select>
-        </div>
-        <div>
-          <label for="pay-rate-amount" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Rate (£) *</label>
-          <input type="number" id="pay-rate-amount" step="0.01" min="0" placeholder="e.g. 160.00" required
-                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-        </div>
-      </div>
-
-      <!-- Vehicle Info -->
-      <div style="margin-bottom: 1.25rem;">
-        <label for="job-vehicle" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Vehicle / Trailer Details</label>
-        <input type="text" id="job-vehicle" placeholder="e.g. Scania R450 — Curtainside"
-               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;" />
-      </div>
-
-      <!-- Additional Info -->
-      <div style="margin-bottom: 1.5rem;">
-        <label for="job-description" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Additional Information</label>
-        <textarea id="job-description" rows="4" placeholder="Any special requirements, load type, restrictions, etc."
-                  style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px; resize: vertical;"></textarea>
-      </div>
-
-      <!-- Fee Notice -->
-      <div style="background: var(--primary-light); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; text-align: center;">
-        <p style="margin: 0; font-size: 0.9rem;">
-          <strong>✅ Free to post.</strong> You will only be charged a one-off fee of <strong>£1.00</strong> when you accept a driver for this job.<br>
-          <span style="color: var(--text-light);">The driver's agreed rate is paid directly — this £1 is our only charge.</span>
-        </p>
-      </div>
-
-      <button type="submit" class="btn primary" style="width: 100%; font-size: 1.05rem;">📢 Post Job — It's Free</button>
-    </form>
-
-  </div>
-</section>
-
-<!-- ==================================================
-   MANAGE POSTED JOBS PAGE — For Companies
-   ================================================== -->
-<section id="manage-jobs-page" class="page hidden">
-  <div class="container" style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-      <h1 style="font-size: 1.8rem; color: var(--primary);">My Posted Jobs</h1>
-      <button class="btn primary" onclick="showPage('post-job-page')">+ Post New Job</button>
-    </div>
-
-    <div id="company-jobs-list">
-      <p style="text-align: center; color: var(--text-light); padding: 2rem;">You haven't posted any jobs yet.</p>
-    </div>
-
-  </div>
-</section>
-
-<!-- ==================================================
-   JOB DETAILS MODAL
-   ================================================== -->
-<div id="job-details-modal" class="modal hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-  <div class="card" style="max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative;">
-    <button onclick="closeJobModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
-    
-    <div id="job-details-content"></div>
-  </div>
-</div>
-
-  <!-- SCRIPTS -->
-  <script type="module" src="./app.js"></script>
-</body>
-</html>
+            <select id="dr-defect-severity" required
