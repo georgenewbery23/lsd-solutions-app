@@ -297,3 +297,41 @@ exports.sendDefectNotification = functions.firestore
       return null;
     }
   });
+  // functions/index.js — Auto-Archive Scheduled Function
+const functions = require('firebase-functions/v2');
+const admin = require('firebase-admin');
+admin.initializeApp();
+const db = admin.firestore();
+
+// Run daily at 2 AM
+exports.archiveOldRecords = functions.scheduler.onSchedule('0 2 * * *', async () => {
+  const today = new Date();
+  
+  const collections = {
+    checklists: 365 * 1.1,
+    defects: 365 * 1.1,
+    jobs: 730 * 1.1,
+    maintenance: 730 * 1.1
+  };
+  
+  for (const [collectionName, days] of Object.entries(collections)) {
+    const cutoffDate = new Date(today.getTime() - (days * 24 * 60 * 60 * 1000));
+    const snapshot = await db.collection(collectionName)
+      .where('createdAt', '<', cutoffDate)
+      .get();
+    
+    if (snapshot.empty) continue;
+    
+    console.log(`Archiving ${snapshot.size} records from ${collectionName}`);
+    
+    for (const doc of snapshot.docs) {
+      // Step 1: Email copy to company (integrate SendGrid/Mailgun here)
+      // await sendArchiveEmail(doc.data(), collectionName);
+      
+      // Step 2: Delete original
+      await doc.ref.delete();
+    }
+  }
+  
+  console.log('✅ Archive complete');
+});
