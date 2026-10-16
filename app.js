@@ -1740,9 +1740,9 @@ const RETENTION_PERIODS = {
   'tachograph': { years: 1, gracePercent: 10 },
   'tachograph-domestic': { years: 5, gracePercent: 10 },
   'driver-cpc': { years: 2, gracePercent: 10 },
-  'operator-licence': { years: 5, gracePercent: 10 },
-  insurance: { years: 3, gracePercent: 10 },
-  working-time: { years: 2, gracePercent: 10 }
+  'operator-licence': { years: 5, gracePercent: 10 },  // ✅ FIXED
+  'insurance': { years: 3, gracePercent: 10 },
+  'working-time': { years: 2, gracePercent: 10 }
 };
 
 function calculateExpiryDate(docType, uploadedDate) {
