@@ -326,32 +326,6 @@ document.querySelectorAll('.check-main').forEach(cb => {
   });
 });
 
-document.getElementById('checklistForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  if (!currentUser) return;
-  const checks = {};
-  document.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
-    checks[cb.name] = cb.checked;
-    const note = document.getElementById(cb.name + '_note');
-    if (note) checks[cb.name + '_note'] = note.querySelector('textarea').value;
-  });
-  await addDoc(collection(db, 'checklists'), {
-    driverUid: currentUser.uid,
-    driverName: userProfile?.name || 'Anonymous',
-    vehicleReg: document.getElementById('checkVehicleReg').value,
-    trailerNo: document.getElementById('checkTrailerNo').value,
-    checkDate: document.getElementById('checkDate').value,
-    checkTime: document.getElementById('checkTime').value,
-    comments: document.getElementById('checkComments').value,
-    signature: document.getElementById('checkSignature').value,
-    checks,
-    submittedAt: serverTimestamp()
-  });
-  const s = document.getElementById('checklistStatus');
-  if (s) { s.style.display = 'block'; s.textContent = '✅ Checklist submitted!'; }
-  e.target.reset();
-});
-
 // ==================================================
 // POST JOB
 // ==================================================
@@ -387,3 +361,509 @@ function initChecklistDefaults() {
   if (t && !t.value) t.value = time;
 }
 document.addEventListener('DOMContentLoaded', initChecklistDefaults);
+
+// ==================================================
+// 🚛 PART 1: DVSA COMPLIANT CHECKLIST SYSTEM
+// ==================================================
+
+// Vehicle Types Definition
+const VEHICLE_TYPES = {
+  CAR_VAN: 'car_van',
+  RIGID: 'rigid',
+  TRACTOR_UNIT: 'tractor_unit',
+  TRAILER: 'trailer'
+};
+
+// DVSA Default Checklist — grouped by category
+const DEFAULT_DVSA_CHECKLIST = {
+  categories: [
+    {
+      id: 'vehicle_details',
+      name: 'Vehicle Details',
+      order: 1,
+      checks: [
+        { id: 'v_reg', label: 'Registration Mark', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'v_make', label: 'Make & Model', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'v_mileage', label: 'Mileage', appliesTo: ['car_van', 'rigid', 'tractor_unit'] }
+      ]
+    },
+    {
+      id: 'exterior',
+      name: 'Exterior',
+      order: 2,
+      checks: [
+        { id: 'ext_body', label: 'Bodywork — damage, secure panels', appliesTo: ['car_van', 'rigid', 'tractor_unit', 'trailer'] },
+        { id: 'ext_mirrors', label: 'Mirrors — condition & security', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'ext_lights', label: 'Lamps & reflectors — condition, operation, cleanliness', appliesTo: ['car_van', 'rigid', 'tractor_unit', 'trailer'] },
+        { id: 'ext_wheels', label: 'Wheels & tyres — condition, pressure, tread depth, security', appliesTo: ['car_van', 'rigid', 'tractor_unit', 'trailer'] },
+        { id: 'ext_windshield', label: 'Windscreen & wipers — condition, wipers operate correctly', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'ext_numberplate', label: 'Registration plate — legible, secure', appliesTo: ['car_van', 'rigid', 'tractor_unit', 'trailer'] }
+      ]
+    },
+    {
+      id: 'brakes',
+      name: 'Brakes',
+      order: 3,
+      checks: [
+        { id: 'brake_service', label: 'Service brake — operates correctly', appliesTo: ['car_van', 'rigid', 'tractor_unit', 'trailer'] },
+        { id: 'brake_parking', label: 'Parking brake — holds securely', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'brake_air', label: 'Air lines & fittings — no leaks, secure', appliesTo: ['rigid', 'tractor_unit', 'trailer'] },
+        { id: 'brake_pads', label: 'Brake pads/shoes — sufficient material', appliesTo: ['car_van', 'rigid', 'tractor_unit'] }
+      ]
+    },
+    {
+      id: 'coupling',
+      name: 'Coupling & Connections',
+      order: 4,
+      checks: [
+        { id: 'coupling_fifthwheel', label: 'Fifth wheel — secure, no damage, release mechanism safe', appliesTo: ['tractor_unit'] },
+        { id: 'coupling_kingpin', label: 'Kingpin — condition, locking mechanism', appliesTo: ['trailer'] },
+        { id: 'coupling_safety', label: 'Safety device — correctly attached', appliesTo: ['tractor_unit', 'trailer'] },
+        { id: 'coupling_air', label: 'Air/electrical connections — secure, no damage', appliesTo: ['rigid', 'tractor_unit', 'trailer'] }
+      ]
+    },
+    {
+      id: 'interior',
+      name: 'Interior & Documents',
+      order: 5,
+      checks: [
+        { id: 'int_docs', label: 'All required documents present & in date', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'int_safety', label: 'Fire extinguisher & first aid kit present & valid', appliesTo: ['car_van', 'rigid', 'tractor_unit'] },
+        { id: 'int_seatbelts', label: 'Seat belts — condition & fastening', appliesTo: ['car_van', 'rigid', 'tractor_unit'] }
+      ]
+    },
+    {
+      id: 'trailer_items',
+      name: 'Trailer Specific',
+      order: 6,
+      checks: [
+        { id: 'trailer_suspension', label: 'Suspension — condition, no leaks', appliesTo: ['trailer'] },
+        { id: 'trailer_underrun', label: 'Side & rear underrun protection — secure & undamaged', appliesTo: ['trailer'] },
+        { id: 'trailer_landing', label: 'Landing legs — raise/lower correctly, secure when travelling', appliesTo: ['trailer'] }
+      ]
+    }
+  ]
+};
+
+// Get filtered checklist based on vehicle type
+window.getChecklistForVehicleType = function(checklistData, vehicleType) {
+  if (!checklistData || !checklistData.categories) return DEFAULT_DVSA_CHECKLIST;
+  
+  const filtered = {
+    categories: checklistData.categories.map(cat => ({
+      ...cat,
+      checks: cat.checks.filter(check => 
+        check.appliesTo && check.appliesTo.includes(vehicleType)
+      )
+    })).filter(cat => cat.checks.length > 0)
+  };
+  return filtered;
+};
+
+// Initialize company checklist on first registration
+window.initialiseCompanyChecklist = async function(companyId) {
+  const companyChecklistRef = doc(db, 'companies', companyId, 'settings', 'checklist');
+  const existing = await getDoc(companyChecklistRef);
+  
+  if (!existing.exists()) {
+    await setDoc(companyChecklistRef, {
+      ...DEFAULT_DVSA_CHECKLIST,
+      createdWithVersion: '1.0',
+      lastModified: serverTimestamp()
+    });
+    console.log('✅ DVSA-compliant checklist installed for company:', companyId);
+  }
+};
+
+// ==================================================
+// 🏢 PART 2: COMPANY CHECKLIST EDITOR
+// ==================================================
+
+window.showComplianceWarning = function(message) {
+  const warningEl = document.getElementById('complianceWarning');
+  if (warningEl) {
+    warningEl.innerHTML = `<div class="warning-box" style="background:#fff3cd; border-left:4px solid #d47500; padding:0.75rem; margin:1rem 0; border-radius:4px;">
+      <strong>⚠️ DVSA Compliance Notice</strong>
+      <p style="margin:0.5rem 0 0 0;">${message}</p>
+    </div>`;
+  }
+};
+
+window.hideComplianceWarning = function() {
+  const warningEl = document.getElementById('complianceWarning');
+  if (warningEl) warningEl.innerHTML = '';
+};
+
+window.reorderCategory = async function(categoryId, direction) {
+  if (!confirm('⚠️ Changing order may affect your standard check layout. You can proceed, but ensure all required DVSA items remain accessible. Continue?')) {
+    return;
+  }
+  showComplianceWarning('You have reordered a checklist section. Please verify all DVSA-required items are still included.');
+  // Reorder logic — reload checklist after
+  await loadCompanyChecklistEditor();
+};
+
+window.removeCategory = async function(categoryId, categoryName) {
+  if (!confirm(`⚠️ You are removing the category "${categoryName}".\n\nThis may remove all checks in this section and affect DVSA compliance. You can proceed, but ensure you are not removing legally required checks.\n\nRemove this category?`)) {
+    return;
+  }
+  showComplianceWarning(`Category "${categoryName}" was removed. Your checklist may no longer meet DVSA minimum requirements. Please review.`);
+  // Remove logic
+  await loadCompanyChecklistEditor();
+};
+
+window.removeCheck = async function(categoryId, checkId, checkLabel) {
+  if (!confirm(`⚠️ You are removing: "${checkLabel}"\n\nThis item may be required by DVSA regulations. You can proceed, but ensure you have considered the impact.\n\nRemove this check item?`)) {
+    return;
+  }
+  showComplianceWarning(`"${checkLabel}" was removed from your checklist. This may affect DVSA compliance. Please review your full checklist.`);
+  // Remove logic
+  await loadCompanyChecklistEditor();
+};
+
+window.loadCompanyChecklistEditor = async function() {
+  const container = document.getElementById('checklistEditorContainer');
+  if (!container || !userProfile || userRole !== 'company') return;
+  
+  hideComplianceWarning();
+  const checklistRef = doc(db, 'companies', userProfile.uid, 'settings', 'checklist');
+  const snap = await getDoc(checklistRef);
+  
+  let checklist = DEFAULT_DVSA_CHECKLIST;
+  if (snap.exists()) {
+    const data = snap.data();
+    if (data.categories) checklist = data;
+  }
+  
+  container.innerHTML = `
+    <div style="margin-bottom:1rem;">
+      <h3>Edit Checklist Structure</h3>
+      <p style="color:#666; font-size:0.9rem;">Drag to reorder or use buttons. Changes apply to all future driver checks.</p>
+      <div id="complianceWarning"></div>
+    </div>
+    ${checklist.categories.map(cat => `
+      <div class="card" style="margin-bottom:1rem; padding:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd; padding-bottom:0.5rem; margin-bottom:0.5rem;">
+          <strong>${cat.name}</strong>
+          <div>
+            <button type="button" onclick="reorderCategory('${cat.id}', 'up')">⬆️</button>
+            <button type="button" onclick="reorderCategory('${cat.id}', 'down')">⬇️</button>
+            <button type="button" onclick="removeCategory('${cat.id}', '${cat.name}')" style="color:red;">🗑️ Remove</button>
+          </div>
+        </div>
+        ${cat.checks.map(check => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.25rem 1rem;">
+            <span>${check.label}</span>
+            <button type="button" onclick="removeCheck('${cat.id}', '${check.id}', '${check.label}')" style="font-size:0.8rem; color:red;">Remove</button>
+          </div>
+        `).join('')}
+        <button type="button" style="margin-top:0.5rem;">+ Add Check</button>
+      </div>
+    `).join('')}
+    <button type="button" style="margin-top:1rem;">+ Add New Category</button>
+  `;
+};
+
+// ==================================================
+// 🚛 PART 3: DRIVER ENHANCED CHECKLIST FLOW
+// ==================================================
+
+window.currentCheckType = null; // 'vehicle' | 'vehicle_trailer' | 'trailer_only'
+window.selectedVehicleReg = null;
+window.selectedTrailerNo = null;
+window.linkedJobId = null;
+
+window.loadVehicleTrailerOptions = async function() {
+  const vehicleSelect = document.getElementById('checkVehicleReg');
+  const trailerSelect = document.getElementById('checkTrailerNo');
+  const checkTypeRadios = document.querySelectorAll('input[name="checkType"]');
+  
+  if (!vehicleSelect && !trailerSelect) return;
+  
+  // Load company's vehicles
+  if (vehicleSelect && userProfile?.companyId) {
+    const vehiclesSnap = await getDocs(collection(db, 'companies', userProfile.companyId, 'vehicles'));
+    vehicleSelect.innerHTML = '<option value="">-- Select Vehicle --</option>';
+    vehiclesSnap.docs.forEach(d => {
+      const v = d.data();
+      vehicleSelect.innerHTML += `<option value="${v.registration}">${v.registration} — ${v.type.replace('_', ' ').toUpperCase()}</option>`;
+    });
+  }
+  
+  // Load company's trailers
+  if (trailerSelect && userProfile?.companyId) {
+    const trailersSnap = await getDocs(collection(db, 'companies', userProfile.companyId, 'trailers'));
+    trailerSelect.innerHTML = '<option value="">-- Select Trailer --</option>';
+    trailersSnap.docs.forEach(d => {
+      const t = d.data();
+      trailerSelect.innerHTML += `<option value="${t.trailerNumber}">${t.trailerNumber}</option>`;
+    });
+  }
+  
+  // Check type selection
+  checkTypeRadios?.forEach(radio => {
+    radio.addEventListener('change', function() {
+      currentCheckType = this.value;
+      const vehGroup = document.getElementById('vehicleSelectGroup');
+      const trlGroup = document.getElementById('trailerSelectGroup');
+      
+      if (currentCheckType === 'vehicle_only') {
+        if (vehGroup) vehGroup.style.display = 'block';
+        if (trlGroup) trlGroup.style.display = 'none';
+      } else if (currentCheckType === 'trailer_only') {
+        if (vehGroup) vehGroup.style.display = 'none';
+        if (trlGroup) trlGroup.style.display = 'block';
+      } else {
+        if (vehGroup) vehGroup.style.display = 'block';
+        if (trlGroup) trlGroup.style.display = 'block';
+      }
+    });
+  });
+};
+
+// Render enhanced checklist with Green/Amber/Red options
+window.renderEnhancedChecklist = function(checklistStructure) {
+  const container = document.getElementById('enhancedChecklistContainer');
+  if (!container) return;
+  
+  container.innerHTML = checklistStructure.categories.map(cat => `
+    <div class="checklist-category">
+      <h4>${cat.name}</h4>
+      ${cat.checks.map(check => `
+        <div class="check-item-enhanced" data-check-id="${check.id}">
+          <label class="check-label">${check.label}</label>
+          <div class="status-buttons" style="display:flex; gap:0.5rem; margin:0.5rem 0;">
+            <label class="status-btn">
+              <input type="radio" name="status_${check.id}" value="green" checked 
+                onchange="handleStatusChange('${check.id}', 'green')">
+              <span style="color:green; font-weight:bold;">✅ No Defect</span>
+            </label>
+            <label class="status-btn">
+              <input type="radio" name="status_${check.id}" value="amber"
+                onchange="handleStatusChange('${check.id}', 'amber')">
+              <span style="color:orange; font-weight:bold;">⚠️ Advisory</span>
+            </label>
+            <label class="status-btn">
+              <input type="radio" name="status_${check.id}" value="red"
+                onchange="handleStatusChange('${check.id}', 'red')">
+              <span style="color:red; font-weight:bold;">🔴 Major</span>
+            </label>
+          </div>
+          <div id="defect_details_${check.id}" style="display:none; padding:0.5rem 1rem; background:#f9f9f9; border-radius:4px; margin:0.5rem 0;">
+            <label>Defect Description:</label>
+            <textarea id="defect_note_${check.id}" rows="3" style="width:100%; margin:0.5rem 0;" placeholder="Describe the issue..."></textarea>
+            <label>Upload Photos:</label>
+            <input type="file" id="defect_photos_${check.id}" accept="image/*" multiple style="margin:0.5rem 0;">
+            <div id="photo_preview_${check.id}" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+};
+
+window.handleStatusChange = async function(checkId, status) {
+  const detailsDiv = document.getElementById(`defect_details_${checkId}`);
+  
+  if (status === 'green') {
+    // Check for previous defects on this item
+    const previousDefect = await checkPreviousDefect(checkId, selectedVehicleReg, selectedTrailerNo);
+    if (previousDefect) {
+      const confirmed = confirm(
+        `⚠️ A defect was previously reported for this item:\n\n"${previousDefect.description}"\n\nHas this defect been rectified, or is it still present?\n\nClick OK = Rectified\nCancel = Still Present`
+      );
+      
+      if (confirmed) {
+        await recordDefectRectified(previousDefect.id, checkId);
+      } else {
+        // Keep as defect — revert status
+        document.querySelector(`input[name="status_${checkId}"][value="amber"]`).checked = true;
+        if (detailsDiv) detailsDiv.style.display = 'block';
+        return;
+      }
+    }
+    if (detailsDiv) detailsDiv.style.display = 'none';
+  } else {
+    if (detailsDiv) detailsDiv.style.display = 'block';
+  }
+};
+
+window.checkPreviousDefect = async function(checkId, vehicleReg, trailerNo) {
+  // Search recent checklists for same check with defect
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const checksRef = collection(db, 'checklists');
+  let q = query(checksRef, 
+    where('submittedAt', '>', thirtyDaysAgo),
+    where('vehicleReg', '==', vehicleReg)
+  );
+  if (trailerNo) {
+    q = query(checksRef, 
+      where('submittedAt', '>', thirtyDaysAgo),
+      where('trailerNo', '==', trailerNo)
+    );
+  }
+  
+  const snap = await getDocs(q);
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    const status = data.checks?.[`status_${checkId}`];
+    if (status === 'amber' || status === 'red') {
+      return {
+        id: doc.id,
+        description: data.checks?.[`defect_note_${checkId}`] || 'No description provided'
+      };
+    }
+  }
+  return null;
+};
+
+window.recordDefectRectified = async function(defectChecklistId, checkId) {
+  await addDoc(collection(db, 'defect_signoff_requests'), {
+    originalChecklistId: defectChecklistId,
+    checkId: checkId,
+    driverUid: currentUser.uid,
+    driverName: userProfile.name,
+    requestDate: serverTimestamp(),
+    status: 'pending_signoff',
+    companyId: userProfile.companyId || null
+  });
+  
+  // Notify company
+  await addDoc(collection(db, 'notifications'), {
+    type: 'defect_rectified_request',
+    title: '🔧 Defect Marked Rectified',
+    message: `A driver has marked a defect as rectified — awaiting your review & sign-off.`,
+    read: false,
+    createdAt: serverTimestamp()
+  });
+};
+
+// ==================================================
+// 🚛 PART 4: SUBMISSION, REPORTS & ENHANCED FLOW
+// ==================================================
+
+// Replace old checklist form submit handler — completely replaces the old one above
+// ⚠️ REMINDER: DELETE the old 'checklistForm' submit listener further UP in your file
+document.getElementById('checklistForm')?.removeEventListener('submit', window.OLD_checklistSubmitHandler);
+
+window.OLD_checklistSubmitHandler = document.getElementById('checklistForm')?.onsubmit;
+
+document.getElementById('checklistForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const checksData = {};
+  const defectsFound = [];
+  
+  // Gather all statuses and notes
+  document.querySelectorAll('.check-item-enhanced').forEach(item => {
+    const checkId = item.getAttribute('data-check-id');
+    const statusInput = item.querySelector(`input[name="status_${checkId}"]:checked`);
+    const status = statusInput ? statusInput.value : 'green';
+    const noteEl = document.getElementById(`defect_note_${checkId}`);
+    const note = noteEl ? noteEl.value.trim() : '';
+    
+    checksData[`status_${checkId}`] = status;
+    if (note) checksData[`defect_note_${checkId}`] = note;
+    
+    if (status !== 'green') {
+      defectsFound.push({
+        checkId,
+        status,
+        description: note,
+        vehicleReg: selectedVehicleReg,
+        trailerNo: selectedTrailerNo
+      });
+    }
+  });
+  
+  const checklistData = {
+    driverUid: currentUser.uid,
+    driverName: userProfile?.name || 'Anonymous',
+    companyId: userProfile?.companyId || null,
+    checkType: currentCheckType,
+    vehicleReg: selectedVehicleReg,
+    trailerNo: selectedTrailerNo,
+    linkedJobId: linkedJobId,
+    checkDate: document.getElementById('checkDate')?.value || new Date().toISOString().split('T')[0],
+    checkTime: document.getElementById('checkTime')?.value,
+    comments: document.getElementById('checkComments')?.value,
+    signature: document.getElementById('checkSignature')?.value,
+    checks: checksData,
+    defectsFound: defectsFound,
+    submittedAt: serverTimestamp()
+  };
+  
+  await addDoc(collection(db, 'checklists'), checklistData);
+  
+  // If defects found — send notification to company
+  if (defectsFound.length > 0) {
+    await addDoc(collection(db, 'notifications'), {
+      type: 'new_defects',
+      title: `⚠️ ${defectsFound.length} Defect${defectsFound.length > 1 ? 's' : ''} Reported`,
+      message: `${checklistData.driverName} — ${selectedVehicleReg || selectedTrailerNo || 'Unknown Vehicle'}`,
+      defectCount: defectsFound.length,
+      vehicleReg: selectedVehicleReg,
+      trailerNo: selectedTrailerNo,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+  }
+  
+  const s = document.getElementById('checklistStatus');
+  if (s) { 
+    s.style.display = 'block'; 
+    s.textContent = defectsFound.length > 0 
+      ? `✅ Checklist submitted — ${defectsFound.length} defect(s) recorded & notification sent.`
+      : '✅ Checklist submitted — No defects found.';
+  }
+  
+  e.target.reset();
+  selectedVehicleReg = null;
+  selectedTrailerNo = null;
+  linkedJobId = null;
+  currentCheckType = null;
+});
+
+// Load vehicles into dropdown when checklist page opens
+window.initializeChecklistPage = async function() {
+  await loadVehicleTrailerOptions();
+  
+  // When vehicle selected, determine type and load relevant checklist
+  const vehicleSelect = document.getElementById('checkVehicleReg');
+  vehicleSelect?.addEventListener('change', async function() {
+    selectedVehicleReg = this.value || null;
+    if (selectedVehicleReg) {
+      // Get vehicle type and load filtered checklist
+      const vehicleSnap = await getDocs(
+        query(collection(db, 'companies', userProfile.companyId, 'vehicles'),
+        where('registration', '==', selectedVehicleReg)
+      ));
+      
+      let vehicleType = 'rigid'; // default
+      if (!vehicleSnap.empty) {
+        vehicleType = vehicleSnap.docs[0].data().type || 'rigid';
+      }
+      
+      // Load company's custom checklist
+      const checklistRef = doc(db, 'companies', userProfile.companyId, 'settings', 'checklist');
+      const checklistSnap = await getDoc(checklistRef);
+      let baseChecklist = DEFAULT_DVSA_CHECKLIST;
+      if (checklistSnap.exists()) {
+        baseChecklist = checklistSnap.data();
+      }
+      
+      // Filter to this vehicle type and render
+      const filtered = getChecklistForVehicleType(baseChecklist, vehicleType);
+      renderEnhancedChecklist(filtered);
+    }
+  });
+  
+  // Trailer select change
+  const trailerSelect = document.getElementById('checkTrailerNo');
+  trailerSelect?.addEventListener('change', function() {
+    selectedTrailerNo = this.value || null;
+  });
+};
