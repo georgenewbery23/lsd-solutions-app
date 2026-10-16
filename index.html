@@ -257,8 +257,7 @@
       Companies post jobs for free. Drivers find work for free. No phone calls. No waiting. No inflated agency fees. Just the right driver at the right time.
     </p>
     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem;">
-<button class="btn primary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" 
-        onclick="showRegisterPage()">Create Free Account</button>
+      <button class="btn primary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="showRegisterPage()">Create Free Account</button>
       <button class="btn secondary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="showPage('pricing-page')">View Pricing</button>
     </div>
     
@@ -801,17 +800,6 @@
           </div>
           <div class="form-group">
             <label>How serious is it? *</label>
-            <script>
-function showRegisterPage() {
-  showPage('auth-page');
-  document.querySelector('.auth-tab[data-auth-tab="register"]').click();
-}
-</script>
-<script type="module" src="./app.js"></script>
-<select id="dr-defect-severity" required>
-  <option value="">Select...</option>
-  <option value="minor">Minor</option>
-  <option value="significant">Significant</option>
-  <option value="major">Major — Vehicle off road</option>
-  <option value="prohibitive">Prohibitive — Must not move</option>
-</select>
+            <select id="dr-defect-severity" required>
+              <option value="">Select...</option>
+              <option value="
