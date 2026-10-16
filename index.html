@@ -197,6 +197,37 @@
       <button class="btn small secondary" onclick="handleSignOut()">Sign Out</button>
     </div>
   </header>
+  
+  <!-- ======================================
+   NAVIGATION — Shows when NO ONE is signed in
+   ====================================== -->
+<nav id="nav-guest" class="main-nav">
+  <a href="#" data-page="home-page">Home</a>
+  <a href="#" data-page="pricing-page">Pricing</a>
+  <a href="#" data-page="auth-page">Sign In / Register</a>
+</nav>
+
+<!-- ======================================
+   NAVIGATION — Shows when DRIVER is signed in
+   ====================================== -->
+<nav id="nav-driver" class="main-nav hidden">
+  <a href="#" data-page="driver-dashboard-page">Dashboard</a>
+  <a href="#" data-page="job-board-page">🔍 Find Work</a>
+  <a href="#" data-page="my-applications-page">My Applications</a>
+  <a href="#" data-page="driver-profile-page">My Profile</a>
+  <a href="#" onclick="window.handleSignOut()">Sign Out</a>
+</nav>
+
+<!-- ======================================
+   NAVIGATION — Shows when COMPANY is signed in
+   ====================================== -->
+<nav id="nav-company" class="main-nav hidden">
+  <a href="#" data-page="company-dashboard-page">Dashboard</a>
+  <a href="#" data-page="post-job-page">📢 Post a Job</a>
+  <a href="#" data-page="manage-jobs-page">Manage Jobs</a>
+  <a href="#" data-page="company-profile-page">Company Profile</a>
+  <a href="#" onclick="window.handleSignOut()">Sign Out</a>
+</nav>
 
   <nav id="main-nav" class="nav-tabs" style="display:none;">
     <!-- Dynamic tabs inserted by app.js based on user role -->
