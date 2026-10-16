@@ -229,6 +229,90 @@
   <a href="#" onclick="window.handleSignOut()">Sign Out</a>
 </nav>
 
+<!-- ======================================
+     HOME PAGE — Public Landing Page
+     ====================================== -->
+<section id="home-page" class="page active">
+  <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 3rem 1rem; text-align: center;">
+    <h1 style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;">Find Drivers. Find Work. Fair Price for Everyone.</h1>
+    <p style="font-size: 1.2rem; color: var(--text-light); margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+      Companies post jobs for free. Drivers find work for free. No phone calls. No waiting. No inflated agency fees. Just the right driver at the right time.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem;">
+      <button class="btn primary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="showPage('auth-page'); document.querySelector('.auth-tab[data-auth-tab=\"register\"]').click();">Create Free Account</button>
+      <button class="btn secondary" style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="showPage('pricing-page')">View Pricing</button>
+    </div>
+    
+    <div class="grid grid-3" style="margin-top: 3rem; text-align: left;">
+      <div class="card">
+        <h3 style="color: var(--primary);">🏢 For Companies</h3>
+        <p>Post jobs instantly. See who's available nearby. Only pay £1.00 when you hire someone. That's it.</p>
+      </div>
+      <div class="card">
+        <h3 style="color: var(--primary);">👤 For Drivers</h3>
+        <p>Browse jobs near you. Apply directly. Keep 100% of your rate. We're completely free for drivers — always.</p>
+      </div>
+      <div class="card">
+        <h3 style="color: var(--primary);">📋 Full Compliance</h3>
+        <p>Daily checklists, defect tracking, document expiry, and DVSA record retention — all built in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================
+     PRICING PAGE
+     ====================================== -->
+<section id="pricing-page" class="page">
+  <div class="container" style="max-width: 900px; margin: 0 auto; padding: 3rem 1rem;">
+    <h2 style="text-align: center; color: var(--primary); margin-bottom: 2rem;">Simple, Transparent Pricing</h2>
+    
+    <div class="grid grid-3" style="gap: 1.5rem;">
+      <div class="card" style="text-align: center;">
+        <h3 style="color: var(--primary);">🚛 STARTER</h3>
+        <p style="font-size: 1.8rem; font-weight: 700; margin: 1rem 0;">£19<span style="font-size: 1rem; color: var(--text-light);">/mo</span></p>
+        <ul style="text-align: left; list-style: none; padding: 0;">
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Unlimited Drivers</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Up to 5 Vehicles</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Daily Checklists</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Browse & Apply for Jobs</li>
+          <li style="padding: 0.5rem 0;">❌ Post Jobs</li>
+        </ul>
+      </div>
+      
+      <div class="card" style="text-align: center; border: 2px solid var(--accent);">
+        <span class="badge" style="background: var(--accent); color: #fff; position: relative; top: -12px;">MOST POPULAR</span>
+        <h3 style="color: var(--primary);">🏠 STANDARD</h3>
+        <p style="font-size: 1.8rem; font-weight: 700; margin: 1rem 0;">£39<span style="font-size: 1rem; color: var(--text-light);">/mo</span></p>
+        <ul style="text-align: left; list-style: none; padding: 0;">
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Unlimited Drivers</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Up to 15 Vehicles</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Post Unlimited Jobs</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Maintenance & Defects</li>
+          <li style="padding: 0.5rem 0;">✅ Compliance & Tacomaster</li>
+        </ul>
+      </div>
+      
+      <div class="card" style="text-align: center;">
+        <h3 style="color: var(--primary);">🏢 PRO</h3>
+        <p style="font-size: 1.8rem; font-weight: 700; margin: 1rem 0;">£69<span style="font-size: 1rem; color: var(--text-light);">/mo</span></p>
+        <ul style="text-align: left; list-style: none; padding: 0;">
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Everything in Standard</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Unlimited Vehicles</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Featured Job Listings</li>
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">✅ Priority Support</li>
+          <li style="padding: 0.5rem 0;">✅ Dedicated Setup Help</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="card" style="text-align: center; margin-top: 2rem; background: #e8f5e9;">
+      <h3 style="color: var(--success);">👤 FOR DRIVERS — Completely Free!</h3>
+      <p style="margin: 0.5rem 0;">No sign-up fees. No commission. No hidden charges. Ever.</p>
+    </div>
+  </div>
+</section>
+
   <nav id="main-nav" class="nav-tabs" style="display:none;">
     <!-- Dynamic tabs inserted by app.js based on user role -->
   </nav>
