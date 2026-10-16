@@ -1831,6 +1831,541 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 
 // ==================================================
+// 🔹 JOB BOARD & MARKETPLACE
+// ==================================================
+
+const JOB_STATUSES = {
+  ACTIVE: 'active',
+  FILLED: 'filled',
+  CANCELLED: 'cancelled',
+  EXPIRED: 'expired'
+};
+
+const APPLICATION_STATUSES = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+  WITHDRAWN: 'withdrawn'
+};
+
+// Helper: Format pay rate for display
+function formatPayRate(amount, type) {
+  const symbols = {
+    'daily': '/day',
+    'halfday': '/half day',
+    'hourly': '/hour',
+    'job': ' flat',
+    'mile': '/mile'
+  };
+  return `£${parseFloat(amount).toFixed(2)}${symbols[type] || ''}`;
+}
+
+// Load all jobs for job board
+async function loadJobBoard() {
+  const container = document.getElementById('job-listings');
+  if (!container) return;
+  
+  try {
+    const now = Timestamp.now();
+    const snap = await getDocs(
+      query(
+        collection(db, 'jobs'),
+        where('status', '==', JOB_STATUSES.ACTIVE),
+        where('startDateTime', '>', now),
+        orderBy('startDateTime', 'asc')
+      )
+    );
+
+    if (snap.empty) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+          <h3 style="color: var(--primary); margin-bottom: 0.5rem;">No jobs available right now</h3>
+          <p style="color: var(--text-light);">Check back soon — new jobs are posted daily.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    snap.forEach(doc => {
+      const job = doc.data();
+      const startDate = job.startDateTime?.toDate() ? job.startDateTime.toDate() : new Date(job.startDate);
+      
+      container.innerHTML += `
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem; cursor: pointer;" onclick="showJobDetails('${doc.id}')">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+            <div>
+              <h3 style="color: var(--primary); margin-bottom: 0.25rem;">${escapeHtml(job.jobType || 'Job')}</h3>
+              <p style="color: var(--text-light); font-size: 0.9rem; margin: 0;">📍 ${escapeHtml(job.startLocation || 'Location not specified')}</p>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 700; color: var(--accent); font-size: 1.1rem;">${formatPayRate(job.payAmount, job.payType)}</div>
+              <div style="font-size: 0.8rem; color: var(--text-light);">${formatDateShort(startDate)}</div>
+            </div>
+          </div>
+          ${job.destination ? `<p style="font-size: 0.85rem; color: var(--text-light); margin: 0;">→ ${escapeHtml(job.destination)}</p>` : ''}
+          <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--text-light);">Posted anonymously • Company name revealed once accepted</span>
+            <span class="btn small secondary">View & Apply</span>
+          </div>
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.error('Error loading jobs:', err);
+    container.innerHTML = '<p style="text-align: center; color: red;">Could not load jobs. Please refresh.</p>';
+  }
+}
+window.loadJobBoard = loadJobBoard
+
+// Show full job details modal
+async function showJobDetails(jobId) {
+  const modal = document.getElementById('job-details-modal');
+  const content = document.getElementById('job-details-content');
+  if (!modal || !content) return;
+
+  try {
+    const jobDoc = await getDoc(doc(db, 'jobs', jobId));
+    if (!jobDoc.exists()) {
+      content.innerHTML = '<p>Job not found or no longer available.</p>';
+      modal.classList.add('hidden');
+      return;
+    }
+
+    const job = jobDoc.data();
+    const startDate = job.startDateTime?.toDate() ? job.startDateTime.toDate() : new Date(job.startDate);
+    const startTime = job.startTime || '--:--';
+    
+    // Check if current user has already applied
+    let existingApplication = null;
+    if (currentUser) {
+      const appSnap = await getDocs(
+        query(collection(db, 'applications'), 
+          where('jobId', '==', jobId),
+          where('driverId', '==', currentUser.uid)
+        )
+      );
+      if (!appSnap.empty) {
+        appSnap.forEach(d => { existingApplication = { id: d.id, ...d.data() }; });
+      }
+    }
+
+    content.innerHTML = `
+      <h2 style="color: var(--primary); margin-bottom: 1rem;">${escapeHtml(job.jobType || 'Job Details')}</h2>
+      
+      <div style="margin-bottom: 1rem;">
+        <p style="margin: 0.25rem 0;"><strong>Start:</strong> ${formatDateShort(startDate)} at ${startTime}</p>
+        <p style="margin: 0.25rem 0;"><strong>From:</strong> ${escapeHtml(job.startLocation || 'Not specified')}</p>
+        ${job.destination ? `<p style="margin: 0.25rem 0;"><strong>To:</strong> ${escapeHtml(job.destination)}</p>` : ''}
+        <p style="margin: 0.25rem 0;"><strong>Rate:</strong> ${formatPayRate(job.payAmount, job.payType)}</p>
+        ${job.vehicleInfo ? `<p style="margin: 0.25rem 0;"><strong>Vehicle:</strong> ${escapeHtml(job.vehicleInfo)}</p>` : ''}
+      </div>
+      
+      ${job.description ? `
+        <div style="background: var(--primary-light); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+          <strong>Additional Info:</strong>
+          <p style="margin-top: 0.5rem; white-space: pre-wrap;">${escapeHtml(job.description)}</p>
+        </div>
+      ` : ''}
+      
+      <div style="background: #fff8e1; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+        📌 <strong>Company name is kept anonymous</strong> — you will receive full contact details once you are accepted for this job.
+      </div>
+      
+      ${existingApplication ? `
+        <div style="text-align: center; padding: 1rem; background: var(--primary-light); border-radius: 4px;">
+          <p>✅ You have applied for this job</p>
+          <p style="font-size: 0.9rem; color: var(--text-light);">Status: <strong>${existingApplication.status.charAt(0).toUpperCase() + existingApplication.status.slice(1)}</strong></p>
+        </div>
+      ` : currentUser ? `
+        <button class="btn primary" style="width: 100%;" onclick="applyForJob('${jobId}')">✋ Apply for This Job</button>
+      ` : `
+        <button class="btn primary" style="width: 100%;" onclick="showPage('auth-page'); closeJobModal();">Sign In to Apply</button>
+      `}
+    `;
+    
+    modal.classList.remove('hidden');
+  } catch (err) {
+    console.error('Error loading job details:', err);
+    showToast('Could not load job details', 'danger');
+  }
+}
+window.showJobDetails = showJobDetails
+
+function closeJobModal() {
+  document.getElementById('job-details-modal').classList.add('hidden');
+}
+window.closeJobModal = closeJobModal
+
+// Apply for a job
+async function applyForJob(jobId) {
+  if (!currentUser || !userProfile) {
+    showToast('Please sign in first', 'warning');
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, 'applications'), {
+      jobId: jobId,
+      driverId: currentUser.uid,
+      driverName: userProfile.name,
+      driverEmail: userProfile.email,
+      driverPhone: userProfile.phone || '',
+      companyId: userProfile.companyId || null,
+      status: APPLICATION_STATUSES.PENDING,
+      appliedAt: Timestamp.now()
+    });
+    
+    showToast('✅ Application submitted! Good luck!', 'success');
+    closeJobModal();
+    loadJobBoard();
+  } catch (err) {
+    console.error('Error applying:', err);
+    showToast('Failed to submit application', 'danger');
+  }
+}
+window.applyForJob = applyForJob
+
+// Handle post job form submit
+document.addEventListener('submit', async e => {
+  if (e.target.id === 'post-job-form') {
+    e.preventDefault();
+    if (!currentUser || userProfile?.role !== 'company') {
+      showToast('Please sign in as a company', 'warning');
+      return;
+    }
+
+    const formData = {
+      companyId: userProfile.companyId || currentUser.uid,
+      jobType: document.getElementById('job-type').value,
+      startDate: document.getElementById('job-start-date').value,
+      startTime: document.getElementById('job-start-time').value,
+      startLocation: document.getElementById('job-location').value,
+      destination: document.getElementById('job-destination').value || null,
+      payType: document.getElementById('pay-rate-type').value,
+      payAmount: parseFloat(document.getElementById('pay-rate-amount').value),
+      vehicleInfo: document.getElementById('job-vehicle').value || null,
+      description: document.getElementById('job-description').value || null,
+      status: JOB_STATUSES.ACTIVE,
+      createdAt: Timestamp.now(),
+      anonymous: true
+    };
+
+    try {
+      await addDoc(collection(db, 'jobs'), formData);
+      showToast('✅ Job posted successfully!', 'success');
+      e.target.reset();
+      showPage('manage-jobs-page');
+    } catch (err) {
+      console.error('Error posting job:', err);
+      showToast('Failed to post job', 'danger');
+    }
+  }
+});
+
+// Load company's posted jobs
+async function loadCompanyJobs() {
+  const container = document.getElementById('company-jobs-list');
+  if (!container || !userProfile?.companyId) return;
+
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'jobs'), 
+        where('companyId', '==', userProfile.companyId),
+        orderBy('createdAt', 'desc')
+      )
+    );
+
+    if (snap.empty) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+          <h3 style="color: var(--primary); margin-bottom: 0.5rem;">No jobs posted yet</h3>
+          <p style="color: var(--text-light); margin-bottom: 1.5rem;">Reach drivers by posting your first job — it's free!</p>
+          <button class="btn primary" onclick="showPage('post-job-page')">Post Your First Job</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    snap.forEach(async doc => {
+      const job = { id: doc.id, ...doc.data() };
+      const startDate = job.startDate ? new Date(job.startDate) : null;
+      
+      // Count applications
+      let applicationCount = 0;
+      const appsSnap = await getDocs(query(collection(db, 'applications'), where('jobId', '==', doc.id)));
+      applicationCount = appsSnap.size;
+      
+      const statusBadges = {
+        'active': '<span class="badge success">● Active</span>',
+        'filled': '<span class="badge" style="background: #e3f2fd; color: #1565c0;">● Filled</span>',
+        'cancelled': '<span class="badge" style="background: #ffebee; color: #c62828;">● Cancelled</span>'
+      };
+      
+      container.innerHTML += `
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <div>
+              <h4 style="color: var(--primary); margin: 0 0 0.25rem 0;">${escapeHtml(job.jobType || 'Job')}</h4>
+              <p style="font-size: 0.9rem; color: var(--text-light); margin: 0;">
+                ${startDate ? formatDateShort(startDate) : 'Date TBC'} • ${escapeHtml(job.startLocation)}
+              </p>
+            </div>
+            <div style="text-align: right;">
+              ${statusBadges[job.status] || ''}
+              <div style="font-weight: 600; margin-top: 0.25rem;">${formatPayRate(job.payAmount, job.payType)}</div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+            <span style="font-size: 0.85rem; color: var(--text-light);">${applicationCount} application${applicationCount !== 1 ? 's' : ''}</span>
+            <div>
+              <button class="btn small secondary" onclick="viewApplications('${doc.id}')">View Applications</button>
+              ${job.status === 'active' ? `<button class="btn small" style="background: #ffebee; color: #c62828;" onclick="cancelJob('${doc.id}')">Cancel</button>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.error('Error loading company jobs:', err);
+    container.innerHTML = '<p style="text-align: center; color: red;">Could not load your jobs</p>';
+  }
+}
+window.loadCompanyJobs = loadCompanyJobs
+
+// View applications for a specific job
+async function viewApplications(jobId) {
+  const modal = document.createElement('div');
+  modal.id = 'apps-modal';
+  modal.style = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+  
+  try {
+    const jobDoc = await getDoc(doc(db, 'jobs', jobId));
+    if (!jobDoc.exists()) return;
+    const job = jobDoc.data();
+    
+    const appsSnap = await getDocs(query(collection(db, 'applications'), where('jobId', '==', jobId), orderBy('appliedAt', 'desc')));
+    
+    modal.innerHTML = `
+      <div class="card" style="max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 2rem; position: relative;">
+        <button onclick="this.closest('#apps-modal').remove()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Applications — ${escapeHtml(job.jobType || 'Job')}</h3>
+        
+        ${appsSnap.empty ? '<p style="color: var(--text-light);">No applications yet. Check back soon!</p>' : ''}
+        
+        ${appsSnap.docs.map(appDoc => {
+          const app = appDoc.data();
+          const statusColors = {
+            'pending': 'background: #fff8e1; color: #f57c00;',
+            'accepted': 'background: #e8f5e9; color: #2e7d32;',
+            'rejected': 'background: #ffebee; color: #c62828;'
+          };
+          return `
+            <div style="padding: 1rem; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <strong>${escapeHtml(app.driverName || 'Anonymous')}</strong>
+                <span style="font-size: 0.8rem; padding: 0.15rem 0.5rem; border-radius: 10px; ${statusColors[app.status]}">${app.status}</span>
+              </div>
+              <p style="font-size: 0.85rem; margin: 0.25rem 0;">📧 ${escapeHtml(app.driverEmail || 'Email not provided')}</p>
+              ${app.driverPhone ? `<p style="font-size: 0.85rem; margin: 0.25rem 0;">📱 ${escapeHtml(app.driverPhone)}</p>` : ''}
+              
+              ${app.status === 'pending' ? `
+                <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+                  <button class="btn small primary" style="flex: 1;" onclick="acceptDriver('${jobId}', '${appDoc.id}', '${app.driverId}')">✅ Accept & Reveal Details</button>
+                  <button class="btn small" style="background: #ffebee; color: #c62828; flex: 1;" onclick="rejectDriver('${appDoc.id}')">❌ Reject</button>
+                </div>
+              ` : ''}
+              
+              ${app.status === 'accepted' ? `
+                <div style="margin-top: 0.5rem; padding: 0.5rem; background: #e8f5e9; border-radius: 4px; font-size: 0.85rem;">
+                  ✅ Driver accepted. Contact details shared with both parties. £1.00 agency fee applies.
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (err) {
+    console.error('Error loading applications:', err);
+    showToast('Could not load applications', 'danger');
+  }
+}
+window.viewApplications = viewApplications
+
+// ACCEPT DRIVER — The Key Moment!
+async function acceptDriver(jobId, applicationId, driverId) {
+  if (!confirm('Are you sure you want to accept this driver?\n\n• Company name & contact details will be revealed to them\n• The £1.00 agency fee becomes payable\n• The job will be marked as filled')) return;
+  
+  try {
+    // 1. Update application status
+    await updateDoc(doc(db, 'applications', applicationId), {
+      status: APPLICATION_STATUSES.ACCEPTED,
+      acceptedAt: Timestamp.now()
+    });
+    
+    // 2. Mark job as filled
+    await updateDoc(doc(db, 'jobs', jobId), {
+      status: JOB_STATUSES.FILLED,
+      acceptedDriverId: driverId,
+      filledAt: Timestamp.now()
+    });
+    
+    // 3. Record the £1 fee for the company
+    await addDoc(collection(db, 'transactions'), {
+      companyId: userProfile.companyId || currentUser.uid,
+      type: 'agency-fee',
+      amount: 1.00,
+      description: 'Job placement fee — driver accepted',
+      jobId: jobId,
+      applicationId: applicationId,
+      status: 'pending',
+      createdAt: Timestamp.now()
+    });
+    
+    showToast('✅ Driver accepted! Company details revealed. £1.00 fee recorded.', 'success');
+    
+    // Refresh
+    document.getElementById('apps-modal')?.remove();
+    loadCompanyJobs();
+  } catch (err) {
+    console.error('Error accepting driver:', err);
+    showToast('Failed to accept driver', 'danger');
+  }
+}
+window.acceptDriver = acceptDriver
+
+// REJECT DRIVER
+async function rejectDriver(applicationId) {
+  if (!confirm('Reject this application?')) return;
+  
+  try {
+    await updateDoc(doc(db, 'applications', applicationId), {
+      status: APPLICATION_STATUSES.REJECTED,
+      rejectedAt: Timestamp.now()
+    });
+    showToast('Application rejected', 'success');
+    document.getElementById('apps-modal')?.remove();
+    loadCompanyJobs();
+  } catch (err) {
+    console.error('Error rejecting:', err);
+    showToast('Failed to reject', 'danger');
+  }
+}
+window.rejectDriver = rejectDriver
+
+// CANCEL JOB
+async function cancelJob(jobId) {
+  if (!confirm('Cancel this job posting? No fee will be charged.')) return;
+  
+  try {
+    await updateDoc(doc(db, 'jobs', jobId), {
+      status: JOB_STATUSES.CANCELLED,
+      cancelledAt: Timestamp.now()
+    });
+    showToast('Job cancelled', 'success');
+    loadCompanyJobs();
+  } catch (err) {
+    console.error('Error cancelling job:', err);
+    showToast('Failed to cancel job', 'danger');
+  }
+}
+window.cancelJob = cancelJob
+
+// Load driver's applications
+async function loadMyApplications() {
+  const container = document.getElementById('applications-list');
+  if (!container || !currentUser) return;
+
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'applications'), where('driverId', '==', currentUser.uid), orderBy('appliedAt', 'desc'))
+    );
+
+    if (snap.empty) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+          <h3 style="color: var(--primary); margin-bottom: 0.5rem;">No applications yet</h3>
+          <p style="color: var(--text-light); margin-bottom: 1.5rem;">Browse available jobs and apply — it's completely free!</p>
+          <button class="btn primary" onclick="showPage('job-board-page')">🔍 Browse Jobs</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    snap.forEach(async appDoc => {
+      const app = appDoc.data();
+      const jobDoc = await getDoc(doc(db, 'jobs', app.jobId));
+      const job = jobDoc.exists() ? jobDoc.data() : null;
+      
+      const statusInfo = {
+        'pending': { text: '⏳ Under review', color: '#f57c00' },
+        'accepted': { text: '✅ Accepted — Details Revealed', color: '#2e7d32' },
+        'rejected': { text: '❌ Not successful', color: '#c62828' },
+        'withdrawn': { text: 'Withdrawn', color: '#757575' }
+      };
+      const s = statusInfo[app.status] || { text: app.status, color: '#757575' };
+      
+      container.innerHTML += `
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+          <h4 style="color: var(--primary); margin-bottom: 0.5rem;">${job ? escapeHtml(job.jobType) : 'Job no longer available'}</h4>
+          <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">
+            Applied: ${app.appliedAt ? formatDate(app.appliedAt.toDate()) : 'Unknown date'}
+          </p>
+          <p style="font-weight: 600; color: ${s.color};">${s.text}</p>
+          
+          ${app.status === 'accepted' && job ? `
+            <div style="margin-top: 1rem; padding: 1rem; background: #e8f5e9; border-radius: 4px;">
+              <p style="font-weight: 600; color: #2e7d32; margin-bottom: 0.5rem;">🎉 Congratulations! Here are the company details:</p>
+              <p style="margin: 0.25rem 0;"><strong>Company:</strong> ${escapeHtml(job.companyName || 'Name revealed')}</p>
+              <p style="margin: 0.25rem 0;"><strong>Start:</strong> ${job.startDate} at ${job.startTime}</p>
+              <p style="margin: 0.25rem 0;"><strong>Location:</strong> ${escapeHtml(job.startLocation)}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.error('Error loading applications:', err);
+    container.innerHTML = '<p style="text-align: center; color: red;">Could not load your applications</p>';
+  }
+}
+window.loadMyApplications = loadMyApplications
+
+// Search jobs
+function searchJobs() {
+  showToast('Search functionality running...', 'info');
+  loadJobBoard();
+}
+window.searchJobs = searchJobs
+
+// Auto-load when pages shown
+document.addEventListener('click', e => {
+  if (e.target.matches('[data-page="job-board-page"]')) {
+    setTimeout(loadJobBoard, 100);
+  }
+  if (e.target.matches('[data-page="post-job-page"]')) {
+    // Ensure only companies can access
+    if (userProfile && userProfile.role !== 'company') {
+      showToast('Only company accounts can post jobs', 'warning');
+      showPage('driver-dashboard-page');
+      return;
+    }
+  }
+  if (e.target.matches('[data-page="manage-jobs-page"]')) {
+    setTimeout(loadCompanyJobs, 100);
+  }
+  if (e.target.matches('[data-page="my-applications-page"]')) {
+    setTimeout(loadMyApplications, 100);
+  }
+});
+
+// ==================================================
 // 🔹 INITIALISATION COMPLETE
 // ==================================================
 console.log('%c🚛 LSD Solutions — App Loaded', 'color: #1a365d; font-weight: bold; font-size: 14px;');
