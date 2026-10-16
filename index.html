@@ -5,1021 +5,770 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LSD Solutions — HGV & Logistics Services</title>
   <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
-  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="icon" type="image/png" href="./assets/favicon.png" />
   <style>
-    /* ==================================================
-       LSD SOLUTIONS — MAIN STYLES
-       ================================================== */
+    /* ======================================
+       GLOBAL STYLES
+       ====================================== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
     :root {
       --primary: #1a365d;
       --primary-light: #e8edf3;
-      --accent: #d47500;
-      --accent-light: #f9e9d6;
+      --accent: #d4af37;
+      --accent-dark: #b8962f;
       --success: #2e7d32;
-      --danger: #c62828;
-      --text-dark: #2d2d2d;
-      --text-light: #666666;
-      --border: #cccccc;
-      --shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --warning: #ed6c02;
+      --danger: #d32f2f;
+      --neutral: #f5f7fa;
+      --text-dark: #2d3748;
+      --text-light: #718096;
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+      --radius: 8px;
     }
-
-    body {
-      background: #f7f9fc;
-      color: var(--text-dark);
-      line-height: 1.6;
-    }
-
-    /* ==================================================
-       PAGE VISIBILITY — CRITICAL
-       ================================================== */
-    .page {
-      display: none;
-      min-height: 100vh;
-      background: white;
-    }
-    .page.active {
-      display: block;
-    }
-
-    /* ==================================================
-       LAYOUT & CONTAINERS
-       ================================================== */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-
-    .page-header {
-      background: var(--primary);
-      color: white;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: var(--shadow);
-    }
-
-    .page-header h1 {
-      font-size: 1.5rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .page-header p {
-      opacity: 0.9;
-      font-size: 0.95rem;
-    }
-
-    .card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border: 1px solid #eee;
-    }
-
-    .card h2 {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary-light);
-      padding-bottom: 0.5rem;
-    }
-
-    /* ==================================================
-       BUTTONS
-       ================================================== */
-    .btn {
-      display: inline-block;
-      padding: 0.75rem 1.25rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      text-decoration: none;
-      text-align: center;
-      transition: all 0.2s ease;
-      font-weight: 500;
-    }
-
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: #152c4a; }
-    .btn-accent { background: var(--accent); color: white; }
-    .btn-accent:hover { background: #b86600; }
-    .btn-success { background: var(--success); color: white; }
-    .btn-success:hover { background: #266b2a; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-danger:hover { background: #a82222; }
-    .btn-secondary { background: #e0e0e0; color: var(--text-dark); }
-    .btn-secondary:hover { background: #d0d0d0; }
-
-    .btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin: 1rem 0;
-    }
-
-    .btn-block {
-      width: 100%;
-      margin: 0.5rem 0;
-    }
-
-    /* ==================================================
-       FORMS
-       ================================================== */
-    form {
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    label {
-      display: block;
-      margin: 1rem 0 0.25rem;
-      font-weight: 500;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.2);
-    }
-
-    small {
-      display: block;
-      margin-top: 0.25rem;
-      color: var(--text-light);
-      font-size: 0.85rem;
-    }
-
-    .form-hint {
-      color: var(--text-light);
-      font-size: 0.85rem;
-      margin-top: 0.25rem;
-    }
-
-    /* ==================================================
-       MILEAGE SECTION
-       ================================================== */
-    .mileage-section {
-      padding: 1.25rem;
-      background: var(--primary-light);
-      border-radius: 8px;
-      margin: 1rem 0;
-    }
-
-    .mileage-section h3 {
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      color: var(--primary);
-    }
-
-    .mileage-section label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 0.75rem 0;
-    }
-
-    .mileage-section input,
-    .mileage-section select {
-      width: auto;
-      flex: 1;
-      max-width: 150px;
-    }
-
-    .mileage-unit-label {
-      min-width: 45px;
-      font-weight: 500;
-    }
-
-    .mileage-result {
-      margin-top: 1rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid #ccc;
-      font-size: 1.05rem;
-    }
-
-    .mileage-result strong {
-      color: var(--primary);
-    }
-    /* ==================================================
-       UTILITY CLASSES
-       ================================================== */
+    body { background: #f0f4f8; color: var(--text-dark); line-height: 1.5; min-height: 100vh; }
     .hidden { display: none !important; }
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .mt-1 { margin-top: 1rem; }
-    .mt-2 { margin-top: 2rem; }
-    .mb-1 { margin-bottom: 1rem; }
-    .mb-2 { margin-bottom: 2rem; }
-
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 500;
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; border-radius: var(--radius); font-size: 0.95rem; font-weight: 500; transition: all 0.2s; }
+    input, select, textarea {
+      width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 0.95rem; background: #fff; transition: border 0.2s;
     }
-    .status-active { background: #e8f5e9; color: var(--success); }
-    .status-pending { background: #fff3e0; color: var(--accent); }
-    .status-inactive { background: #f3f3f3; color: var(--text-light); }
-
-    .nav-bar {
-      background: var(--primary);
-      padding: 0.75rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav-bar .btn {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.9rem;
-      background: rgba(255,255,255,0.15);
-      color: white;
-    }
-
-    .nav-bar .btn:hover,
-    .nav-bar .btn.active {
-      background: rgba(255,255,255,0.25);
-    }
-
-    .logout-btn {
-      margin-left: auto;
-      background: var(--danger) !important;
-    }
-
-    .error-box {
-      background: #ffebee;
-      border-left: 4px solid var(--danger);
-      padding: 1rem;
-      margin: 1rem 0;
-      color: var(--danger);
-      border-radius: 4px;
-    }
-
-    .success-box {
-      background: #e8f5e9;
-      border-left: 4px solid var(--success);
-      padding: 1rem;
-      margin: 1rem 0;
-      color: var(--success);
-      border-radius: 4px;
-    }
-
-    .info-box {
-      background: var(--primary-light);
-      border-left: 4px solid var(--primary);
-      padding: 1rem;
-      margin: 1rem 0;
-      color: var(--primary);
-      border-radius: 4px;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 1.5rem 0;
-    }
-
-    @media (max-width: 600px) {
-      .btn-group { flex-direction: column; }
-      .nav-bar { justify-content: center; }
-      .logout-btn { margin-left: 0; width: 100%; }
-      .mileage-section label { flex-wrap: wrap; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; color: var(--text-dark); }
+    .btn { padding: 0.65rem 1.25rem; border-radius: var(--radius); font-weight: 500; }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.primary:hover { background: #152c4d; }
+    .btn.secondary { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+    .btn.secondary:hover { background: var(--primary-light); }
+    .btn.success { background: var(--success); color: #fff; }
+    .btn.warning { background: var(--warning); color: #fff; }
+    .btn.danger { background: var(--danger); color: #fff; }
+    .btn.small { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+    .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 1.25rem; margin-bottom: 1rem; }
+    .card h2 { font-size: 1.15rem; margin-bottom: 1rem; color: var(--primary); }
+    .card h3 { font-size: 1rem; margin-bottom: 0.75rem; color: var(--text-dark); }
+    .grid { display: grid; gap: 1rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .header-bar { background: var(--primary); color: #fff; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .header-bar .logo-group { display: flex; align-items: center; gap: 0.75rem; }
+    .header-bar img { height: 36px; width: auto; }
+    .header-bar h1 { font-size: 1.1rem; font-weight: 600; }
+    .header-bar .user-area { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; }
+    .nav-tabs { display: flex; flex-wrap: wrap; background: #fff; border-bottom: 1px solid var(--border); padding: 0 1rem; gap: 0.25rem; }
+    .nav-tab { padding: 0.75rem 1rem; font-size: 0.9rem; color: var(--text-light); border-bottom: 2px solid transparent; cursor: pointer; }
+    .nav-tab:hover { color: var(--primary); background: var(--primary-light); }
+    .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .page { display: none; padding: 1rem; max-width: 1200px; margin: 0 auto; }
+    .page.active { display: block; }
+    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: linear-gradient(135deg, var(--primary) 0%, #2a4a7c 100%); }
+    .auth-card { background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg); width: 100%; max-width: 420px; padding: 2rem; }
+    .auth-card h2 { text-align: center; color: var(--primary); margin-bottom: 0.3rem; font-size: 1.6rem; }
+    .auth-card .subtitle { text-align: center; color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .auth-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 0.75rem; text-align: center; font-weight: 500; color: var(--text-light); cursor: pointer; border-bottom: 2px solid transparent; }
+    .auth-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .form-group { margin-bottom: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .full-width { grid-column: 1 / -1; }
+    .link-text { color: var(--primary); cursor: pointer; font-size: 0.9rem; text-align: center; display: block; margin-top: 1rem; }
+    .link-text:hover { text-decoration: underline; }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.85rem 1.25rem; border-radius: var(--radius); color: #fff; font-weight: 500; z-index: 9999; max-width: 320px; box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: var(--success); }
+    .toast.warning { background: var(--warning); }
+    .toast.danger { background: var(--danger); }
+    .toast.info { background: var(--primary); }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .badge.success { background: #e8f5e9; color: var(--success); }
+    .badge.warning { background: #fff4e5; color: var(--warning); }
+    .badge.danger { background: #ffebee; color: var(--danger); }
+    .badge.info { background: var(--primary-light); color: var(--primary); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.65rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--neutral); font-weight: 600; color: var(--primary); }
+    tr:hover { background: #fafafa; }
+    .status-good { color: var(--success); font-weight: 500; }
+    .status-warning { color: var(--warning); font-weight: 500; }
+    .status-bad { color: var(--danger); font-weight: 500; }
+    .hidden-mobile { display: table-cell; }
+    @media(max-width:640px){
+      .hidden-mobile { display: none; }
+      .form-row { grid-template-columns: 1fr; }
+      .auth-card { padding: 1.5rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ==================================================
-       PAGE 1: AUTHENTICATION — Sign In / Register
-       ================================================== -->
-  <div id="authPage" class="page active">
-    <div class="container" style="max-width: 500px; padding-top: 3rem;">
-      <div class="text-center mb-2">
-        <h1 style="color: var(--primary); font-size: 2rem;">🚛 LSD Solutions</h1>
-        <p style="color: var(--text-light);">HGV & Logistics Portal</p>
+  <!-- ======================================
+       AUTH PAGES (Sign In / Register)
+       ====================================== -->
+  <div id="auth-page" class="auth-container">
+    <div class="auth-card">
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Sign in to access your LSD Solutions portal</p>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-auth-tab="signin">Sign In</div>
+        <div class="auth-tab" data-auth-tab="register">Create Account</div>
       </div>
 
-      <div id="signInFormContainer" class="card">
-        <h2 class="text-center">Sign In</h2>
-        
-        <div id="authError" class="error-box hidden"></div>
-        
-        <form id="signInForm">
-          <label for="signin-email">Email Address</label>
-          <input type="email" id="signin-email" name="email" required autocomplete="email">
-          
-          <label for="signin-password">Password</label>
-          <input type="password" id="signin-password" name="password" required autocomplete="current-password">
-          
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-          </div>
-          
-          <div class="text-center mt-1">
-            <button type="button" class="btn btn-secondary" onclick="showRegisterOptions()">Create Account</button>
-            <br><br>
-            <a href="#" onclick="showPasswordReset(); return false;">Forgot password?</a>
-          </div>
-        </form>
-      </div>
-
-      <!-- Register Options -->
-      <div id="registerOptionsContainer" class="card hidden">
-        <h2 class="text-center">Register</h2>
-        <p class="text-center">Are you registering as a Driver or a Company?</p>
-        <div class="btn-group">
-          <button class="btn btn-accent btn-block" onclick="showDriverRegister()">🚛 Register as Driver</button>
-          <button class="btn btn-primary btn-block" onclick="showCompanyRegister()">🏢 Register as Company</button>
-          <button class="btn btn-secondary btn-block" onclick="showSignIn()">Back to Sign In</button>
+      <!-- SIGN IN FORM -->
+      <form id="signin-form">
+        <div class="form-group">
+          <label for="si-email">Email Address</label>
+          <input type="email" id="si-email" placeholder="your@email.com" required />
         </div>
-      </div>
+        <div class="form-group">
+          <label for="si-password">Password</label>
+          <input type="password" id="si-password" placeholder="Enter your password" required />
+        </div>
+        <button type="submit" class="btn primary" style="width:100%; margin-top:0.5rem;">Sign In</button>
+        <span class="link-text" onclick="showPage('forgot-password-page')">Forgot your password?</span>
+      </form>
 
-      <!-- Driver Registration -->
-      <div id="driverRegisterContainer" class="card hidden">
-        <h2 class="text-center">Driver Account</h2>
-        <form id="driverRegisterForm">
-          <label for="driver-name">Full Name</label>
-          <input type="text" id="driver-name" name="fullName" required>
-          
-          <label for="driver-email">Email Address</label>
-          <input type="email" id="driver-email" name="email" required autocomplete="email">
-          
-          <label for="driver-password">Password</label>
-          <input type="password" id="driver-password" name="password" required autocomplete="new-password">
-          
-          <label for="driver-phone">Phone Number</label>
-          <input type="tel" id="driver-phone" name="phone">
-          
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary btn-block">Create Driver Account</button>
-            <button type="button" class="btn btn-secondary btn-block" onclick="showRegisterOptions()">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Company Registration -->
-      <div id="companyRegisterContainer" class="card hidden">
-        <h2 class="text-center">Company Account</h2>
-        <form id="companyRegisterForm">
-          <label for="company-name">Company Name</label>
-          <input type="text" id="company-name" name="companyName" required>
-          
-          <label for="company-email">Admin Email Address</label>
-          <input type="email" id="company-email" name="email" required autocomplete="email">
-          
-          <label for="company-password">Password</label>
-          <input type="password" id="company-password" name="password" required autocomplete="new-password">
-          
-          <label for="company-number">Company Number</label>
-          <input type="text" id="company-number" name="companyNumber">
-          
-          <label for="company-address">Registered Address</label>
-          <textarea id="company-address" name="address" rows="3"></textarea>
-          
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary btn-block">Create Company Account</button>
-            <button type="button" class="btn btn-secondary btn-block" onclick="showRegisterOptions()">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Password Reset -->
-      <div id="passwordResetContainer" class="card hidden">
-        <h2 class="text-center">Reset Password</h2>
-        <p class="text-center">Enter your email address below.</p>
-        <form id="passwordResetForm">
-          <label for="reset-email">Email Address</label>
-          <input type="email" id="reset-email" name="email" required autocomplete="email">
-          
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary btn-block">Send Reset Link</button>
-            <button type="button" class="btn btn-secondary btn-block" onclick="showSignIn()">Back</button>
-          </div>
-        </form>
-      </div>
+      <!-- REGISTER FORM -->
+      <form id="register-form" class="hidden">
+        <div class="form-group">
+          <label>Account Type</label>
+          <select id="reg-account-type" required>
+            <option value="">Select...</option>
+            <option value="company">Company / Transport Manager</option>
+            <option value="driver">Self-Employed Driver</option>
+            <option value="employee">Company Employee Driver</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" placeholder="Your full name" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" placeholder="Create a secure password" required />
+        </div>
+        <div class="form-group" id="reg-company-name-group" style="display:none;">
+          <label for="reg-company-name">Company Name</label>
+          <input type="text" id="reg-company-name" placeholder="Company name" />
+        </div>
+        <div class="form-group" id="reg-company-code-group" style="display:none;">
+          <label for="reg-company-code">Company Access Code</label>
+          <input type="text" id="reg-company-code" placeholder="Ask your transport manager" />
+        </div>
+        <button type="submit" class="btn primary" style="width:100%; margin-top:0.5rem;">Create Account</button>
+      </form>
     </div>
   </div>
-    <!-- ==================================================
-       NAVIGATION BAR — Shared by both Portals
-       ================================================== -->
-  <nav id="mainNav" class="nav-bar hidden">
-    <span id="portalTitle" style="color:white; font-weight:bold; margin-right:auto; padding:0.4rem 0.8rem;">Portal</span>
-    <button class="btn" onclick="showPage('driverDashboardPage')">Dashboard</button>
-    <button class="btn" id="driverNavButtons" style="display:none;" onclick="showPage('driverProfilePage')">My Profile</button>
-    <button class="btn" id="driverNavButtons2" style="display:none;" onclick="showPage('driverCalendarPage')">Calendar</button>
-    <button class="btn" id="driverNavButtons3" style="display:none;" onclick="showPage('driverDocumentsPage')">Documents</button>
-    <button class="btn" id="driverNavButtons4" style="display:none;" onclick="showPage('driverWorkPage')">My Work</button>
-    <button class="btn" id="companyNavButtons" style="display:none;" onclick="showPage('companyDashboardPage')">Overview</button>
-    <button class="btn" id="companyNavButtons2" style="display:none;" onclick="showPage('companyFleetPage')">Fleet</button>
-    <button class="btn" id="companyNavButtons3" style="display:none;" onclick="showPage('companyDriversPage')">Drivers</button>
-    <button class="btn" id="companyNavButtons4" style="display:none;" onclick="showPage('companyJobsPage')">Posted Work</button>
-    <button class="btn" id="companyNavButtons5" style="display:none;" onclick="showPage('companyChecklistPage')">Checklists</button>
-    <button class="btn logout-btn" onclick="signOut()">Sign Out</button>
+
+  <!-- FORGOT PASSWORD PAGE -->
+  <div id="forgot-password-page" class="auth-container" style="display:none;">
+    <div class="auth-card">
+      <h2>Reset Password</h2>
+      <p class="subtitle">Enter your email to receive a reset link</p>
+      <form id="forgot-form">
+        <div class="form-group">
+          <label for="fp-email">Email Address</label>
+          <input type="email" id="fp-email" required />
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;">Send Reset Link</button>
+        <span class="link-text" onclick="showPage('auth-page')">Back to Sign In</span>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================
+       MAIN APP HEADER & NAVIGATION
+       ====================================== -->
+  <header id="app-header" class="header-bar" style="display:none;">
+    <div class="logo-group">
+      <img src="./assets/favicon.png" alt="LSD Solutions" onerror="this.style.display='none'" />
+      <h1>LSD Solutions</h1>
+    </div>
+    <div class="user-area">
+      <span id="user-display-name"></span>
+      <button class="btn small secondary" onclick="handleSignOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <nav id="main-nav" class="nav-tabs" style="display:none;">
+    <!-- Dynamic tabs inserted by app.js based on user role -->
   </nav>
 
-  <!-- ==================================================
-       DRIVER PORTAL — Dashboard Page
-       ================================================== -->
-  <div id="driverDashboardPage" class="page">
-    <div class="page-header">
-      <h1>Driver Dashboard</h1>
-      <p>Welcome back, <span id="driverWelcomeName">Driver</span></p>
-    </div>
-    <div class="container">
+  <main id="app-main" style="display:none;">
+  
+      <!-- ======================================
+         COMPANY PORTAL — DASHBOARD
+         ====================================== -->
+    <div id="company-dashboard-page" class="page">
       <div class="card">
-        <h2>Quick Actions</h2>
-        <div class="btn-group">
-          <button class="btn btn-primary btn-block" onclick="showPage('driverProfilePage')">👤 My Profile</button>
-          <button class="btn btn-accent btn-block" onclick="showPage('driverCalendarPage')">📅 My Calendar</button>
-          <button class="btn btn-success btn-block" onclick="showPage('driverDocumentsPage')">📁 My Documents</button>
-          <button class="btn btn-primary btn-block" onclick="showPage('driverWorkPage')">🚛 My Jobs</button>
-          <button class="btn btn-secondary btn-block" onclick="showPage('driverChecklistPage')">✅ Vehicle Check</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Current Status</h2>
-        <p><strong>Account Status:</strong> <span class="status-badge status-active">Active</span></p>
-        <p><strong>Last Login:</strong> <span id="driverLastLogin">—</span></p>
-        <p><strong>Active Jobs:</strong> <span id="driverActiveJobs">0</span></p>
-      </div>
-
-      <div class="card">
-        <h2>Upcoming Jobs</h2>
-        <div id="driverUpcomingJobsList">
-          <p class="text-center text-light">No upcoming jobs scheduled</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================
-       DRIVER PORTAL — Profile Page
-       ================================================== -->
-  <div id="driverProfilePage" class="page">
-    <div class="page-header">
-      <h1>My Profile</h1>
-      <p>Manage your personal and licence details</p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Personal Information</h2>
-        <form id="driverProfileForm">
-          <label for="profile-fullname">Full Name</label>
-          <input type="text" id="profile-fullname" name="fullName">
-
-          <label for="profile-email">Email Address</label>
-          <input type="email" id="profile-email" name="email" readonly style="background:#f5f5f5;">
-
-          <label for="profile-phone">Phone Number</label>
-          <input type="tel" id="profile-phone" name="phone">
-
-          <hr>
-
-          <h3 style="margin:1rem 0 0.5rem; font-size:1rem;">Driving Licence Details</h3>
-
-          <label for="profile-licence-number">Licence Number</label>
-          <input type="text" id="profile-licence-number" name="licenceNumber">
-
-          <label for="profile-valid-from">Valid From</label>
-          <input type="date" id="profile-valid-from" name="validFrom">
-
-          <label for="profile-expiry-date">Expiry Date</label>
-          <input type="date" id="profile-expiry-date" name="expiryDate">
-
-          <label for="profile-medical-expiry">Medical Certificate Expiry</label>
-          <input type="date" id="profile-medical-expiry" name="medicalExpiry">
-
-          <label for="profile-dvsa-points">DVSA Penalty Points</label>
-          <input type="number" id="profile-dvsa-points" name="points" min="0" max="12">
-
-          <div class="btn-group mt-2">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('driverDashboardPage')">Back</button>
+        <h2>Company Dashboard</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Welcome back. Here's your at-a-glance overview.</p>
+        
+        <div class="grid grid-4" style="margin-bottom: 2rem;">
+          <div class="card" style="background: var(--primary-light);">
+            <h3 style="font-size: 1.8rem; color: var(--primary);" id="stat-drivers">0</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light);">Active Drivers</p>
           </div>
-        </form>
-      </div>
-    </div>
-  </div>
+          <div class="card" style="background: #e8f5e9;">
+            <h3 style="font-size: 1.8rem; color: var(--success);" id="stat-vehicles">0</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light);">Vehicles</p>
+          </div>
+          <div class="card" style="background: #fff4e5;">
+            <h3 style="font-size: 1.8rem; color: var(--warning);" id="stat-defects">0</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light);">Open Defects</p>
+          </div>
+          <div class="card" style="background: #e3f2fd;">
+            <h3 style="font-size: 1.8rem; color: #1565c0;" id="stat-jobs">0</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light);">Active Jobs</p>
+          </div>
+        </div>
 
-  <!-- ==================================================
-       DRIVER PORTAL — Calendar Page
-       ================================================== -->
-  <div id="driverCalendarPage" class="page">
-    <div class="page-header">
-      <h1>My Calendar</h1>
-      <p>View your schedule and upcoming work</p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Schedule Overview</h2>
-        <p>Calendar integration coming soon — for now view your upcoming jobs below.</p>
-      </div>
-
-      <div class="card">
-        <h2>Upcoming Schedule</h2>
-        <div id="driverCalendarList">
-          <p class="text-center text-light">No items in your calendar</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Recent Activity</h3>
+            <div id="recent-activity-list" style="max-height: 250px; overflow-y: auto;">
+              <p style="color: var(--text-light); font-style: italic;">Loading activity...</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Alerts & Notices</h3>
+            <div id="alerts-list">
+              <p style="color: var(--text-light); font-style: italic;">No current alerts</p>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="card">
-        <h2>Mark Availability</h2>
-        <form id="holidayForm">
-          <label for="holiday-start">Start Date</label>
-          <input type="date" id="holiday-start" name="startDate">
-
-          <label for="holiday-end">End Date</label>
-          <input type="date" id="holiday-end" name="endDate">
-
-          <label for="holiday-note">Notes / Reason</label>
-          <textarea id="holiday-note" name="note" rows="2" placeholder="Optional"></textarea>
-
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary">Submit Availability</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('driverDashboardPage')">Back</button>
-          </div>
-        </form>
-      </div>
     </div>
-  </div>
 
-  <!-- ==================================================
-       DRIVER PORTAL — Documents Page
-       ================================================== -->
-  <div id="driverDocumentsPage" class="page">
-    <div class="page-header">
-      <h1>My Documents</h1>
-      <p>Upload and manage your licence, certificates and more</p>
-    </div>
-    <div class="container">
+    <!-- ======================================
+         MAINTENANCE SCHEDULES
+         ====================================== -->
+    <div id="maintenance-page" class="page">
       <div class="card">
-        <h2>Upload Document</h2>
-        <form id="documentUploadForm">
-          <label for="doc-type">Document Type</label>
-          <select id="doc-type" name="docType">
-            <option value="licence">Driving Licence</option>
-            <option value="dqc">Driver CPC Card</option>
-            <option value="tachograph">Tachograph Card</option>
-            <option value="medical">Medical Certificate</option>
-            <option value="insurance">Insurance / Proof of No Claims</option>
-            <option value="other">Other</option>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <h2>Maintenance Schedules</h2>
+          <button class="btn primary" onclick="showAddMaintenanceModal()">+ Add Schedule</button>
+        </div>
+        
+        <div class="form-group" style="max-width: 300px; margin-bottom: 1rem;">
+          <label>Filter by Vehicle</label>
+          <select id="maint-filter-vehicle">
+            <option value="all">All Vehicles</option>
           </select>
-
-          <label for="doc-file">Select File</label>
-          <input type="file" id="doc-file" name="docFile" accept=".jpg,.jpeg,.png,.pdf">
-          <small>Supported: JPG, PNG, PDF — Max 10MB</small>
-
-          <label for="doc-expiry">Expiry Date (if applicable)</label>
-          <input type="date" id="doc-expiry" name="expiryDate">
-
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary">Upload Document</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('driverDashboardPage')">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>My Documents</h2>
-        <div id="driverDocumentsList">
-          <p class="text-center text-light">No documents uploaded yet</p>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ==================================================
-       DRIVER PORTAL — My Work / Jobs Page
-       ================================================== -->
-  <div id="driverWorkPage" class="page">
-    <div class="page-header">
-      <h1>My Work</h1>
-      <p>View assigned jobs and record mileage</p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Assigned Jobs</h2>
-        <div id="driverJobsList">
-          <p class="text-center text-light">No jobs assigned to you yet</p>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Vehicle</th>
+              <th>Type</th>
+              <th>Due Date / Mileage</th>
+              <th>Status</th>
+              <th class="hidden-mobile">Assigned To</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="maintenance-list">
+            <tr><td colspan="6" style="text-align:center; color:var(--text-light);">Loading schedules...</td></tr>
+          </tbody>
+        </table>
       </div>
 
-      <div class="card">
-        <h2>Record Mileage</h2>
-        <div class="mileage-section">
-          <label>
-            Start Mileage:
-            <input type="number" id="startMileage" name="startMileage" required>
-            <select id="mileageUnit" onchange="switchMileageUnit(this.value)">
-              <option value="km">Kilometres</option>
-              <option value="miles">Miles</option>
-            </select>
-            <span class="mileage-unit-label" id="startUnitLabel">km</span>
-          </label>
-
-          <label>
-            End Mileage:
-            <input type="number" id="endMileage" name="endMileage" required>
-            <span class="mileage-unit-label" id="endUnitLabel">km</span>
-          </label>
-
-          <div class="mileage-result">
-            <strong>Total Distance:</strong>
-            <span id="totalMileage">0</span>
-            <span id="totalUnitLabel">km</span>
-          </div>
-        </div>
-        <button class="btn btn-primary mt-1" onclick="saveMileageLog()">Save Mileage Entry</button>
-        <button class="btn btn-secondary mt-1" onclick="showPage('driverDashboardPage')">Back</button>
-      </div>
-
-      <div class="card">
-        <h2>Mileage History</h2>
-        <div id="mileageHistoryList">
-          <p class="text-center text-light">No mileage records yet</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================
-       DRIVER PORTAL — Walkaround Checklist Page
-       ================================================== -->
-  <div id="driverChecklistPage" class="page">
-    <div class="page-header">
-      <h1>Daily Vehicle Walkaround Check</h1>
-      <p>DVSA Compliant — Complete before starting your journey</p>
-    </div>
-    <div class="container">
-      <div class="info-box mb-1">
-        <strong>Driver Responsibility:</strong> You must report any defect immediately. It is illegal to drive a defective vehicle.
-      </div>
-
-      <div class="card">
-        <h2>Vehicle Details</h2>
-        <form id="checklistVehicleInfo">
-          <label for="check-reg">Vehicle Registration</label>
-          <input type="text" id="check-reg" name="regNumber" placeholder="e.g. AB12 CDE">
-
-          <label for="check-date">Date of Check</label>
-          <input type="date" id="check-date" name="checkDate">
-
-          <label for="check-odometer">Odometer Reading</label>
-          <input type="number" id="check-odometer" name="odometer" placeholder="Miles / km">
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>Checklist Items</h2>
-        <p id="checklistLoading">Loading checklist...</p>
-        <form id="checklistForm" class="hidden">
-          <div id="checklistItemsContainer">
-            <!-- Checklist items injected by JS -->
-          </div>
-
-          <hr>
-
-          <h3 style="margin:1.5rem 0 0.5rem;">Defects & Comments</h3>
-          <label for="defects-general">General Comments / Other Defects</label>
-          <textarea id="defects-general" name="generalDefects" rows="3" placeholder="Describe any issues found..."></textarea>
-
-          <label for="defects-action">Action Taken</label>
-          <select id="defects-action" name="actionTaken">
-            <option value="none">No defects found</option>
-            <option value="reported">Reported to transport manager</option>
-            <option value="repaired">Repaired / Fixed</option>
-            <option value="outofservice">Vehicle taken out of service</option>
-          </select>
-
-          <hr>
-
-          <h3 style="margin:1.5rem 0 0.5rem;">Declaration & Signature</h3>
-          <label for="driver-declaration">
-            <input type="checkbox" id="driver-declaration" required>
-            I certify that I have personally inspected this vehicle and this report is accurate.
-          </label>
-
-          <label for="driver-signature">Digital Signature (Your Full Name)</label>
-          <input type="text" id="driver-signature" name="signature" placeholder="Type your full name here">
-
-          <div class="btn-group mt-2">
-            <button type="submit" class="btn btn-success">✅ Submit Checklist</button>
-            <button type="reset" class="btn btn-secondary">Clear Form</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('driverDashboardPage')">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>Previous Checks</h2>
-        <div id="previousChecksList">
-          <p class="text-center text-light">No previous checks found</p>
-        </div>
-      </div>
-    </div>
-  </div>
-    <!-- ==================================================
-       COMPANY PORTAL — Dashboard / Overview Page
-       ================================================== -->
-  <div id="companyDashboardPage" class="page">
-    <div class="page-header">
-      <h1>Company Overview</h1>
-      <p>Welcome, <span id="companyWelcomeName">Company Admin</span></p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Quick Stats</h2>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; text-align:center;">
-          <div style="padding:1rem; background:var(--primary-light); border-radius:8px;">
-            <div style="font-size:1.8rem; font-weight:bold; color:var(--primary);" id="statActiveDrivers">0</div>
-            <div style="font-size:0.9rem; color:var(--text-light);">Active Drivers</div>
-          </div>
-          <div style="padding:1rem; background:var(--primary-light); border-radius:8px;">
-            <div style="font-size:1.8rem; font-weight:bold; color:var(--primary);" id="statFleetSize">0</div>
-            <div style="font-size:0.9rem; color:var(--text-light);">Fleet Vehicles</div>
-          </div>
-          <div style="padding:1rem; background:var(--primary-light); border-radius:8px;">
-            <div style="font-size:1.8rem; font-weight:bold; color:var(--primary);" id="statActiveJobs">0</div>
-            <div style="font-size:0.9rem; color:var(--text-light);">Active Jobs</div>
-          </div>
-          <div style="padding:1rem; background:var(--primary-light); border-radius:8px;">
-            <div style="font-size:1.8rem; font-weight:bold; color:var(--primary);" id="statChecklistsToday">0</div>
-            <div style="font-size:0.9rem; color:var(--text-light);">Checklists Today</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Quick Actions</h2>
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="showPage('companyFleetPage')">🚛 Manage Fleet</button>
-          <button class="btn btn-accent" onclick="showPage('companyDriversPage')">👥 Manage Drivers</button>
-          <button class="btn btn-success" onclick="showPage('companyJobsPage')">📋 Posted Work</button>
-          <button class="btn btn-secondary" onclick="showPage('companyChecklistPage')">✅ Checklist Editor</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Recent Activity</h2>
-        <div id="companyRecentActivity">
-          <p class="text-center text-light">Loading recent activity...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================
-       COMPANY PORTAL — Fleet Management Page
-       ================================================== -->
-  <div id="companyFleetPage" class="page">
-    <div class="page-header">
-      <h1>Fleet Management</h1>
-      <p>Manage your vehicles and trailers</p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Add New Vehicle</h2>
-        <form id="addVehicleForm">
-          <label for="veh-type">Vehicle Type</label>
-          <select id="veh-type" name="vehicleType">
-            <option value="hgv">HGV / Truck</option>
-            <option value="rigid">Rigid Vehicle</option>
-            <option value="van">Van</option>
-            <option value="trailer">Trailer</option>
-          </select>
-
-          <label for="veh-reg">Registration Number</label>
-          <input type="text" id="veh-reg" name="registration" placeholder="e.g. AB12 CDE">
-
-          <label for="veh-make">Make / Manufacturer</label>
-          <input type="text" id="veh-make" name="make">
-
-          <label for="veh-model">Model</label>
-          <input type="text" id="veh-model" name="model">
-
-          <label for="veh-year">Year</label>
-          <input type="number" id="veh-year" name="year" min="1990" max="2030">
-
-          <label for="veh-mot-expiry">MOT Expiry Date</label>
-          <input type="date" id="veh-mot-expiry" name="motExpiry">
-
-          <label for="veh-ins-expiry">Insurance Expiry</label>
-          <input type="date" id="veh-ins-expiry" name="insuranceExpiry">
-
-          <label for="veh-tachograph">Tachograph Calibration Due</label>
-          <input type="date" id="veh-tachograph" name="tachographCalibration">
-
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary">Add Vehicle</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('companyDashboardPage')">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>Your Fleet</h2>
-        <div id="fleetList">
-          <p class="text-center text-light">No vehicles added yet</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================
-       COMPANY PORTAL — Driver Management Page
-       ================================================== -->
-  <div id="companyDriversPage" class="page">
-    <div class="page-header">
-      <h1>Driver Management</h1>
-      <p>Invite and manage your employed drivers</p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Invite New Driver</h2>
-        <form id="inviteDriverForm">
-          <label for="invite-name">Driver Full Name</label>
-          <input type="text" id="invite-name" name="fullName" required>
-
-          <label for="invite-email">Email Address</label>
-          <input type="email" id="invite-email" name="email" required>
-
-          <label for="invite-phone">Phone Number</label>
-          <input type="tel" id="invite-phone" name="phone">
-
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary">Send Invitation</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('companyDashboardPage')">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>Your Drivers</h2>
-        <div id="companyDriversList">
-          <p class="text-center text-light">No drivers added yet</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================
-       COMPANY PORTAL — Posted Work / Jobs Page
-       ================================================== -->
-  <div id="companyJobsPage" class="page">
-    <div class="page-header">
-      <h1>Posted Work</h1>
-      <p>Manage and assign available jobs</p>
-    </div>
-    <div class="container">
-      <div class="card">
-        <h2>Post New Job</h2>
-        <form id="postJobForm">
-          <label for="job-title">Job Title / Reference</label>
-          <input type="text" id="job-title" name="title" placeholder="e.g. London — Manchester delivery">
-
-          <label for="job-desc">Description & Instructions</label>
-          <textarea id="job-desc" name="description" rows="4" placeholder="Pickup location, delivery details, special instructions..."></textarea>
-
-          <label for="job-date">Date / Time Required</label>
-          <input type="datetime-local" id="job-date" name="scheduledDateTime">
-
-          <label for="job-assign">Assign to Driver</label>
-          <select id="job-assign" name="assignedDriver">
-            <option value="">— Unassigned / Open —</option>
-          </select>
-
-          <!-- MILEAGE FIELDS -->
-          <div class="mileage-section">
-            <h3>Estimated Mileage</h3>
-            <label>
-              Estimated Distance:
-              <input type="number" id="job-mileage" name="estimatedMileage" placeholder="0">
-              <select id="job-mileage-unit" name="mileageUnit">
-                <option value="km">Kilometres</option>
-                <option value="miles" selected>Miles</option>
+      <!-- Add/Edit Maintenance Modal -->
+      <div id="maint-modal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+        <div class="card" style="width:90%; max-width:500px; max-height:90vh; overflow-y:auto;">
+          <h3 id="maint-modal-title">Add Maintenance Schedule</h3>
+          <form id="maint-form">
+            <input type="hidden" id="maint-id" />
+            <div class="form-group">
+              <label>Vehicle *</label>
+              <select id="maint-vehicle" required>
+                <option value="">Select vehicle...</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label>Maintenance Type *</label>
+              <select id="maint-type" required>
+                <option value="">Select type...</option>
+                <option value="routine">Routine Service</option>
+                <option value="annual">Annual Test / MOT</option>
+                <option value="inspection">Safety Inspection</option>
+                <option value="tachograph">Tachograph Calibration</option>
+                <option value="tyre">Tyre Replacement / Check</option>
+                <option value="brakes">Brake Check / Service</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" id="maint-duedate" />
+              </div>
+              <div class="form-group">
+                <label>Due Mileage</label>
+                <input type="number" id="maint-duemileage" placeholder="e.g. 120000" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Assigned To</label>
+              <select id="maint-assigned">
+                <option value="">-- External / Workshop --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea id="maint-notes" rows="3" placeholder="Any specific requirements or history..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="maint-status">
+                <option value="scheduled">Scheduled</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+              <button type="button" class="btn secondary" style="flex:1;" onclick="closeMaintModal()">Cancel</button>
+              <button type="submit" class="btn primary" style="flex:1;">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================
+         DEFECT MANAGEMENT
+         ====================================== -->
+    <div id="defects-page" class="page">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <h2>Defect Management</h2>
+          <button class="btn primary" onclick="showAddDefectModal()">+ Report Defect</button>
+        </div>
+
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
+          <button class="btn small secondary defect-filter active" data-filter="all">All</button>
+          <button class="btn small warning defect-filter" data-filter="open">Open</button>
+          <button class="btn small info defect-filter" data-filter="in-progress">In Progress</button>
+          <button class="btn small success defect-filter" data-filter="resolved">Resolved</button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Reported</th>
+              <th>Vehicle</th>
+              <th>Defect</th>
+              <th>Severity</th>
+              <th>Status</th>
+              <th class="hidden-mobile">Reported By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="defects-list">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-light);">Loading defects...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add/Edit Defect Modal -->
+      <div id="defect-modal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+        <div class="card" style="width:90%; max-width:500px; max-height:90vh; overflow-y:auto;">
+          <h3 id="defect-modal-title">Report Defect</h3>
+          <form id="defect-form">
+            <input type="hidden" id="defect-id" />
+            <div class="form-group">
+              <label>Vehicle / Trailer *</label>
+              <select id="defect-vehicle" required>
+                <option value="">Select vehicle...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Defect Title *</label>
+              <input type="text" id="defect-title" placeholder="Brief description" required />
+            </div>
+            <div class="form-group">
+              <label>Detailed Description *</label>
+              <textarea id="defect-description" rows="4" placeholder="Full details including location, symptoms, when first noticed..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label>Severity *</label>
+              <select id="defect-severity" required>
+                <option value="">Select severity...</option>
+                <option value="minor">Minor — No immediate action needed</option>
+                <option value="significant">Significant — Schedule repair</option>
+                <option value="major">Major — Vehicle off-road</option>
+                <option value="prohibitive">Prohibitive — Must not be moved</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Location / Area</label>
+              <input type="text" id="defect-location" placeholder="e.g. Front driver's side tyre" />
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="defect-status">
+                <option value="open" selected>Reported / Open</option>
+                <option value="acknowledged">Acknowledged</option>
+                <option value="in-progress">Repair In Progress</option>
+                <option value="resolved">Resolved — Fixed</option>
+                <option value="deferred">Deferred — Authorised</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Notes / Resolution</label>
+              <textarea id="defect-resolution" rows="3" placeholder="Repair details, parts replaced, cost, etc."></textarea>
+            </div>
+            <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+              <button type="button" class="btn secondary" style="flex:1;" onclick="closeDefectModal()">Cancel</button>
+              <button type="submit" class="btn primary" style="flex:1;">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+        <!-- ======================================
+         COMPLIANCE OVERVIEW
+         ====================================== -->
+    <div id="compliance-page" class="page">
+      <div class="card">
+        <h2>Compliance Overview</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Monitor your fleet's legal standing and DVSA requirements in one place.</p>
+
+        <!-- Overall Compliance Score -->
+        <div class="card" style="background: linear-gradient(135deg, var(--primary) 0%, #2a4a7c 100%); color: #fff; text-align: center; margin-bottom: 2rem;">
+          <h3 style="font-size: 1rem; opacity: 0.9; margin-bottom: 0.5rem;">Overall Fleet Compliance Score</h3>
+          <div style="font-size: 3rem; font-weight: 700;" id="compliance-score">--%</div>
+          <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 0.5rem;" id="compliance-status">Calculating...</p>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- Vehicle Compliance -->
+          <div class="card">
+            <h3>🚛 Vehicle Compliance</h3>
+            <div id="vehicle-compliance-list" style="margin-top: 1rem;">
+              <p style="color: var(--text-light); font-style: italic;">Loading...</p>
+            </div>
+          </div>
+
+          <!-- Driver Compliance -->
+          <div class="card">
+            <h3>👤 Driver Compliance</h3>
+            <div id="driver-compliance-list" style="margin-top: 1rem;">
+              <p style="color: var(--text-light); font-style: italic;">Loading...</p>
+            </div>
+          </div>
+
+          <!-- Document Expiry -->
+          <div class="card">
+            <h3>📄 Document Expiry Alerts</h3>
+            <div id="document-alerts-list" style="margin-top: 1rem;">
+              <p style="color: var(--text-light); font-style: italic;">No documents due for renewal</p>
+            </div>
+          </div>
+
+          <!-- Tachograph Status -->
+          <div class="card">
+            <h3>⏱️ Tachograph Status</h3>
+            <div id="tacho-compliance-status" style="margin-top: 1rem;">
+              <p style="color: var(--text-light); font-style: italic;">Not connected</p>
+            </div>
+            <button class="btn small secondary" style="margin-top: 0.75rem; width: 100%;" onclick="showPage('company-settings-page')">Configure Tacomaster API</button>
+          </div>
+        </div>
+
+        <!-- DVSA Required Documents Checklist -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <h3>📋 DVSA Required Documents — Record Retention</h3>
+          <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 1rem;">Records retained 10% longer than statutory requirement, then auto-archived and emailed to company.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Document Type</th>
+                <th>Required For</th>
+                <th>Retention Period</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dvsa-docs-list">
+              <tr><td colspan="4" style="text-align:center; color:var(--text-light);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================
+         TACOMASTER API SETTINGS
+         ====================================== -->
+    <div id="tacomaster-page" class="page">
+      <div class="card">
+        <h2>Tacomaster Integration</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Connect your Tacomaster account to automatically import tachograph data, driver hours, and infringements.</p>
+
+        <div class="card" style="background: var(--primary-light);">
+          <h3>API Connection Status</h3>
+          <div id="tacho-connection-status" style="margin: 1rem 0;">
+            <span class="badge warning">Not Connected</span>
+          </div>
+        </div>
+
+        <form id="tacomaster-form" style="margin-top: 1.5rem;">
+          <div class="form-group">
+            <label for="tacomaster-api-key">Tacomaster API Key</label>
+            <input type="password" id="tacomaster-api-key" placeholder="Enter your Tacomaster API key" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="tacomaster-company-id">Company ID (Optional)</label>
+            <input type="text" id="tacomaster-company-id" placeholder="Your Tacomaster company identifier" />
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="tacomaster-auto-sync" /> Auto-sync tachograph data daily
             </label>
           </div>
+          <button type="submit" class="btn primary">Save & Test Connection</button>
+        </form>
 
-          <label for="job-rate">Rate / Price (£)</label>
-          <input type="number" id="job-rate" name="rate" step="0.01" min="0" placeholder="0.00">
-
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary">Post Job</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('companyDashboardPage')">Back</button>
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+          <h3>Sync History</h3>
+          <div id="tacho-sync-history" style="margin-top: 1rem;">
+            <p style="color: var(--text-light); font-style: italic;">No sync activity yet</p>
           </div>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+          <h3>Manual Sync</h3>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+            <button class="btn secondary" onclick="syncTachoData('drivers')">Sync Driver List</button>
+            <button class="btn secondary" onclick="syncTachoData('vehicles')">Sync Vehicle List</button>
+            <button class="btn secondary" onclick="syncTachoData('latest')">Sync Latest Files</button>
+            <button class="btn primary" onclick="syncTachoData('all')">Full Sync All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================
+         COMPANY SETTINGS PAGE
+         ====================================== -->
+    <div id="company-settings-page" class="page">
+      <div class="card">
+        <h2>Company Settings</h2>
+        
+        <div class="card">
+          <h3>Company Details</h3>
+          <form id="company-details-form">
+            <div class="form-group">
+              <label for="settings-company-name">Company Name</label>
+              <input type="text" id="settings-company-name" />
+            </div>
+            <div class="form-group">
+              <label for="settings-operator-licence">Operator Licence Number</label>
+              <input type="text" id="settings-operator-licence" placeholder="e.g. OB1234567" />
+            </div>
+            <div class="form-group">
+              <label for="settings-email">Primary Contact Email</label>
+              <input type="email" id="settings-email" />
+            </div>
+            <button type="submit" class="btn primary">Save Details</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>API Integrations</h3>
+          <button class="btn secondary" style="width: 100%; text-align: left; margin-bottom: 0.5rem;" onclick="showPage('tacomaster-page')">
+            ⏱️ Tacomaster — Tachograph Integration
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>Document Retention Settings</h3>
+          <form id="retention-form">
+            <div class="form-group">
+              <label>Auto-archive documents after retention period</label>
+              <select id="auto-archive-enabled">
+                <option value="true" selected>Enabled — Email & archive after 110% of legal period</option>
+                <option value="false">Disabled — Keep all documents indefinitely</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Archive Notification Email</label>
+              <input type="email" id="archive-email" placeholder="company@example.com" />
+            </div>
+            <button type="submit" class="btn primary">Save Settings</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================
+         DRIVER PORTAL PAGES
+         ====================================== -->
+    <div id="driver-dashboard-page" class="page">
+      <div class="card">
+        <h2>Welcome, <span id="driver-welcome-name"></span>!</h2>
+        <p style="color: var(--text-light); margin-top: 0.5rem;">Driver Portal Dashboard</p>
+      </div>
+      <div class="grid grid-2" style="margin-top: 1rem;">
+        <button class="btn primary" onclick="showPage('driver-checklist-page')">📝 Daily Walkaround Check</button>
+        <button class="btn secondary" onclick="showPage('driver-defect-report-page')">⚠️ Report a Defect</button>
+        <button class="btn secondary" onclick="showPage('driver-calendar-page')">📅 Availability Calendar</button>
+        <button class="btn secondary" onclick="showPage('driver-documents-page')">📂 My Documents</button>
+        <button class="btn secondary" onclick="showPage('driver-profile-page')">👤 My Profile</button>
+        <button class="btn secondary" onclick="showPage('driver-tachograph-page')">⏱️ My Tachograph Info</button>
+      </div>
+    </div>
+
+    <div id="driver-checklist-page" class="page">
+      <div class="card">
+        <h2>Daily Walkaround Check</h2>
+        <p style="color: var(--text-light); margin-bottom: 1rem;">DVSA Compliant Pre-Use Inspection</p>
+        <div class="form-group">
+          <label>Select Vehicle / Trailer</label>
+          <select id="checklist-vehicle">
+            <option value="">Select your vehicle...</option>
+          </select>
+        </div>
+        <div id="checklist-items" style="margin-top: 1.5rem;">
+          <p style="color: var(--text-light);">Select a vehicle to load checklist items...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="driver-defect-report-page" class="page">
+      <div class="card">
+        <h2>Report a Defect</h2>
+        <p style="color: var(--text-light); margin-bottom: 1rem;">Found something wrong? Report it immediately.</p>
+        <form id="driver-defect-form">
+          <div class="form-group">
+            <label>Vehicle / Trailer *</label>
+            <select id="dr-defect-vehicle" required>
+              <option value="">Select vehicle...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>What's the issue? *</label>
+            <input type="text" id="dr-defect-title" placeholder="Brief description" required />
+          </div>
+          <div class="form-group">
+            <label>More details *</label>
+            <textarea id="dr-defect-description" rows="4" placeholder="Be as specific as possible — location, symptoms, etc." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>How serious is it? *</label>
+            <select id="dr-defect-severity" required>
+              <option value="">Select...</option>
+              <option value="minor">Minor</option>
+              <option value="significant">Significant</option>
+              <option value="major">Major — Vehicle off road</option>
+              <option value="prohibitive">Prohibitive — Must not move</option>
+            </select>
+          </div>
+          <button type="submit" class="btn primary">Submit Report</button>
         </form>
       </div>
+    </div>
 
+    <div id="driver-calendar-page" class="page">
       <div class="card">
-        <h2>Active Jobs</h2>
-        <div id="activeJobsList">
-          <p class="text-center text-light">No active jobs posted</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Completed Jobs</h2>
-        <div id="completedJobsList">
-          <p class="text-center text-light">No completed jobs yet</p>
+        <h2>My Availability & Schedule</h2>
+        <p style="color: var(--text-light); margin-bottom: 1rem;">Let your transport manager know when you're available</p>
+        <div id="calendar-container">
+          <!-- Calendar rendered by app.js -->
+          <div class="calendar-header">
+            <button onclick="changeMonth(-1)">&lt;</button>
+            <h3 id="calendar-month-year"></h3>
+            <button onclick="changeMonth(+1)">&gt;</button>
+          </div>
+          <div class="calendar-grid" id="calendar-days"></div>
+          <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; font-size: 0.85rem;">
+            <span><span style="display:inline-block; width:14px; height:14px; background:#e8f5e9; border-radius:3px; margin-right:4px;"></span>Available</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#ffebee; border-radius:3px; margin-right:4px;"></span>Unavailable</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#fff4e5; border-radius:3px; margin-right:4px;"></span>Pending</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#bbdefb; border-radius:3px; margin-right:4px;"></span>Booked</span>
+            <span><span style="display:inline-block; width:14px; height:14px; background:#f3f4f6; border-radius:3px; margin-right:4px;"></span>Not set</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ==================================================
-       COMPANY PORTAL — Checklist Editor Page
-       ================================================== -->
-  <div id="companyChecklistPage" class="page">
-    <div class="page-header">
-      <h1>Checklist Editor</h1>
-      <p>Customise your DVSA-compliant walkaround checklist</p>
-    </div>
-    <div class="container">
-      <div class="info-box mb-1">
-        <strong>DVSA Compliance Note:</strong> Standard items cannot be removed — only marked active/inactive. You may add company-specific items below.
-      </div>
-
+    <div id="driver-documents-page" class="page">
       <div class="card">
-        <h2>Standard Checklist Items</h2>
-        <div id="standardChecklistEditor">
-          <p class="text-center text-light">Loading checklist items...</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Add Custom Item</h2>
-        <form id="addCustomCheckItemForm">
-          <label for="custom-category">Category</label>
-          <select id="custom-category" name="category">
-            <option value="exterior">Exterior & Bodywork</option>
-            <option value="interior">Interior & Cab</option>
-            <option value="lights">Lights & Mirrors</option>
-            <option value="tyres">Tyres & Wheels</option>
-            <option value="brakes">Brakes</option>
-            <option value="engine">Engine & Oil</option>
-            <option value="trailer">Trailer & Coupling</option>
-            <option value="documents">Documents & Safety</option>
+        <h2>My Documents</h2>
+        <p style="color: var(--text-light); margin-bottom: 1rem;">Upload and manage your licence, CPC, tachograph card, and more.</p>
+        <div class="form-group">
+          <label>Upload New Document</label>
+          <input type="file" id="doc-upload" />
+          <select id="doc-type" style="margin-top:0.5rem;">
+            <option value="">Select document type...</option>
+            <option value="driving-licence">Driving Licence</option>
+            <option value="cpc-card">Driver CPC Card</option>
+            <option value="tacho-card">Tachograph Card</option>
+            <option value="digital-tacho">Digital Tachograph Files</option>
+            <option value="qualification">Certificate / Qualification</option>
+            <option value="medical">Medical Certificate</option>
             <option value="other">Other</option>
           </select>
-
-          <label for="custom-text">Check Item Description</label>
-          <input type="text" id="custom-text" name="text" placeholder="e.g. Check fridge unit temperature">
-
-          <label for="custom-required">
-            <input type="checkbox" id="custom-required" checked>
-            Required check item
-          </label>
-
-          <div class="btn-group mt-1">
-            <button type="submit" class="btn btn-primary">Add Item</button>
-            <button type="button" class="btn btn-secondary" onclick="showPage('companyDashboardPage')">Back</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>Save & Reset</h2>
-        <div class="btn-group">
-          <button class="btn btn-success" onclick="saveChecklistChanges()">💾 Save All Changes</button>
-          <button class="btn btn-secondary" onclick="resetChecklistToDefault()">↩️ Reset to DVSA Default</button>
+          <button class="btn small primary" style="margin-top:0.5rem;" onclick="uploadDriverDocument()">Upload</button>
         </div>
-      </div>
-
-      <div class="card">
-        <h2>Submitted Checks</h2>
-        <div id="allChecksList">
-          <p class="text-center text-light">No checklists submitted yet</p>
+        <div id="driver-docs-list" style="margin-top: 1.5rem;">
+          <p style="color: var(--text-light); font-style: italic;">No documents uploaded yet</p>
         </div>
       </div>
     </div>
-  </div>
-  
-  <div id="companyCompliancePage" class="page hidden">...</div>
-<div id="companyProfilePage" class="page hidden">...</div>
-<div id="companyDocumentsPage" class="page hidden">...</div>
-<div id="companyMaintenancePage" class="page hidden">...</div>
-<div id="companyTachographPage" class="page hidden">...</div>
 
-  <!-- ==================================================
-       JAVASCRIPT — app.js connection
-       ================================================== -->
-  <script type="module" src="app.js"></script>
+    <div id="driver-profile-page" class="page">
+      <div class="card">
+        <h2>My Profile</h2>
+        <form id="driver-profile-form">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="dr-profile-name" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="dr-profile-email" disabled style="background: var(--neutral);" />
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="dr-profile-phone" />
+          </div>
+          <div class="form-group">
+            <label>Location (Town/City)</label>
+            <input type="text" id="dr-profile-location" />
+          </div>
+          <button type="submit" class="btn primary">Update Profile</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="driver-tachograph-page" class="page">
+      <div class="card">
+        <h2>My Tachograph Information</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Your latest tachograph data and driver hours</p>
+        <div id="driver-tacho-data">
+          <p style="color: var(--text-light); font-style: italic;">Connect via your company's Tacomaster integration to view tachograph data here.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast"></div>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
