@@ -801,4 +801,11 @@
           </div>
           <div class="form-group">
             <label>How serious is it? *</label>
+            <script>
+function showRegisterPage() {
+  showPage('auth-page');
+  document.querySelector('.auth-tab[data-auth-tab="register"]').click();
+}
+</script>
+<script type="module" src="./app.js"></script>
             <select id="dr-defect-severity" required
