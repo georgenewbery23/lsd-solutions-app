@@ -321,15 +321,36 @@ async function loadUserProfile(uid) {
 }
 
 // Auth state watcher
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(getAuth(), async (user) => {
+  const navGuest = document.getElementById('nav-guest');
+  const navDriver = document.getElementById('nav-driver');
+  const navCompany = document.getElementById('nav-company');
+  
   if (user) {
     currentUser = user;
-    showMainApp();
-    await loadUserProfile(user.uid);
+    await loadUserProfile();
+    
+    // Hide all navs first
+    if (navGuest) navGuest.classList.add('hidden');
+    if (navDriver) navDriver.classList.add('hidden');
+    if (navCompany) navCompany.classList.add('hidden');
+    
+    // Show the right one
+    if (userProfile?.role === 'company') {
+      if (navCompany) navCompany.classList.remove('hidden');
+    } else if (userProfile?.role === 'driver') {
+      if (navDriver) navDriver.classList.remove('hidden');
+    } else {
+      if (navGuest) navGuest.classList.remove('hidden');
+    }
   } else {
     currentUser = null;
     userProfile = null;
-    showAuth();
+    // Show guest nav only
+    if (navGuest) navGuest.classList.remove('hidden');
+    if (navDriver) navDriver.classList.add('hidden');
+    if (navCompany) navCompany.classList.add('hidden');
+    showPage('home-page');
   }
 });
 
@@ -2364,6 +2385,8 @@ document.addEventListener('click', e => {
     setTimeout(loadMyApplications, 100);
   }
 });
+
+
 
 // ==================================================
 // 🔹 INITIALISATION COMPLETE
