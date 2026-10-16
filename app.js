@@ -48,11 +48,11 @@ import {
 // 🔒 FIREBASE CONFIGURATION — UPDATE WITH YOUR VALUES
 const firebaseConfig = {
   apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
-  authDomain: "YOUR-PROJECT-ID.firebaseapp.com",
-  projectId: "YOUR-PROJECT-ID",
-  storageBucket: "YOUR-PROJECT-ID.appspot.com",
-  messagingSenderId: "YOUR-MESSAGING-ID",
-  appId: "YOUR-APP-ID"
+  authDomain: "lsd-solutions.firebaseapp.com",
+  projectId: "lsd-solutions",
+  storageBucket: "lsd-solutions.firebasestorage.app",
+  messagingSenderId: "833767217116",
+  appId: "1:833767217116:web:b29188de76b5778a086119"
 };
 
 // Initialize Firebase
