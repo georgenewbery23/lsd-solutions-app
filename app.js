@@ -325,7 +325,7 @@ document.getElementById('postJobForm')?.addEventListener('submit', async e => {
   if (!currentUser || userRole !== 'company') return;
   await addDoc(collection(db, 'jobs'), {
     companyId,
-    title: document.getElementById('jobTitle').value,
+    title: d(ocument.getElementById('jobTitle').value,
     status: document.getElementById('jobStatus').value,
     pickup: document.getElementById('jobPickup').value,
     dropoff: document.getElementById('jobDropoff').value,
@@ -1190,3 +1190,846 @@ window.preventRecordDeletion = function() {
 };
 preventRecordDeletion();
 
+// ==================================================
+// 📊 COMPANY COMPLIANCE MODULE — Full Integration
+// ==================================================
+
+// Global reference to current company data
+let currentCompanyData = null;
+
+// ==================================================
+// 📊 COMPLIANCE DASHBOARD
+// ==================================================
+async function loadComplianceDashboard() {
+  if (!currentUser) return;
+  
+  try {
+    const companyRef = doc(db, 'companies', currentUser.uid);
+    const snap = await getDoc(companyRef);
+    
+    if (snap.exists()) {
+      currentCompanyData = snap.data();
+      
+      // Populate licence info
+      document.getElementById('cl-licence-number').textContent = currentCompanyData.licenceNumber || 'Not set';
+      document.getElementById('cl-licence-expiry').textContent = 
+        currentCompanyData.licenceExpiryDate 
+          ? formatDisplayDate(currentCompanyData.licenceExpiryDate) 
+          : 'Not set';
+      
+      // Insurance info
+      document.getElementById('cl-insurer').textContent = currentCompanyData.insuranceProvider || 'Not set';
+      document.getElementById('cl-insurance-expiry').textContent = 
+        currentCompanyData.insuranceExpiryDate 
+          ? formatDisplayDate(currentCompanyData.insuranceExpiryDate) 
+          : 'Not set';
+      
+      // Financial standing
+      document.getElementById('cl-financial-expiry').textContent = 
+        currentCompanyData.financialStandingExpiry 
+          ? formatDisplayDate(currentCompanyData.financialStandingExpiry) 
+          : 'Not set';
+      
+      // Tacho next due
+      document.getElementById('cl-tacho-due').textContent = 
+        currentCompanyData.nextTachoDue 
+          ? formatDisplayDate(currentCompanyData.nextTachoDue) 
+          : 'Not recorded';
+      
+      // Load and check all documents for expiry alerts
+      await loadExpiryAlerts();
+    }
+  } catch (error) {
+    console.error('Error loading compliance dashboard:', error);
+  }
+}
+
+async function loadExpiryAlerts() {
+  const alertsContainer = document.getElementById('complianceAlerts');
+  const today = new Date();
+  const thirtyDays = new Date();
+  thirtyDays.setDate(today.getDate() + 30);
+  const sixtyDays = new Date();
+  sixtyDays.setDate(today.getDate() + 60);
+  
+  try {
+    const docsRef = collection(db, 'companies', currentUser.uid, 'documents');
+    const snapshot = await getDocs(docsRef);
+    
+    const alerts = [];
+    
+    // Check company profile dates too
+    const checkDate = (dateStr, label) => {
+      if (!dateStr) return;
+      const expiry = new Date(dateStr);
+      const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      
+      if (daysLeft < 0) {
+        alerts.push({ level: 'critical', message: `⚠️ ${label} — EXPIRED ${Math.abs(daysLeft)} days ago!` });
+      } else if (daysLeft <= 30) {
+        alerts.push({ level: 'warning', message: `🔴 ${label} — Expires in ${daysLeft} days` });
+      } else if (daysLeft <= 60) {
+        alerts.push({ level: 'info', message: `🟡 ${label} — Expires in ${daysLeft} days` });
+      }
+    };
+    
+    if (currentCompanyData) {
+      checkDate(currentCompanyData.licenceExpiryDate, 'Operator Licence');
+      checkDate(currentCompanyData.insuranceExpiryDate, 'Insurance');
+      checkDate(currentCompanyData.financialStandingExpiry, 'Financial Standing');
+      checkDate(currentCompanyData.transportManagerExpiry, 'Transport Manager CPC');
+    }
+    
+    // Check uploaded documents
+    snapshot.forEach(docSnap => {
+      const doc = docSnap.data();
+      if (!doc.expiryDate) return;
+      
+      const expiry = new Date(doc.expiryDate);
+      const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      
+      if (daysLeft < 0) {
+        alerts.push({ level: 'critical', message: `⚠️ ${doc.name || doc.type} — EXPIRED!` });
+      } else if (daysLeft <= 30) {
+        alerts.push({ level: 'warning', message: `🔴 ${doc.name || doc.type} — Expires in ${daysLeft} days` });
+      } else if (daysLeft <= 60) {
+        alerts.push({ level: 'info', message: `🟡 ${doc.name || doc.type} — Expires in ${daysLeft} days` });
+      }
+    });
+    
+    if (alerts.length === 0) {
+      alertsContainer.innerHTML = '<p class="text-center" style="color:var(--success);">✅ All documents and dates up to date — No alerts</p>';
+    } else {
+      alertsContainer.innerHTML = alerts.map(a => {
+        const bg = a.level === 'critical' ? '#ffebee' : a.level === 'warning' ? '#fff3e0' : '#fff8e1';
+        return `<div style="padding:0.75rem; background:${bg}; border-radius:4px; margin-bottom:0.5rem;">${a.message}</div>`;
+      }).join('');
+    }
+  } catch (error) {
+    alertsContainer.innerHTML = '<p class="text-center text-light">Could not load alerts</p>';
+  }
+}
+
+// ==================================================
+// 🏢 COMPANY PROFILE / OPERATOR LICENCE
+// ==================================================
+document.getElementById('companyProfileForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const formData = new FormData(e.target);
+  const profileData = {
+    licenceNumber: formData.get('licenceNumber'),
+    licenceType: formData.get('licenceType'),
+    licenceIssueDate: formData.get('licenceIssueDate'),
+    licenceExpiryDate: formData.get('licenceExpiryDate'),
+    trafficArea: formData.get('trafficArea'),
+    authorisedVehicles: parseInt(formData.get('authorisedVehicles')) || null,
+    transportManagerName: formData.get('transportManagerName'),
+    transportManagerCPC: formData.get('transportManagerCPC'),
+    transportManagerExpiry: formData.get('transportManagerExpiry'),
+    insuranceProvider: formData.get('insuranceProvider'),
+    insurancePolicyNumber: formData.get('insurancePolicyNumber'),
+    insuranceExpiryDate: formData.get('insuranceExpiryDate'),
+    financialStandingExpiry: formData.get('financialStandingExpiry'),
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    const companyRef = doc(db, 'companies', currentUser.uid);
+    await setDoc(companyRef, profileData, { merge: true });
+    currentCompanyData = { ...currentCompanyData, ...profileData };
+    alert('✅ Company profile saved successfully!');
+    showPage('companyCompliancePage');
+    loadComplianceDashboard();
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    alert('❌ Error saving profile: ' + error.message);
+  }
+});
+
+async function loadCompanyProfile() {
+  if (!currentUser) return;
+  
+  try {
+    const companyRef = doc(db, 'companies', currentUser.uid);
+    const snap = await getDoc(companyRef);
+    
+    if (snap.exists()) {
+      const data = snap.data();
+      
+      setInputValue('ol-number', data.licenceNumber);
+      setInputValue('ol-type', data.licenceType);
+      setInputValue('ol-issue-date', data.licenceIssueDate);
+      setInputValue('ol-expiry-date', data.licenceExpiryDate);
+      setInputValue('ol-traffic-area', data.trafficArea);
+      setInputValue('ol-authorised-vehicles', data.authorisedVehicles);
+      setInputValue('tm-name', data.transportManagerName);
+      setInputValue('tm-cpc-number', data.transportManagerCPC);
+      setInputValue('tm-expiry', data.transportManagerExpiry);
+      setInputValue('ins-provider', data.insuranceProvider);
+      setInputValue('ins-policy', data.insurancePolicyNumber);
+      setInputValue('ins-expiry', data.insuranceExpiryDate);
+      setInputValue('financial-expiry', data.financialStandingExpiry);
+    }
+  } catch (error) {
+    console.error('Error loading profile:', error);
+  }
+}
+
+// ==================================================
+// 📁 COMPANY DOCUMENTS MANAGEMENT
+// ==================================================
+document.getElementById('companyDocUploadForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser) { alert('Please sign in first'); return; }
+  
+  const formData = new FormData(e.target);
+  
+  try {
+    await addDoc(collection(db, 'companies', currentUser.uid, 'documents'), {
+      type: formData.get('docType'),
+      name: formData.get('documentName'),
+      expiryDate: formData.get('expiryDate'),
+      uploadedAt: serverTimestamp()
+    });
+    
+    alert('✅ Document logged successfully!');
+    e.target.reset();
+    loadCompanyDocuments();
+    loadExpiryAlerts();
+  } catch (error) {
+    console.error('Error logging document:', error);
+    alert('❌ Error: ' + error.message);
+  }
+});
+
+async function loadCompanyDocuments() {
+  if (!currentUser) return;
+  const container = document.getElementById('companyDocsList');
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'documents'),
+      orderBy('uploadedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-center text-light">No documents uploaded yet</p>';
+      return;
+    }
+    
+    container.innerHTML = snapshot.docs.map(docSnap => {
+      const d = docSnap.data();
+      const expiry = d.expiryDate ? formatDisplayDate(d.expiryDate) : 'No expiry';
+      return `
+        <div style="padding:0.75rem; border-bottom:1px solid #eee;">
+          <strong>${escapeHtml(d.name || d.type)}</strong><br>
+          <small>Type: ${formatDocType(d.type)} | Expires: ${expiry}</small>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    container.innerHTML = '<p class="text-center text-light">Could not load documents</p>';
+  }
+}
+
+function formatDocType(type) {
+  const map = {
+    'operator-licence': 'Operator Licence',
+    'insurance-cert': 'Insurance Certificate',
+    'financial-evidence': 'Financial Evidence',
+    'mot-cert': 'MOT Certificate',
+    'tacho-card': 'Tachograph Card',
+    'driver-cpc': 'Driver CPC',
+    'employment-contract': 'Employment Contract',
+    'policy-document': 'Policy Document',
+    'other': 'Other'
+  };
+  return map[type] || type;
+}
+
+// ==================================================
+// 🔧 DEFECT REPORTING & MAINTENANCE
+// ==================================================
+document.getElementById('defectReportForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const formData = new FormData(e.target);
+  
+  try {
+    await addDoc(collection(db, 'companies', currentUser.uid, 'defects'), {
+      vehicleReg: (formData.get('vehicleReg') || '').toUpperCase(),
+      description: formData.get('description'),
+      reportedBy: formData.get('reportedBy'),
+      priority: formData.get('priority'),
+      status: 'open',
+      reportedAt: serverTimestamp()
+    });
+    
+    alert('✅ Defect recorded successfully!');
+    e.target.reset();
+    loadDefectsList();
+  } catch (error) {
+    console.error('Error recording defect:', error);
+    alert('❌ Error: ' + error.message);
+  }
+});
+
+async function loadDefectsList() {
+  if (!currentUser) return;
+  const container = document.getElementById('defectsList');
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'defects'),
+      orderBy('reportedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-center text-light">No defects recorded</p>';
+      return;
+    }
+    
+    const priorityColors = {
+      'immediate': '#ffebee',
+      'urgent': '#fff3e0',
+      'schedule': '#fff8e1',
+      'monitor': '#e8f5e9'
+    };
+    
+    const priorityLabels = {
+      'immediate': '⚠️ Immediate',
+      'urgent': '🔴 Urgent',
+      'schedule': '🟡 Schedule',
+      'monitor': '🟢 Monitor'
+    };
+    
+    container.innerHTML = snapshot.docs.map(docSnap => {
+      const d = docSnap.data();
+      return `
+        <div style="padding:0.75rem; background:${priorityColors[d.priority] || '#fff'}; border-radius:4px; margin-bottom:0.5rem;">
+          <strong>${escapeHtml(d.vehicleReg || 'Unknown Vehicle')}</strong>
+          <span class="status-badge" style="float:right;">${priorityLabels[d.priority] || d.priority}</span>
+          <p style="margin:0.5rem 0;">${escapeHtml(d.description)}</p>
+          <small>Reported by: ${escapeHtml(d.reportedBy || 'Unknown')} — ${formatTimestamp(d.reportedAt)}</small>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    container.innerHTML = '<p class="text-center text-light">Could not load defects</p>';
+  }
+}
+
+// Service scheduling
+document.getElementById('scheduleServiceForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const formData = new FormData(e.target);
+  
+  try {
+    await addDoc(collection(db, 'companies', currentUser.uid, 'services'), {
+      vehicleReg: (formData.get('vehicleReg') || '').toUpperCase(),
+      serviceType: formData.get('serviceType'),
+      dueDate: formData.get('dueDate'),
+      dueMileage: formData.get('dueMileage') ? parseInt(formData.get('dueMileage')) : null,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    
+    alert('✅ Service scheduled!');
+    e.target.reset();
+    loadServiceSchedule();
+  } catch (error) {
+    console.error('Error scheduling service:', error);
+    alert('❌ Error: ' + error.message);
+  }
+});
+
+async function loadServiceSchedule() {
+  if (!currentUser) return;
+  const container = document.getElementById('serviceScheduleList');
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'services'),
+      orderBy('dueDate', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-center text-light">No services scheduled</p>';
+      return;
+    }
+    
+    const typeLabels = {
+      'routine': '🔧 Routine Service',
+      'mot': '🚥 MOT Test',
+      'tachocal': '⏱️ Tacho Calibration',
+      'repair': '🔩 Repair'
+    };
+    
+    container.innerHTML = snapshot.docs.map(docSnap => {
+      const d = docSnap.data();
+      return `
+        <div style="padding:0.75rem; border-bottom:1px solid #eee;">
+          <strong>${escapeHtml(d.vehicleReg)}</strong> — ${typeLabels[d.serviceType] || d.serviceType}<br>
+          <small>Due: ${formatDisplayDate(d.dueDate)}${d.dueMileage ? ` / ${d.dueMileage} miles` : ''}</small>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    container.innerHTML = '<p class="text-center text-light">Could not load schedule</p>';
+  }
+}
+
+// ==================================================
+// ⏱️ TACHOGRAPH & DRIVERS' HOURS
+// ==================================================
+document.getElementById('tachoDownloadForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const formData = new FormData(e.target);
+  
+  try {
+    await addDoc(collection(db, 'companies', currentUser.uid, 'tachoDownloads'), {
+      downloadType: formData.get('downloadType'),
+      reference: formData.get('reference'),
+      downloadDate: formData.get('downloadDate'),
+      nextDueDate: formData.get('nextDueDate'),
+      recordedAt: serverTimestamp()
+    });
+    
+    // Update company profile next due date
+    const companyRef = doc(db, 'companies', currentUser.uid);
+    await updateDoc(companyRef, { nextTachoDue: formData.get('nextDueDate') });
+    
+    alert('✅ Download recorded!');
+    e.target.reset();
+    loadTachoSchedule();
+    loadComplianceDashboard();
+  } catch (error) {
+    console.error('Error recording download:', error);
+    alert('❌ Error: ' + error.message);
+  }
+});
+
+async function loadTachoSchedule() {
+  if (!currentUser) return;
+  const container = document.getElementById('tachoScheduleList');
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'tachoDownloads'),
+      orderBy('downloadDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-center text-light">No downloads recorded yet</p>';
+      return;
+    }
+    
+    container.innerHTML = snapshot.docs.map(docSnap => {
+      const d = docSnap.data();
+      return `
+        <div style="padding:0.75rem; border-bottom:1px solid #eee;">
+          <strong>${d.downloadType === 'vehicle' ? '🚛 Vehicle Unit' : '👤 Driver Card'}</strong> — ${escapeHtml(d.reference)}<br>
+          <small>Downloaded: ${formatDisplayDate(d.downloadDate)} | Next due: ${formatDisplayDate(d.nextDueDate)}</small>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    container.innerHTML = '<p class="text-center text-light">Could not load downloads</p>';
+  }
+}
+
+// Infringements
+document.getElementById('infringementForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  
+  const formData = new FormData(e.target);
+  
+  try {
+    await addDoc(collection(db, 'companies', currentUser.uid, 'infringements'), {
+      driverName: formData.get('driverName'),
+      incidentDate: formData.get('incidentDate'),
+      infringementType: formData.get('infringementType'),
+      actionTaken: formData.get('actionTaken'),
+      recordedAt: serverTimestamp()
+    });
+    
+    alert('✅ Infringement recorded!');
+    e.target.reset();
+    loadInfringementsList();
+  } catch (error) {
+    console.error('Error recording infringement:', error);
+    alert('❌ Error: ' + error.message);
+  }
+});
+
+async function loadInfringementsList() {
+  if (!currentUser) return;
+  const container = document.getElementById('infringementsList');
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'infringements'),
+      orderBy('incidentDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-center text-light">No infringements recorded — Great job!</p>';
+      return;
+    }
+    
+    container.innerHTML = snapshot.docs.map(docSnap => {
+      const d = docSnap.data();
+      return `
+        <div style="padding:0.75rem; border-bottom:1px solid #eee;">
+          <strong>${escapeHtml(d.driverName)}</strong><br>
+          <small>${d.infringementType} — ${formatDisplayDate(d.incidentDate)}</small>
+          ${d.actionTaken ? `<p style="margin-top:0.25rem; font-size:0.9rem;">Action: ${escapeHtml(d.actionTaken)}</p>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    container.innerHTML = '<p class="text-center text-light">Could not load infringements</p>';
+  }
+}
+
+// ==================================================
+// 📄 REPORTING CENTRE
+// ==================================================
+function printReport() {
+  window.print();
+}
+
+async function generateChecklistReport() {
+  const from = document.getElementById('report-checks-from').value;
+  const to = document.getElementById('report-checks-to').value;
+  const output = document.getElementById('report-checks-output');
+  
+  if (!from || !to) { alert('Please select a date range'); return; }
+  
+  output.innerHTML = '<p>Loading data...</p>';
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'checklists'),
+      orderBy('checkDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    const filtered = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(d => {
+        if (!d.checkDate) return false;
+        const cd = new Date(d.checkDate);
+        return cd >= new Date(from) && cd <= new Date(to);
+      });
+    
+    if (filtered.length === 0) {
+      output.innerHTML = '<p class="text-center text-light">No checklists found for selected date range</p>';
+      return;
+    }
+    
+    output.innerHTML = `
+      <h3>Daily Walkaround Checklist Register</h3>
+      <p><strong>Date Range:</strong> ${formatDisplayDate(from)} to ${formatDisplayDate(to)}</p>
+      <p><strong>Total Checks:</strong> ${filtered.length}</p>
+      <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.9rem;">
+        <thead>
+          <tr style="background:var(--primary); color:white;">
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Date</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Vehicle</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Driver</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Defects?</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(d => `
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${formatDisplayDate(d.checkDate)}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.regNumber || 'Unknown')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.signature || 'Unknown')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.hasDefects ? '⚠️ Yes' : '✅ No'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    output.innerHTML = '<p class="error-box">Error generating report: ' + error.message + '</p>';
+  }
+}
+
+async function generateDefectReport() {
+  const output = document.getElementById('report-defects-output');
+  output.innerHTML = '<p>Loading data...</p>';
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'defects'),
+      orderBy('reportedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      output.innerHTML = '<p class="text-center text-light">No defects recorded — ✅ All clear!</p>';
+      return;
+    }
+    
+    const defects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    output.innerHTML = `
+      <h3>Defect & Maintenance Register</h3>
+      <p><strong>Total Defects Recorded:</strong> ${defects.length}</p>
+      <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.9rem;">
+        <thead>
+          <tr style="background:var(--primary); color:white;">
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Vehicle</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Description</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Reported By</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Priority</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${defects.map(d => `
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.vehicleReg)}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.description.substring(0,40))}${d.description.length > 40 ? '...' : ''}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.reportedBy || 'Unknown')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.priority}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${formatTimestamp(d.reportedAt)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    output.innerHTML = '<p class="error-box">Error: ' + error.message + '</p>';
+  }
+}
+
+async function generateTachoReport() {
+  const output = document.getElementById('report-tacho-output');
+  output.innerHTML = '<p>Loading data...</p>';
+  
+  try {
+    const q = query(
+      collection(db, 'companies', currentUser.uid, 'tachoDownloads'),
+      orderBy('downloadDate', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      output.innerHTML = '<p class="text-center text-light">No tachograph downloads recorded</p>';
+      return;
+    }
+    
+    const downloads = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    output.innerHTML = `
+      <h3>Tachograph Download Compliance Report</h3>
+      <p><strong>Total Downloads Recorded:</strong> ${downloads.length}</p>
+      <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.9rem;">
+        <thead>
+          <tr style="background:var(--primary); color:white;">
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Type</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Reference</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Downloaded</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Next Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${downloads.map(d => `
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.downloadType === 'vehicle' ? 'Vehicle Unit' : 'Driver Card'}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.reference)}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${formatDisplayDate(d.downloadDate)}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${formatDisplayDate(d.nextDueDate)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <p style="margin-top:1rem; font-size:0.85rem; font-style:italic;">
+        Legal requirement: Vehicle units every 28 days max • Driver cards every 90 days max
+      </p>
+    `;
+  } catch (error) {
+    output.innerHTML = '<p class="error-box">Error: ' + error.message + '</p>';
+  }
+}
+
+async function generateVehicleReport() {
+  const output = document.getElementById('report-vehicles-output');
+  output.innerHTML = '<p>Loading data...</p>';
+  
+  try {
+    const q = query(collection(db, 'companies', currentUser.uid, 'vehicles'));
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      output.innerHTML = '<p class="text-center text-light">No vehicles in fleet yet</p>';
+      return;
+    }
+    
+    const vehicles = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    output.innerHTML = `
+      <h3>Vehicle Compliance Summary</h3>
+      <p><strong>Total Vehicles:</strong> ${vehicles.length}</p>
+      <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.9rem;">
+        <thead>
+          <tr style="background:var(--primary); color:white;">
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Reg</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Make/Model</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">MOT Due</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Insurance Due</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Tacho Cal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${vehicles.map(d => `
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #ddd; font-weight:bold;">${escapeHtml(d.registration || 'Unknown')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.make || '')} ${escapeHtml(d.model || '')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.motExpiry ? formatDisplayDate(d.motExpiry) : 'Not set'}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.insuranceExpiry ? formatDisplayDate(d.insuranceExpiry) : 'Not set'}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.tachographCalibration ? formatDisplayDate(d.tachographCalibration) : 'Not set'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    output.innerHTML = '<p class="error-box">Error: ' + error.message + '</p>';
+  }
+}
+
+async function generateDriverReport() {
+  const output = document.getElementById('report-drivers-output');
+  output.innerHTML = '<p>Loading data...</p>';
+  
+  try {
+    const q = query(collection(db, 'companies', currentUser.uid, 'drivers'));
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      output.innerHTML = '<p class="text-center text-light">No drivers registered yet</p>';
+      return;
+    }
+    
+    const drivers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    output.innerHTML = `
+      <h3>Driver Compliance Summary</h3>
+      <p><strong>Total Drivers:</strong> ${drivers.length}</p>
+      <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.9rem;">
+        <thead>
+          <tr style="background:var(--primary); color:white;">
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Name</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Licence No.</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">CPC Expiry</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Medical Expiry</th>
+            <th style="padding:0.5rem; text-align:left; border:1px solid #ddd;">Tacho Card Exp</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${drivers.map(d => `
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #ddd; font-weight:bold;">${escapeHtml(d.fullName || 'Unknown')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${escapeHtml(d.licenceNumber || 'Not recorded')}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.cpcExpiry ? formatDisplayDate(d.cpcExpiry) : 'Not set'}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.medicalExpiry ? formatDisplayDate(d.medicalExpiry) : 'Not set'}</td>
+              <td style="padding:0.5rem; border:1px solid #ddd;">${d.tachoCardExpiry ? formatDisplayDate(d.tachoCardExpiry) : 'Not set'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    output.innerHTML = '<p class="error-box">Error: ' + error.message + '</p>';
+  }
+}
+
+async function generateComplianceCertificate() {
+  const output = document.getElementById('report-cert-output');
+  output.innerHTML = '<p>Generating certificate...</p>';
+  
+  try {
+    const today = new Date();
+    const companyRef = doc(db, 'companies', currentUser.uid);
+    const snap = await getDoc(companyRef);
+    const company = snap.exists() ? snap.data() : {};
+    
+    output.innerHTML = `
+      <div style="border:2px solid var(--primary); padding:2rem; border-radius:8px; background:white;">
+        <h2 style="text-align:center; color:var(--primary); margin-bottom:0.5rem;">🚛 LSD Solutions — Compliance Certificate</h2>
+        <p style="text-align:center; color:var(--text-light); margin-bottom:2rem;">Generated: ${today.toLocaleDateString('en-GB')}</p>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+          <div>
+            <h4 style="border-bottom:2px solid var(--primary-light); padding-bottom:0.5rem;">Company Details</h4>
+            <p><strong>Company:</strong> ${escapeHtml(company.companyName || 'Not Recorded')}</p>
+            <p><strong>Operator Licence:</strong> ${escapeHtml(company.licenceNumber || 'Not Recorded')}</p>
+            <p><strong>Licence Type:</strong> ${company.licenceType || 'Not Recorded'}</p>
+            <p><strong>Traffic Area:</strong> ${company.trafficArea || 'Not Recorded'}</p>
+          </div>
+          <div>
+            <h4 style="border-bottom:2px solid var(--primary-light); padding-bottom:0.5rem;">Key Dates</h4>
+            <p><strong>Licence Expires:</strong> ${company.licenceExpiryDate ? formatDisplayDate(company.licenceExpiryDate) : 'Not Recorded'}</p>
+            <p><strong>Insurance Expires:</strong> ${company.insuranceExpiryDate ? formatDisplayDate(company.insuranceExpiryDate) : 'Not Recorded'}</p>
+            <p><strong>Financial Standing Expires:</strong> ${company.financialStandingExpiry ? formatDisplayDate(company.financialStandingExpiry) : 'Not Recorded'}</p>
+            <p><strong>Transport Manager CPC Expires:</strong> ${company.transportManagerExpiry ? formatDisplayDate(company.transportManagerExpiry) : 'Not Recorded'}</p>
+          </div>
+        </div>
+        
+        <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid #eee; text-align:center; font-style:italic; color:var(--text-light);">
+          <p>This document provides a snapshot of compliance records as at the date of generation.<br>
+          All records should be kept up to date — DVSA may request further evidence during a visit.</p>
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    output.innerHTML = '<p class="error-box">Error: ' + error.message + '</p>';
+  }
+}
+
+// ==================================================
+// 🛠️ HELPER FUNCTIONS
+// ==================================================
+function setInputValue(id, value) {
+  const el = document.getElementById(id);
+  if (el && value !== undefined && value !== null) el.value = value;
+}
+
+function formatDisplayDate(dateValue) {
+  if (!dateValue) return '—';
+  const d = new Date(dateValue);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '—';
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ==================================================
+// 🔗 PAGE LOADERS — Called when showing each page
+// ==================================================
+// Update your existing showPage function to call these:
+// showPage('companyCompliancePage') → loadComplianceDashboard()
+// showPage('companyProfilePage') → loadCompanyProfile()
+// showPage('companyDocumentsPage') → loadCompanyDocuments()
+// showPage('companyMaintenancePage') → loadDefectsList(); loadServiceSchedule()
+// showPage('companyTachographPage') → loadTachoSchedule(); loadInfringementsList()
