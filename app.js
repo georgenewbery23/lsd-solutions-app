@@ -92,6 +92,59 @@ function showToast(message, type = 'success') {
 }
 
 // ==================================================
+// 🔐 AUTH TAB NAVIGATION
+// ==================================================
+window.selectedRole = null;
+
+function showAuthTab(tabName) {
+  // Deactivate all tabs
+  document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+  // Hide all forms
+  document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+
+  if (tabName === 'signin') {
+    document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
+    document.getElementById('signinForm').classList.add('active');
+  }
+  else if (tabName === 'register') {
+    document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
+    document.getElementById('registerForm').classList.add('active');
+  }
+  else if (tabName === 'reset') {
+    document.getElementById('resetForm').classList.add('active');
+  }
+}
+window.showAuthTab = showAuthTab;
+
+function selectRole(role) {
+  window.selectedRole = role;
+  // Update visual selection
+  document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`role-${role}`).classList.add('selected');
+}
+window.selectRole = selectRole;
+
+function showToast(message, type = 'info') {
+  // Remove any existing toast
+  const existing = document.querySelector('.toast-message');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-message';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: ${type === 'warning' ? '#fef3c7' : type === 'error' ? '#fee2e2' : '#dbeafe'};
+    color: ${type === 'warning' ? '#b45309' : type === 'error' ? '#dc2626' : '#1e40af'};
+    padding: 0.85rem 1.5rem; border-radius: 8px; font-weight: 500; z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+window.showToast = showToast;
+
+// ==================================================
 // 🔐 AUTHENTICATION — Page Switching
 // ==================================================
 function showPage(pageId) {
