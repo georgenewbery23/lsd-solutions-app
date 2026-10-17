@@ -249,56 +249,79 @@ window.handleSignOut = handleSignOut;
 // ==================================================
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
+    // No user signed in → show auth page
     currentUser = null;
     userProfile = null;
-    showPage('auth-page');
+    showPage('authPage'); // ✅ MATCHES YOUR HTML
     return;
   }
   
   currentUser = user;
   
   try {
-    // Try driver profile first
-    let snap = await getDoc(doc(db, 'drivers', user.uid));
+    // Check COMPANY profile first
+    let snap = await getDoc(doc(db, 'companies', user.uid));
     if (snap.exists()) {
       userProfile = snap.data();
       userProfile.uid = user.uid;
       
-      // Update UI
-      const nameEl = document.getElementById('driver-user-name');
-      if (nameEl) nameEl.textContent = escapeHtml(userProfile.name || 'Driver');
-      
-      showPage('driver-dashboard-page');
-      const dashName = document.getElementById('driver-dash-name');
-      if (dashName) dashName.textContent = escapeHtml(userProfile.name || 'Driver');
-      loadDriverRecentActivity();
-      return;
-    }
-    
-    // Try company profile
-    snap = await getDoc(doc(db, 'companies', user.uid));
-    if (snap.exists()) {
-      userProfile = snap.data();
-      userProfile.uid = user.uid;
-      
+      // Update UI elements
       const nameEl = document.getElementById('company-user-name');
       if (nameEl) nameEl.textContent = escapeHtml(userProfile.name || 'Company');
       
       showPage('company-dashboard-page');
       const dashName = document.getElementById('company-dash-name');
       if (dashName) dashName.textContent = escapeHtml(userProfile.name || 'Company');
+      
+      // Update navigation highlighting
+      if (typeof updateNavigationForPage === 'function') {
+        updateNavigationForPage('company-dashboard-page');
+      }
+      
       loadCompanyStats();
       loadCompanyActivity();
       return;
     }
     
-    // No profile found — offer recovery
-    showPage('auth-page');
-    showToast('Profile not found — please register', 'warning');
+    // Check DRIVER profile
+    snap = await getDoc(doc(db, 'drivers', user.uid));
+    if (snap.exists()) {
+      userProfile = snap.data();
+      userProfile.uid = user.uid;
+      
+      // Update UI elements
+      const nameEl = document.getElementById('driver-user-name');
+      if (nameEl) nameEl.textContent = escapeHtml(userProfile.name || 'Driver');
+      
+      showPage('driver-dashboard-page');
+      const dashName = document.getElementById('driver-dash-name');
+      if (dashName) dashName.textContent = escapeHtml(userProfile.name || 'Driver');
+      
+      // Update navigation highlighting
+      if (typeof updateNavigationForPage === 'function') {
+        updateNavigationForPage('driver-dashboard-page');
+      }
+      
+      loadDriverRecentActivity();
+      return;
+    }
+    
+    // ==================================================
+    // NO PROFILE FOUND — THIS WAS THE BLANK SCREEN BUG
+    // ==================================================
+    console.log('No profile found for:', user.email);
+    showToast('Welcome! Please complete registration to continue.', 'warning');
+    showPage('authPage'); // ✅ Correct page ID — auth form shows instead of blank!
+    
+    // Auto-switch to Register tab so user doesn't get stuck on Sign In
+    if (typeof showAuthTab === 'function') {
+      showAuthTab('register');
+    }
     
   } catch (err) {
     console.error('Auth routing error:', err);
-    showPage('auth-page');
+    showToast('Something went wrong — please try signing in again.', 'warning');
+    showPage('authPage');
   }
 });
 // ==================================================
