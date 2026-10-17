@@ -2042,13 +2042,15 @@ async function runArchiveCleanup() {
   }
 }
 
-// Run once per day when app loads (lightweight check only)
+// Run once per day when app loads — ONLY processes CURRENT USER'S records
 const lastRun = localStorage.getItem('lastArchiveCheck');
-const today = new Date();  // ← MOVED UP HERE
+const today = new Date();
 const todayStr = today.toDateString();
 if (lastRun !== todayStr) {
   localStorage.setItem('lastArchiveCheck', todayStr);
-  setTimeout(runArchiveCleanup, 5000); // Run 5s after app loads
+  // Skip broad scan — archive cleanup should be done via Cloud Functions
+  // This client-side check is now disabled to avoid permission errors
+  console.log('📅 Archive check skipped — use Cloud Function for scheduled cleanup');
 }
 
 // ==================================================
