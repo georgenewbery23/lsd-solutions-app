@@ -44,15 +44,15 @@ import {
   deleteObject
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
-  authDomain: "lsd-solutions.firebaseapp.com",
-  databaseURL: "https://lsd-solutions-default-rtdb.firebaseio.com",
-  projectId: "lsd-solutions",
-  storageBucket: "lsd-solutions.firebasestorage.app",
-  messagingSenderId: "833767217116",
-  appId: "1:833767217116:web:b29188de76b5778a086119",
-  measurementId: "G-7YF4T8BBPT"
+const FIREBASE_CONFIG = {   // ← ALL CAPS, underscores
+  apiKey: "AIzaSyD1futajZiZd79r08a8TJHAMfgtpPPk0rk",
+  authDomain: "lsd-solutions.firebaseapp.com",
+  databaseURL: "https://lsd-solutions-default-rtdb.firebaseio.com",
+  projectId: "lsd-solutions",
+  storageBucket: "lsd-solutions.firebasestorage.app",
+  messagingSenderId: "833767217116",
+  appId: "1:833767217116:web:b29188de76b5778a086119",
+  measurementId: "G-7YF4T8BBPT"
 };
 
 // ==================================================
