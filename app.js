@@ -2044,6 +2044,7 @@ async function runArchiveCleanup() {
 
 // Run once per day when app loads (lightweight check only)
 const lastRun = localStorage.getItem('lastArchiveCheck');
+const today = new Date();  // ← MOVED UP HERE
 const todayStr = today.toDateString();
 if (lastRun !== todayStr) {
   localStorage.setItem('lastArchiveCheck', todayStr);
