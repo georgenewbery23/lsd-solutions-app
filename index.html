@@ -1,3 +1,203 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LSD Solutions — HGV & Logistics Services</title>
+  <meta name="description" content="For All Your Longhaul, Shunting And Delivery Needs" />
+  <!-- ✅ CORRECTED FAVICON PATH -->
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+    :root {
+      --primary: #1a365d;
+      --primary-light: #e8edf3;
+      --accent: #d47500;
+      --success: #2e7d32;
+      --danger: #c62828;
+      --gray: #6b7280;
+      --light-gray: #f3f4f6;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    body { background: #f8fafc; color: #1f2937; min-height: 100vh; }
+    .hidden { display: none !important; }
+    .page { display: none; width: 100%; min-height: 100vh; }
+    .page.active { display: block; }
+    .app-header {
+      background: white; padding: 1rem 2rem; box-shadow: var(--shadow);
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .app-header h1 { font-size: 1.25rem; color: var(--primary); }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+    .app-container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    .card {
+      background: white; border-radius: 10px; padding: 1.5rem;
+      box-shadow: var(--shadow); margin-bottom: 1rem;
+    }
+    .form-input {
+      width: 100%; padding: 0.75rem; border: 1px solid #d1d5db;
+      border-radius: 6px; font-size: 1rem; margin-bottom: 0.75rem;
+    }
+    .btn {
+      padding: 0.75rem 1.25rem; border: none; border-radius: 6px;
+      font-size: 0.95rem; cursor: pointer; font-weight: 500; transition: 0.2s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.primary { background: var(--primary); color: white; }
+    .btn.secondary { background: var(--light-gray); color: #374151; }
+    .btn.success { background: var(--success); color: white; }
+    .btn.danger { background: var(--danger); color: white; }
+    .muted { color: var(--gray); margin-bottom: 0.5rem; }
+    .badge {
+      display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px;
+      font-size: 0.85rem; font-weight: 500;
+    }
+    .badge.info { background: #dbeafe; color: #1e40af; }
+    .badge.success { background: #d1fae5; color: #166534; }
+    .badge.danger { background: #fee2e2; color: #dc2626; }
+    .badge.warning { background: #fef3c7; color: #b45309; }
+    .grid { display: grid; gap: 1rem; }
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: white; border-radius: 12px; padding: 2rem; width: 100%;
+      max-width: 500px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-content h3 { margin-bottom: 1rem; color: var(--primary); }
+    .auth-container {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 2rem; background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+    }
+    .auth-card {
+      background: white; border-radius: 16px; padding: 2.5rem;
+      box-shadow: 0 4px 20px rgba(26, 54, 93, 0.12); width: 100%; max-width: 440px;
+    }
+    .auth-card h1 { text-align: center; color: var(--primary); margin-bottom: 0.5rem; font-size: 1.75rem; }
+    .auth-subtitle { text-align: center; color: var(--gray); margin-bottom: 2rem; }
+    .auth-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid var(--light-gray); }
+    .auth-tab {
+      flex: 1; padding: 0.75rem; text-align: center; border: none;
+      background: transparent; cursor: pointer; font-size: 1rem; color: var(--gray);
+    }
+    .auth-tab.active { border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 600; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+    .role-selector { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+    .role-option {
+      flex: 1; padding: 1rem; border: 2px solid var(--light-gray); border-radius: 8px;
+      text-align: center; cursor: pointer; transition: 0.2s;
+    }
+    .role-option.selected { border-color: var(--primary); background: var(--primary-light); }
+    .nav-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-buttons button { white-space: nowrap; }
+    .nav-buttons button.current-page { opacity: 0.4; cursor: default; transform: none; }
+  </style>
+</head>
+<body>
+
+  <!-- ================================================== -->
+  <!-- AUTH PAGE — Sign In / Register -->
+  <!-- ================================================== -->
+  <div id="authPage" class="page active">
+    <div class="auth-container">
+      <div class="auth-card">
+        <h1>🚛 LSD Solutions</h1>
+        <p class="auth-subtitle">Welcome back — please sign in to continue</p>
+        
+        <div class="auth-tabs">
+          <button class="auth-tab active" onclick="showAuthTab('signin')">Sign In</button>
+          <button class="auth-tab" onclick="showAuthTab('register')">Create an Account</button>
+        </div>
+
+        <!-- SIGN IN FORM -->
+        <div id="signinForm" class="auth-form active">
+          <input type="email" id="signin-email" class="form-input" placeholder="Email Address" />
+          <input type="password" id="signin-password" class="form-input" placeholder="Password" />
+          <button class="btn primary" style="width:100%;margin-top:0.5rem;" onclick="handleSignIn()">Sign In</button>
+          <p style="text-align:center;margin-top:1rem;">
+            <a href="#" onclick="showAuthTab('reset');return false;" style="color:var(--primary);">Forgot your password?</a>
+          </p>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="registerForm" class="auth-form">
+          <p style="margin-bottom:0.75rem;font-weight:500;">I am registering as:</p>
+          <div class="role-selector">
+            <div class="role-option" id="role-company" onclick="selectRole('company')">
+              🏢<br /><strong>Company</strong>
+            </div>
+            <div class="role-option" id="role-driver" onclick="selectRole('driver')">
+              👤<br /><strong>Driver</strong>
+            </div>
+          </div>
+          <input type="text" id="register-name" class="form-input" placeholder="Full Name" />
+          <input type="email" id="register-email" class="form-input" placeholder="Email Address" />
+          <input type="password" id="register-password" class="form-input" placeholder="Create Password" />
+          <button class="btn primary" style="width:100%;margin-top:0.5rem;" onclick="handleRegister()">Create Account</button>
+        </div>
+
+        <!-- PASSWORD RESET FORM -->
+        <div id="resetForm" class="auth-form">
+          <p style="margin-bottom:1rem;">Enter your email address and we'll send you a link to reset your password.</p>
+          <input type="email" id="reset-email" class="form-input" placeholder="Email Address" />
+          <button class="btn primary" style="width:100%;margin-top:0.5rem;" onclick="handlePasswordReset()">Send Reset Link</button>
+          <p style="text-align:center;margin-top:1rem;">
+            <a href="#" onclick="showAuthTab('signin');return false;" style="color:var(--primary);">Back to Sign In</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- ================================================== -->
+  <!-- COMPANY DASHBOARD PAGE -->
+  <!-- ================================================== -->
+  <div id="company-dashboard-page" class="page">
+    <div class="app-header">
+      <h1>🏢 LSD Solutions — Company Portal</h1>
+      <div class="header-actions" id="companyNav">
+        <button class="btn secondary" data-page="company-dashboard-page" onclick="showPage('company-dashboard-page')">Home</button>
+        <button class="btn secondary" data-page="vehicles-page" onclick="showPage('vehicles-page')">Vehicles</button>
+        <button class="btn secondary" data-page="drivers-management-page" onclick="showPage('drivers-management-page')">Drivers</button>
+        <button class="btn secondary" data-page="jobs-page" onclick="showPage('jobs-page')">Posted Work</button>
+        <button class="btn secondary" data-page="maintenance-schedule-page" onclick="showPage('maintenance-schedule-page')">Maintenance</button>
+        <button class="btn secondary" data-page="defects-page" onclick="showPage('defects-page')">Defects</button>
+        <button class="btn secondary" data-page="compliance-page" onclick="showPage('compliance-page')">Compliance</button>
+        <button class="btn secondary" data-page="tacomaster-dashboard-page" onclick="showPage('tacomaster-dashboard-page')">Tacomaster</button>
+        <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+    <div class="app-container">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div class="card">
+          <h3>🚛 Vehicles</h3>
+          <p style="font-size:2rem;font-weight:bold;color:var(--primary);" id="stat-vehicles">0</p>
+        </div>
+        <div class="card">
+          <h3>👥 Drivers</h3>
+          <p style="font-size:2rem;font-weight:bold;color:var(--primary);" id="stat-drivers">0</p>
+        </div>
+        <div class="card">
+          <h3>⚠️ Open Defects</h3>
+          <p style="font-size:2rem;font-weight:bold;color:var(--danger);" id="stat-defects">0</p>
+        </div>
+        <div class="card">
+          <h3>📋 Active Jobs</h3>
+          <p style="font-size:2rem;font-weight:bold;color:var(--accent);" id="stat-jobs">0</p>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1.5rem;">
+        <h3>📊 Recent Activity</h3>
+        <div id="company-recent-activity" style="margin-top:1rem;">
+          <p class="muted">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================================================== -->
   <!-- MAINTENANCE SCHEDULE PAGE -->
   <!-- ================================================== -->
@@ -9,12 +209,10 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <p class="muted">Planned servicing, inspections & manufacturer intervals — DVSA compliant</p>
       </div>
-      
       <div class="card" style="margin-top: 1rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
           <h3>All Assets</h3>
@@ -36,7 +234,6 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <p class="muted">Report, track & close defects — fully auditable records</p>
@@ -45,11 +242,9 @@
           <span class="badge success" id="defect-count-closed">Closed: 0</span>
         </div>
       </div>
-      
       <div class="card" style="margin-top:1rem;">
         <button class="btn primary" onclick="showReportDefectModal()">📝 Report New Defect</button>
       </div>
-      
       <div id="defects-list" style="margin-top:1rem;"></div>
     </div>
   </div>
@@ -65,13 +260,11 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <p class="muted">Real-time DVSA & Operator Licence status dashboard</p>
         <div id="compliance-status-banner" style="margin-top:1rem;"></div>
       </div>
-      
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1rem;">
         <div class="card">
           <h3>📋 Operator Licence</h3>
@@ -86,7 +279,6 @@
           <div id="expiry-alerts"></div>
         </div>
       </div>
-      
       <div class="card" style="margin-top:1rem;">
         <h3>📊 Fleet Compliance Summary</h3>
         <div id="fleet-compliance-table"></div>
@@ -105,18 +297,21 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <p class="muted">Real-time driver hours, infringements & file downloads</p>
+        <div style="margin-top:1rem;">
+          <label style="font-weight:500;">Tacomaster API Key</label>
+          <input type="text" id="tacomaster-api-key" class="form-input" placeholder="Enter your API key..." />
+          <button class="btn primary" onclick="saveTacomasterKey()">Save & Connect</button>
+        </div>
       </div>
       <div id="tacomaster-dashboard" style="margin-top:1rem;">
-        <p>Loading...</p>
+        <p class="muted">Enter your API key above to view tachograph data, infringements & working time compliance.</p>
       </div>
     </div>
   </div>
-
-  <!-- ================================================== -->
+    <!-- ================================================== -->
   <!-- VEHICLES PAGE -->
   <!-- ================================================== -->
   <div id="vehicles-page" class="page">
@@ -127,7 +322,6 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <button class="btn primary" onclick="showAddVehicleModal()">➕ Add Vehicle</button>
@@ -147,7 +341,6 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -163,7 +356,7 @@
   </div>
 
   <!-- ================================================== -->
-  <!-- JOBS / WORK PAGE -->
+  <!-- JOBS / POSTED WORK PAGE -->
   <!-- ================================================== -->
   <div id="jobs-page" class="page">
     <div class="app-header">
@@ -173,12 +366,33 @@
         <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
       </div>
     </div>
-    
     <div class="app-container">
       <div class="card">
         <button class="btn primary" onclick="showPostJobModal()">➕ Post New Job</button>
       </div>
       <div id="jobs-list" style="margin-top:1rem;"></div>
+    </div>
+  </div>
+
+  <!-- ================================================== -->
+  <!-- DRIVER PORTAL PAGE (Placeholder — extend as needed) -->
+  <!-- ================================================== -->
+  <div id="driver-dashboard-page" class="page">
+    <div class="app-header">
+      <h1>👤 Driver Portal</h1>
+      <div class="header-actions" id="driverNav">
+        <button class="btn secondary" data-page="driver-dashboard-page" onclick="showPage('driver-dashboard-page');">Home</button>
+        <button class="btn secondary" data-page="checklist-page" onclick="showPage('checklist-page');">Daily Check</button>
+        <button class="btn secondary" data-page="driver-jobs-page" onclick="showPage('driver-jobs-page');">My Jobs</button>
+        <button class="btn secondary" data-page="driver-documents-page" onclick="showPage('driver-documents-page');">Documents</button>
+        <button class="btn secondary" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+    <div class="app-container">
+      <div class="card">
+        <h2>Welcome</h2>
+        <p class="muted" id="driver-welcome-text">Loading your dashboard...</p>
+      </div>
     </div>
   </div>
 
@@ -307,9 +521,6 @@
   <!-- ================================================== -->
   <!-- FIREBASE & APP SCRIPTS -->
   <!-- ================================================== -->
-  <script type="module">
-    // Firebase imports will be in app.js — this file just links it:
-  </script>
   <script src="./app.js" type="module"></script>
 </body>
 </html>
