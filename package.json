@@ -2,6 +2,10 @@
   "name": "lsd-solutions-app",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0 <21.0.0"
+  },
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -11,7 +15,7 @@
     "lint": "expo lint",
     "build:web": "expo export --platform web --output-dir dist --base /"
   },
-    "dependencies": {
+  "dependencies": {
     "expo": "~57.0.0",
     "expo-constants": "~17.0.2",
     "expo-device": "~7.0.1",
@@ -32,10 +36,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.2.2"
-  },
-    "engines": {
-    "node": ">=20.0.0 <21.0.0"
-  },
-  "private": true
+    "@types/react": "~18.3.12"
+  }
 }
