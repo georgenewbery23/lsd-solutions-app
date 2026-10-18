@@ -34,5 +34,8 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~19.2.2"
   },
+    "engines": {
+    "node": ">=20.0.0 <21.0.0"
+  },
   "private": true
 }
