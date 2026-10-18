@@ -16,26 +16,34 @@
     "build:web": "expo export --platform web --output-dir dist --base /"
   },
   "dependencies": {
-    "expo": "~58.0.0",
-    "expo-constants": "~18.0.0",
-    "expo-device": "~8.0.0",
-    "expo-font": "~14.0.0",
-    "expo-linking": "~7.1.0",
-    "expo-router": "~5.0.0",
+    "@expo/ui": "~57.0.25",
+    "expo": "~58.0.14",
+    "expo-constants": "~57.0.22",
+    "expo-device": "~57.0.2",
+    "expo-font": "~57.0.4",
+    "expo-glass-effect": "~57.0.4",
+    "expo-image": "~57.0.5",
+    "expo-linking": "~57.0.13",
+    "expo-router": "~58.0.23",
     "expo-splash-screen": "~58.0.10",
-    "expo-status-bar": "~2.0.0",
-    "expo-web-browser": "~15.0.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "expo-status-bar": "~57.0.1",
+    "expo-symbols": "~57.0.3",
+    "expo-system-ui": "~57.0.4",
+    "expo-web-browser": "~57.0.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.88.0",
-    "react-native-gesture-handler": "~2.3.3",
-    "react-native-reanimated": "~4.7.0",
-    "react-native-safe-area-context": "~5.2.0",
-    "react-native-screens": "~4.4.0",
-    "react-native-web": "~0.22.0"
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "~4.7.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.2",
+    "react-native-web": "~0.21.4",
+    "react-native-worklets": "~0.7.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.3.0"
+    "@types/react": "~19.2.18",
+    "@types/react-native": "~0.64.38",
+    "typescript": "~6.0.3"
   }
 }
